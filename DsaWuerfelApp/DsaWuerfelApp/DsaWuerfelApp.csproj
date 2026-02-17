@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\DsaWuerfelApp.Shared\DsaWuerfelApp.Shared.csproj" />
+        <ProjectReference Include="..\DsaWuerfelApp.Client\DsaWuerfelApp.Client.csproj"/>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.3"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="wwwroot\lib\" />
+    </ItemGroup>
+
+</Project>

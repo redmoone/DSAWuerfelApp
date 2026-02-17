@@ -1,0 +1,38 @@
+# Build
+bin/
+obj/
+
+# NuGet (alt/optional)
+packages/
+
+# Rider / IntelliJ
+.idea/
+*.iml
+riderModule.iml
+
+# ReSharper
+_ReSharper.Caches/
+**/_ReSharper.Caches/
+
+# User-spezifisch
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs / temp
+*.log
+artifacts/
+tmp/
+temp/
+
+# VS / MSBuild
+.vs/
+*.vsidx
+*.vscode/
+
+# Blazor / ASP.NET generierte Assets (kommen oft unter obj/, aber sicher ist sicher)
+**/wwwroot/_framework/
+**/wwwroot/_content/
+**/wwwroot/service-worker-assets.js
+**/wwwroot/service-worker.js
