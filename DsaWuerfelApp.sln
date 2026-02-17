@@ -4,7 +4,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DsaWuerfelApp", "DsaWuerfel
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DsaWuerfelApp.Client", "DsaWuerfelApp\DsaWuerfelApp.Client\DsaWuerfelApp.Client.csproj", "{981D4C5D-14A5-4E5F-AC89-2B0B02E016BD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DsaWuerfelApp.Shared", "DsaWuerfelApp.Shared\DsaWuerfelApp.Shared.csproj", "{70FF075E-FC19-43AE-9F4B-49E728C2D1E5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DsaWuerfelApp.Shared", "DsaWuerfelApp\DsaWuerfelApp.Shared\DsaWuerfelApp.Shared.csproj", "{70FF075E-FC19-43AE-9F4B-49E728C2D1E5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
