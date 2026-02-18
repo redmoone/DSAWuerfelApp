@@ -1,0 +1,230 @@
+﻿@page "/wuerfel"
+@using System.Net.Http.Json
+@using MudBlazor
+@using DsaWuerfelApp.Client.Components
+
+<MudPaper Class="pa-4 roll-page">
+    <MudGrid AlignItems="AlignItems.Center">
+        <!-- Active dice (oben) -->
+        <MudItem xs="12" md="8">
+            <MudStack Row="true" Spacing="3" Class="active-area">
+                @foreach (var d in ActiveDiceExpanded())
+                {
+                    <DiceIcon
+                        Src="@GetDiceSrc(d)"
+                        Value="@GetLastValueForSide(d).ToString()"
+                        Title="Click to remove"
+                        SizeClass="lg"
+                        ColorClass="@GetDiceClass(d)"
+                        OnClick="@(() => RemoveDie(d))" />
+                }
+
+                @if (_selected.Count == 0)
+                {
+                    <MudText Color="Color.Secondary">Klicke unten einen Würfel an, um ihn hinzuzufügen.</MudText>
+                }
+            </MudStack>
+        </MudItem>
+
+        <!-- Total -->
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-3 total-box" Elevation="0">
+                <MudText Typo="Typo.subtitle2">Total</MudText>
+                <MudText Typo="Typo.h3">@(_last?.Total ?? 0)</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <MudDivider Class="my-3" />
+
+    <!-- Dice picker (unten) + modifier stepper -->
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="2">
+
+        @foreach (var s in _availableSides)
+        {
+            <DiceIcon
+                Src="@GetDiceSrc(s)"
+                Value="@s.ToString()"
+                Title="Add W@s"
+                SizeClass="sm"
+                ColorClass="@GetDiceClass(s)"
+                OnClick="@(() => AddDie(s))" />
+        }
+
+        <MudDivider Vertical="true" Class="mx-2" />
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+            <MudIconButton Icon="@Icons.Material.Filled.Remove" Variant="Variant.Outlined" OnClick="@(() => _modifier--)" />
+            <MudNumericField T="int" Dense="true" Style="width:90px"
+                             @bind-Value="_modifier" Min="-999" Max="999" />
+            <MudIconButton Icon="@Icons.Material.Filled.Add" Variant="Variant.Outlined" OnClick="@(() => _modifier++)" />
+
+            <MudChip T="string" Class="ml-2" Color="Color.Dark" Variant="Variant.Filled">
+                @(_modifier >= 0 ? $"+{_modifier}" : _modifier.ToString())
+            </MudChip>
+        </MudStack>
+    </MudStack>
+
+    <MudStack AlignItems="AlignItems.Center" Class="mt-3">
+        <MudButton Disabled="@(_selected.Count==0)" Variant="Variant.Filled" Size="Size.Large" OnClick="Roll">
+            Roll
+        </MudButton>
+    </MudStack>
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <MudAlert Severity="Severity.Error" Class="mt-3">@_error</MudAlert>
+    }
+
+    @if (_last is not null)
+    {
+        <MudText Class="mt-3" Typo="Typo.subtitle2">
+            Würfe: @string.Join(", ", _last.Rolls.Select(r => $"W{r.Sides}:{r.Value}"))
+            | Summe: @_last.Sum
+            | Mod: @_last.Modifier
+        </MudText>
+    }
+</MudPaper>
+
+<style>
+.roll-page { background: #eef4ff; border-radius: 16px; }
+.active-area { min-height: 140px; }
+.total-box { text-align: right; border-radius: 16px; background: rgba(255,255,255,0.7); }
+
+/* Dice wrapper (replaces die-btn + inline svg) */
+.die-wrap{
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  user-select: none;
+  filter: drop-shadow(0 10px 14px rgba(0,0,0,0.22));
+}
+.die-wrap:active { transform: translateY(1px); }
+
+.die-wrap.lg { width:120px; height:120px; }
+.die-wrap.sm { width:36px; height:36px; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.18)); }
+
+.die-img { width:100%; height:100%; display:block; }
+
+/* number overlay */
+.die-text{
+  position: absolute;
+  inset: 0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight: 900;
+  color: white;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.28);
+  pointer-events: none;
+}
+.die-wrap.lg .die-text { font-size:44px; }
+.die-wrap.sm .die-text { font-size:14px; }
+
+/* optional: color tint (only works if SVG uses currentColor) */
+.dice-c4  { color: #20b36d; }
+.dice-c6  { color: #14b6c8; }
+.dice-c8  { color: #7b5cff; }
+.dice-c10 { color: #ff4aa2; }
+.dice-c12 { color: #ff6b2c; }
+.dice-c20 { color: #d31e1e; }
+.dice-c100 { color: #555; }
+</style>
+
+@code {
+    [Inject] public HttpClient Http { get; set; } = default!;
+
+    private readonly int[] _availableSides = { 4, 6, 8, 10, 12, 20, 100 };
+
+    // selected dice as "count per sides"
+    private readonly Dictionary<int, int> _selected = new();
+
+    private int _modifier = 0;
+    private string? _error;
+
+    private RollSetResult? _last;
+    private readonly Dictionary<int, int> _lastValueBySides = new(); // show last rolled value on big dice
+
+    private void AddDie(int sides)
+    {
+        _selected.TryGetValue(sides, out var c);
+        _selected[sides] = c + 1;
+    }
+
+    private void RemoveDie(int sides)
+    {
+        if (!_selected.TryGetValue(sides, out var c)) return;
+        if (c <= 1) _selected.Remove(sides);
+        else _selected[sides] = c - 1;
+    }
+
+    private IEnumerable<int> ActiveDiceExpanded()
+    {
+        foreach (var kv in _selected.OrderBy(k => k.Key))
+            for (int i = 0; i < kv.Value; i++)
+                yield return kv.Key;
+    }
+
+    private int GetLastValueForSide(int sides)
+        => _lastValueBySides.TryGetValue(sides, out var v) ? v : 0;
+
+    private string GetDiceClass(int sides) => sides switch
+    {
+        4 => "dice-c4",
+        6 => "dice-c6",
+        8 => "dice-c8",
+        10 => "dice-c10",
+        12 => "dice-c12",
+        20 => "dice-c20",
+        100 => "dice-c100",
+        _ => "dice-c20"
+    };
+
+    private string GetDiceSrc(int sides) => sides switch
+    {
+        4 => "dice/D4.svg",
+        6 => "dice/D6.svg",
+        8 => "dice/D8.svg",
+        10 => "dice/D10.svg",
+        12 => "dice/D12.svg",
+        20 => "dice/D20.svg",
+        100 => "dice/D100.svg", // if you don't have it, remove 100 from _availableSides
+        _ => "dice/D20.svg"
+    };
+
+    private async Task Roll()
+    {
+        _error = null;
+
+        try
+        {
+            var req = new RollSetRequest(
+                _selected.Select(k => new DiceGroup(k.Key, k.Value)).ToList(),
+                _modifier
+            );
+
+            var resp = await Http.PostAsJsonAsync("api/dice/rollset", req);
+            if (!resp.IsSuccessStatusCode)
+            {
+                var err = await resp.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+                _error = err?.GetValueOrDefault("error") ?? "Unbekannter Fehler";
+                return;
+            }
+
+            _last = await resp.Content.ReadFromJsonAsync<RollSetResult>();
+
+            _lastValueBySides.Clear();
+            foreach (var grp in _last!.Rolls.GroupBy(r => r.Sides))
+                _lastValueBySides[grp.Key] = grp.Last().Value;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    public record DiceGroup(int Sides, int Count);
+    public record SingleRoll(int Sides, int Value);
+    public record RollSetRequest(List<DiceGroup> Dice, int Modifier);
+    public record RollSetResult(DiceGroup[] Dice, int Modifier, SingleRoll[] Rolls, int Sum, int Total);
+}

@@ -1,0 +1,25 @@
+﻿@inject IJSRuntime JS
+
+<canvas @ref="_canvas" style="width:220px;height:220px;"></canvas>
+
+@code {
+    private ElementReference _canvas;
+    private IJSObjectReference? _module;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        _module = await JS.InvokeAsync<IJSObjectReference>(
+            "import", "./js/dice3d.js");
+
+        await _module.InvokeVoidAsync("init", _canvas);
+        await _module.InvokeVoidAsync("showDie", 20);
+    }
+
+    public async Task Roll(int sides)
+    {
+        if (_module != null)
+            await _module.InvokeVoidAsync("roll", sides);
+    }
+}

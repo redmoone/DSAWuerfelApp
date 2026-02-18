@@ -1,15 +1,24 @@
-using DsaWuerfelApp.Client.Pages;
+using DsaWuerfelApp.Services;
 using DsaWuerfelApp.Components;
+using _Imports = DsaWuerfelApp.Client._Imports;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Services.AddControllers();
+builder.Services.AddSingleton<DiceService>();
+
+builder.Services.AddCors(o => o.AddPolicy("dev", p =>
+    p.WithOrigins("https://127.0.0.1:55059", "http://127.0.0.1:55058",
+            "https://localhost:55059", "http://localhost:55058")
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+));
+
 builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseWebAssemblyDebugging();
@@ -17,18 +26,19 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseHttpsRedirection();
 
+app.UseCors("dev");        
 app.UseAntiforgery();
+
+app.MapControllers();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(DsaWuerfelApp.Client._Imports).Assembly);
+    .AddAdditionalAssemblies(typeof(_Imports).Assembly);
 
 app.Run();

@@ -1,0 +1,49 @@
+﻿.dice-svg { display:block; }
+
+.dice-base { fill: var(--dice); }
+.dice-hi   { fill: rgba(255,255,255,0.22); }
+.dice-mid  { fill: rgba(255,255,255,0.10); }
+.dice-lo   { fill: rgba(0,0,0,0.22); }
+
+.dice-text {
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    font-weight: 900;
+    font-size: 34px;
+    fill: white;
+    paint-order: stroke;
+    stroke: rgba(0,0,0,0.18);
+    stroke-width: 2px;
+}
+
+/* color themes per sides */
+.dice-c4  { --dice: #20b36d; }
+.dice-c6  { --dice: #14b6c8; }
+.dice-c8  { --dice: #7b5cff; }
+.dice-c10 { --dice: #ff4aa2; }
+.dice-c12 { --dice: #ff6b2c; }
+.dice-c20 { --dice: #d31e1e; }
+
+/* button wrapper */
+.die-btn {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    filter: drop-shadow(0 10px 14px rgba(0,0,0,0.22));
+}
+.die-btn:active { transform: translateY(1px); }
+.dice-svg { display:block; }
+
+/* set via Class to color the die */
+.dice-c20 { --dice:#d31e1e; --diceStroke: rgba(0,0,0,0); }
+
+/* number styling */
+.dice-text{
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    font-weight: 900;
+    font-size: 9px; /* because viewBox is 24x24 */
+    fill: white;
+    paint-order: stroke;
+    stroke: rgba(0,0,0,0.18);
+    stroke-width: 0.8px;
+}
