@@ -6,17 +6,26 @@
     <title>DsaWuerfelApp</title>
     <base href="/" />
 
-    <!-- MudBlazor CSS -->
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+
+    <link href="app.css" rel="stylesheet" />
+    <link href="DsaWuerfelApp.Client.styles.css" rel="stylesheet" />
 </head>
 
 <body>
 <div id="app">Loading...</div>
 
-<!-- Blazor -->
+<script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+</script>
+
 <script src="_framework/blazor.webassembly.js"></script>
 
-<!-- MudBlazor JS (MUST be after blazor.webassembly.js) -->
 <script src="_content/MudBlazor/MudBlazor.min.js"></script>
 </body>
 </html>

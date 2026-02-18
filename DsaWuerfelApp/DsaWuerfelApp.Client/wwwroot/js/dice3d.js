@@ -1,5 +1,6 @@
-﻿import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
-import { GLTFLoader } from "https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
+﻿// Wir nutzen jetzt die Namen aus der importmap ("three" und "three/addons/...")
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 let renderer, scene, camera;
 let diceMap = new Map();
@@ -21,13 +22,19 @@ export async function init(canvas) {
     scene.add(light);
 
     const loader = new GLTFLoader();
-    const gltf = await loader.loadAsync("./models/dice-set.glb");
+
+    // WICHTIG: Dateiname angepasst auf "dice_set.glb" (mit Unterstrich), 
+    // falls deine Datei so heißt wie im Upload.
+    const gltf = await loader.loadAsync("./models/dice_set.glb");
 
     scene.add(gltf.scene);
 
     gltf.scene.traverse(obj => {
         if (obj.isMesh && obj.name) {
             const name = obj.name.toLowerCase();
+            // Optional: Sicherstellen, dass Materialien korrekt angezeigt werden
+            if (obj.material) obj.material.side = THREE.DoubleSide;
+
             if (["d4","d6","d8","d10","d12","d20"].includes(name)) {
                 diceMap.set(name, obj);
                 obj.visible = false;
@@ -63,7 +70,6 @@ export function showDie(sides) {
 }
 
 export function roll(sides) {
-
     const key = "d" + sides;
     const die = diceMap.get(key);
     if (!die) return;
@@ -73,13 +79,23 @@ export function roll(sides) {
     const start = performance.now();
     const duration = 700;
 
+    // Start-Rotation (zufällig für Abwechslung)
+    const startRot = { x: die.rotation.x, y: die.rotation.y, z: die.rotation.z };
+
+    // Ziel-Rotation (simuliert "wildes Trudeln")
+    const targetRot = {
+        x: startRot.x + Math.PI * (4 + Math.random()),
+        y: startRot.y + Math.PI * (5 + Math.random()),
+        z: startRot.z + Math.PI * (3 + Math.random())
+    };
+
     function spin(t) {
         const p = Math.min(1, (t - start) / duration);
-        const ease = 1 - Math.pow(1 - p, 3);
+        const ease = 1 - Math.pow(1 - p, 3); // Cubic Ease Out
 
-        die.rotation.x = ease * Math.PI * 4;
-        die.rotation.y = ease * Math.PI * 5;
-        die.rotation.z = ease * Math.PI * 3;
+        die.rotation.x = startRot.x + (targetRot.x - startRot.x) * ease;
+        die.rotation.y = startRot.y + (targetRot.y - startRot.y) * ease;
+        die.rotation.z = startRot.z + (targetRot.z - startRot.z) * ease;
 
         if (p < 1) requestAnimationFrame(spin);
     }
