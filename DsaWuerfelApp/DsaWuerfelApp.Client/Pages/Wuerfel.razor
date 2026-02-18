@@ -5,7 +5,6 @@
 
 <MudPaper Class="pa-4 roll-page">
     <MudGrid AlignItems="AlignItems.Center">
-        <!-- Active dice (oben) -->
         <MudItem xs="12" md="8">
             <MudStack Row="true" Spacing="3" Class="active-area">
                 @foreach (var d in ActiveDiceExpanded())
@@ -26,8 +25,11 @@
             </MudStack>
         </MudItem>
 
-        <!-- Total -->
         <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4 d-flex justify-center" Elevation="0">
+                <Dice3D @ref="_dice3d" />
+            </MudPaper>
+
             <MudPaper Class="pa-3 total-box" Elevation="0">
                 <MudText Typo="Typo.subtitle2">Total</MudText>
                 <MudText Typo="Typo.h3">@(_last?.Total ?? 0)</MudText>
@@ -37,7 +39,6 @@
 
     <MudDivider Class="my-3" />
 
-    <!-- Dice picker (unten) + modifier stepper -->
     <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="2">
 
         @foreach (var s in _availableSides)
@@ -90,8 +91,6 @@
 .roll-page { background: #eef4ff; border-radius: 16px; }
 .active-area { min-height: 140px; }
 .total-box { text-align: right; border-radius: 16px; background: rgba(255,255,255,0.7); }
-
-/* Dice wrapper (replaces die-btn + inline svg) */
 .die-wrap{
   position: relative;
   display: inline-block;
@@ -100,13 +99,9 @@
   filter: drop-shadow(0 10px 14px rgba(0,0,0,0.22));
 }
 .die-wrap:active { transform: translateY(1px); }
-
 .die-wrap.lg { width:120px; height:120px; }
 .die-wrap.sm { width:36px; height:36px; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.18)); }
-
 .die-img { width:100%; height:100%; display:block; }
-
-/* number overlay */
 .die-text{
   position: absolute;
   inset: 0;
@@ -120,8 +115,6 @@
 }
 .die-wrap.lg .die-text { font-size:44px; }
 .die-wrap.sm .die-text { font-size:14px; }
-
-/* optional: color tint (only works if SVG uses currentColor) */
 .dice-c4  { color: #20b36d; }
 .dice-c6  { color: #14b6c8; }
 .dice-c8  { color: #7b5cff; }
@@ -135,15 +128,14 @@
     [Inject] public HttpClient Http { get; set; } = default!;
 
     private readonly int[] _availableSides = { 4, 6, 8, 10, 12, 20, 100 };
-
-    // selected dice as "count per sides"
     private readonly Dictionary<int, int> _selected = new();
-
     private int _modifier = 0;
     private string? _error;
 
     private RollSetResult? _last;
-    private readonly Dictionary<int, int> _lastValueBySides = new(); // show last rolled value on big dice
+    private readonly Dictionary<int, int> _lastValueBySides = new();
+    
+    private Dice3D _dice3d = default!;
 
     private void AddDie(int sides)
     {
@@ -188,14 +180,13 @@
         10 => "dice/D10.svg",
         12 => "dice/D12.svg",
         20 => "dice/D20.svg",
-        100 => "dice/D100.svg", // if you don't have it, remove 100 from _availableSides
+        100 => "dice/D100.svg",
         _ => "dice/D20.svg"
     };
 
     private async Task Roll()
     {
         _error = null;
-
         try
         {
             var req = new RollSetRequest(
@@ -216,6 +207,12 @@
             _lastValueBySides.Clear();
             foreach (var grp in _last!.Rolls.GroupBy(r => r.Sides))
                 _lastValueBySides[grp.Key] = grp.Last().Value;
+
+            if (_last != null && _last.Rolls.Length > 0)
+            {
+                var maxSides = _last.Rolls.Max(r => r.Sides);
+                await _dice3d.Roll(maxSides);
+            }
         }
         catch (Exception ex)
         {
