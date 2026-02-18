@@ -7,7 +7,7 @@ namespace DsaWuerfelApp.Hubs;
 public class GameHub : Hub
 {
     private readonly SessionService _sessionService;
-    private readonly DiceService _diceService; 
+    private readonly DiceService _diceService; // Dein existierender Service
 
     public GameHub(SessionService sessionService, DiceService diceService)
     {
@@ -19,6 +19,7 @@ public class GameHub : Hub
     {
         var session = _sessionService.CreateSession(userId, userName);
         
+        // Den Ersteller (Meister) in die SignalR-Gruppe packen
         await Groups.AddToGroupAsync(Context.ConnectionId, session.SessionId);
         
         return session.JoinCode;
@@ -39,6 +40,7 @@ public class GameHub : Hub
 
         await Groups.AddToGroupAsync(Context.ConnectionId, session.SessionId);
         
+        // Alle anderen informieren
         await Clients.Group(session.SessionId).SendAsync("PlayerJoined", userName);
         
         return true;
@@ -46,6 +48,7 @@ public class GameHub : Hub
 
     public async Task RollDice(RollRequest request)
     {
+        // Convert Shared.DiceGroup to Services.DiceGroup
         var serviceDiceGroups = request.Dice.Select(d => new DsaWuerfelApp.Services.DiceGroup(d.Sides, d.Count)).ToList();
 
         var resultData = _diceService.RollSet(serviceDiceGroups, request.Modifier);
@@ -59,6 +62,7 @@ public class GameHub : Hub
             Rolls = resultData.Rolls.Select(r => new DsaWuerfelApp.Shared.SingleRoll { Sides = r.Sides, Value = r.Value }).ToList()
         };
 
+        // 2. An ALLE in der Gruppe senden
         await Clients.Group(request.SessionId).SendAsync("ShowRollResult", result);
     }
 }

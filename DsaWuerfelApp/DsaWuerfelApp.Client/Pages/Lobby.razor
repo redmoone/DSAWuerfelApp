@@ -1,0 +1,75 @@
+﻿@page "/"
+@using DsaWuerfelApp.Client.Services
+@inject GameClient Game
+@inject NavigationManager Nav
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+    <MudPaper Class="pa-8" Elevation="4">
+        <MudText Typo="Typo.h3" Align="Align.Center" GutterBottom="true">🎲 DSA Würfel</MudText>
+        
+        <MudTextField @bind-Value="_userName" Label="Dein Name" Variant="Variant.Outlined" Class="mb-6" />
+
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+            
+            <MudTabPanel Text="Beitreten" Icon="@Icons.Material.Filled.Login">
+                <MudStack Spacing="3">
+                    <MudTextField @bind-Value="_joinCode" Label="Session Code (z.B. X7K9)" 
+                                  Variant="Variant.Filled" Style="text-transform:uppercase" />
+                    
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" 
+                               OnClick="Join" Disabled="@string.IsNullOrWhiteSpace(_joinCode)">
+                        Beitreten
+                    </MudButton>
+                </MudStack>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Neue Runde" Icon="@Icons.Material.Filled.AddCircle">
+                <MudText Class="mb-4">Erstelle eine neue Runde als Meister.</MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" FullWidth="true"
+                           OnClick="Create">
+                    Session Erstellen
+                </MudButton>
+            </MudTabPanel>
+            
+        </MudTabs>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-4">@_error</MudAlert>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private string _userName = "";
+    private string _joinCode = "";
+    private string _error = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Game.StartAsync();
+    }
+
+    private async Task Join()
+    {
+        if (string.IsNullOrWhiteSpace(_userName)) { _error = "Bitte Namen eingeben"; return; }
+        
+        var success = await Game.JoinSession(_joinCode.ToUpper(), _userName);
+        if (success)
+        {
+            Nav.NavigateTo("/wuerfel");
+        }
+        else
+        {
+            _error = "Session nicht gefunden oder Code falsch.";
+        }
+    }
+
+    private async Task Create()
+    {
+        if (string.IsNullOrWhiteSpace(_userName)) { _error = "Bitte Namen eingeben"; return; }
+
+        var code = await Game.CreateSession(_userName);
+        Nav.NavigateTo("/wuerfel"); 
+    }
+}

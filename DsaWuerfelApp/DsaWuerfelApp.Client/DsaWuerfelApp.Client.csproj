@@ -11,11 +11,13 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.3"/>
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.3" />
         <PackageReference Include="MudBlazor" Version="9.0.0-rc.1" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\..\DsaWuerfelApp.Shared\DsaWuerfelApp.Shared.csproj" />
+      <ProjectReference Include="..\DsaWuerfelApp.Shared\DsaWuerfelApp.Shared.csproj" />
     </ItemGroup>
 
 </Project>
