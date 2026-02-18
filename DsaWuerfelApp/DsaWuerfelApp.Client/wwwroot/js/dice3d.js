@@ -2,84 +2,43 @@
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 let renderer, scene, camera;
-let diceMap = new Map();
-let rootGroup; // Container für das Zentrieren
+let diceModels = new Map();
+let activeDice = [];
 
 export async function init(canvas) {
-
-    // 1. Renderer Setup (wieder transparent)
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     renderer.setPixelRatio(devicePixelRatio);
-    renderer.setClearColor(0x000000, 0); // Transparent
+    renderer.setClearColor(0x000000, 0);
 
     scene = new THREE.Scene();
 
-    // 2. Kamera und Licht
-    camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
-    camera.position.set(0, 0, 10); // Kamera schaut von vorne drauf
-    scene.add(camera);
+    // SETUP: Top-Down Orthographic-style view
+    // Position camera high up on Y axis, looking straight down at 0,0,0
+    camera = new THREE.PerspectiveCamera(30, 1, 1, 100);
+    camera.position.set(0, 20, 0);
+    camera.lookAt(0, 0, 0);
 
-    // Licht an die Kamera hängen (Headlight), damit der Würfel immer beleuchtet ist
-    const light = new THREE.PointLight(0xffffff, 1.5);
-    camera.add(light);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+    // Light coming from top-left to cast nice shadows on the "floor"
+    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(-5, 10, 5);
+    scene.add(dirLight);
 
     const loader = new GLTFLoader();
+    const gltf = await loader.loadAsync("./models/dice_set.glb");
 
-    try {
-        const gltf = await loader.loadAsync("./models/dice_set.glb");
-
-        // Gruppe erstellen, um alles gemeinsam zu verschieben
-        rootGroup = new THREE.Group();
-        rootGroup.add(gltf.scene);
-        scene.add(rootGroup);
-
-        // Würfel identifizieren
-        gltf.scene.traverse(obj => {
-            if (obj.isMesh && obj.name) {
-                const name = obj.name.toLowerCase();
-                if (["d4","d6","d8","d10","d12","d20"].includes(name)) {
-                    diceMap.set(name, obj);
-                    obj.visible = false;
-                }
-            }
-        });
-
-        // 3. WICHTIG: Auto-Fix dauerhaft anwenden (Zentrieren & Skalieren)
-        const refDie = diceMap.get("d20") || diceMap.values().next().value;
-        if (refDie) {
-            // Kurz sichtbar machen für Messung
-            const wasVisible = refDie.visible;
-            refDie.visible = true;
-
-            const box = new THREE.Box3().setFromObject(refDie);
-            const center = new THREE.Vector3();
-            box.getCenter(center);
-            const size = new THREE.Vector3();
-            box.getSize(size);
-
-            refDie.visible = wasVisible;
-
-            // Modell so verschieben, dass der Würfel im Nullpunkt (0,0,0) liegt
-            gltf.scene.position.x = -center.x;
-            gltf.scene.position.y = -center.y;
-            gltf.scene.position.z = -center.z;
-
-            // Skalieren, damit er gut ins Bild passt (Zielgröße ca. 2.2 Einheiten)
-            const maxDim = Math.max(size.x, size.y, size.z);
-            if (maxDim > 0) {
-                const scaleFactor = 2.2 / maxDim;
-                rootGroup.scale.set(scaleFactor, scaleFactor, scaleFactor);
+    gltf.scene.traverse(obj => {
+        if (obj.isMesh && obj.name) {
+            const name = obj.name.toLowerCase();
+            if (["d4","d6","d8","d10","d12","d20"].includes(name)) {
+                obj.geometry.center();
+                diceModels.set(name, obj);
             }
         }
-
-    } catch (err) {
-        console.error("Fehler beim Laden der Würfel:", err);
-    }
+    });
 
     resize(canvas);
     window.addEventListener("resize", () => resize(canvas));
-
     animate();
 }
 
@@ -96,45 +55,83 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-export function showDie(sides) {
-    diceMap.forEach(d => d.visible = false);
-    const key = "d" + sides;
-    if (diceMap.has(key)) {
-        diceMap.get(key).visible = true;
-    }
+function getPosition(index, total) {
+    // INCREASED SPACING:
+    // "spread" determines how far apart dice are.
+    const spread = 3.5;
+    const rowSize = 5;
+
+    // Calculate Grid Positions (X, Z) looking from top
+    // Centering logic: (index % cols) - (totalWidth / 2)
+
+    const col = index % rowSize;
+    const row = Math.floor(index / rowSize);
+
+    // Center the row based on how many items are ACTUALLY in this row
+    const itemsInThisRow = Math.min(total - (row * rowSize), rowSize);
+    const xOffset = (itemsInThisRow - 1) * spread / 2;
+
+    const x = (col * spread) - xOffset;
+    const z = (row * spread) - ((Math.ceil(total/rowSize)-1) * spread / 2);
+
+    return { x, y: 0, z };
 }
 
-export function roll(sides) {
-    const key = "d" + sides;
-    const die = diceMap.get(key);
-    if (!die) return;
+export function updateDice(sidesArray) {
+    activeDice.forEach(mesh => scene.remove(mesh));
+    activeDice = [];
 
-    showDie(sides);
+    sidesArray.forEach((sides, index) => {
+        const key = "d" + sides;
+        const template = diceModels.get(key);
+        if (!template) return;
 
+        const mesh = template.clone();
+        const pos = getPosition(index, sidesArray.length);
+
+        mesh.position.set(pos.x, pos.y, pos.z);
+
+        // Random rotation on Y axis (spinning on the table), 
+        // but keep X/Z relatively flat so we can read numbers from top view
+        mesh.rotation.set(
+            Math.random() * 0.5,       // Slight tilt X
+            Math.random() * Math.PI * 2, // Full rotation Y
+            Math.random() * 0.5        // Slight tilt Z
+        );
+
+        scene.add(mesh);
+        activeDice.push(mesh);
+    });
+}
+
+export function rollDice() {
     const start = performance.now();
-    const duration = 800; // Animation dauert 0.8 Sekunden
+    const duration = 600;
 
-    // Aktuelle Rotation merken
-    const startRot = { x: die.rotation.x, y: die.rotation.y, z: die.rotation.z };
+    const animations = activeDice.map(mesh => {
+        return {
+            mesh: mesh,
+            start: { x: mesh.rotation.x, y: mesh.rotation.y, z: mesh.rotation.z },
+            target: {
+                // Spin primarily on Y (like a top) + some tumbling
+                x: mesh.rotation.x + Math.PI * 2,
+                y: mesh.rotation.y + Math.PI * 4 + (Math.random() * Math.PI),
+                z: mesh.rotation.z + Math.PI * 2
+            }
+        };
+    });
 
-    // Ziel: Einfach wild drehen (Zufall)
-    // HINWEIS: Das landet auf einer zufälligen Seite, nicht zwingend auf dem echten Ergebnis!
-    const targetRot = {
-        x: startRot.x + Math.PI * (4 + Math.random() * 2),
-        y: startRot.y + Math.PI * (4 + Math.random() * 2),
-        z: startRot.z + Math.PI * (4 + Math.random() * 2)
-    };
-
-    function spin(t) {
+    function loop(t) {
         const p = Math.min(1, (t - start) / duration);
-        const ease = 1 - Math.pow(1 - p, 3); // Cubic Ease Out (schnell starten, langsam enden)
+        const ease = 1 - Math.pow(1 - p, 3);
 
-        die.rotation.x = startRot.x + (targetRot.x - startRot.x) * ease;
-        die.rotation.y = startRot.y + (targetRot.y - startRot.y) * ease;
-        die.rotation.z = startRot.z + (targetRot.z - startRot.z) * ease;
+        animations.forEach(a => {
+            a.mesh.rotation.x = a.start.x + (a.target.x - a.start.x) * ease;
+            a.mesh.rotation.y = a.start.y + (a.target.y - a.start.y) * ease;
+            a.mesh.rotation.z = a.start.z + (a.target.z - a.start.z) * ease;
+        });
 
-        if (p < 1) requestAnimationFrame(spin);
+        if (p < 1) requestAnimationFrame(loop);
     }
-
-    requestAnimationFrame(spin);
+    requestAnimationFrame(loop);
 }
