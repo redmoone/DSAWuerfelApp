@@ -1,7 +1,7 @@
 ﻿@page "/wuerfel"
 @using DsaWuerfelApp.Client.Components
 
-<MudPaper Class="google-dice-container pa-4" Elevation="3">
+<div class="google-dice-container pa-4">
     <div class="stage-wrapper">
         <div class="dice-canvas">
             <Dice3D @ref="_dice3d" />
@@ -30,23 +30,15 @@
     </div>
 
     <div class="d-flex justify-center align-center gap-4 mt-6">
-        <MudToggleIconButton @bind-Toggled="_showModifier"
-                             Icon="@Icons.Material.Filled.Exposure"
-                             ToggledIcon="@Icons.Material.Filled.Check"
-                             Color="Color.Default" ToggledColor="Color.Primary" />
+        
+        <div class="d-flex align-center pa-1" style="border: 1px solid #e0e0e0; border-radius: 24px;">
+            <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" OnClick="@(() => _modifier--)" />
+            
+            <input type="number" @bind="_modifier" 
+                   style="width: 50px; text-align: center; border: none; outline: none; font-weight: 500; font-size: 1rem;" />
 
-        @if (_showModifier)
-        {
-            <MudNumericField @bind-Value="_modifier" Variant="Variant.Outlined"
-                             Margin="Margin.Dense" Class="modifier-input"
-                             Label="Mod" Min="-99" Max="99" />
-        }
-        else if (_modifier != 0)
-        {
-             <MudChip T="string" Size="Size.Small" OnClose="() => _modifier = 0">
-                 @(_modifier > 0 ? $"+{_modifier}" : _modifier.ToString())
-             </MudChip>
-        }
+            <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" OnClick="@(() => _modifier++)" />
+        </div>
 
         <MudButton Variant="Variant.Filled" Color="Color.Primary"
                    Size="Size.Large" OnClick="Roll"
@@ -61,4 +53,4 @@
     {
         <MudAlert Severity="Severity.Error" Class="mt-3">@_error</MudAlert>
     }
-</MudPaper>
+</div>
