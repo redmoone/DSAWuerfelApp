@@ -6,17 +6,24 @@
 @code {
     private ElementReference _canvas;
     private IJSObjectReference? _module;
+    private DotNetObjectReference<Dice3D>? _dotNetRef;
+
+    [Parameter]
+    public EventCallback<int> OnDiceRemoved { get; set; }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             _module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/dice3d.js");
+            
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await _module.InvokeVoidAsync("setDotNetRef", _dotNetRef);
+            
             await _module.InvokeVoidAsync("init", _canvas);
         }
     }
 
-    // Updates the visual dice on the table (add/remove)
     public async Task UpdateDice(IEnumerable<int> sides)
     {
         if (_module is not null)
@@ -25,17 +32,27 @@
         }
     }
 
-    // Triggers the spin animation
-    public async Task Roll()
+    public async Task Roll(int[] results)
     {
         if (_module is not null)
         {
-            await _module.InvokeVoidAsync("rollDice");
+            await _module.InvokeVoidAsync("rollDice", results);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnDiceRemovedCallback(int index)
+    {
+        if (OnDiceRemoved.HasDelegate)
+        {
+            await OnDiceRemoved.InvokeAsync(index);
         }
     }
 
     async ValueTask IAsyncDisposable.DisposeAsync()
     {
+        _dotNetRef?.Dispose();
+        
         if (_module is not null)
         {
             await _module.DisposeAsync();

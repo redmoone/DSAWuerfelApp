@@ -42,6 +42,30 @@ public partial class Wuerfel
         await _dice3d.UpdateDice(flatList);
     }
 
+    private void HandleDiceRemoved(int index)
+    {
+        var flatList = _selected
+            .OrderBy(x => x.Key)
+            .SelectMany(kv => Enumerable.Repeat(kv.Key, kv.Value))
+            .ToList();
+
+        if (index >= 0 && index < flatList.Count)
+        {
+            int sides = flatList[index];
+            if (_selected.TryGetValue(sides, out int count) && count > 0)
+            {
+                _selected[sides]--;
+                if (_selected[sides] == 0)
+                {
+                    _selected.Remove(sides);
+                }
+                
+                _ = Update3DView();
+                StateHasChanged();
+            }
+        }
+    }
+
     private static string GetShapeClass(int sides) => "shape-d" + sides;
 
     private async Task Roll()
@@ -56,8 +80,6 @@ public partial class Wuerfel
                 _modifier
             );
 
-            var animTask = _dice3d.Roll();
-
             var resp = await Http.PostAsJsonAsync("api/dice/rollset", req);
 
             if (!resp.IsSuccessStatusCode)
@@ -67,7 +89,12 @@ public partial class Wuerfel
             }
 
             _last = await resp.Content.ReadFromJsonAsync<RollSetResult>();
-            await animTask;
+
+            if (_last != null)
+            {
+                var resultsArray = _last.Rolls.Select(r => r.Value).ToArray();
+                await _dice3d.Roll(resultsArray);
+            }
         }
         catch (Exception ex)
         {

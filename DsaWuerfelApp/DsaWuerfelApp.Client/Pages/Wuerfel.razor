@@ -4,14 +4,44 @@
 <div class="google-dice-container pa-4">
     <div class="stage-wrapper">
         <div class="dice-canvas">
-            <Dice3D @ref="_dice3d" />
+            <Dice3D @ref="_dice3d" OnDiceRemoved="HandleDiceRemoved" />
         </div>
 
-        @if (_selected.Count > 0)
+        @if (_last != null)
+        {
+            <div class="total-overlay d-flex align-center justify-center flex-wrap gap-2 pa-4">
+                @for (int i = 0; i < _last.Rolls.Length; i++)
+                {
+                    var roll = _last.Rolls[i];
+                    <div class="mini-die-container">
+                        <div class="die-shape mini-die @GetShapeClass(roll.Sides)">
+                            <span class="die-text">@roll.Value</span>
+                        </div>
+                    </div>
+
+                    @if (i < _last.Rolls.Length - 1 || _last.Modifier != 0)
+                    {
+                        <span class="math-symbol">+</span>
+                    }
+                }
+
+                @if (_last.Modifier != 0)
+                {
+                    <span class="modifier-value">@_last.Modifier</span>
+                }
+
+                @if (_last.Rolls.Length > 1 || _last.Modifier != 0)
+                {
+                    <span class="math-symbol ms-2 me-2">=</span>
+                }
+
+                <span class="total-value" style="font-size: 2.5rem; line-height: 1;">@_last.Total</span>
+            </div>
+        }
+        else if (_selected.Count > 0)
         {
             <div class="total-overlay">
-                <span class="total-label">Total</span>
-                <span class="total-value">@(_last?.Total ?? 0)</span>
+                <span class="total-label">Ready to roll...</span>
             </div>
         }
     </div>
@@ -34,15 +64,12 @@
         <div class="d-flex align-center pa-1" style="border: 1px solid #e0e0e0; border-radius: 24px;">
             <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" OnClick="@(() => _modifier--)" />
             
-            <input type="number" @bind="_modifier" 
-                   style="width: 50px; text-align: center; border: none; outline: none; font-weight: 500; font-size: 1rem;" />
+            <input type="number" @bind="_modifier" style="width: 50px; text-align: center; border: none; outline: none; font-weight: 500; font-size: 1rem;" />
 
             <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" OnClick="@(() => _modifier++)" />
         </div>
 
-        <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                   Size="Size.Large" OnClick="Roll"
-                   Disabled="@(_selected.Count == 0)" Class="px-8 rounded-pill">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="Roll" Disabled="@(_selected.Count == 0)" Class="px-8 rounded-pill">
             Roll
         </MudButton>
 
