@@ -11,21 +11,19 @@ var provider = new FileExtensionContentTypeProvider
     }
 };
 
-
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<SessionService>();
 builder.Services.AddSingleton<DiceService>();
 
-// CORS hinzufügen
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
         policy =>
         {
             policy.AllowAnyOrigin()
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
+                .AllowAnyHeader()
+                .AllowAnyMethod();
         });
 });
 
@@ -40,12 +38,12 @@ else
     app.UseHsts();
 }
 
-// CORS must be placed before UseHttpsRedirection to avoid preflight redirect errors
 app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
 
 app.UseBlazorFrameworkFiles();
+app.UseStaticFiles();
 app.UseStaticFiles(new StaticFileOptions
 {
     ContentTypeProvider = provider

@@ -17,7 +17,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\DsaWuerfelApp.Shared\DsaWuerfelApp.Shared.csproj" />
       <ProjectReference Include="..\DsaWuerfelApp.Shared\DsaWuerfelApp.Shared.csproj" />
     </ItemGroup>
 

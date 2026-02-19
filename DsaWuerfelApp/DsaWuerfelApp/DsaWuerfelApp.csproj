@@ -8,7 +8,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\DsaWuerfelApp.Shared\DsaWuerfelApp.Shared.csproj" />
         <ProjectReference Include="..\DsaWuerfelApp.Client\DsaWuerfelApp.Client.csproj"/>
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.3"/>
         <ProjectReference Include="..\DsaWuerfelApp.Shared\DsaWuerfelApp.Shared.csproj" />
@@ -16,12 +15,6 @@
 
     <ItemGroup>
       <Folder Include="wwwroot\" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <_ContentIncludedByDefault Remove="Components\App.razor" />
-      <_ContentIncludedByDefault Remove="Components\Pages\Error.razor" />
-      <_ContentIncludedByDefault Remove="Components\_Imports.razor" />
     </ItemGroup>
 
 </Project>
