@@ -47,3 +47,55 @@
     stroke: rgba(0,0,0,0.18);
     stroke-width: 0.8px;
 }
+.die-shape {
+    width: 48px;
+    height: 48px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.die-text {
+    position: relative;
+    z-index: 2;
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.shape-d4 {
+    background-color: #177a4a;
+    -webkit-clip-path: polygon(50% 8%, 6% 92%, 94% 92%);
+    clip-path: polygon(50% 8%, 6% 92%, 94% 92%);
+}
+
+.shape-d4 .die-text {
+    transform: translateY(20%);
+}
+
+.shape-d6 {
+    background-color: #0c7e8a;
+    width: 40px;
+    height: 40px;
+}
+
+.shape-d8 {
+    background-color: #3a2c77;
+    clip-path: polygon(50% 4%, 83% 30%, 90% 70%, 50% 96%, 10% 70%, 15% 30%);
+}
+
+.shape-d10 {
+    background-color: #8c2e5c;
+    clip-path: polygon(50% 4%, 96% 40%, 96% 60%, 50% 96%, 4% 60%, 4% 40%);
+}
+
+.shape-d12 {
+    background-color: #6e1010;
+    clip-path: polygon(50% 2%, 82% 16%, 98% 39%, 98% 61%, 82% 84%, 50% 98%, 18% 84%, 2% 61%, 2% 39%, 18% 16%);
+}
+
+.shape-d20 {
+    background-color: #9a3913;
+    clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%);
+}

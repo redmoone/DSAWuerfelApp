@@ -1,0 +1,51 @@
+﻿@using DsaWuerfelApp.Client.Pages
+
+@if (Result != null)
+{
+    <div class="total-overlay d-flex align-center justify-center flex-wrap gap-2 pa-4">
+        @for (int i = 0; i < Result.Rolls.Length; i++)
+        {
+            var roll = Result.Rolls[i];
+            
+            <div class="mini-die-container">
+                <div class="die-shape mini-die @GetShapeClass(roll.Sides)">
+                    <span class="die-text">@roll.Value</span>
+                </div>
+            </div>
+
+            @if (i < Result.Rolls.Length - 1 || Result.Modifier != 0)
+            {
+                <span class="math-symbol">+</span>
+            }
+        }
+
+        @if (Result.Modifier != 0)
+        {
+            <span class="modifier-value">@Result.Modifier</span>
+        }
+
+        @if (Result.Rolls.Length > 1 || Result.Modifier != 0)
+        {
+            <span class="math-symbol ms-2 me-2">=</span>
+        }
+
+        <span class="total-value" style="font-size: 2.5rem; line-height: 1;">@Result.Total</span>
+    </div>
+}
+else if (HasSelection)
+{
+    <div class="total-overlay">
+        <span class="total-label">Ready to roll...</span>
+    </div>
+}
+
+@code 
+{
+    [Parameter] 
+    public Wuerfel.RollSetResult? Result { get; set; }
+    
+    [Parameter] 
+    public bool HasSelection { get; set; }
+
+    private static string GetShapeClass(int sides) => "shape-d" + sides;
+}

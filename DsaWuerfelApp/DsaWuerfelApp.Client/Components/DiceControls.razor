@@ -1,0 +1,68 @@
+﻿<MudDivider Class="my-4" />
+
+<div class="d-flex justify-center flex-wrap gap-6 align-center">
+    @foreach (var s in AvailableSides)
+    {
+        <div class="die-selector" @onclick="() => OnAddDie.InvokeAsync(s)">
+            <div class="die-shape @GetShapeClass(s)">
+                <span class="die-text">@s</span>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="d-flex justify-center align-center gap-4 mt-6">
+    <div class="d-flex align-center pa-1" style="border: 1px solid #e0e0e0; border-radius: 24px;">
+        <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" OnClick="DecreaseModifier" />
+        
+        <input type="number" value="@Modifier" @onchange="OnModifierChanged" style="width: 50px; text-align: center; border: none; outline: none; font-weight: 500; font-size: 1rem;" />
+        
+        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" OnClick="IncreaseModifier" />
+    </div>
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="() => OnRoll.InvokeAsync()" Disabled="@(!HasSelection)" Class="px-8 rounded-pill">
+        Roll
+    </MudButton>
+
+    <MudIconButton Icon="@Icons.Material.Filled.Refresh" OnClick="() => OnReset.InvokeAsync()" />
+</div>
+
+@code 
+{
+    [Parameter] 
+    public int[] AvailableSides { get; set; } = Array.Empty<int>();
+    
+    [Parameter] 
+    public int Modifier { get; set; }
+    
+    [Parameter] 
+    public bool HasSelection { get; set; }
+    
+    [Parameter] 
+    public EventCallback<int> OnAddDie { get; set; }
+    
+    [Parameter] 
+    public EventCallback<int> ModifierChanged { get; set; }
+    
+    [Parameter] 
+    public EventCallback OnRoll { get; set; }
+    
+    [Parameter] 
+    public EventCallback OnReset { get; set; }
+
+    private Task DecreaseModifier() => ModifierChanged.InvokeAsync(Modifier - 1);
+    
+    private Task IncreaseModifier() => ModifierChanged.InvokeAsync(Modifier + 1);
+    
+    private Task OnModifierChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int val))
+        {
+            return ModifierChanged.InvokeAsync(val);
+        }
+        
+        return Task.CompletedTask;
+    }
+
+    private static string GetShapeClass(int sides) => "shape-d" + sides;
+}

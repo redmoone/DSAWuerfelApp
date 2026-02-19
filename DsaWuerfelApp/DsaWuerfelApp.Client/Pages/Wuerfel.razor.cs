@@ -7,7 +7,8 @@ namespace DsaWuerfelApp.Client.Pages;
 
 public partial class Wuerfel
 {
-    [Inject] public HttpClient Http { get; set; } = null!;
+    [Inject] 
+    public HttpClient Http { get; set; } = null!;
 
     private readonly int[] _availableSides = [4, 6, 8, 10, 12, 20];
     private readonly Dictionary<int, int> _selected = new();
@@ -16,8 +17,6 @@ public partial class Wuerfel
     private string? _error;
     private RollSetResult? _last;
     private Dice3D _dice3d = null!;
-    
-    // Referenz zur neuen Sub-Komponente
     private RollHistory _rollHistory = null!;
 
     private async Task AddDie(int sides)
@@ -33,6 +32,11 @@ public partial class Wuerfel
         _last = null;
         _modifier = 0;
         await Update3DView();
+    }
+
+    private void UpdateModifier(int newModifier)
+    {
+        _modifier = newModifier;
     }
 
     private async Task Update3DView()
@@ -58,6 +62,7 @@ public partial class Wuerfel
             if (_selected.TryGetValue(sides, out int count) && count > 0)
             {
                 _selected[sides]--;
+                
                 if (_selected[sides] == 0)
                 {
                     _selected.Remove(sides);
@@ -69,11 +74,13 @@ public partial class Wuerfel
         }
     }
 
-    private static string GetShapeClass(int sides) => "shape-d" + sides;
-
     private async Task Roll()
     {
-        if (_selected.Values.Sum() == 0) return;
+        if (_selected.Values.Sum() == 0)
+        {
+            return;
+        }
+        
         _error = null;
 
         try
@@ -108,8 +115,8 @@ public partial class Wuerfel
                     var resultsArray = _last.Rolls.Select(r => r.Value).ToArray();
                     await _dice3d.Roll(resultsArray);
                     
-                    // Offline-Wurf manuell an die neue Komponente weitergeben
-                    _rollHistory.AddLocalRoll(new RollResult { 
+                    _rollHistory.AddLocalRoll(new RollResult 
+                    { 
                         PlayerName = "Du (Offline)", 
                         TotalSum = _last.Total, 
                         Modifier = _last.Modifier,

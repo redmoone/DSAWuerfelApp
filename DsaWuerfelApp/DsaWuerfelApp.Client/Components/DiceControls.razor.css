@@ -1,0 +1,25 @@
+﻿.die-selector {
+    cursor: pointer;
+    transition: transform 0.1s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.die-selector:active {
+    transform: scale(0.9);
+}
+
+.die-selector:hover {
+    filter: brightness(1.1);
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=number] {
+    -moz-appearance: textfield;
+}

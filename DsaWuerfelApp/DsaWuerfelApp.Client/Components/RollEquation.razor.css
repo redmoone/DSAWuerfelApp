@@ -1,0 +1,53 @@
+﻿.total-overlay {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: white;
+    padding: 10px 20px;
+    border-radius: 30px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.total-label {
+    font-size: 0.9rem;
+    color: #5f6368;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.total-value {
+    font-size: 2rem;
+    color: #202124;
+    font-weight: 500;
+    line-height: 1;
+}
+
+.mini-die-container {
+    width: 50px;
+    height: 50px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mini-die {
+    transform: scale(0.85);
+    transform-origin: center center;
+    position: absolute;
+}
+
+.math-symbol {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #888;
+}
+
+.modifier-value {
+    font-size: 2rem;
+    font-weight: 700;
+}
