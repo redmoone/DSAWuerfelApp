@@ -1,0 +1,108 @@
+﻿.google-dice-container {
+    background-color: white; border-radius: 8px;
+    max-width: 800px; margin: 20px auto;
+}
+.stage-wrapper {
+    position: relative;
+    background-color: #eef4ff;
+    height: 350px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.dice-canvas { width: 100%; height: 100%; }
+
+.total-overlay {
+    position: absolute; bottom: 20px; right: 20px;
+    background: white; padding: 10px 20px;
+    border-radius: 30px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: flex; align-items: center; gap: 12px;
+}
+.total-label { font-size: 0.9rem; color: #5f6368; font-weight: 600; text-transform:uppercase; letter-spacing:0.5px; }
+.total-value { font-size: 2rem; color: #202124; font-weight: 500; line-height: 1; }
+
+.die-selector {
+    cursor: pointer; transition: transform 0.1s;
+    display: flex; flex-direction: column; align-items: center;
+}
+.die-selector:active { transform: scale(0.9); }
+.die-selector:hover { filter: brightness(1.1); }
+
+.die-shape {
+    width: 48px; height: 48px;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.die-text {
+    position: relative; z-index: 2;
+    color: white; font-weight: 700; font-size: 16px;
+}
+
+.shape-d4 {
+    background-color: #20b36d;
+    -webkit-clip-path: polygon(50% 8%, 6% 92%, 94% 92%);
+    clip-path: polygon(50% 8%, 6% 92%, 94% 92%);
+}
+.shape-d4 .die-text{
+    transform: translateY(20%);
+}
+.shape-d6 {
+    background-color: #14b6c8;
+    width: 40px;
+    height: 40px;
+}
+
+.shape-d8 {
+    background-color: #7b5cff;
+    clip-path: polygon(
+            50% 4%,
+            83% 30%,
+            90% 70%,
+            50% 96%,
+            10% 70%,
+            15% 30%
+    );
+}
+
+.shape-d10{
+    background-color:#ff4aa2;
+    clip-path: polygon(
+            50% 4%,
+            96% 40%,
+            96% 60%,
+            50% 96%,
+            4% 60%,
+            4% 40%
+    );
+}
+
+.shape-d12 {
+    background-color: #d31e1e;
+    clip-path: polygon(
+            50% 2%,
+            82% 16%,
+            98% 39%,
+            98% 61%,
+            82% 84%,
+            50% 98%,
+            18% 84%,
+            2% 61%,
+            2% 39%,
+            18% 16%
+    );
+}
+
+.shape-d20 {
+    background-color: #ff6b2c;
+    clip-path: polygon(
+            25% 6%,
+            75% 6%,
+            100% 50%,
+            75% 94%,
+            25% 94%,
+            0% 50%
+    );
+}
+
+.modifier-input { width: 80px; }

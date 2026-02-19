@@ -1,9 +1,7 @@
 ﻿@page "/wuerfel"
-@using System.Net.Http.Json
 @using DsaWuerfelApp.Client.Components
 
 <MudPaper Class="google-dice-container pa-4" Elevation="3">
-    
     <div class="stage-wrapper">
         <div class="dice-canvas">
             <Dice3D @ref="_dice3d" />
@@ -33,14 +31,14 @@
 
     <div class="d-flex justify-center align-center gap-4 mt-6">
         <MudToggleIconButton @bind-Toggled="_showModifier"
-                             Icon="@Icons.Material.Filled.Exposure" 
+                             Icon="@Icons.Material.Filled.Exposure"
                              ToggledIcon="@Icons.Material.Filled.Check"
                              Color="Color.Default" ToggledColor="Color.Primary" />
 
         @if (_showModifier)
         {
-            <MudNumericField @bind-Value="_modifier" Variant="Variant.Outlined" 
-                             Margin="Margin.Dense" Class="modifier-input" 
+            <MudNumericField @bind-Value="_modifier" Variant="Variant.Outlined"
+                             Margin="Margin.Dense" Class="modifier-input"
                              Label="Mod" Min="-99" Max="99" />
         }
         else if (_modifier != 0)
@@ -50,12 +48,12 @@
              </MudChip>
         }
 
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" 
-                   Size="Size.Large" OnClick="Roll" 
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   Size="Size.Large" OnClick="Roll"
                    Disabled="@(_selected.Count == 0)" Class="px-8 rounded-pill">
             Roll
         </MudButton>
-        
+
         <MudIconButton Icon="@Icons.Material.Filled.Refresh" OnClick="Reset" />
     </div>
 
@@ -63,199 +61,4 @@
     {
         <MudAlert Severity="Severity.Error" Class="mt-3">@_error</MudAlert>
     }
-
 </MudPaper>
-
-<style>
-    .google-dice-container {
-        background-color: white; border-radius: 8px;
-        max-width: 800px; margin: 20px auto;
-    }
-    .stage-wrapper {
-        position: relative;
-        background-color: #eef4ff;
-        height: 350px; /* Taller for top view */
-        border-radius: 8px;
-        overflow: hidden;
-    }
-    .dice-canvas { width: 100%; height: 100%; }
-    
-    .total-overlay {
-        position: absolute; bottom: 20px; right: 20px;
-        background: white; padding: 10px 20px;
-        border-radius: 30px; /* Pill shape */
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        display: flex; align-items: center; gap: 12px;
-    }
-    .total-label { font-size: 0.9rem; color: #5f6368; font-weight: 600; text-transform:uppercase; letter-spacing:0.5px; }
-    .total-value { font-size: 2rem; color: #202124; font-weight: 500; line-height: 1; }
-
-    /* --- CSS SHAPE ICONS --- */
-    .die-selector {
-        cursor: pointer; transition: transform 0.1s;
-        display: flex; flex-direction: column; align-items: center;
-    }
-    .die-selector:active { transform: scale(0.9); }
-    .die-selector:hover { filter: brightness(1.1); }
-
-    .die-shape {
-        width: 48px; height: 48px;
-        position: relative;
-        display: flex; align-items: center; justify-content: center;
-    }
-
-    .die-text {
-        position: relative; z-index: 2;
-        color: white; font-weight: 700; font-size: 16px;
-    }
-
-    .shape-d4 {
-        background-color: #20b36d;
-        -webkit-clip-path: polygon(50% 8%, 6% 92%, 94% 92%);
-        clip-path: polygon(50% 8%, 6% 92%, 94% 92%);
-    }
-    .shape-d4 .die-text{
-        transform: translateY(20%);
-    }
-    .shape-d6 {
-        background-color: #14b6c8;
-        width: 40px;
-        height: 40px;
-    }
-
-    .shape-d8 {
-        background-color: #7b5cff;
-        clip-path: polygon(
-            50% 4%,  
-            83% 30%, 
-            90% 70%, 
-            50% 96%,
-            10% 70%, 
-            15% 30% 
-        );
-    }
-
-    .shape-d10{
-        background-color:#ff4aa2;
-        clip-path: polygon(
-            50% 4%,   /* top point */
-            96% 40%,  /* upper-right */
-            96% 60%,  /* lower-right */
-            50% 96%,  /* bottom point */
-            4% 60%,  /* lower-left */
-            4% 40%   /* upper-left */
-        );
-    }
-
-    .shape-d12 {
-        background-color: #d31e1e;
-        clip-path: polygon(
-            /* X Y */
-            50% 2%,   /* 1: top */
-            82% 16%,  /* 2: top-right */
-            
-            
-            98% 39%,  /* 3: upper-right */
-            98% 61%,  /* 4: right-lower */
-            
-            
-            82% 84%,  /* 5: bottom-right */
-            50% 98%,  /* 6: bottom */
-            18% 84%,  /* 7: bottom-left */
-            
-            2% 61%,   /* 8: left-lower */
-            2% 39%,   /* 9: upper-left */
-            
-            
-            18% 16%   /* 10: top-left */
-        );
-    }
-
-    .shape-d20 {
-        background-color: #ff6b2c;
-        clip-path: polygon(
-            25% 6%, 
-            75% 6%,
-            100% 50%,
-            75% 94%, 
-            25% 94%,
-            0% 50%
-        );
-    }
-
-    .modifier-input { width: 80px; }
-</style>
-
-@code {
-    [Inject] public HttpClient Http { get; set; } = default!;
-    
-    private readonly int[] _availableSides = { 4, 6, 8, 10, 12, 20 };
-    private readonly Dictionary<int, int> _selected = new();
-    
-    private int _modifier = 0;
-    private bool _showModifier = false;
-    private string? _error;
-    private RollSetResult? _last;
-    private Dice3D _dice3d = default!;
-
-    private async Task AddDie(int sides)
-    {
-        if (!_selected.ContainsKey(sides)) _selected[sides] = 0;
-        _selected[sides]++;
-        await Update3DView();
-    }
-
-    private async Task Reset()
-    {
-        _selected.Clear();
-        _last = null;
-        _modifier = 0;
-        await Update3DView();
-    }
-
-    private async Task Update3DView()
-    {
-        var flatList = new List<int>();
-        foreach (var kv in _selected.OrderBy(x => x.Key))
-            for(int i=0; i < kv.Value; i++) flatList.Add(kv.Key);
-            
-        await _dice3d.UpdateDice(flatList);
-    }
-
-    private string GetShapeClass(int sides) => "shape-d" + sides;
-
-    private async Task Roll()
-    {
-        _error = null;
-        try
-        {
-            var req = new RollSetRequest(
-                _selected.Select(k => new DiceGroup(k.Key, k.Value)).ToList(),
-                _modifier
-            );
-
-            // Spin immediately
-            var animTask = _dice3d.Roll(); 
-            
-            var resp = await Http.PostAsJsonAsync("api/dice/rollset", req);
-            
-            if (!resp.IsSuccessStatusCode)
-            {
-                _error = "Fehler beim Würfeln";
-                return;
-            }
-
-            _last = await resp.Content.ReadFromJsonAsync<RollSetResult>();
-            await animTask; 
-        }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
-        }
-    }
-
-    public record DiceGroup(int Sides, int Count);
-    public record SingleRoll(int Sides, int Value);
-    public record RollSetRequest(List<DiceGroup> Dice, int Modifier);
-    public record RollSetResult(DiceGroup[] Dice, int Modifier, SingleRoll[] Rolls, int Sum, int Total);
-}
