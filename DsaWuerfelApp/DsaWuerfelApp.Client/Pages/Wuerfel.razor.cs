@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using System.Net.Http.Json;
 using DsaWuerfelApp.Client.Components;
+using DsaWuerfelApp.Shared;
 
 namespace DsaWuerfelApp.Client.Pages;
 
@@ -12,10 +13,12 @@ public partial class Wuerfel
     private readonly Dictionary<int, int> _selected = new();
 
     private int _modifier = 0;
-    private bool _showModifier = false;
     private string? _error;
     private RollSetResult? _last;
     private Dice3D _dice3d = null!;
+    
+    // Referenz zur neuen Sub-Komponente
+    private RollHistory _rollHistory = null!;
 
     private async Task AddDie(int sides)
     {
@@ -75,25 +78,45 @@ public partial class Wuerfel
 
         try
         {
-            var req = new RollSetRequest(
-                _selected.Where(k => k.Value > 0).Select(k => new DiceGroup(k.Key, k.Value)).ToList(),
-                _modifier
-            );
-
-            var resp = await Http.PostAsJsonAsync("api/dice/rollset", req);
-
-            if (!resp.IsSuccessStatusCode)
+            if (GameClient.IsConnected && !string.IsNullOrEmpty(GameClient.CurrentSessionId))
             {
-                _error = "Fehler beim Würfeln";
-                return;
+                var diceGroups = _selected.Where(k => k.Value > 0)
+                                          .Select(k => new DsaWuerfelApp.Shared.DiceGroup(k.Key, k.Value))
+                                          .ToList();
+                
+                await GameClient.RollDice(diceGroups, _modifier, GameClient.CurrentSessionId);
             }
-
-            _last = await resp.Content.ReadFromJsonAsync<RollSetResult>();
-
-            if (_last != null)
+            else
             {
-                var resultsArray = _last.Rolls.Select(r => r.Value).ToArray();
-                await _dice3d.Roll(resultsArray);
+                var req = new RollSetRequest(
+                    _selected.Where(k => k.Value > 0).Select(k => new DiceGroup(k.Key, k.Value)).ToList(),
+                    _modifier
+                );
+
+                var resp = await Http.PostAsJsonAsync("api/dice/rollset", req);
+
+                if (!resp.IsSuccessStatusCode)
+                {
+                    _error = "Fehler beim Würfeln";
+                    return;
+                }
+
+                _last = await resp.Content.ReadFromJsonAsync<RollSetResult>();
+
+                if (_last != null)
+                {
+                    var resultsArray = _last.Rolls.Select(r => r.Value).ToArray();
+                    await _dice3d.Roll(resultsArray);
+                    
+                    // Offline-Wurf manuell an die neue Komponente weitergeben
+                    _rollHistory.AddLocalRoll(new RollResult { 
+                        PlayerName = "Du (Offline)", 
+                        TotalSum = _last.Total, 
+                        Modifier = _last.Modifier,
+                        Timestamp = DateTime.UtcNow,
+                        Rolls = _last.Rolls.Select(r => new DsaWuerfelApp.Shared.SingleRoll { Sides = r.Sides, Value = r.Value }).ToList()
+                    });
+                }
             }
         }
         catch (Exception ex)

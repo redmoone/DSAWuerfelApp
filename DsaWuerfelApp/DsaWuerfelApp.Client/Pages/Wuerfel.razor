@@ -1,83 +1,69 @@
 ﻿@page "/wuerfel"
 @using DsaWuerfelApp.Client.Components
+@using DsaWuerfelApp.Client.Services
+@using DsaWuerfelApp.Shared
+@inject GameClient GameClient
 
-<div class="google-dice-container pa-4">
-    <div class="stage-wrapper">
-        <div class="dice-canvas">
-            <Dice3D @ref="_dice3d" OnDiceRemoved="HandleDiceRemoved" />
-        </div>
-
-        @if (_last != null)
-        {
-            <div class="total-overlay d-flex align-center justify-center flex-wrap gap-2 pa-4">
-                @for (int i = 0; i < _last.Rolls.Length; i++)
-                {
-                    var roll = _last.Rolls[i];
-                    <div class="mini-die-container">
-                        <div class="die-shape mini-die @GetShapeClass(roll.Sides)">
-                            <span class="die-text">@roll.Value</span>
-                        </div>
-                    </div>
-
-                    @if (i < _last.Rolls.Length - 1 || _last.Modifier != 0)
-                    {
-                        <span class="math-symbol">+</span>
-                    }
-                }
-
-                @if (_last.Modifier != 0)
-                {
-                    <span class="modifier-value">@_last.Modifier</span>
-                }
-
-                @if (_last.Rolls.Length > 1 || _last.Modifier != 0)
-                {
-                    <span class="math-symbol ms-2 me-2">=</span>
-                }
-
-                <span class="total-value" style="font-size: 2.5rem; line-height: 1;">@_last.Total</span>
-            </div>
-        }
-        else if (_selected.Count > 0)
-        {
-            <div class="total-overlay">
-                <span class="total-label">Ready to roll...</span>
-            </div>
-        }
-    </div>
-
-    <MudDivider Class="my-4" />
-
-    <div class="d-flex justify-center flex-wrap gap-6 align-center">
-        @foreach (var s in _availableSides)
-        {
-            <div class="die-selector" @onclick="() => AddDie(s)">
-                <div class="die-shape @GetShapeClass(s)">
-                    <span class="die-text">@s</span>
+<div class="google-dice-container pa-4" style="max-width: 1200px;">
+    <MudGrid>
+        <MudItem xs="12" md="8">
+            <div class="stage-wrapper">
+                <div class="dice-canvas">
+                    <Dice3D @ref="_dice3d" OnDiceRemoved="HandleDiceRemoved" />
                 </div>
+
+                @if (_last != null)
+                {
+                    <div class="total-overlay d-flex align-center justify-center flex-wrap gap-2 pa-4">
+                        @for (int i = 0; i < _last.Rolls.Length; i++)
+                        {
+                            var roll = _last.Rolls[i];
+                            <div class="mini-die-container">
+                                <div class="die-shape mini-die @GetShapeClass(roll.Sides)">
+                                    <span class="die-text">@roll.Value</span>
+                                </div>
+                            </div>
+                            @if (i < _last.Rolls.Length - 1 || _last.Modifier != 0) { <span class="math-symbol">+</span> }
+                        }
+                        @if (_last.Modifier != 0) { <span class="modifier-value">@_last.Modifier</span> }
+                        @if (_last.Rolls.Length > 1 || _last.Modifier != 0) { <span class="math-symbol ms-2 me-2">=</span> }
+                        
+                        <span class="total-value" style="font-size: 2.5rem; line-height: 1;">@_last.Total</span>
+                    </div>
+                }
+                else if (_selected.Count > 0)
+                {
+                    <div class="total-overlay"><span class="total-label">Ready to roll...</span></div>
+                }
             </div>
-        }
-    </div>
 
-    <div class="d-flex justify-center align-center gap-4 mt-6">
-        
-        <div class="d-flex align-center pa-1" style="border: 1px solid #e0e0e0; border-radius: 24px;">
-            <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" OnClick="@(() => _modifier--)" />
-            
-            <input type="number" @bind="_modifier" style="width: 50px; text-align: center; border: none; outline: none; font-weight: 500; font-size: 1rem;" />
+            <MudDivider Class="my-4" />
 
-            <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" OnClick="@(() => _modifier++)" />
-        </div>
+            <div class="d-flex justify-center flex-wrap gap-6 align-center">
+                @foreach (var s in _availableSides)
+                {
+                    <div class="die-selector" @onclick="() => AddDie(s)">
+                        <div class="die-shape @GetShapeClass(s)"><span class="die-text">@s</span></div>
+                    </div>
+                }
+            </div>
 
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="Roll" Disabled="@(_selected.Count == 0)" Class="px-8 rounded-pill">
-            Roll
-        </MudButton>
+            <div class="d-flex justify-center align-center gap-4 mt-6">
+                <div class="d-flex align-center pa-1" style="border: 1px solid #e0e0e0; border-radius: 24px;">
+                    <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" OnClick="@(() => _modifier--)" />
+                    <input type="number" @bind="_modifier" style="width: 50px; text-align: center; border: none; outline: none; font-weight: 500; font-size: 1rem;" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" OnClick="@(() => _modifier++)" />
+                </div>
 
-        <MudIconButton Icon="@Icons.Material.Filled.Refresh" OnClick="Reset" />
-    </div>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="Roll" Disabled="@(_selected.Count == 0)" Class="px-8 rounded-pill">Roll</MudButton>
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh" OnClick="Reset" />
+            </div>
 
-    @if (!string.IsNullOrWhiteSpace(_error))
-    {
-        <MudAlert Severity="Severity.Error" Class="mt-3">@_error</MudAlert>
-    }
+            @if (!string.IsNullOrWhiteSpace(_error)) { <MudAlert Severity="Severity.Error" Class="mt-3">@_error</MudAlert> }
+        </MudItem>
+
+        <MudItem xs="12" md="4">
+            <RollHistory @ref="_rollHistory" />
+        </MudItem>
+    </MudGrid>
 </div>

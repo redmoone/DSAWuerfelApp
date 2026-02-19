@@ -1,0 +1,55 @@
+﻿@using DsaWuerfelApp.Shared
+@using DsaWuerfelApp.Client.Services
+@inject GameClient GameClient
+
+<MudPaper Class="pa-4 d-flex flex-column" Style="height: 100%; min-height: 400px; background-color: #f8f9fa;">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <MudText Typo="Typo.h6">Wurf-Verlauf</MudText>
+        @if (GameClient.IsConnected)
+        {
+            <MudChip T="string" Color="Color.Success" Size="Size.Small">Verbunden</MudChip>
+        }
+        else
+        {
+            <MudChip T="string" Color="Color.Warning" Size="Size.Small">Offline</MudChip>
+        }
+    </div>
+
+    <div class="flex-grow-1 overflow-y-auto pr-2" style="max-height: 500px;">
+        @if (_history.Count == 0)
+        {
+            <MudText Typo="Typo.body2" Class="text-muted text-center mt-4">Noch keine Würfe in dieser Session.</MudText>
+        }
+        
+        @foreach (var log in _history)
+        {
+            <MudCard Class="mb-3" Elevation="1">
+                <MudCardContent Class="pa-3">
+                    <div class="d-flex justify-space-between mb-2">
+                        <MudText Typo="Typo.subtitle2" Color="Color.Primary"><strong>@log.PlayerName</strong></MudText>
+                        <MudText Typo="Typo.caption" Class="text-muted">@log.Timestamp.ToLocalTime().ToString("HH:mm")</MudText>
+                    </div>
+                    <div class="d-flex align-center flex-wrap gap-1">
+                        @foreach (var r in log.Rolls)
+                        {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Class="mr-1 mb-1">
+                                @r.Value <span class="text-muted ml-1" style="font-size: 0.7em;">(d@(r.Sides))</span>
+                            </MudChip>
+                        }
+                        @if (log.Modifier != 0)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Dark" Variant="Variant.Text">
+                                @(log.Modifier > 0 ? "+" : "")@log.Modifier
+                            </MudChip>
+                        }
+                    </div>
+                    <MudDivider Class="my-2"/>
+                    <div class="d-flex justify-space-between align-center">
+                        <MudText Typo="Typo.body2">Summe</MudText>
+                        <MudText Typo="Typo.h6"><strong>@log.TotalSum</strong></MudText>
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        }
+    </div>
+</MudPaper>
