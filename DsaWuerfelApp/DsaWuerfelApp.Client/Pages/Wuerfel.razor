@@ -4,34 +4,32 @@
 @using DsaWuerfelApp.Shared
 @inject GameClient GameClient
 
-<div class="google-dice-container pa-4" style="max-width: 1200px;">
-    <MudGrid>
-        <MudItem xs="12" md="8">
-            <div class="stage-wrapper">
-                <div class="dice-canvas">
-                    <Dice3D @ref="_dice3d" OnDiceRemoved="HandleDiceRemoved" />
-                </div>
+<div class="google-dice-container pa-4" style="max-width: 800px; margin: 0 auto;">
+    <div class="mb-4">
+        <RollHistory @ref="_rollHistory" />
+    </div>
 
-                <RollEquation Result="_last" HasSelection="_selected.Count > 0" />
-            </div>
+    <div class="stage-wrapper">
+        <div class="dice-canvas">
+            <Dice3D @ref="_dice3d" OnDiceRemoved="HandleDiceRemoved" />
+        </div>
+        
+        <RollEquation Result="_last" HasSelection="_selected.Count > 0" />
+    </div>
 
-            <DiceControls 
-                AvailableSides="_availableSides" 
-                Modifier="_modifier" 
-                HasSelection="_selected.Count > 0"
-                OnAddDie="AddDie" 
-                ModifierChanged="UpdateModifier" 
-                OnRoll="Roll" 
-                OnReset="Reset" />
+    <DiceControls 
+        AvailableSides="_availableSides" 
+        Modifier="_modifier" 
+        HasSelection="_selected.Count > 0"
+        IsHiddenRoll="_isHiddenRoll"
+        IsHiddenRollChanged="UpdateHiddenRollStatus"
+        OnAddDie="AddDie" 
+        ModifierChanged="UpdateModifier" 
+        OnRoll="Roll" 
+        OnReset="Reset" />
 
-            @if (!string.IsNullOrWhiteSpace(_error))
-            {
-                <MudAlert Severity="Severity.Error" Class="mt-3">@_error</MudAlert>
-            }
-        </MudItem>
-
-        <MudItem xs="12" md="4">
-            <RollHistory @ref="_rollHistory" />
-        </MudItem>
-    </MudGrid>
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <MudAlert Severity="Severity.Error" Class="mt-3">@_error</MudAlert>
+    }
 </div>

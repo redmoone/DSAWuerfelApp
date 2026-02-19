@@ -1,17 +1,19 @@
 ﻿.die-selector {
     cursor: pointer;
-    transition: transform 0.1s;
+    transition: transform 0.1s, filter 0.1s;
     display: flex;
     flex-direction: column;
     align-items: center;
+    filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.4));
 }
 
 .die-selector:active {
     transform: scale(0.9);
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
 }
 
 .die-selector:hover {
-    filter: brightness(1.1);
+    filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.5)) brightness(1.15);
 }
 
 input::-webkit-outer-spin-button,

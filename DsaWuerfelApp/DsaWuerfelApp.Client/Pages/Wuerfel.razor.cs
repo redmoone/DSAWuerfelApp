@@ -14,6 +14,7 @@ public partial class Wuerfel
     private readonly Dictionary<int, int> _selected = new();
 
     private int _modifier = 0;
+    private bool _isHiddenRoll = false; // Neu: Status für verdeckte Würfe
     private string? _error;
     private RollSetResult? _last;
     private Dice3D _dice3d = null!;
@@ -37,6 +38,11 @@ public partial class Wuerfel
     private void UpdateModifier(int newModifier)
     {
         _modifier = newModifier;
+    }
+    
+    private void UpdateHiddenRollStatus(bool isHidden)
+    {
+        _isHiddenRoll = isHidden;
     }
 
     private async Task Update3DView()
@@ -85,7 +91,8 @@ public partial class Wuerfel
 
         try
         {
-            if (GameClient.IsConnected && !string.IsNullOrEmpty(GameClient.CurrentSessionId))
+            // Wenn verbunden UND NICHT verdeckt -> an alle senden
+            if (GameClient.IsConnected && !string.IsNullOrEmpty(GameClient.CurrentSessionId) && !_isHiddenRoll)
             {
                 var diceGroups = _selected.Where(k => k.Value > 0)
                                           .Select(k => new DsaWuerfelApp.Shared.DiceGroup(k.Key, k.Value))
@@ -95,6 +102,7 @@ public partial class Wuerfel
             }
             else
             {
+                // Lokaler Wurf (Offline ODER Verdeckt)
                 var req = new RollSetRequest(
                     _selected.Where(k => k.Value > 0).Select(k => new DiceGroup(k.Key, k.Value)).ToList(),
                     _modifier
@@ -115,9 +123,12 @@ public partial class Wuerfel
                     var resultsArray = _last.Rolls.Select(r => r.Value).ToArray();
                     await _dice3d.Roll(resultsArray);
                     
+                    // Markierung im lokalen Log, damit der Spieler weiß, dass es verdeckt war
+                    string logName = _isHiddenRoll ? "Du (Verdeckter Wurf)" : "Du (Offline)";
+                    
                     _rollHistory.AddLocalRoll(new RollResult 
                     { 
-                        PlayerName = "Du (Offline)", 
+                        PlayerName = logName, 
                         TotalSum = _last.Total, 
                         Modifier = _last.Modifier,
                         Timestamp = DateTime.UtcNow,

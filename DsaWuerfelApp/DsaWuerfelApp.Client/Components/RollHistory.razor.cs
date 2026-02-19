@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
-using DsaWuerfelApp.Shared;
+﻿using DsaWuerfelApp.Shared;
 
 namespace DsaWuerfelApp.Client.Components;
 

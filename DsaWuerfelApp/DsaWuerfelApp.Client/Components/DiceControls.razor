@@ -20,40 +20,40 @@
         <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" OnClick="IncreaseModifier" />
     </div>
 
+    <MudIconButton Icon="@(IsHiddenRoll ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)" 
+                   Variant="Variant.Filled" 
+                   Color="@(IsHiddenRoll ? Color.Warning : Color.Dark)" 
+                   Size="Size.Medium" 
+                   OnClick="ToggleHiddenRoll" 
+                   Title="@(IsHiddenRoll ? "Verdeckter Wurf (nur für dich sichtbar)" : "Öffentlicher Wurf (für alle sichtbar)")" 
+                   Class="rounded-circle" />
+
     <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="() => OnRoll.InvokeAsync()" Disabled="@(!HasSelection)" Class="px-8 rounded-pill">
         Roll
     </MudButton>
 
-    <MudIconButton Icon="@Icons.Material.Filled.Refresh" OnClick="() => OnReset.InvokeAsync()" />
+    <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" Color="Color.Error" Size="Size.Medium" OnClick="() => OnReset.InvokeAsync()" Title="Tisch leeren" Class="rounded-circle" />
 </div>
 
 @code 
 {
-    [Parameter] 
-    public int[] AvailableSides { get; set; } = Array.Empty<int>();
+    [Parameter] public int[] AvailableSides { get; set; } = Array.Empty<int>();
+    [Parameter] public int Modifier { get; set; }
+    [Parameter] public bool HasSelection { get; set; }
+    [Parameter] public bool IsHiddenRoll { get; set; }
     
-    [Parameter] 
-    public int Modifier { get; set; }
-    
-    [Parameter] 
-    public bool HasSelection { get; set; }
-    
-    [Parameter] 
-    public EventCallback<int> OnAddDie { get; set; }
-    
-    [Parameter] 
-    public EventCallback<int> ModifierChanged { get; set; }
-    
-    [Parameter] 
-    public EventCallback OnRoll { get; set; }
-    
-    [Parameter] 
-    public EventCallback OnReset { get; set; }
+    [Parameter] public EventCallback<int> OnAddDie { get; set; }
+    [Parameter] public EventCallback<int> ModifierChanged { get; set; }
+    [Parameter] public EventCallback<bool> IsHiddenRollChanged { get; set; }
+    [Parameter] public EventCallback OnRoll { get; set; }
+    [Parameter] public EventCallback OnReset { get; set; }
 
     private Task DecreaseModifier() => ModifierChanged.InvokeAsync(Modifier - 1);
     
     private Task IncreaseModifier() => ModifierChanged.InvokeAsync(Modifier + 1);
     
+    private Task ToggleHiddenRoll() => IsHiddenRollChanged.InvokeAsync(!IsHiddenRoll);
+
     private Task OnModifierChanged(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out int val))

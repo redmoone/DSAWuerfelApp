@@ -1,53 +1,27 @@
-﻿.total-overlay {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    background: white;
-    padding: 10px 20px;
-    border-radius: 30px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+﻿.die-selector {
+    cursor: pointer;
+    transition: transform 0.1s, filter 0.1s;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 12px;
+    filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.25));
 }
 
-.total-label {
-    font-size: 0.9rem;
-    color: #5f6368;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+.die-selector:active {
+    transform: scale(0.9);
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
 }
 
-.total-value {
-    font-size: 2rem;
-    color: #202124;
-    font-weight: 500;
-    line-height: 1;
+.die-selector:hover {
+    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.3)) brightness(1.1);
 }
 
-.mini-die-container {
-    width: 50px;
-    height: 50px;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
-.mini-die {
-    transform: scale(0.85);
-    transform-origin: center center;
-    position: absolute;
-}
-
-.math-symbol {
-    font-size: 2rem;
-    font-weight: 800;
-    color: #888;
-}
-
-.modifier-value {
-    font-size: 2rem;
-    font-weight: 700;
+input[type=number] {
+    -moz-appearance: textfield;
 }
