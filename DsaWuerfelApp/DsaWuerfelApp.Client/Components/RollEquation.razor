@@ -6,7 +6,6 @@
         @for (int i = 0; i < Result.Rolls.Length; i++)
         {
             var roll = Result.Rolls[i];
-            
             <div class="mini-die-container">
                 <div class="die-shape mini-die @GetShapeClass(roll.Sides)">
                     <span class="die-text">@roll.Value</span>
@@ -30,12 +29,6 @@
         }
 
         <span class="total-value" style="font-size: 2.5rem; line-height: 1;">@Result.Total</span>
-    </div>
-}
-else if (HasSelection)
-{
-    <div class="total-overlay d-flex align-center justify-center pa-3">
-        <span class="total-label" style="color: #666; font-weight: bold; text-transform: uppercase;">Bereit zum Würfeln...</span>
     </div>
 }
 

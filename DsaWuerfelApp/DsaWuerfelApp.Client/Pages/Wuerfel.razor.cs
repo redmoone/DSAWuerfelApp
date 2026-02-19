@@ -5,7 +5,7 @@ using DsaWuerfelApp.Shared;
 
 namespace DsaWuerfelApp.Client.Pages;
 
-public partial class Wuerfel
+public partial class Wuerfel : IDisposable
 {
     [Inject] 
     public HttpClient Http { get; set; } = null!;
@@ -13,17 +13,40 @@ public partial class Wuerfel
     private readonly int[] _availableSides = [4, 6, 8, 10, 12, 20];
     private readonly Dictionary<int, int> _selected = new();
 
-    private int _modifier = 0;
-    private bool _isHiddenRoll = false; // Neu: Status für verdeckte Würfe
+    private int _modifier;
     private string? _error;
     private RollSetResult? _last;
     private Dice3D _dice3d = null!;
     private RollHistory _rollHistory = null!;
+    private bool _isHiddenRoll;
+
+    protected override void OnInitialized() => GameClient.OnRollResultReceived += HandleServerRoll;
+
+    public void Dispose() => GameClient.OnRollResultReceived -= HandleServerRoll;
+
+    private async void HandleServerRoll(RollResult result)
+    {
+        _last = new RollSetResult(
+            result.Rolls.GroupBy(r => r.Sides).Select(g => new DiceGroup(g.Key, g.Count())).ToArray(),
+            result.Modifier,
+            result.Rolls.Select(r => new SingleRoll(r.Sides, r.Value)).ToArray(),
+            result.TotalSum - result.Modifier,
+            result.TotalSum
+        );
+
+        await InvokeAsync(async () => 
+        {
+            if (_dice3d != null)
+            {
+                await _dice3d.Roll(_last.Rolls.Select(r => r.Value).ToArray());
+            }
+            StateHasChanged();
+        });
+    }
 
     private async Task AddDie(int sides)
     {
-        _selected.TryAdd(sides, 0);
-        _selected[sides]++;
+        _selected[sides] = _selected.GetValueOrDefault(sides) + 1;
         await Update3DView();
     }
 
@@ -35,111 +58,94 @@ public partial class Wuerfel
         await Update3DView();
     }
 
-    private void UpdateModifier(int newModifier)
-    {
-        _modifier = newModifier;
-    }
-    
-    private void UpdateHiddenRollStatus(bool isHidden)
-    {
-        _isHiddenRoll = isHidden;
-    }
+    private void UpdateModifier(int newModifier) => _modifier = newModifier;
 
-    private async Task Update3DView()
-    {
-        var flatList = _selected
-            .OrderBy(x => x.Key)
-            .SelectMany(kv => Enumerable.Repeat(kv.Key, kv.Value))
-            .ToList();
+    private void UpdateHiddenRollStatus(bool isHidden) => _isHiddenRoll = isHidden;
 
-        await _dice3d.UpdateDice(flatList);
-    }
+    private List<int> GetFlatDiceList() => 
+        _selected.OrderBy(x => x.Key)
+                 .SelectMany(kv => Enumerable.Repeat(kv.Key, kv.Value))
+                 .ToList();
+
+    private async Task Update3DView() => await _dice3d.UpdateDice(GetFlatDiceList());
 
     private void HandleDiceRemoved(int index)
     {
-        var flatList = _selected
-            .OrderBy(x => x.Key)
-            .SelectMany(kv => Enumerable.Repeat(kv.Key, kv.Value))
-            .ToList();
+        var flatList = GetFlatDiceList();
 
-        if (index >= 0 && index < flatList.Count)
+        if (index < 0 || index >= flatList.Count) return;
+
+        int sides = flatList[index];
+        
+        if (_selected.GetValueOrDefault(sides) <= 1)
         {
-            int sides = flatList[index];
-            if (_selected.TryGetValue(sides, out int count) && count > 0)
-            {
-                _selected[sides]--;
-                
-                if (_selected[sides] == 0)
-                {
-                    _selected.Remove(sides);
-                }
-                
-                _ = Update3DView();
-                StateHasChanged();
-            }
+            _selected.Remove(sides);
         }
+        else
+        {
+            _selected[sides]--;
+        }
+        
+        _ = Update3DView();
+        StateHasChanged();
     }
 
     private async Task Roll()
     {
-        if (_selected.Values.Sum() == 0)
-        {
-            return;
-        }
+        if (_selected.Values.Sum() == 0) return;
         
         _error = null;
 
         try
         {
-            // Wenn verbunden UND NICHT verdeckt -> an alle senden
-            if (GameClient.IsConnected && !string.IsNullOrEmpty(GameClient.CurrentSessionId) && !_isHiddenRoll)
+            var diceGroups = _selected.Select(k => new DiceGroup(k.Key, k.Value)).ToList();
+
+            if (GameClient.IsConnected && !string.IsNullOrEmpty(GameClient.CurrentSessionId))
             {
-                var diceGroups = _selected.Where(k => k.Value > 0)
-                                          .Select(k => new DsaWuerfelApp.Shared.DiceGroup(k.Key, k.Value))
-                                          .ToList();
-                
-                await GameClient.RollDice(diceGroups, _modifier, GameClient.CurrentSessionId);
+                await RollOnlineAsync(diceGroups);
             }
             else
             {
-                // Lokaler Wurf (Offline ODER Verdeckt)
-                var req = new RollSetRequest(
-                    _selected.Where(k => k.Value > 0).Select(k => new DiceGroup(k.Key, k.Value)).ToList(),
-                    _modifier
-                );
-
-                var resp = await Http.PostAsJsonAsync("api/dice/rollset", req);
-
-                if (!resp.IsSuccessStatusCode)
-                {
-                    _error = "Fehler beim Würfeln";
-                    return;
-                }
-
-                _last = await resp.Content.ReadFromJsonAsync<RollSetResult>();
-
-                if (_last != null)
-                {
-                    var resultsArray = _last.Rolls.Select(r => r.Value).ToArray();
-                    await _dice3d.Roll(resultsArray);
-                    
-                    // Markierung im lokalen Log, damit der Spieler weiß, dass es verdeckt war
-                    string logName = _isHiddenRoll ? "Du (Verdeckter Wurf)" : "Du (Offline)";
-                    
-                    _rollHistory.AddLocalRoll(new RollResult 
-                    { 
-                        PlayerName = logName, 
-                        TotalSum = _last.Total, 
-                        Modifier = _last.Modifier,
-                        Timestamp = DateTime.UtcNow,
-                        Rolls = _last.Rolls.Select(r => new DsaWuerfelApp.Shared.SingleRoll { Sides = r.Sides, Value = r.Value }).ToList()
-                    });
-                }
+                await RollOfflineAsync(diceGroups);
             }
         }
         catch (Exception ex)
         {
             _error = ex.Message;
+        }
+    }
+
+    private async Task RollOnlineAsync(List<DiceGroup> diceGroups)
+    {
+        var sharedGroups = diceGroups.Select(g => new DsaWuerfelApp.Shared.DiceGroup(g.Sides, g.Count)).ToList();
+        await GameClient.RollDice(sharedGroups, _modifier, GameClient.CurrentSessionId!);
+    }
+
+    private async Task RollOfflineAsync(List<DiceGroup> diceGroups)
+    {
+        var req = new RollSetRequest(diceGroups, _modifier);
+        var resp = await Http.PostAsJsonAsync("api/dice/rollset", req);
+
+        if (!resp.IsSuccessStatusCode)
+        {
+            _error = "Fehler beim Würfeln";
+            return;
+        }
+
+        _last = await resp.Content.ReadFromJsonAsync<RollSetResult>();
+
+        if (_last != null)
+        {
+            await _dice3d.Roll(_last.Rolls.Select(r => r.Value).ToArray());
+            
+            _rollHistory.AddLocalRoll(new RollResult 
+            { 
+                PlayerName = "Du (Offline)", 
+                TotalSum = _last.Total, 
+                Modifier = _last.Modifier,
+                Timestamp = DateTime.UtcNow,
+                Rolls = _last.Rolls.Select(r => new DsaWuerfelApp.Shared.SingleRoll { Sides = r.Sides, Value = r.Value }).ToList()
+            });
         }
     }
 
