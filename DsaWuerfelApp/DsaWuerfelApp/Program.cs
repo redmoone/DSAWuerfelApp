@@ -40,6 +40,9 @@ else
     app.UseHsts();
 }
 
+// CORS must be placed before UseHttpsRedirection to avoid preflight redirect errors
+app.UseCors("AllowAll");
+
 app.UseHttpsRedirection();
 
 app.UseBlazorFrameworkFiles();
@@ -47,13 +50,8 @@ app.UseStaticFiles(new StaticFileOptions
 {
     ContentTypeProvider = provider
 });
-app.UseBlazorFrameworkFiles();
-app.UseStaticFiles();
 
 app.UseRouting();
-
-// CORS aktivieren
-app.UseCors("AllowAll");
 
 app.MapControllers();
 app.MapHub<GameHub>("/gamehub"); 

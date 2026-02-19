@@ -109,13 +109,79 @@
         color: white; font-weight: 700; font-size: 16px;
     }
 
-    /* Colors */
-    .shape-d4  { background-color: #20b36d; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); padding-top: 10px; } /* Triangle */
-    .shape-d6  { background-color: #14b6c8; border-radius: 6px; } /* Square */
-    .shape-d8  { background-color: #7b5cff; clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); } /* Diamond */
-    .shape-d10 { background-color: #ff4aa2; clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%); } /* Pentagon-ish */
-    .shape-d12 { background-color: #ff6b2c; clip-path: polygon(50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%); } /* Hexagon */
-    .shape-d20 { background-color: #d31e1e; clip-path: polygon(50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%); } /* Hexagon */
+    .shape-d4 {
+        background-color: #20b36d;
+        -webkit-clip-path: polygon(50% 8%, 6% 92%, 94% 92%);
+        clip-path: polygon(50% 8%, 6% 92%, 94% 92%);
+    }
+    .shape-d4 .die-text{
+        transform: translateY(20%);
+    }
+    .shape-d6 {
+        background-color: #14b6c8;
+        width: 40px;
+        height: 40px;
+    }
+
+    .shape-d8 {
+        background-color: #7b5cff;
+        clip-path: polygon(
+            50% 4%,  
+            83% 30%, 
+            90% 70%, 
+            50% 96%,
+            10% 70%, 
+            15% 30% 
+        );
+    }
+
+    .shape-d10{
+        background-color:#ff4aa2;
+        clip-path: polygon(
+            50% 4%,   /* top point */
+            96% 40%,  /* upper-right */
+            96% 60%,  /* lower-right */
+            50% 96%,  /* bottom point */
+            4% 60%,  /* lower-left */
+            4% 40%   /* upper-left */
+        );
+    }
+
+    .shape-d12 {
+        background-color: #d31e1e;
+        clip-path: polygon(
+            /* X Y */
+            50% 2%,   /* 1: top */
+            82% 16%,  /* 2: top-right */
+            
+            
+            98% 39%,  /* 3: upper-right */
+            98% 61%,  /* 4: right-lower */
+            
+            
+            82% 84%,  /* 5: bottom-right */
+            50% 98%,  /* 6: bottom */
+            18% 84%,  /* 7: bottom-left */
+            
+            2% 61%,   /* 8: left-lower */
+            2% 39%,   /* 9: upper-left */
+            
+            
+            18% 16%   /* 10: top-left */
+        );
+    }
+
+    .shape-d20 {
+        background-color: #ff6b2c;
+        clip-path: polygon(
+            25% 6%, 
+            75% 6%,
+            100% 50%,
+            75% 94%, 
+            25% 94%,
+            0% 50%
+        );
+    }
 
     .modifier-input { width: 80px; }
 </style>
