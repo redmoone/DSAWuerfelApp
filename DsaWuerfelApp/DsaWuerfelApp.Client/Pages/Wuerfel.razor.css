@@ -1,13 +1,25 @@
 ﻿.google-dice-container {
+    display: flex;
+    flex-direction: column;
     background-color: white;
     border-radius: 8px;
-    margin: 20px auto;
+    height: calc(100vh - 100px);
+    margin: 0 auto;
+    max-width: 1200px;
+    overflow: hidden;
+}
+
+.history-area {
+    flex: 0 0 300px;
+    overflow-y: auto;
+    padding-bottom: 10px;
+    zoom: 0.8;
 }
 
 .stage-wrapper {
+    flex: 1;
     position: relative;
     background-color: #eef4ff;
-    height: 350px;
     border-radius: 8px;
     overflow: hidden;
 }
@@ -15,4 +27,13 @@
 .dice-canvas {
     width: 100%;
     height: 100%;
+}
+
+.controls-wrapper {
+    flex: 0 0 30%;
+    display: flex;
+    flex-direction: column;
+    padding-top: 16px;
+    overflow-y: auto;
+    zoom: 0.8;
 }

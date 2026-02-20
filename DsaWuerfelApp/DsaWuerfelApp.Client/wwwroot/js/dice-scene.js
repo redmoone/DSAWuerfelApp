@@ -16,8 +16,8 @@ export function initScene(canvas, supersample) {
     const scene = new THREE.Scene();
 
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 500);
-    camera.position.set(0, 16, 0);
-    camera.lookAt(0, 0, 0);
+    camera.position.set(0, 16, 1);
+    camera.lookAt(0, 0, 1);
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.18));
 

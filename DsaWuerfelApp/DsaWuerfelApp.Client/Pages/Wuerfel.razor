@@ -4,8 +4,8 @@
 @using DsaWuerfelApp.Shared
 @inject GameClient GameClient
 
-<div class="google-dice-container pa-4" style="max-width: 800px; margin: 0 auto;">
-    <div class="mb-4">
+<div class="google-dice-container pa-4">
+    <div class="history-area">
         <RollHistory @ref="_rollHistory" />
     </div>
 
@@ -13,23 +13,22 @@
         <div class="dice-canvas">
             <Dice3D @ref="_dice3d" OnDiceRemoved="HandleDiceRemoved" />
         </div>
-        
-        <RollEquation Result="_last" HasSelection="_selected.Count > 0" />
+        <RollEquation Result="_last" />
     </div>
 
-    <DiceControls 
-        AvailableSides="_availableSides" 
-        Modifier="_modifier" 
-        HasSelection="_selected.Count > 0"
-        IsHiddenRoll="_isHiddenRoll"
-        IsHiddenRollChanged="UpdateHiddenRollStatus"
-        OnAddDie="AddDie" 
-        ModifierChanged="UpdateModifier" 
-        OnRoll="Roll" 
-        OnReset="Reset" />
+    <div class="controls-wrapper">
+        <DiceControls 
+            AvailableSides="_availableSides" 
+            Modifier="_modifier" 
+            HasSelection="_selected.Count > 0"
+            OnAddDie="AddDie" 
+            ModifierChanged="UpdateModifier" 
+            OnRoll="Roll" 
+            OnReset="Reset" />
 
-    @if (!string.IsNullOrWhiteSpace(_error))
-    {
-        <MudAlert Severity="Severity.Error" Class="mt-3">@_error</MudAlert>
-    }
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-3">@_error</MudAlert>
+        }
+    </div>
 </div>
