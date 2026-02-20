@@ -2,18 +2,6 @@
 @inject GameClient GameClient
 
 <div class="chat-panel">
-    <div class="d-flex justify-space-between align-center mb-2 px-2">
-        <MudText Typo="Typo.subtitle1" Class="font-weight-bold">Wurf-Verlauf</MudText>
-        @if (GameClient.IsConnected)
-        {
-            <MudChip T="string" Color="Color.Success" Size="Size.Small">Verbunden</MudChip>
-        }
-        else
-        {
-            <MudChip T="string" Color="Color.Warning" Size="Size.Small">Offline</MudChip>
-        }
-    </div>
-
     <div class="chat-history-container">
         @if (_history.Count == 0)
         {
@@ -33,7 +21,6 @@
                         @for (int i = 0; i < log.Rolls.Count; i++)
                         {
                             var r = log.Rolls[i];
-                            
                             <div class="history-die-container">
                                 <div class="die-shape history-die shape-d@(r.Sides)">
                                     <span class="die-text">@r.Value</span>

@@ -5,15 +5,17 @@
 @inject GameClient GameClient
 
 <div class="google-dice-container pa-4">
-    <div class="history-area">
-        <RollHistory @ref="_rollHistory" />
-    </div>
-
-    <div class="stage-wrapper">
-        <div class="dice-canvas">
-            <Dice3D @ref="_dice3d" OnDiceRemoved="HandleDiceRemoved" />
+    <div class="split-view">
+        <div class="history-area">
+            <RollHistory @ref="_rollHistory" />
         </div>
-        <RollEquation Result="_last" />
+
+        <div class="stage-wrapper">
+            <div class="dice-canvas">
+                <Dice3D @ref="_dice3d" OnDiceRemoved="HandleDiceRemoved" />
+            </div>
+            <RollEquation Result="_last" />
+        </div>
     </div>
 
     <div class="controls-wrapper">

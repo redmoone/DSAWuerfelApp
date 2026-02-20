@@ -3,16 +3,29 @@
     flex-direction: column;
     background-color: white;
     border-radius: 8px;
-    height: calc(100vh - 100px);
+    height: calc(100vh - 40px);
     margin: 0 auto;
     max-width: 1200px;
     overflow: hidden;
+    gap: 16px;
+}
+
+.split-view {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    overflow: hidden;
+    gap: 16px;
 }
 
 .history-area {
-    flex: 0 0 300px;
+    flex: 0 0 400px; 
     overflow-y: auto;
-    padding-bottom: 10px;
+    padding-right: 8px;
+   
+}
+
+.history-area ::deep .chat-panel {
     zoom: 0.8;
 }
 
@@ -33,7 +46,19 @@
     flex: 0 0 30%;
     display: flex;
     flex-direction: column;
-    padding-top: 16px;
     overflow-y: auto;
     zoom: 0.8;
+}
+
+@media (max-width: 768px) {
+    .split-view {
+        flex-direction: column;
+    }
+
+    .history-area {
+        flex: 0 0 120px; 
+        width: 100%;
+        padding-right: 0;
+        padding-bottom: 8px;
+    }
 }

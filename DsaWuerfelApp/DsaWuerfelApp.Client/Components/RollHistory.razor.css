@@ -7,7 +7,7 @@
 .chat-history-container {
     flex-grow: 1;
     overflow-y: auto;
-    max-height: 250px;
+    min-height: 0;
     padding-right: 8px;
 }
 
