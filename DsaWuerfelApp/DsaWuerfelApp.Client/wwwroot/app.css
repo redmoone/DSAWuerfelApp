@@ -71,3 +71,11 @@
     background: linear-gradient(135deg, #d65524, #6e270e);
     clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%);
 }
+
+:root {
+    --dsa-blue: #1c2e4a;          
+    --dsa-gold: #d4af37;          
+    --dsa-gold-glow: rgba(212, 175, 55, 0.3);
+    --dsa-white: #f5f5f5;        
+    --pill-bg: rgba(28, 46, 74, 0.85); 
+}

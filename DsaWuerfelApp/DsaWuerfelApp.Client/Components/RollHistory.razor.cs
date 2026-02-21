@@ -4,11 +4,10 @@ namespace DsaWuerfelApp.Client.Components;
 
 public partial class RollHistory : IDisposable
 {
-    private List<RollResult> _history = new();
+    private List<RollResult> _history = [];
 
     protected override void OnInitialized()
     {
-        // Komponente lauscht selbst auf Multiplayer-Würfe
         GameClient.OnRollResultReceived += HandleIncomingRoll;
     }
 
@@ -26,7 +25,6 @@ public partial class RollHistory : IDisposable
         });
     }
 
-    // Erlaubt der Wuerfel-Page, lokale Offline-Würfe in das Log zu pushen
     public void AddLocalRoll(RollResult result)
     {
         _history.Insert(0, result);

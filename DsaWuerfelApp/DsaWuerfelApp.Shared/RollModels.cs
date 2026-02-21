@@ -3,7 +3,7 @@
 public class RollRequest
 {
     public string SessionId { get; set; } = string.Empty;
-    public List<DiceGroup> Dice { get; set; } = new();
+    public List<DiceGroup> Dice { get; set; } = [];
     public int Modifier { get; set; }
 }
 
@@ -20,7 +20,7 @@ public class RollResult
 {
     public string PlayerName { get; set; } = string.Empty;
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-    public List<SingleRoll> Rolls { get; set; } = new();
+    public List<SingleRoll> Rolls { get; set; } = [];
     public int Modifier { get; set; }
     public int TotalSum { get; set; }
 }
