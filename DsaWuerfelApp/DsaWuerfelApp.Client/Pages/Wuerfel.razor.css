@@ -32,7 +32,10 @@
 .stage-wrapper {
     flex: 1;
     position: relative;
-    background-color: #eef4ff;
+    background-image: url('../images/dsa-karte.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     border-radius: 8px;
     overflow: hidden;
 }

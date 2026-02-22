@@ -17,7 +17,9 @@
             <RollEquation Result="_last"/>
         </div>
     </div>
-
+    
+    <ProbenSearch OnRoll="HandleProbenRoll" />
+    
     <div class="d-flex flex-wrap gap-3 my-4">
         <AttributePill ShortName="MU" Value="14" IconPath="lion.svg" OnClick="@(() => RollAttribute("MU", 14))"/>
         <AttributePill ShortName="KL" Value="13" IconPath="owl.svg" OnClick="@(() => RollAttribute("KL", 13))"/>
@@ -37,7 +39,7 @@
         <DiceControls
             AvailableSides="_availableSides"
             Modifier="_modifier"
-            HasSelection="_selected.Count > 0"
+            HasSelection="_selectedDice.Count > 0"
             OnAddDie="AddDie"
             ModifierChanged="UpdateModifier"
             OnRoll="Roll"
