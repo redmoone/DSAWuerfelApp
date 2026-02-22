@@ -1,4 +1,4 @@
-﻿<div class="attribute-pill">
+﻿<div class="attribute-pill" @onclick="OnClick">
     <div class="attribute-icon-container">
         <img src="icons/@IconPath" alt="@ShortName" class="attribute-icon" />
         <span class="attribute-label">@ShortName</span>
@@ -7,7 +7,15 @@
 </div>
 
 @code {
-    [Parameter] public string ShortName { get; set; } = string.Empty;
-    [Parameter] public int Value { get; set; }
-    [Parameter] public string IconPath { get; set; } = string.Empty;
+    [Parameter] 
+    public string ShortName { get; set; } = string.Empty;
+
+    [Parameter] 
+    public int Value { get; set; }
+
+    [Parameter] 
+    public string IconPath { get; set; } = string.Empty;
+
+    [Parameter] 
+    public EventCallback OnClick { get; set; }
 }

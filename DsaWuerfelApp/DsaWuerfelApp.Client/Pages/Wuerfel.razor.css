@@ -48,6 +48,9 @@
     flex-direction: column;
     overflow-y: auto;
     zoom: 0.8;
+    padding-bottom: 15px; 
+    margin-bottom: 10px;
+    flex-shrink: 0;
 }
 
 @media (max-width: 768px) {

@@ -7,36 +7,41 @@
 <div class="google-dice-container pa-4">
     <div class="split-view">
         <div class="history-area">
-            <RollHistory @ref="_rollHistory" />
+            <RollHistory @ref="_rollHistory"/>
         </div>
 
         <div class="stage-wrapper">
             <div class="dice-canvas">
-                <Dice3D @ref="_dice3d" OnDiceRemoved="HandleDiceRemoved" />
+                <Dice3D @ref="_dice3d" OnDiceRemoved="HandleDiceRemoved"/>
             </div>
-            <RollEquation Result="_last" />
+            <RollEquation Result="_last"/>
         </div>
     </div>
-    <div class="attribute-pill">
-        <AttributePill ShortName="MU" Value="14" IconPath="lion.svg" />
-        <AttributePill ShortName="KL" Value="13" IconPath="owl.svg" />
-        <AttributePill ShortName="IN" Value="15" IconPath="eye.svg" />
-        <AttributePill ShortName="CH" Value="12" IconPath="mask.svg" />
-        <AttributePill ShortName="FF" Value="15" IconPath="hand.svg" />
-        <AttributePill ShortName="GE" Value="15" IconPath="cat.svg" />
-        <AttributePill ShortName="KO" Value="14" IconPath="shield.svg" />
-        <AttributePill ShortName="KK" Value="13" IconPath="muscle.svg" />
 
+    <div class="d-flex flex-wrap gap-3 my-4">
+        <AttributePill ShortName="MU" Value="14" IconPath="lion.svg" OnClick="@(() => RollAttribute("MU", 14))"/>
+        <AttributePill ShortName="KL" Value="13" IconPath="owl.svg" OnClick="@(() => RollAttribute("KL", 13))"/>
+        <AttributePill ShortName="IN" Value="15" IconPath="eye.svg" OnClick="@(() => RollAttribute("IN", 15))"/>
+        <AttributePill ShortName="CH" Value="12" IconPath="mask.svg" OnClick="@(() => RollAttribute("CH", 12))"/>
+        <AttributePill ShortName="FF" Value="15" IconPath="hand.svg" OnClick="@(() => RollAttribute("FF", 15))"/>
+        <AttributePill ShortName="GE" Value="15" IconPath="cat.svg" OnClick="@(() => RollAttribute("GE", 15))"/>
+        <AttributePill ShortName="KO" Value="14" IconPath="shield.svg" OnClick="@(() => RollAttribute("KO", 14))"/>
+        <AttributePill ShortName="KK" Value="13" IconPath="muscle.svg" OnClick="@(() => RollAttribute("KK", 13))"/>
+        
+        <div class="ms-auto">
+            <ModifierPill @bind-Value="_modifier"/>
+        </div>
     </div>
+
     <div class="controls-wrapper">
-        <DiceControls 
-            AvailableSides="_availableSides" 
-            Modifier="_modifier" 
+        <DiceControls
+            AvailableSides="_availableSides"
+            Modifier="_modifier"
             HasSelection="_selected.Count > 0"
-            OnAddDie="AddDie" 
-            ModifierChanged="UpdateModifier" 
-            OnRoll="Roll" 
-            OnReset="Reset" />
+            OnAddDie="AddDie"
+            ModifierChanged="UpdateModifier"
+            OnRoll="Roll"
+            OnReset="Reset"/>
 
         @if (!string.IsNullOrWhiteSpace(_error))
         {

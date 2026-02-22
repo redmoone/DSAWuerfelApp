@@ -1,5 +1,7 @@
 ﻿.attribute-pill {
     display: inline-flex;
+    user-select: none;
++   cursor: pointer;
     align-items: center;
     background-color: var(--pill-bg);
     border: 3px solid var(--dsa-gold);

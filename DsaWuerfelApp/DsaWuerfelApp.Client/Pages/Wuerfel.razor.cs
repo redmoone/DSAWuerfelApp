@@ -148,6 +148,13 @@ public partial class Wuerfel : IDisposable
             });
         }
     }
+    
+    private async Task RollAttribute(string attributeName, int value)
+    {
+        await Reset();
+        await AddDie(20);
+        await Roll();
+    }
 
     public record DiceGroup(int Sides, int Count);
     public record SingleRoll(int Sides, int Value);
