@@ -17,8 +17,8 @@ export function initScene(canvas, supersample) {
 
     const camera = new THREE.PerspectiveCamera(10, 1, 0.1, 1000);
 
-    camera.position.set(0, 20, 1);
-    camera.lookAt(0, 0, 1);
+    camera.position.set(0, 30, 0);
+    camera.lookAt(0, 0, 0);
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.18));
 
@@ -68,9 +68,9 @@ export function resizeScene(canvas, renderer, camera) {
         camera.aspect = w / h;
 
         if (w < 800) {
-            camera.position.y = 20 + ((800 - w) / 500) * 15;
+            camera.position.y = 35 + ((800 - w) / 500) * 15;
         } else {
-            camera.position.y = 20;
+            camera.position.y = 35;
         }
 
         camera.updateProjectionMatrix();
