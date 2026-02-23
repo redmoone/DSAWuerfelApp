@@ -15,6 +15,7 @@ public partial class Wuerfel : IDisposable
     private readonly List<int> _selectedDice = new();
 
     private int _modifier;
+    private int _diceModifier;
     private string? _error;
     private RollSetResult? _last;
     private Dice3D _dice3d = null!;

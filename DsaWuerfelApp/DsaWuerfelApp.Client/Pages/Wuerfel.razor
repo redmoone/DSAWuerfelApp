@@ -41,10 +41,10 @@
     <div class="controls-wrapper">
         <DiceControls
             AvailableSides="_availableSides"
-            Modifier="_modifier"
+            Modifier="_diceModifier"
             HasSelection="_selectedDice.Count > 0"
             OnAddDie="AddDie"
-            ModifierChanged="UpdateModifier"
+            ModifierChanged="(val) => _diceModifier = val"
             OnRoll="Roll"
             OnReset="Reset"/>
 
