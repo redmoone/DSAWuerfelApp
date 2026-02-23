@@ -10,11 +10,14 @@
             <RollHistory @ref="_rollHistory"/>
         </div>
 
+        <div class="equation-middle-wrapper">
+            <RollEquation Result="_last"/>
+        </div>
+
         <div class="stage-wrapper">
             <div class="dice-canvas">
                 <Dice3D @ref="_dice3d" OnDiceRemoved="HandleDiceRemoved"/>
             </div>
-            <RollEquation Result="_last"/>
         </div>
     </div>
     

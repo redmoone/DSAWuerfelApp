@@ -1,7 +1,7 @@
 ﻿import * as THREE from "three";
-import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
-import {SUPERSAMPLE, DICE_SCALE, USE_EDGE_OUTLINE, diceRotations} from "./dice-constants.js";
-import {initScene, resizeScene} from "./dice-scene.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { SUPERSAMPLE, DICE_SCALE, USE_EDGE_OUTLINE, diceRotations } from "./dice-constants.js";
+import { initScene, resizeScene } from "./dice-scene.js";
 
 let renderer, scene, camera;
 let diceModels = new Map();
@@ -55,34 +55,42 @@ export async function init(canvas) {
         }
     });
 
-    canvas.addEventListener('click', (event) => {
-        const rect = canvas.getBoundingClientRect();
-        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-        raycaster.setFromCamera(mouse, camera);
-
-        const intersects = raycaster.intersectObjects(activeDice, true);
-
-        if (intersects.length > 0) {
-            let clickedObject = intersects[0].object;
-
-            while (clickedObject && !activeDice.includes(clickedObject) && clickedObject.parent !== scene) {
-                clickedObject = clickedObject.parent;
-            }
-
-            if (activeDice.includes(clickedObject)) {
-                const idx = clickedObject.userData.diceIndex;
-                if (dotNetRef && idx !== undefined) {
-                    dotNetRef.invokeMethodAsync('OnDiceRemovedCallback', idx);
-                }
-            }
-        }
-    });
+    canvas.addEventListener('click', handleCanvasClick);
 
     resizeScene(canvas, renderer, camera);
-    window.addEventListener("resize", () => resizeScene(canvas, renderer, camera));
+
+    window.addEventListener("resize", () => {
+        resizeScene(canvas, renderer, camera);
+        recalculatePositions(canvas.clientWidth);
+    });
+
     animate(canvas);
+}
+
+function handleCanvasClick(event) {
+    const canvas = event.target;
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+
+    const intersects = raycaster.intersectObjects(activeDice, true);
+
+    if (intersects.length > 0) {
+        let clickedObject = intersects[0].object;
+
+        while (clickedObject && !activeDice.includes(clickedObject) && clickedObject.parent !== scene) {
+            clickedObject = clickedObject.parent;
+        }
+
+        if (activeDice.includes(clickedObject)) {
+            const idx = clickedObject.userData.diceIndex;
+            if (dotNetRef && idx !== undefined) {
+                dotNetRef.invokeMethodAsync('OnDiceRemovedCallback', idx);
+            }
+        }
+    }
 }
 
 function animate(canvas) {
@@ -91,20 +99,54 @@ function animate(canvas) {
     renderer.render(scene, camera);
 }
 
-function getPosition(index, total) {
-    const spread = 3.5;
-    const rowSize = 5;
+function calculateLayout(canvasWidth) {
+    const pixelsPerDie = 120;
+    const maxDicePerRow = 10;
+    const minDicePerRow = 5;
 
-    const col = index % rowSize;
-    const row = Math.floor(index / rowSize);
+    let dicePerRow = Math.floor(canvasWidth / pixelsPerDie);
 
-    const itemsInThisRow = Math.min(total - row * rowSize, rowSize);
-    const xOffset = ((itemsInThisRow - 1) * spread) / 2;
+    if (dicePerRow > maxDicePerRow) {
+        dicePerRow = maxDicePerRow;
+    }
 
-    const x = col * spread - xOffset;
-    const z = row * spread - ((Math.ceil(total / rowSize) - 1) * spread) / 2;
+    let scaleFactor = 1.0;
 
-    return {x, y: 0, z};
+    if (dicePerRow < minDicePerRow) {
+        dicePerRow = minDicePerRow;
+        const minWidth = minDicePerRow * pixelsPerDie;
+        scaleFactor = canvasWidth / minWidth;
+    }
+
+    const spread = 3.5 * scaleFactor;
+
+    return { dicePerRow, scaleFactor, spread };
+}
+
+function getPosition(index, total, layout) {
+    const col = index % layout.dicePerRow;
+    const row = Math.floor(index / layout.dicePerRow);
+
+    const itemsInThisRow = Math.min(total - row * layout.dicePerRow, layout.dicePerRow);
+    const xOffset = ((itemsInThisRow - 1) * layout.spread) / 2;
+
+    const x = col * layout.spread - xOffset;
+    const z = row * layout.spread - ((Math.ceil(total / layout.dicePerRow) - 1) * layout.spread) / 2;
+
+    return { x, y: 0, z };
+}
+
+function recalculatePositions(canvasWidth) {
+    const totalDice = activeDice.length;
+    if (totalDice === 0) return;
+
+    const layout = calculateLayout(canvasWidth);
+
+    activeDice.forEach((mesh, index) => {
+        const pos = getPosition(index, totalDice, layout);
+        mesh.position.set(pos.x, pos.y, pos.z);
+        mesh.scale.setScalar(DICE_SCALE * layout.scaleFactor);
+    });
 }
 
 function addEdgeOverlay(root) {
@@ -130,14 +172,9 @@ export function updateDice(sidesArray) {
         if (!template) return;
 
         const mesh = template.clone(true);
-        mesh.userData = {diceIndex: index, sides: sides};
+        mesh.userData = { diceIndex: index, sides: sides };
 
-        const pos = getPosition(index, sidesArray.length);
-        mesh.position.set(pos.x, pos.y, pos.z);
-
-        mesh.scale.setScalar(DICE_SCALE);
-
-        let targetRot = {x: 0, y: 0, z: 0};
+        let targetRot = { x: 0, y: 0, z: 0 };
         if (diceRotations[key] && diceRotations[key][sides]) {
             targetRot = diceRotations[key][sides];
         }
@@ -156,6 +193,10 @@ export function updateDice(sidesArray) {
         scene.add(mesh);
         activeDice.push(mesh);
     });
+
+    if (renderer && renderer.domElement) {
+        recalculatePositions(renderer.domElement.clientWidth);
+    }
 }
 
 export function rollDice(resultsArray) {
@@ -166,7 +207,7 @@ export function rollDice(resultsArray) {
         const sides = mesh.userData.sides;
         const rolledValue = resultsArray[index];
 
-        let faceTarget = {x: 0, y: 0, z: 0};
+        let faceTarget = { x: 0, y: 0, z: 0 };
 
         if (diceRotations["d" + sides] && diceRotations["d" + sides][rolledValue]) {
             faceTarget = diceRotations["d" + sides][rolledValue];
@@ -177,7 +218,7 @@ export function rollDice(resultsArray) {
         const randomSpinsZ = Math.floor(Math.random() * 3) + 2;
 
         return {
-            mesh, start: {x: mesh.rotation.x, y: mesh.rotation.y, z: mesh.rotation.z}, target: {
+            mesh, start: { x: mesh.rotation.x, y: mesh.rotation.y, z: mesh.rotation.z }, target: {
                 x: faceTarget.x + (Math.PI * 2 * randomSpinsX),
                 y: faceTarget.y + (Math.PI * 2 * randomSpinsY),
                 z: faceTarget.z + (Math.PI * 2 * randomSpinsZ)

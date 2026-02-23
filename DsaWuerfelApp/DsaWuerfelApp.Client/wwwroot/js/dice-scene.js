@@ -15,8 +15,9 @@ export function initScene(canvas, supersample) {
 
     const scene = new THREE.Scene();
 
-    const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 500);
-    camera.position.set(0, 16, 1);
+    const camera = new THREE.PerspectiveCamera(10, 1, 0.1, 1000);
+
+    camera.position.set(0, 20, 1);
     camera.lookAt(0, 0, 1);
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.18));
@@ -27,11 +28,11 @@ export function initScene(canvas, supersample) {
     key.shadow.mapSize.set(2048, 2048);
     key.shadow.bias = -0.00008;
     key.shadow.camera.near = 1;
-    key.shadow.camera.far = 60;
-    key.shadow.camera.left = -25;
-    key.shadow.camera.right = 25;
-    key.shadow.camera.top = 25;
-    key.shadow.camera.bottom = -25;
+    key.shadow.camera.far = 200;
+    key.shadow.camera.left = -50;
+    key.shadow.camera.right = 50;
+    key.shadow.camera.top = 50;
+    key.shadow.camera.bottom = -50;
     scene.add(key);
 
     const fill = new THREE.DirectionalLight(0xffffff, 0.35);
@@ -43,7 +44,7 @@ export function initScene(canvas, supersample) {
     scene.add(rim);
 
     const ground = new THREE.Mesh(
-        new THREE.PlaneGeometry(200, 200),
+        new THREE.PlaneGeometry(500, 500),
         new THREE.ShadowMaterial({ opacity: 0.22 })
     );
     ground.rotation.x = -Math.PI / 2;
@@ -65,6 +66,13 @@ export function resizeScene(canvas, renderer, camera) {
     if (canvas.width !== targetW || canvas.height !== targetH) {
         renderer.setSize(w, h, false);
         camera.aspect = w / h;
+
+        if (w < 800) {
+            camera.position.y = 20 + ((800 - w) / 500) * 15;
+        } else {
+            camera.position.y = 20;
+        }
+
         camera.updateProjectionMatrix();
     }
 }

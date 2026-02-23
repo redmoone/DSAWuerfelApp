@@ -3,7 +3,7 @@
     flex-direction: column;
     background-color: white;
     border-radius: 8px;
-    height: calc(100vh - 40px);
+    min-height: calc(100vh - 200px);
     margin: 0 auto;
     max-width: 1200px;
     overflow: hidden;
@@ -12,21 +12,27 @@
 
 .split-view {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     flex: 1;
     overflow: hidden;
     gap: 16px;
 }
 
 .history-area {
-    flex: 0 0 400px; 
+    flex: 0 0 300px;
+    width: 100%;
     overflow-y: auto;
-    padding-right: 8px;
-   
 }
 
 .history-area ::deep .chat-panel {
     zoom: 0.8;
+}
+
+.equation-middle-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    flex: 0 0 auto;
 }
 
 .stage-wrapper {
@@ -51,20 +57,18 @@
     flex-direction: column;
     overflow-y: auto;
     zoom: 0.8;
-    padding-bottom: 15px; 
+    padding-bottom: 15px;
     margin-bottom: 10px;
     flex-shrink: 0;
 }
 
 @media (max-width: 768px) {
-    .split-view {
-        flex-direction: column;
+    .history-area {
+        flex: 0 0 120px;
+        padding-bottom: 8px;
     }
 
-    .history-area {
-        flex: 0 0 120px; 
-        width: 100%;
-        padding-right: 0;
-        padding-bottom: 8px;
+    .equation-middle-wrapper {
+        padding: 8px 0;
     }
 }
