@@ -2,18 +2,23 @@
     position: relative;
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
 }
 
 main {
     flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .sidebar {
-    background-color: #212529; /* Neutraler Hintergrund statt pinkem Verlauf */
+    background-color: #212529;
 }
 
-/* Die restlichen Regeln für .top-row können theoretisch bleiben oder gelöscht werden, 
-   da wir das HTML-Element entfernt haben. Der Übersicht halber habe ich sie hier weggelassen. */
+.content {
+    flex: 1;
+    padding: 0 !important; /* Remove default padding */
+}
 
 @media (min-width: 641px) {
     .page {
@@ -25,11 +30,6 @@ main {
         height: 100vh;
         position: sticky;
         top: 0;
-    }
-
-    article {
-        padding-left: 2rem !important;
-        padding-right: 1.5rem !important;
     }
 }
 

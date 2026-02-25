@@ -1,12 +1,15 @@
 ﻿.combat-container {
     width: 100%;
-    min-height: calc(100vh - 64px);
-    background-image: url('../images/background-scene.png');
+    min-height: 100vh;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('../images/background-wuerfel-scene.webp');
     background-size: cover;
     background-position: center;
-    background-attachment: fixed;
+    background-repeat: no-repeat;
     display: flex;
     flex-direction: column;
+    margin: 0;
+    padding: 0;
+    color: var(--dsa-white);
 }
 
 .split-view {
@@ -16,15 +19,22 @@
     width: 100%;
     max-width: 1400px;
     margin: 0 auto;
+    padding: 24px;
+    flex: 1;
+}
+
+.left-column {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
 }
 
 .combat-zone {
-    background-color: rgba(255, 255, 255, 0.85);
-    border-radius: 12px;
+    background-color: rgba(165, 165, 165, 0.85);
+    border-radius: 8px;
     padding: 24px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--dsa-gold);
+    color: black;
 }
 
 .zone-title {
@@ -101,6 +111,65 @@
 .log-entries {
     height: 100%;
     min-height: 400px;
+}
+
+.search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: var(--pill-bg);
+    border: 3px solid var(--dsa-gold);
+    border-radius: 50px;
+    padding: 4px 15px;
+    box-shadow: 0 0 10px var(--dsa-gold-glow);
+    max-width: 400px;
+    height: 45px;
+}
+
+.search-icon {
+    width: 20px;
+    height: 20px;
+    filter: brightness(0) invert(1);
+    opacity: 0.6;
+}
+
+.search-input {
+    background: transparent;
+    border: none;
+    color: var(--dsa-white);
+    outline: none;
+    width: 100%;
+    margin-left: 10px;
+    font-size: 1rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.search-input::placeholder {
+    color: rgba(245, 245, 245, 0.5);
+}
+
+.search-dropdown {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    right: 0;
+    background-color: var(--dsa-blue);
+    border: 2px solid var(--dsa-gold);
+    border-radius: 10px;
+    overflow: hidden;
+    z-index: 100;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.dropdown-item {
+    padding: 10px 15px;
+    color: var(--dsa-white);
+    cursor: pointer;
+    user-select: none;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(212, 175, 55, 0.15);
 }
 
 @media (max-width: 960px) {

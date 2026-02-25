@@ -9,11 +9,31 @@ public class RollRequest
 
 public class DiceGroup
 {
-    public int Sides { get; set; }
+    public DiceGroup() { }
+
+    public DiceGroup(int sides, int count)
+    {
+        Sides = sides;
+        Count = count;
+    }
+
     public int Count { get; set; }
-    
-    public DiceGroup() {}
-    public DiceGroup(int sides, int count) { Sides = sides; Count = count; }
+
+    public int Sides { get; set; } = 20;
+
+    public string? Color { get; set; }
+
+    public string DiceType
+    {
+        get => $"d{Sides}";
+        set
+        {
+            if (!string.IsNullOrEmpty(value) && value.StartsWith("d") && int.TryParse(value.Substring(1), out int s))
+            {
+                Sides = s;
+            }
+        }
+    }
 }
 
 public class RollResult

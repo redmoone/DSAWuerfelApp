@@ -1,0 +1,50 @@
+﻿@using DsaWuerfelApp.Shared
+<MudPaper Class="pa-4" Elevation="0" Outlined="true">
+    <MudText Typo="Typo.h6">Nahkampf Manöver</MudText>
+
+    <MudGrid>
+        <MudItem xs="6">
+            <MudNumericField @bind-Value="AttackValue" Label="Attacke-Wert (AT)" Variant="Variant.Outlined"/>
+        </MudItem>
+        <MudItem xs="6">
+            <MudNumericField @bind-Value="Modifier" Label="Erschwernis/Erleichterung" Variant="Variant.Outlined"/>
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudTextField @bind-Value="ManeuverName" Label="Manöver Name (z.B. Wuchtschlag)"
+                          Variant="Variant.Outlined"></MudTextField>
+        </MudItem>
+
+        <MudItem xs="12" Class="d-flex justify-center">
+            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="Roll">Attacke Würfeln</MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@code {
+
+    // Event, das dem Parent (der Hauptseite) sagt: "Hier sind die Daten, bitte würfeln!"
+    [Parameter] public EventCallback<(List<DiceGroup> Dice, int Modifier, string Label)> OnRollRequest { get; set; }
+
+    private int AttackValue { get; set; } = 12;
+    private int Modifier { get; set; } = 0;
+    private string ManeuverName { get; set; } = "Basisattacke";
+
+    private async Task Roll()
+    {
+        // Logik für Nahkampf: Ein W20 für die Attacke
+        var dice = new List<DiceGroup>
+        {
+            new DiceGroup
+            {
+                DiceType = "d20",
+                Count = 1,
+                Color = "#FF0000" // Rot für Attacke
+            }
+        };
+
+        // Callback feuern
+        await OnRollRequest.InvokeAsync((dice, Modifier, $"{ManeuverName} (AT {AttackValue})"));
+    }
+
+}

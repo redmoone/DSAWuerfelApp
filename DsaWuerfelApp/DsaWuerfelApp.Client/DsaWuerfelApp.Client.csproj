@@ -20,4 +20,8 @@
       <ProjectReference Include="..\DsaWuerfelApp.Shared\DsaWuerfelApp.Shared.csproj" />
     </ItemGroup>
 
+  <ItemGroup>
+    <Content Remove="Pages\CombatPage.razor"/>
+  </ItemGroup>
+
 </Project>
