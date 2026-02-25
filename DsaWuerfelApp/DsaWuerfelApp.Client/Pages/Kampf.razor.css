@@ -1,0 +1,110 @@
+﻿.combat-container {
+    width: 100%;
+    min-height: calc(100vh - 64px);
+    background-image: url('../images/background-scene.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    display: flex;
+    flex-direction: column;
+}
+
+.split-view {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.combat-zone {
+    background-color: rgba(255, 255, 255, 0.85);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.zone-title {
+    color: var(--dsa-blue);
+    font-size: 1.75rem;
+    font-weight: bold;
+    border-bottom: 2px solid var(--dsa-gold);
+    padding-bottom: 8px;
+    margin-bottom: 20px;
+}
+
+.zone-subtitle {
+    color: var(--dsa-blue);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.status-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.status-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.status-label {
+    color: var(--dsa-blue);
+    font-weight: bold;
+    width: 40px;
+    font-size: 1.1rem;
+}
+
+.action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+}
+
+.dsa-btn {
+    background-color: var(--dsa-blue);
+    color: var(--dsa-white);
+    border: 2px solid var(--dsa-gold);
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    text-transform: uppercase;
+    font-size: 1.1rem;
+}
+
+.dsa-btn:hover {
+    background-color: var(--dsa-gold);
+    color: var(--dsa-blue);
+    box-shadow: 0 0 12px var(--dsa-gold-glow);
+    transform: translateY(-2px);
+}
+
+.secondary-action {
+    background-color: transparent;
+    color: var(--dsa-blue);
+}
+
+.secondary-action:hover {
+    background-color: var(--dsa-blue);
+    color: var(--dsa-white);
+}
+
+.log-entries {
+    height: 100%;
+    min-height: 400px;
+}
+
+@media (max-width: 960px) {
+    .split-view {
+        grid-template-columns: 1fr;
+    }
+}

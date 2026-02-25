@@ -1,0 +1,55 @@
+﻿@page "/kampf"
+@using DsaWuerfelApp.Client.Components
+
+<div class="combat-container pa-4">
+    <div class="split-view">
+        <div class="combat-zone left-panel">
+            <h2 class="zone-title">Held</h2>
+            
+            <div class="status-bars">
+                <div class="status-row">
+                    <span class="status-label">LeP</span>
+                    <MudProgressLinear Color="Color.Error" Value="100" Height="20px" Striped="true" Class="flex-grow-1" />
+                </div>
+                <div class="status-row mt-2">
+                    <span class="status-label">AuP</span>
+                    <MudProgressLinear Color="Color.Success" Value="100" Height="20px" Striped="true" Class="flex-grow-1" />
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-3 my-5">
+                <AttributePill ShortName="AT" Value="15" IconPath="sword.svg" />
+                <AttributePill ShortName="PA" Value="13" IconPath="shield.svg" />
+                <AttributePill ShortName="INI" Value="12" IconPath="feather.svg" />
+                <AttributePill ShortName="RS" Value="4" IconPath="weight.svg" />
+            </div>
+
+            <div class="action-grid mt-6">
+                <button class="dsa-btn primary-action">Attacke</button>
+                <button class="dsa-btn primary-action">Parade</button>
+                <button class="dsa-btn secondary-action">Ausweichen</button>
+            </div>
+
+            <div class="maneuver-section mt-8">
+                <h3 class="zone-subtitle">Manöver</h3>
+                <div class="d-flex align-center gap-4 mt-3">
+                    <MudSelect T="string" Label="Aktion wählen" Variant="Variant.Outlined" Class="bg-white rounded">
+                        <MudSelectItem Value="@("Wuchtschlag")" />
+                        <MudSelectItem Value="@("Finte")" />
+                        <MudSelectItem Value="@("Meisterparade")" />
+                    </MudSelect>
+                    
+                    <div class="ms-auto">
+                        <ModifierPill Value="0" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="combat-zone right-panel">
+            <h2 class="zone-title">Kampfverlauf</h2>
+            <div class="log-entries">
+            </div>
+        </div>
+    </div>
+</div>
