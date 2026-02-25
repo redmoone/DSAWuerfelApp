@@ -30,13 +30,12 @@
     position: relative;
     z-index: 2;
     color: white;
-    font-weight: 700;
-    font-size: 16px;
+    font-size: 27px;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .shape-d4 {
-    background: linear-gradient(135deg, #25ba70, #115935);
+    background: #25ba70;
     -webkit-clip-path: polygon(50% 8%, 6% 92%, 94% 92%);
     clip-path: polygon(50% 8%, 6% 92%, 94% 92%);
 }
@@ -46,29 +45,29 @@
 }
 
 .shape-d6 {
-    background: linear-gradient(135deg, #15c3d6, #085e68);
+    background: #085e68;
     width: 40px;
     height: 40px;
     border-radius: 4px;
 }
 
 .shape-d8 {
-    background: linear-gradient(135deg, #5b46a8, #261c4d);
+    background:  #261c4d;
     clip-path: polygon(50% 4%, 83% 30%, 90% 70%, 50% 96%, 10% 70%, 15% 30%);
 }
 
 .shape-d10 {
-    background: linear-gradient(135deg, #c74483, #631e3f);
+    background: #631e3f;
     clip-path: polygon(50% 4%, 96% 40%, 96% 60%, 50% 96%, 4% 60%, 4% 40%);
 }
 
 .shape-d12 {
-    background: linear-gradient(135deg, #a31a1a, #4a0909);
+    background: #4a0909;
     clip-path: polygon(50% 2%, 82% 16%, 98% 39%, 98% 61%, 82% 84%, 50% 98%, 18% 84%, 2% 61%, 2% 39%, 18% 16%);
 }
 
 .shape-d20 {
-    background: linear-gradient(135deg, #d65524, #6e270e);
+    background: #6e270e;
     clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%);
 }
 
