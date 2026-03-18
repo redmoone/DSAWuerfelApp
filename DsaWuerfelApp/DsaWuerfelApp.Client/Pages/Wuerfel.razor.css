@@ -1,30 +1,30 @@
-﻿.google-dice-container {
+﻿.wuerfel-page-container {
     display: flex;
     flex-direction: column;
     background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('../images/background-wuerfel-scene.webp');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    border: none;
-    box-shadow: none;
-    border-radius: 0;
     min-height: 100vh;
     margin: 0;
     max-width: 100%;
-    gap: 16px;
+    gap: 32px;
     color: var(--dsa-white);
 }
 
-.split-view {
+.top-section {
     display: flex;
-    flex-direction: column;
-    flex: 1;
-    gap: 16px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    flex-wrap: wrap;
 }
 
 .history-area {
-    flex: 0 0 300px;
-    width: 100%;
+    flex: 1;
+    min-width: 300px;
+    max-height: 200px;
     overflow-y: auto;
     background-color: rgba(165, 165, 165, 0.85);
     border-radius: 8px;
@@ -36,44 +36,69 @@
     zoom: 0.8;
 }
 
-.equation-middle-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: left;
-    flex: 0 0 auto;
-}
-
-.stage-wrapper {
-    flex: 0 1 200px;
-    max-height: 200px;
-    position: relative;
+.dice-3d-box {
+    width: 200px;
+    height: 200px;
+    flex-shrink: 0;
     background-color: rgba(165, 165, 165, 0.85);
     border-radius: 8px;
     border: 1px solid var(--dsa-gold);
     overflow: hidden;
 }
 
-.dice-canvas {
+.action-blocks-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
     width: 100%;
-    height: 100%;
 }
 
-.controls-wrapper {
-    flex: 0 0 auto;
+.action-block {
+    background-color: #ffffff;
+    color: #000000;
+    border-radius: 8px;
+    padding: 24px;
     display: flex;
     flex-direction: column;
-    zoom: 0.8;
-    padding-bottom: 15px;
-    margin-bottom: 10px;
+    gap: 20px;
+    border: 2px solid var(--dsa-gold);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
 }
 
-@media (max-width: 768px) {
-    .history-area {
-        flex: 0 0 120px;
-        padding-bottom: 8px;
-    }
+.block-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--dsa-gold);
+    padding-bottom: 8px;
+    text-align: center;
+    color: #333333;
+}
 
-    .equation-middle-wrapper {
-        padding: 8px 0;
-    }
+.attribute-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    justify-items: center;
+    width: 100%;
+}
+
+.attribute-modifier-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.equation-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 16px;
+}
+
+.modifier-wrapper {
+    display: flex;
+    justify-content: flex-end;
 }

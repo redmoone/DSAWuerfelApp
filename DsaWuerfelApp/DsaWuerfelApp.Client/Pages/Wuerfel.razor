@@ -3,53 +3,91 @@
 @using DsaWuerfelApp.Client.Services
 @inject GameClient GameClient
 
-<div class="google-dice-container pa-4">
-    <div class="split-view">
-        <div class="history-area">
+<div class="wuerfel-page-container pa-4">
+    <div class="top-section">
+        <div class="history-area" title="Historie der bisherigen Würfe">
             <RollHistory @ref="_rollHistory"/>
         </div>
 
-        <div class="equation-middle-wrapper">
-            <RollEquation Result="_last"/>
+        <div class="dice-3d-box" title="3D Ansicht der gefallenen Würfel">
+            <Dice3D @ref="_dice3d" OnDiceRemoved="HandleDiceRemoved"/>
         </div>
+    </div>
 
-        <div class="stage-wrapper">
-            <div class="dice-canvas">
-                <Dice3D @ref="_dice3d" OnDiceRemoved="HandleDiceRemoved"/>
+    <div class="action-blocks-container">
+        <div class="action-block">
+            <h3 class="block-title">Eigenschaftsproben</h3>
+
+            <div class="attribute-grid">
+                <div title="Mut Probe würfeln">
+                    <AttributePill ShortName="MU" Value="14" IconPath="lion.svg"
+                                   OnClick="@(() => RollAttribute("MU", 14))"/>
+                </div>
+                <div title="Klugheit Probe würfeln">
+                    <AttributePill ShortName="KL" Value="13" IconPath="owl.svg"
+                                   OnClick="@(() => RollAttribute("KL", 13))"/>
+                </div>
+                <div title="Intuition Probe würfeln">
+                    <AttributePill ShortName="IN" Value="15" IconPath="eye.svg"
+                                   OnClick="@(() => RollAttribute("IN", 15))"/>
+                </div>
+                <div title="Charisma Probe würfeln">
+                    <AttributePill ShortName="CH" Value="12" IconPath="mask.svg"
+                                   OnClick="@(() => RollAttribute("CH", 12))"/>
+                </div>
+                <div title="Fingerfertigkeit Probe würfeln">
+                    <AttributePill ShortName="FF" Value="15" IconPath="hand.svg"
+                                   OnClick="@(() => RollAttribute("FF", 15))"/>
+                </div>
+                <div title="Gewandtheit Probe würfeln">
+                    <AttributePill ShortName="GE" Value="15" IconPath="cat.svg"
+                                   OnClick="@(() => RollAttribute("GE", 15))"/>
+                </div>
+                <div title="Konstitution Probe würfeln">
+                    <AttributePill ShortName="KO" Value="14" IconPath="shield.svg"
+                                   OnClick="@(() => RollAttribute("KO", 14))"/>
+                </div>
+                <div title="Körperkraft Probe würfeln">
+                    <AttributePill ShortName="KK" Value="13" IconPath="muscle.svg"
+                                   OnClick="@(() => RollAttribute("KK", 13))"/>
+                </div>
+            </div>
+
+            <div class="attribute-modifier-wrapper" title="Erleichterung oder Erschwernis einstellen">
+                <ModifierPill @bind-Value="_modifier"/>
             </div>
         </div>
-    </div>
-    
-    <ProbenSearch OnRoll="HandleProbenRoll" />
-    
-    <div class="d-flex flex-wrap gap-3 my-4">
-        <AttributePill ShortName="MU" Value="14" IconPath="lion.svg" OnClick="@(() => RollAttribute("MU", 14))"/>
-        <AttributePill ShortName="KL" Value="13" IconPath="owl.svg" OnClick="@(() => RollAttribute("KL", 13))"/>
-        <AttributePill ShortName="IN" Value="15" IconPath="eye.svg" OnClick="@(() => RollAttribute("IN", 15))"/>
-        <AttributePill ShortName="CH" Value="12" IconPath="mask.svg" OnClick="@(() => RollAttribute("CH", 12))"/>
-        <AttributePill ShortName="FF" Value="15" IconPath="hand.svg" OnClick="@(() => RollAttribute("FF", 15))"/>
-        <AttributePill ShortName="GE" Value="15" IconPath="cat.svg" OnClick="@(() => RollAttribute("GE", 15))"/>
-        <AttributePill ShortName="KO" Value="14" IconPath="shield.svg" OnClick="@(() => RollAttribute("KO", 14))"/>
-        <AttributePill ShortName="KK" Value="13" IconPath="muscle.svg" OnClick="@(() => RollAttribute("KK", 13))"/>
-        
-        <div class="ms-auto">
-            <ModifierPill @bind-Value="_modifier"/>
+
+        <div class="action-block">
+            <h3 class="block-title">Probensuche & Ergebnis</h3>
+            <div title="Suche nach Talenten oder Zaubern für automatisierte Proben">
+                <ProbenSearch OnRoll="HandleProbenRoll"/>
+            </div>
+            <div class="equation-wrapper" title="Zusammenfassung des letzten Wurfs">
+                <RollEquation Result="_last"/>
+            </div>
         </div>
-    </div>
 
-    <div class="controls-wrapper">
-        <DiceControls
-            AvailableSides="_availableSides"
-            Modifier="_diceModifier"
-            HasSelection="_selectedDice.Count > 0"
-            OnAddDie="AddDie"
-            ModifierChanged="(val) => _diceModifier = val"
-            OnRoll="Roll"
-            OnReset="Reset"/>
+        <div class="action-block">
+            <h3 class="block-title">Freier Wurf</h3>
+            <div class="modifier-wrapper" title="Globalen Modifikator für den nächsten Wurf einstellen">
+                <ModifierPill @bind-Value="_modifier"/>
+            </div>
+            <div title="Manuelle Auswahl der Würfel">
+                <DiceControls
+                    AvailableSides="_availableSides"
+                    Modifier="_diceModifier"
+                    HasSelection="_selectedDice.Count > 0"
+                    OnAddDie="AddDie"
+                    ModifierChanged="(val) => _diceModifier = val"
+                    OnRoll="Roll"
+                    OnReset="Reset"/>
+            </div>
 
-        @if (!string.IsNullOrWhiteSpace(_error))
-        {
-            <MudAlert Severity="Severity.Error" Class="mt-3">@_error</MudAlert>
-        }
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-3">@_error</MudAlert>
+            }
+        </div>
     </div>
 </div>

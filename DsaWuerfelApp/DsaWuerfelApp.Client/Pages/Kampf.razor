@@ -28,6 +28,48 @@
                     <AttributePill ShortName="PA" Value="13" IconPath="shield.svg"/>
                     <AttributePill ShortName="INI" Value="12" IconPath="feather.svg"/>
                     <AttributePill ShortName="RS" Value="4" IconPath="weight.svg"/>
+                    <AttributePill ShortName="FK" Value="14" IconPath="icons/search.svg"/>
+                    <AttributePill ShortName="GS" Value="8" IconPath="icons/feather.svg"/>
+                    <AttributePill ShortName="BE" Value="1" IconPath="icons/weight.svg"/>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 my-4 justify-center">
+                    <AttributePill ShortName="MU" Value="14" IconPath="lion.svg"
+                                   OnClick="@(() => RollAttribute("MU", 14))"/>
+                    <AttributePill ShortName="KL" Value="13" IconPath="owl.svg"
+                                   OnClick="@(() => RollAttribute("KL", 13))"/>
+                    <AttributePill ShortName="IN" Value="15" IconPath="eye.svg"
+                                   OnClick="@(() => RollAttribute("IN", 15))"/>
+                    <AttributePill ShortName="CH" Value="12" IconPath="mask.svg"
+                                   OnClick="@(() => RollAttribute("CH", 12))"/>
+                    <AttributePill ShortName="FF" Value="15" IconPath="hand.svg"
+                                   OnClick="@(() => RollAttribute("FF", 15))"/>
+                    <AttributePill ShortName="GE" Value="15" IconPath="cat.svg"
+                                   OnClick="@(() => RollAttribute("GE", 15))"/>
+                    <AttributePill ShortName="KO" Value="14" IconPath="shield.svg"
+                                   OnClick="@(() => RollAttribute("KO", 14))"/>
+                    <AttributePill ShortName="KK" Value="13" IconPath="muscle.svg"
+                                   OnClick="@(() => RollAttribute("KK", 13))"/>
+                </div>
+
+                <div class="helden-details-container">
+                    <div class="wounds-section">
+                        <h4 class="zone-subtitle">Wunden</h4>
+                        <div class="wounds-tracker d-flex gap-2">
+                            <MudCheckBox T="bool" Color="Color.Error" Label="1"/>
+                            <MudCheckBox T="bool" Color="Color.Error" Label="2"/>
+                            <MudCheckBox T="bool" Color="Color.Error" Label="3"/>
+                        </div>
+                    </div>
+
+                    <div class="equipment-section">
+                        <h4 class="zone-subtitle">Ausrüstung</h4>
+                        <ul class="equipment-list">
+                            <li>Langschwert (1W6+4)</li>
+                            <li>Kettenhemd (RS 4)</li>
+                            <li>Heiltrank (3)</li>
+                        </ul>
+                    </div>
                 </div>
 
                 <div class="action-grid mt-6">
