@@ -1,30 +1,31 @@
-﻿using Microsoft.AspNetCore.Components;
-
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 
 using DsaWuerfelApp.Client.Components;
 using DsaWuerfelApp.Shared;
+
+using Microsoft.AspNetCore.Components;
 
 namespace DsaWuerfelApp.Client.Pages;
 
 public partial class Wuerfel : IDisposable
 {
-    [Inject] public HttpClient Http { get; set; } = null!;
-
     private readonly int[] _availableSides = [4, 6, 8, 10, 12, 20];
-    private readonly List<int> _selectedDice = new();
 
-    private int _modifier;
+    private readonly List<string> _selectedAttributes = [];
+    private readonly List<int> _selectedDice = new();
+    private Dice3D _dice3d = null!;
     private int _diceModifier;
     private string? _error;
-    private RollSetResult? _last;
-    private Dice3D _dice3d = null!;
-    private RollHistory _rollHistory = null!;
     private bool _isHiddenRoll;
+    private RollSetResult? _last;
 
-    protected override void OnInitialized() => GameClient.OnRollResultReceived += HandleServerRoll;
+    private int _modifier;
+    private RollHistory _rollHistory = null!;
+    [Inject] public HttpClient Http { get; set; } = null!;
 
     public void Dispose() => GameClient.OnRollResultReceived -= HandleServerRoll;
+
+    protected override void OnInitialized() => GameClient.OnRollResultReceived += HandleServerRoll;
 
     private async void HandleServerRoll(RollResult result)
     {
@@ -103,7 +104,7 @@ public partial class Wuerfel : IDisposable
 
     private async Task RollOnlineAsync(List<DiceGroup> diceGroups)
     {
-        var sharedGroups = diceGroups.Select(g => new DsaWuerfelApp.Shared.DiceGroup(g.Sides, g.Count)).ToList();
+        var sharedGroups = diceGroups.Select(g => new Shared.DiceGroup(g.Sides, g.Count)).ToList();
         await GameClient.RollDice(sharedGroups, _modifier, GameClient.CurrentSessionId!);
     }
 
@@ -131,7 +132,7 @@ public partial class Wuerfel : IDisposable
                 Modifier = _last.Modifier,
                 Timestamp = DateTime.UtcNow,
                 Rolls = _last.Rolls
-                    .Select(r => new DsaWuerfelApp.Shared.SingleRoll { Sides = r.Sides, Value = r.Value }).ToList()
+                    .Select(r => new Shared.SingleRoll { Sides = r.Sides, Value = r.Value }).ToList()
             });
         }
     }
@@ -153,6 +154,32 @@ public partial class Wuerfel : IDisposable
         await AddDie(20);
         await AddDie(20);
         await Roll();
+    }
+
+    private void ToggleAttribute(string shortName)
+    {
+        if (ShouldResetAttribute(shortName))
+        {
+            ResetAttribute(shortName);
+            return;
+        }
+
+        _selectedAttributes.Add(shortName);
+    }
+
+    private bool ShouldResetAttribute(string shortName)
+    {
+        return GetAttributeCount(shortName) == 3 || _selectedAttributes.Count == 3;
+    }
+
+    private void ResetAttribute(string shortName)
+    {
+        _selectedAttributes.RemoveAll(a => a == shortName);
+    }
+
+    private int GetAttributeCount(string shortName)
+    {
+        return _selectedAttributes.Count(a => a == shortName);
     }
 
     public record DiceGroup(int Sides, int Count);

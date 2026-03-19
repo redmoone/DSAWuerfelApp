@@ -1,21 +1,12 @@
-﻿<div class="attribute-pill" @onclick="OnClick">
+﻿<div class="attribute-pill @(SelectionCount > 0 ? "active" : "")" @onclick="OnClickCallback">
     <div class="attribute-icon-container">
         <img src="icons/@IconPath" alt="@ShortName" class="attribute-icon" />
         <span class="attribute-label">@ShortName</span>
     </div>
     <div class="attribute-value">@Value</div>
+
+    @if (SelectionCount > 0)
+    {
+        <div class="selection-badge">@(SelectionCount)x</div>
+    }
 </div>
-
-@code {
-    [Parameter] 
-    public string ShortName { get; set; } = string.Empty;
-
-    [Parameter] 
-    public int Value { get; set; }
-
-    [Parameter] 
-    public string IconPath { get; set; } = string.Empty;
-
-    [Parameter] 
-    public EventCallback OnClick { get; set; }
-}

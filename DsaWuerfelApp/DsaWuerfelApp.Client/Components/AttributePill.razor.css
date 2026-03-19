@@ -1,17 +1,19 @@
 ﻿.attribute-pill {
     display: inline-flex;
     user-select: none;
-+   cursor: pointer;
+    cursor: pointer;
     align-items: center;
     background-color: var(--pill-bg);
     border: 3px solid var(--dsa-gold);
     border-radius: 50px;
-    padding: 4px 15px 4px 6px; /* Rechts mehr Platz für die Zahl */
+    padding: 4px 15px 4px 6px;
     color: var(--dsa-white);
     box-shadow: 0 0 10px var(--dsa-gold-glow);
     min-width: 80px;
     height: 45px;
     gap: 10px;
+    position: relative;
+    transition: background-color 0.2s, color 0.2s;
 }
 
 .attribute-icon-container {
@@ -30,9 +32,48 @@
     display: block;
 }
 
-
 .attribute-icon[alt] {
     text-indent: -9999px;
+}
+
+
+
+.attribute-value {
+    font-size: 1.2rem;
+    font-weight: bold;
+    flex-grow: 1;
+    text-align: right;
+    padding-right: 5px;
+}
+
+.attribute-pill.active {
+    background-color: var(--dsa-gold);
+    color: #000000;
+    border-color: var(--dsa-gold);
+}
+
+.attribute-pill.active .attribute-icon {
+    filter: brightness(0);
+}
+
+.attribute-pill.active .attribute-value {
+    color: #000000;
+}
+
+
+.selection-badge {
+    position: absolute;
+    top: -6px;
+    right: -2px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    background-color: var(--dsa-gold);
+    color: #000000;
+    padding: 1px 4px;
+    border-radius: 3px;
+    line-height: 1;
+    pointer-events: none;
+    z-index: 10;
 }
 
 .attribute-label {
@@ -42,7 +83,7 @@
     font-size: 0.6rem;
     font-weight: bold;
     background-color: var(--dsa-gold);
-    color: var(--dsa-blue);
+    color: #000000;
     padding: 1px 4px;
     border-radius: 3px;
     line-height: 1;
@@ -51,10 +92,3 @@
     text-transform: uppercase;
 }
 
-.attribute-value {
-    font-size: 1.2rem;
-    font-weight: bold;
-    flex-grow: 1;
-    text-align: right;
-    padding-right: 5px;
-}
