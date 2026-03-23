@@ -1,0 +1,77 @@
+﻿.dice-action-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-top: 1.5rem;
+}
+
+.left-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.right-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.dsa-btn {
+    background-color: var(--pill-bg);
+    border: 3px solid var(--dsa-gold);
+    color: var(--dsa-gold);
+    border-radius: 50px;
+    padding: 0 20px;
+    height: 45px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: transform 0.1s, background-color 0.2s;
+    user-select: none;
+    box-shadow: 0 0 10px var(--dsa-gold-glow);
+}
+
+.dsa-btn:hover:not(:disabled) {
+    background-color: rgba(212, 175, 55, 0.1);
+}
+
+.dsa-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.dsa-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.dsa-btn-icon {
+    background-color: var(--pill-bg);
+    border: 3px solid var(--dsa-gold);
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 0 10px var(--dsa-gold-glow);
+}
+
+.dsa-btn-icon.active {
+    background-color: var(--dsa-gold);
+}
+
+.dsa-btn-icon.active .btn-icon {
+    filter: none;
+}
+
+.btn-icon {
+    width: 20px;
+    height: 20px;
+    filter: brightness(0) invert(1);
+}

@@ -1,0 +1,17 @@
+﻿<div class="dice-action-panel">
+    <div class="left-controls">
+        @ResultPillContent
+
+        <ModifierPill Modifier="Modifier" ModifierChanged="ModifierChanged"/>
+
+        <button class="dsa-btn-icon @(IsHiddenRoll ? "active" : "")" @onclick="ToggleHiddenRoll">
+            <img src="icons/eye-closed.svg" class="btn-icon" alt=""/>
+        </button>
+    </div>
+
+    <div class="right-controls">
+        <button class="dsa-btn" @onclick="() => OnRoll.InvokeAsync()" disabled="@(!HasSelection)">
+            Würfeln
+        </button>
+    </div>
+</div>
