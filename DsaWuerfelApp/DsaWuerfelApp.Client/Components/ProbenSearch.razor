@@ -1,68 +1,54 @@
-﻿<div class="proben-action-bar">
-    <div class="search-wrapper">
-        <img src="icons/search.svg" class="search-icon" alt="" />
-        <input type="text" 
-               class="search-input" 
-               placeholder="Nach Proben suchen..." 
-               @bind="SearchTerm" 
-               @bind:event="oninput" 
-               @onfocus="() => _isDropdownOpen = true"
-               @onblur="HandleBlur" />
+﻿<div class="search-wrapper">
+    <img src="icons/search.svg" class="search-icon" alt=""/>
+    <input type="text"
+           class="search-input"
+           placeholder="Nach Proben suchen..."
+           @bind="SearchTerm"
+           @bind:event="oninput"
+           @onfocus="() => _isDropdownOpen = true"
+           @onblur="HandleBlur"/>
 
-        @if (_isDropdownOpen && FilteredProben.Any())
-        {
-            <div class="search-dropdown">
-                @foreach (var probe in FilteredProben)
-                {
-                    <div class="dropdown-item" @onclick="() => SelectProbe(probe)">
-                        @probe
-                    </div>
-                }
-            </div>
-        }
-    </div>
-
-    <ModifierPill @bind-Value="Modifier" />
-
-    <button class="dsa-btn-icon @(IsHiddenRoll ? "active" : "")" @onclick="ToggleHidden" title="Versteckt würfeln">
-        <img src="icons/eye-closed.svg" class="btn-icon" alt="" />
-    </button>
-
-    <button class="dsa-btn primary" @onclick="RollProbe" disabled="@string.IsNullOrWhiteSpace(SelectedProbe)">
-        Probenwurf
-    </button>
+    @if (_isDropdownOpen && FilteredProben.Any())
+    {
+        <div class="search-dropdown">
+            @foreach (var probe in FilteredProben)
+            {
+                <div class="dropdown-item" @onclick="() => SelectProbe(probe)">
+                    @probe
+                </div>
+            }
+        </div>
+    }
 </div>
 
 @code {
-    [Parameter]
-    public EventCallback<(string Probe, int Modifier, bool IsHidden)> OnRoll { get; set; }
+    [Parameter] public string SelectedProbe { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> SelectedProbeChanged { get; set; }
 
-    public int Modifier { get; set; }
-    public bool IsHiddenRoll { get; set; }
     public string SearchTerm { get; set; } = string.Empty;
-    public string SelectedProbe { get; set; } = string.Empty;
 
     private bool _isDropdownOpen;
 
-    private readonly List<string> _mockProben = new()
-    {
+    private readonly List<string> _mockProben =
+    [
         "Klettern (MU/GE/KK)",
         "Körperbeherrschung (GE/GE/KO)",
         "Sinnesschärfe (KL/IN/IN)",
         "Überreden (MU/IN/CH)",
         "Verbergen (MU/IN/AG)"
-    };
+    ];
 
     private IEnumerable<string> FilteredProben => 
         string.IsNullOrWhiteSpace(SearchTerm) 
             ? _mockProben 
             : _mockProben.Where(p => p.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
 
-    private void SelectProbe(string probe)
+    private Task SelectProbe(string probe)
     {
         SelectedProbe = probe;
         SearchTerm = probe;
         _isDropdownOpen = false;
+        return SelectedProbeChanged.InvokeAsync(probe);
     }
 
     private async Task HandleBlur()
@@ -70,8 +56,4 @@
         await Task.Delay(150);
         _isDropdownOpen = false;
     }
-
-    private void ToggleHidden() => IsHiddenRoll = !IsHiddenRoll;
-
-    private Task RollProbe() => OnRoll.InvokeAsync((SelectedProbe, Modifier, IsHiddenRoll));
 }

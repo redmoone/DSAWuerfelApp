@@ -24,7 +24,7 @@
                             <img src="icons/eye-closed.svg" class="btn-icon" alt="Auge"/>
                         </button>
 
-                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Variant="Variant.Filled"
+                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Variant="Variant.Filled" 
                                        OnClick="Reset" title="Tisch leeren" Class="rounded-circle"
                                        Style="width: 48px; height: 48px; background-color: var(--pill-bg); color: var(--dsa-white); border: 2px solid var(--dsa-gold);"/>
                     </div>
@@ -85,7 +85,7 @@
         <div class="action-block">
             <h3 class="block-title">Probensuche & Ergebnis</h3>
             <div title="Suche nach Talenten oder Zaubern für automatisierte Proben">
-                <ProbenSearch OnRoll="HandleProbenRoll"/>
+                <ProbenSearch @bind-SelectedProbe="_selectedProbe"/>
             </div>
         </div>
 

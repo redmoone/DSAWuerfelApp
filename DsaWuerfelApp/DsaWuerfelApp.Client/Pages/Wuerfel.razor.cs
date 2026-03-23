@@ -14,16 +14,17 @@ public partial class Wuerfel : IDisposable
     private readonly List<int> _selectedDice = [];
 
     private Dice3D _dice3d = null!;
-
     private string? _error;
     private bool _isHiddenRoll;
     private RollSetResult? _last;
     private int _modifier;
     private RollHistory _rollHistory = null!;
+    private string? _selectedProbe;
 
     [Inject] public HttpClient Http { get; set; } = null!;
 
-    private bool CanRoll => _selectedDice.Count > 0 || _selectedAttributes.Count > 0;
+    private bool CanRoll => _selectedDice.Count > 0 || _selectedAttributes.Count > 0 ||
+                            !string.IsNullOrWhiteSpace(_selectedProbe);
 
     public void Dispose() => GameClient.OnRollResultReceived -= HandleServerRoll;
 
@@ -60,6 +61,7 @@ public partial class Wuerfel : IDisposable
     {
         _selectedDice.Clear();
         _selectedAttributes.Clear();
+        _selectedProbe = null;
         _last = null;
         _modifier = 0;
         await Update3DView();
@@ -79,12 +81,24 @@ public partial class Wuerfel : IDisposable
 
     private async Task ExecuteGlobalRoll()
     {
+        if (!string.IsNullOrWhiteSpace(_selectedProbe))
+        {
+            _selectedDice.Clear();
+            _selectedAttributes.Clear();
+            _selectedDice.AddRange([20, 20, 20]);
+            await Update3DView();
+            await Roll();
+            return;
+        }
+
         if (_selectedDice.Count == 0 && _selectedAttributes.Count > 0)
         {
             for (int i = 0; i < _selectedAttributes.Count; i++)
             {
                 _selectedDice.Add(20);
             }
+
+            await Update3DView();
         }
 
         await Roll();
@@ -150,18 +164,6 @@ public partial class Wuerfel : IDisposable
                     .Select(r => new Shared.SingleRoll { Sides = r.Sides, Value = r.Value }).ToList()
             });
         }
-    }
-
-    private async Task HandleProbenRoll((string Probe, int Modifier, bool IsHidden) args)
-    {
-        await Reset();
-        _modifier = args.Modifier;
-        _isHiddenRoll = args.IsHidden;
-
-        await AddDie(20);
-        await AddDie(20);
-        await AddDie(20);
-        await Roll();
     }
 
     private void ToggleAttribute(string shortName)
