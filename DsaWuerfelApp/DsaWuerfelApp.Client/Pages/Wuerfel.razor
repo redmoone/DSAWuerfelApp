@@ -12,6 +12,29 @@
         <div class="middle-section">
             <div class="results-bar">
                 <h3 class="results-title">Ergebnisse und Würfeln</h3>
+
+                <div class="global-actions-bar">
+                    <div class="left-actions">
+                        <RollEquation Result="_last"/>
+
+                        <ModifierPill @bind-Value="_modifier"/>
+
+                        <button class="dsa-btn-icon @(_isHiddenRoll ? "active" : "")" @onclick="ToggleHiddenRoll"
+                                title="@(_isHiddenRoll ? "Verdeckter Wurf" : "Öffentlicher Wurf")">
+                            <img src="icons/eye-closed.svg" class="btn-icon" alt="Auge"/>
+                        </button>
+
+                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Variant="Variant.Filled"
+                                       OnClick="Reset" title="Tisch leeren" Class="rounded-circle"
+                                       Style="width: 48px; height: 48px; background-color: var(--pill-bg); color: var(--dsa-white); border: 2px solid var(--dsa-gold);"/>
+                    </div>
+
+                    <div class="right-actions">
+                        <button class="dsa-btn" @onclick="ExecuteGlobalRoll" disabled="@(!CanRoll)">
+                            Würfeln
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div class="dice-3d-box" title="3D Ansicht der gefallenen Würfel">
@@ -23,52 +46,39 @@
     <div class="action-blocks-container">
         <div class="action-block">
             <h3 class="block-title">Eigenschaftsproben</h3>
-
             <div class="attribute-grid">
                 <div title="Mut Probe auswählen">
                     <AttributePill ShortName="MU" Value="14" IconPath="lion.svg"
-                                   SelectionCount='@GetAttributeCount("MU")'
-                                   OnClick="@(() => ToggleAttribute("MU"))"/>
+                                   SelectionCount='@GetAttributeCount("MU")' OnClick="@(() => ToggleAttribute("MU"))"/>
                 </div>
                 <div title="Klugheit Probe auswählen">
                     <AttributePill ShortName="KL" Value="13" IconPath="owl.svg"
-                                   SelectionCount='@GetAttributeCount("KL")'
-                                   OnClick="@(() => ToggleAttribute("KL"))"/>
+                                   SelectionCount='@GetAttributeCount("KL")' OnClick="@(() => ToggleAttribute("KL"))"/>
                 </div>
                 <div title="Intuition Probe auswählen">
                     <AttributePill ShortName="IN" Value="15" IconPath="eye.svg"
-                                   SelectionCount='@GetAttributeCount("IN")'
-                                   OnClick="@(() => ToggleAttribute("IN"))"/>
+                                   SelectionCount='@GetAttributeCount("IN")' OnClick="@(() => ToggleAttribute("IN"))"/>
                 </div>
                 <div title="Charisma Probe auswählen">
                     <AttributePill ShortName="CH" Value="12" IconPath="mask.svg"
-                                   SelectionCount='@GetAttributeCount("CH")'
-                                   OnClick="@(() => ToggleAttribute("CH"))"/>
+                                   SelectionCount='@GetAttributeCount("CH")' OnClick="@(() => ToggleAttribute("CH"))"/>
                 </div>
                 <div title="Fingerfertigkeit Probe auswählen">
                     <AttributePill ShortName="FF" Value="15" IconPath="hand.svg"
-                                   SelectionCount='@GetAttributeCount("FF")'
-                                   OnClick="@(() => ToggleAttribute("FF"))"/>
+                                   SelectionCount='@GetAttributeCount("FF")' OnClick="@(() => ToggleAttribute("FF"))"/>
                 </div>
                 <div title="Gewandtheit Probe auswählen">
                     <AttributePill ShortName="GE" Value="15" IconPath="cat.svg"
-                                   SelectionCount='@GetAttributeCount("GE")'
-                                   OnClick="@(() => ToggleAttribute("GE"))"/>
+                                   SelectionCount='@GetAttributeCount("GE")' OnClick="@(() => ToggleAttribute("GE"))"/>
                 </div>
                 <div title="Konstitution Probe auswählen">
                     <AttributePill ShortName="KO" Value="14" IconPath="shield.svg"
-                                   SelectionCount='@GetAttributeCount("KO")'
-                                   OnClick="@(() => ToggleAttribute("KO"))"/>
+                                   SelectionCount='@GetAttributeCount("KO")' OnClick="@(() => ToggleAttribute("KO"))"/>
                 </div>
                 <div title="Körperkraft Probe auswählen">
                     <AttributePill ShortName="KK" Value="13" IconPath="muscle.svg"
-                                   SelectionCount='@GetAttributeCount("KK")'
-                                   OnClick="@(() => ToggleAttribute("KK"))"/>
+                                   SelectionCount='@GetAttributeCount("KK")' OnClick="@(() => ToggleAttribute("KK"))"/>
                 </div>
-            </div>
-
-            <div class="attribute-modifier-wrapper" title="Erleichterung oder Erschwernis einstellen">
-                <ModifierPill @bind-Value="_modifier"/>
             </div>
         </div>
 
@@ -77,25 +87,12 @@
             <div title="Suche nach Talenten oder Zaubern für automatisierte Proben">
                 <ProbenSearch OnRoll="HandleProbenRoll"/>
             </div>
-            <div class="equation-wrapper" title="Zusammenfassung des letzten Wurfs">
-                <RollEquation Result="_last"/>
-            </div>
         </div>
 
         <div class="action-block">
             <h3 class="block-title">Freier Wurf</h3>
-            <div class="modifier-wrapper" title="Globalen Modifikator für den nächsten Wurf einstellen">
-                <ModifierPill @bind-Value="_modifier"/>
-            </div>
             <div title="Manuelle Auswahl der Würfel">
-                <DiceControls
-                    AvailableSides="_availableSides"
-                    Modifier="_diceModifier"
-                    HasSelection="_selectedDice.Count > 0"
-                    OnAddDie="AddDie"
-                    ModifierChanged="(val) => _diceModifier = val"
-                    OnRoll="Roll"
-                    OnReset="Reset"/>
+                <DiceControls AvailableSides="_availableSides" OnAddDie="AddDie"/>
             </div>
 
             @if (!string.IsNullOrWhiteSpace(_error))

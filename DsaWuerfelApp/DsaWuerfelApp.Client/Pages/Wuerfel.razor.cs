@@ -10,18 +10,20 @@ namespace DsaWuerfelApp.Client.Pages;
 public partial class Wuerfel : IDisposable
 {
     private readonly int[] _availableSides = [4, 6, 8, 10, 12, 20];
-
     private readonly List<string> _selectedAttributes = [];
-    private readonly List<int> _selectedDice = new();
+    private readonly List<int> _selectedDice = [];
+
     private Dice3D _dice3d = null!;
-    private int _diceModifier;
+
     private string? _error;
     private bool _isHiddenRoll;
     private RollSetResult? _last;
-
     private int _modifier;
     private RollHistory _rollHistory = null!;
+
     [Inject] public HttpClient Http { get; set; } = null!;
+
+    private bool CanRoll => _selectedDice.Count > 0 || _selectedAttributes.Count > 0;
 
     public void Dispose() => GameClient.OnRollResultReceived -= HandleServerRoll;
 
@@ -57,14 +59,13 @@ public partial class Wuerfel : IDisposable
     private async Task Reset()
     {
         _selectedDice.Clear();
+        _selectedAttributes.Clear();
         _last = null;
         _modifier = 0;
         await Update3DView();
     }
 
-    private void UpdateModifier(int newModifier) => _modifier = newModifier;
-
-    private void UpdateHiddenRollStatus(bool isHidden) => _isHiddenRoll = isHidden;
+    private void ToggleHiddenRoll() => _isHiddenRoll = !_isHiddenRoll;
 
     private async Task Update3DView() => await _dice3d.UpdateDice(_selectedDice);
 
@@ -74,6 +75,19 @@ public partial class Wuerfel : IDisposable
         _selectedDice.RemoveAt(index);
         _ = Update3DView();
         StateHasChanged();
+    }
+
+    private async Task ExecuteGlobalRoll()
+    {
+        if (_selectedDice.Count == 0 && _selectedAttributes.Count > 0)
+        {
+            for (int i = 0; i < _selectedAttributes.Count; i++)
+            {
+                _selectedDice.Add(20);
+            }
+        }
+
+        await Roll();
     }
 
     private async Task Roll()
@@ -87,6 +101,7 @@ public partial class Wuerfel : IDisposable
                 .GroupBy(sides => sides)
                 .Select(g => new DiceGroup(g.Key, g.Count()))
                 .ToList();
+
             if (GameClient.IsConnected && !string.IsNullOrEmpty(GameClient.CurrentSessionId))
             {
                 await RollOnlineAsync(diceGroups);
@@ -137,13 +152,6 @@ public partial class Wuerfel : IDisposable
         }
     }
 
-    private async Task RollAttribute(string attributeName, int value)
-    {
-        await Reset();
-        await AddDie(20);
-        await Roll();
-    }
-
     private async Task HandleProbenRoll((string Probe, int Modifier, bool IsHidden) args)
     {
         await Reset();
@@ -167,20 +175,14 @@ public partial class Wuerfel : IDisposable
         _selectedAttributes.Add(shortName);
     }
 
-    private bool ShouldResetAttribute(string shortName)
-    {
-        return GetAttributeCount(shortName) == 3 || _selectedAttributes.Count == 3;
-    }
+    private bool ShouldResetAttribute(string shortName) =>
+        GetAttributeCount(shortName) == 3 || _selectedAttributes.Count == 3;
 
-    private void ResetAttribute(string shortName)
-    {
+    private void ResetAttribute(string shortName) =>
         _selectedAttributes.RemoveAll(a => a == shortName);
-    }
 
-    private int GetAttributeCount(string shortName)
-    {
-        return _selectedAttributes.Count(a => a == shortName);
-    }
+    private int GetAttributeCount(string shortName) =>
+        _selectedAttributes.Count(a => a == shortName);
 
     public record DiceGroup(int Sides, int Count);
 
