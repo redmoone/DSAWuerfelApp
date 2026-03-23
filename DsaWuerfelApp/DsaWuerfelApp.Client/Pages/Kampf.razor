@@ -120,36 +120,3 @@
         </div>
     </div>
 </div>
-
-@code {
-    public string SearchTerm { get; set; } = string.Empty;
-    public string SelectedManeuver { get; set; } = string.Empty;
-
-    private bool _isDropdownOpen;
-
-    private readonly List<string> _availableManeuvers = new()
-    {
-        "Befreiungsschlag", "Entwaffnen", "Finte", "Gezielter Stich",
-        "Hammerschlag", "Meisterparade", "Niederwerfen", "Schildschlag",
-        "Sturmangriff", "Umreißen", "Wuchtschlag"
-    };
-
-    private IEnumerable<string> FilteredManeuvers =>
-        string.IsNullOrWhiteSpace(SearchTerm)
-            ? _availableManeuvers
-            : _availableManeuvers.Where(m => m.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
-
-    private void SelectManeuver(string maneuver)
-    {
-        SelectedManeuver = maneuver;
-        SearchTerm = maneuver;
-        _isDropdownOpen = false;
-    }
-
-    private async Task HandleBlur()
-    {
-        await Task.Delay(150);
-        _isDropdownOpen = false;
-    }
-
-}

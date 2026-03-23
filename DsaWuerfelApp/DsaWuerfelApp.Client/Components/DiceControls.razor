@@ -10,11 +10,3 @@
         </div>
     }
 </div>
-
-@code 
-{
-    [Parameter] public int[] AvailableSides { get; set; } = [];
-    [Parameter] public EventCallback<int> OnAddDie { get; set; }
-
-    private static string GetShapeClass(int sides) => "shape-d" + sides;
-}

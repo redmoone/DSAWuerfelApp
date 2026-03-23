@@ -1,7 +1,4 @@
 ﻿@page "/"
-@using DsaWuerfelApp.Client.Services
-@inject GameClient Game
-@inject NavigationManager Nav
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
     <MudPaper Class="pa-8" Elevation="4">
@@ -39,37 +36,3 @@
         }
     </MudPaper>
 </MudContainer>
-
-@code {
-    private string _userName = "";
-    private string _joinCode = "";
-    private string _error = "";
-
-    protected override async Task OnInitializedAsync()
-    {
-        await Game.StartAsync();
-    }
-
-    private async Task Join()
-    {
-        if (string.IsNullOrWhiteSpace(_userName)) { _error = "Bitte Namen eingeben"; return; }
-        
-        var success = await Game.JoinSession(_joinCode.ToUpper(), _userName);
-        if (success)
-        {
-            Nav.NavigateTo("/wuerfel");
-        }
-        else
-        {
-            _error = "Session nicht gefunden oder Code falsch.";
-        }
-    }
-
-    private async Task Create()
-    {
-        if (string.IsNullOrWhiteSpace(_userName)) { _error = "Bitte Namen eingeben"; return; }
-
-        var code = await Game.CreateSession(_userName);
-        Nav.NavigateTo("/wuerfel"); 
-    }
-}

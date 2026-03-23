@@ -1,6 +1,4 @@
-﻿@using DsaWuerfelApp.Client.Pages
-
-<div class="roll-equation-pill">
+﻿<div class="roll-equation-pill">
     @if (Result is null)
     {
         <span class="equation-text">Bereit zum Würfeln</span>
@@ -12,26 +10,3 @@
         <span class="equation-total">@Result.Total</span>
     }
 </div>
-
-@code {
-    [Parameter]
-    public Wuerfel.RollSetResult? Result { get; set; }
-
-    private string EquationText
-    {
-        get
-        {
-            if (Result is null || !Result.Rolls.Any()) 
-                return string.Empty;
-
-            var rolls = string.Join(" + ", Result.Rolls.Select(r => r.Value));
-
-            return Result.Modifier switch
-            {
-                > 0 => $"{rolls} + {Result.Modifier}",
-                < 0 => $"{rolls} - {Math.Abs(Result.Modifier)}",
-                _ => rolls
-            };
-        }
-    }
-}
