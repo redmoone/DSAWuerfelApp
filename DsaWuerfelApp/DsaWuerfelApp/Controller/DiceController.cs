@@ -1,4 +1,6 @@
 ﻿using DsaWuerfelApp.Services;
+using DsaWuerfelApp.Shared;
+
 using Microsoft.AspNetCore.Mvc;
 
 namespace DsaWuerfelApp.Controllers;

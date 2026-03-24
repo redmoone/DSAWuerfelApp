@@ -11,7 +11,7 @@
 
         <div class="middle-section">
             <div class="results-bar">
-                <h3 class="results-title">Ergebnisse & Würfeln</h3>
+                <h3 class="results-title">Ergebnisse und Würfeln</h3>
 
                 <div class="global-actions-bar">
                     <div class="left-actions">
@@ -46,44 +46,11 @@
     <div class="action-blocks-container">
         <div class="action-block">
             <h3 class="block-title">Eigenschaftsproben</h3>
-            <div class="attribute-grid">
-                <div title="Mut Probe auswählen">
-                    <AttributePill ShortName="MU" Value="14" IconPath="lion.svg"
-                                   SelectionCount='@GetAttributeCount("MU")' OnClick="@(() => ToggleAttribute("MU"))"/>
-                </div>
-                <div title="Klugheit Probe auswählen">
-                    <AttributePill ShortName="KL" Value="13" IconPath="owl.svg"
-                                   SelectionCount='@GetAttributeCount("KL")' OnClick="@(() => ToggleAttribute("KL"))"/>
-                </div>
-                <div title="Intuition Probe auswählen">
-                    <AttributePill ShortName="IN" Value="15" IconPath="eye.svg"
-                                   SelectionCount='@GetAttributeCount("IN")' OnClick="@(() => ToggleAttribute("IN"))"/>
-                </div>
-                <div title="Charisma Probe auswählen">
-                    <AttributePill ShortName="CH" Value="12" IconPath="mask.svg"
-                                   SelectionCount='@GetAttributeCount("CH")' OnClick="@(() => ToggleAttribute("CH"))"/>
-                </div>
-                <div title="Fingerfertigkeit Probe auswählen">
-                    <AttributePill ShortName="FF" Value="15" IconPath="hand.svg"
-                                   SelectionCount='@GetAttributeCount("FF")' OnClick="@(() => ToggleAttribute("FF"))"/>
-                </div>
-                <div title="Gewandtheit Probe auswählen">
-                    <AttributePill ShortName="GE" Value="15" IconPath="cat.svg"
-                                   SelectionCount='@GetAttributeCount("GE")' OnClick="@(() => ToggleAttribute("GE"))"/>
-                </div>
-                <div title="Konstitution Probe auswählen">
-                    <AttributePill ShortName="KO" Value="14" IconPath="shield.svg"
-                                   SelectionCount='@GetAttributeCount("KO")' OnClick="@(() => ToggleAttribute("KO"))"/>
-                </div>
-                <div title="Körperkraft Probe auswählen">
-                    <AttributePill ShortName="KK" Value="13" IconPath="muscle.svg"
-                                   SelectionCount='@GetAttributeCount("KK")' OnClick="@(() => ToggleAttribute("KK"))"/>
-                </div>
-            </div>
+            <AttributePanel SelectedAttributes="_selectedAttributes" OnAttributeToggled="ToggleAttribute"/>
         </div>
 
         <div class="action-block">
-            <h3 class="block-title">Probensuche</h3>
+            <h3 class="block-title">Probensuche & Ergebnis</h3>
             <div title="Suche nach Talenten oder Zaubern für automatisierte Proben">
                 <ProbenSearch @bind-SelectedProbe="_selectedProbe"/>
             </div>

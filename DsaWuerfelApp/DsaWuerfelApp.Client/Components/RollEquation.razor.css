@@ -7,22 +7,22 @@
     background-color: var(--pill-bg);
     border: 3px solid var(--dsa-gold);
     border-radius: 50px;
-    padding: 8px 24px;
+    padding: 4px 15px; /* Geändert von 8px 24px um an AttributePill anzupassen */
     color: var(--dsa-white);
-    box-shadow: 0 0 15px var(--dsa-gold-glow);
-    min-height: 56px;
+    box-shadow: 0 0 10px var(--dsa-gold-glow); /* Angepasst an AttributePill */
+    min-height: 45px; /* Geändert von 56px um an AttributePill anzupassen */
 
     user-select: none;
     pointer-events: none;
 }
 
 .equation-text {
-    font-size: 1.2rem;
+    font-size: 1rem; /* Leicht reduziert */
     opacity: 0.9;
 }
 
 .equation-equals {
-    font-size: 1.2rem;
+    font-size: 1rem; /* Leicht reduziert */
     color: var(--dsa-gold);
     font-weight: bold;
 }
