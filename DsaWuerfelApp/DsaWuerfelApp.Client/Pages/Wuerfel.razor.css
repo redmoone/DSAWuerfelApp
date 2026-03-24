@@ -28,7 +28,7 @@
     overflow-y: auto;
     background-color: rgba(165, 165, 165, 0.85);
     border-radius: 8px;
-    border: 1px solid var(--dsa-gold);
+    border: 2px solid var(--dsa-gold);
     color: black;
 }
 
@@ -42,7 +42,7 @@
     flex-shrink: 0;
     background-color: rgba(165, 165, 165, 0.85);
     border-radius: 8px;
-    border: 1px solid var(--dsa-gold);
+    border: 2px solid var(--dsa-gold);
     overflow: hidden;
 }
 
@@ -201,4 +201,9 @@
 .btn-icon {
     width: 24px;
     height: 24px;
+    filter: invert(1);
+}
+
+.dsa-btn-icon.active .btn-icon {
+    filter: none;
 }
