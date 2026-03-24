@@ -75,6 +75,13 @@ public partial class Wuerfel : IDisposable
     {
         if (index < 0 || index >= _selectedDice.Count) return;
         _selectedDice.RemoveAt(index);
+
+        // If we remove a d20 and we have attributes selected, also remove an attribute
+        if (_selectedDice.Count < _selectedAttributes.Count)
+        {
+            _selectedAttributes.RemoveAt(_selectedAttributes.Count - 1);
+        }
+
         _ = Update3DView();
         StateHasChanged();
     }
@@ -91,6 +98,7 @@ public partial class Wuerfel : IDisposable
             return;
         }
 
+        // If we have selected attributes but no dice added yet, add them now before rolling
         if (_selectedDice.Count == 0 && _selectedAttributes.Count > 0)
         {
             for (int i = 0; i < _selectedAttributes.Count; i++)
@@ -166,25 +174,81 @@ public partial class Wuerfel : IDisposable
         }
     }
 
-    private void ToggleAttribute(string shortName)
+    private async Task AddAttribute(string shortName)
     {
-        if (ShouldResetAttribute(shortName))
+        if (GetAttributeCount(shortName) >= 3)
         {
-            ResetAttribute(shortName);
+            _selectedAttributes.RemoveAll(a => a == shortName);
+
+            for (int i = 0; i < 3; i++)
+            {
+                var d20Index = _selectedDice.IndexOf(20);
+                if (d20Index != -1)
+                {
+                    _selectedDice.RemoveAt(d20Index);
+                }
+            }
+
+            await Update3DView();
             return;
         }
 
-        _selectedAttributes.Add(shortName);
+        if (_selectedAttributes.Count < 3)
+        {
+            if (_selectedAttributes.Count == 3)
+            {
+                var removedAttr = _selectedAttributes[0];
+                _selectedAttributes.RemoveAt(0);
+            }
+            else
+            {
+                _selectedDice.Add(20);
+            }
+
+            _selectedAttributes.Add(shortName);
+            await Update3DView();
+        }
+        else if (_selectedAttributes.Count == 3)
+        {
+            _selectedAttributes.RemoveAt(0);
+            _selectedAttributes.Add(shortName);
+        }
     }
 
-    private bool ShouldResetAttribute(string shortName) =>
-        GetAttributeCount(shortName) == 3 || _selectedAttributes.Count == 3;
+    private async Task RemoveAttribute(string shortName)
+    {
+        if (GetAttributeCount(shortName) == 0)
+        {
+            _selectedAttributes.Clear();
+            _selectedDice.RemoveAll(d => d == 20);
 
-    private void ResetAttribute(string shortName) =>
-        _selectedAttributes.RemoveAll(a => a == shortName);
+            _selectedAttributes.Add(shortName);
+            _selectedAttributes.Add(shortName);
+            _selectedAttributes.Add(shortName);
 
-    private int GetAttributeCount(string shortName) =>
-        _selectedAttributes.Count(a => a == shortName);
+            _selectedDice.Add(20);
+            _selectedDice.Add(20);
+            _selectedDice.Add(20);
+
+            await Update3DView();
+            return;
+        }
+
+        var index = _selectedAttributes.LastIndexOf(shortName);
+        if (index != -1)
+        {
+            _selectedAttributes.RemoveAt(index);
+            var d20Index = _selectedDice.LastIndexOf(20);
+            if (d20Index != -1)
+            {
+                _selectedDice.RemoveAt(d20Index);
+            }
+
+            await Update3DView();
+        }
+    }
+
+    private int GetAttributeCount(string shortName) => _selectedAttributes.Count(a => a == shortName);
 
     public record DiceGroup(int Sides, int Count);
 

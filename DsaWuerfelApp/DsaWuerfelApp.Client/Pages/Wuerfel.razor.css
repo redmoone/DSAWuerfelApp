@@ -24,7 +24,7 @@
 .history-area {
     flex: 1;
     min-width: 300px;
-    height: 42vh;
+    height: 40vh;
     overflow-y: auto;
     background-color: rgba(165, 165, 165, 0.85);
     border-radius: 8px;
@@ -39,10 +39,23 @@
 .middle-section {
     display: flex;
     flex-direction: row;
-    align-items: stretch;
+    align-items: flex-start;
     gap: 24px;
     width: 100%;
     flex-wrap: wrap;
+}
+
+.dice-3d-box {
+    width: 25%;
+    min-width: 200px;
+    height: 175px;
+    background-color: rgba(165, 165, 165, 0.85);
+    border-radius: 8px;
+    border: 2px solid var(--dsa-gold);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .results-bar {
@@ -60,19 +73,6 @@
     gap: 16px;
 }
 
-.dice-3d-box {
-    width: 25%;
-    min-width: 200px;
-    min-height: 175px;
-    flex-shrink: 0;
-    background-color: rgba(165, 165, 165, 0.85);
-    border-radius: 8px;
-    border: 2px solid var(--dsa-gold); 
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 
 .action-blocks-container {
     display: grid;
@@ -104,13 +104,6 @@
     color: var(--dsa-white);
 }
 
-.attribute-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    justify-content: center;
-    width: 100%;
-}
 
 .attribute-modifier-wrapper {
     display: flex;

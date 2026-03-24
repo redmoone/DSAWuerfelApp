@@ -1,0 +1,7 @@
+﻿.attribute-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    width: 100%;
+}

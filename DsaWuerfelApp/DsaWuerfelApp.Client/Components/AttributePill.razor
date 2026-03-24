@@ -1,5 +1,9 @@
-﻿<div class="attribute-pill @(SelectionCount > 0 ? "active" : "")" @onclick="OnClickCallback">
-    <div class="attribute-icon-container">
+﻿<div class="attribute-pill @(SelectionCount > 0 ? "active" : "")"
+     @onclick="HandleClick"
+     @oncontextmenu="HandleRightClick"
+     @oncontextmenu:preventDefault="true">
+
+<div class="attribute-icon-container">
         <img src="icons/@IconPath" alt="@ShortName" class="attribute-icon" />
         <span class="attribute-label">@ShortName</span>
     </div>
