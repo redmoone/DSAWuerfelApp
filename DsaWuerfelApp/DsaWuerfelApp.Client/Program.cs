@@ -12,7 +12,8 @@ builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddSingleton<GameClient>();
 builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
-
 builder.Services.AddMudServices();
+builder.Services.AddScoped<IHeroApiClient, HeroApiClient>();
+
 
 await builder.Build().RunAsync();

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Components.Web;
 
 namespace DsaWuerfelApp.Client.Components;
 
-public partial class AttributePill
+public partial class AttributePill : ComponentBase
 {
     [Parameter] public string ShortName { get; set; } = string.Empty;
     [Parameter] public int Value { get; set; }
@@ -11,6 +11,7 @@ public partial class AttributePill
     [Parameter] public int SelectionCount { get; set; }
     [Parameter] public EventCallback<string> OnIncrease { get; set; }
     [Parameter] public EventCallback<string> OnDecrease { get; set; }
+    [Parameter] public EventCallback OnClick { get; set; }
 
     private Task HandleClick(MouseEventArgs e)
     {

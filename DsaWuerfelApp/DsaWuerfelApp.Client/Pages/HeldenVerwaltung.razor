@@ -1,0 +1,29 @@
+﻿@page "/helden-verwaltung"
+
+<div class="helden-verwaltung-container">
+    <h2>Helden Verwaltung</h2>
+
+    <div class="upload-section">
+        <InputFile id="xml-upload" OnChange="HandleFileUploadAsync" accept=".xml"/>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+    {
+        <div class="alert-error">
+            @ErrorMessage
+        </div>
+    }
+
+    @if (Heroes.Any())
+    {
+        <div class="hero-list">
+            @foreach (var hero in Heroes)
+            {
+                <div class="hero-card">
+                    <span class="hero-name">@hero.Name</span>
+                    <button class="btn-delete" @onclick="() => RemoveHeroAsync(hero)">Entfernen</button>
+                </div>
+            }
+        </div>
+    }
+</div>
