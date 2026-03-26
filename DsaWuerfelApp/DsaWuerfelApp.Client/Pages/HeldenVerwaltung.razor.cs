@@ -9,24 +9,42 @@ namespace DsaWuerfelApp.Client.Pages;
 public partial class HeldenVerwaltung : ComponentBase
 {
     private const long MaxFileSize = 1024 * 1024 * 2;
+    private const int MaxAllowedFiles = 15;
 
     [Inject] private IHeroApiClient HeroApiClient { get; set; } = default!;
 
     protected List<Hero> Heroes { get; set; } = new();
+    protected IReadOnlyList<IBrowserFile> SelectedFiles { get; set; } = Array.Empty<IBrowserFile>();
+    protected Hero? SelectedHero { get; set; }
     protected string ErrorMessage { get; set; } = string.Empty;
+    protected string DragClass { get; set; } = string.Empty;
 
-    protected async Task HandleFileUploadAsync(InputFileChangeEventArgs e)
+    protected void LoadFiles(InputFileChangeEventArgs e)
+    {
+        Console.WriteLine($"LoadFiles fired. Count: {e.FileCount}");
+        ErrorMessage = string.Empty;
+        ClearDragClass();
+        SelectedFiles = e.GetMultipleFiles(MaxAllowedFiles);
+    }
+
+    protected async Task UploadFilesAsync()
     {
         ErrorMessage = string.Empty;
 
+        if (!SelectedFiles.Any())
+        {
+            return;
+        }
+
         try
         {
-            await using var stream = e.File.OpenReadStream(MaxFileSize);
-            await HeroApiClient.UploadHeroAsync(stream, e.File.Name);
+            var uploadedHeroes = await HeroApiClient.UploadHeroesAsync(SelectedFiles, MaxFileSize);
+            Heroes.AddRange(uploadedHeroes);
+            SelectedFiles = Array.Empty<IBrowserFile>();
         }
         catch (IOException)
         {
-            ErrorMessage = "Die Datei überschreitet die maximal erlaubte Größe von 2 MB.";
+            ErrorMessage = "Eine oder mehrere Dateien überschreiten die maximal erlaubte Größe von 2 MB.";
         }
         catch (HttpRequestException)
         {
@@ -44,10 +62,30 @@ public partial class HeldenVerwaltung : ComponentBase
         {
             await HeroApiClient.DeleteHeroAsync(hero.Id);
             Heroes.Remove(hero);
+
+            if (SelectedHero?.Id == hero.Id)
+            {
+                SelectedHero = null;
+            }
         }
         catch (HttpRequestException)
         {
             ErrorMessage = "Fehler beim Löschen des Helden auf dem Server.";
         }
+    }
+
+    protected void SelectHero(Hero hero)
+    {
+        SelectedHero = hero;
+    }
+
+    protected void SetDragClass()
+    {
+        DragClass = "drag-active";
+    }
+
+    protected void ClearDragClass()
+    {
+        DragClass = string.Empty;
     }
 }

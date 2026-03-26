@@ -4,7 +4,30 @@
     <h2>Helden Verwaltung</h2>
 
     <div class="upload-section">
-        <InputFile id="xml-upload" OnChange="HandleFileUploadAsync" accept=".xml"/>
+        <div class="drop-zone @DragClass"
+             @ondragenter="SetDragClass"
+             @ondragleave="ClearDragClass"
+             @ondragover="SetDragClass"
+             @ondragenter:preventDefault="true"
+             @ondragover:preventDefault="true"
+             @ondragleave:preventDefault="true">
+
+            <InputFile OnChange="LoadFiles" multiple accept=".xml" class="file-input"/>
+            <p class="drop-zone-text">XML-Dateien hierhin ziehen oder klicken zum Auswählen</p>
+        </div>
+
+        @if (SelectedFiles.Any())
+        {
+            <div class="selected-files">
+                <ul>
+                    @foreach (var file in SelectedFiles)
+                    {
+                        <li>@file.Name</li>
+                    }
+                </ul>
+                <button class="btn-upload" @onclick="UploadFilesAsync">Hochladen</button>
+            </div>
+        }
     </div>
 
     @if (!string.IsNullOrWhiteSpace(ErrorMessage))
@@ -19,9 +42,14 @@
         <div class="hero-list">
             @foreach (var hero in Heroes)
             {
-                <div class="hero-card">
+                <div class="hero-card @(hero == SelectedHero ? "selected" : "")"
+                     @onclick="() => SelectHero(hero)">
                     <span class="hero-name">@hero.Name</span>
-                    <button class="btn-delete" @onclick="() => RemoveHeroAsync(hero)">Entfernen</button>
+                    <button class="btn-delete"
+                            @onclick="() => RemoveHeroAsync(hero)"
+                            @onclick:stopPropagation>
+                        Entfernen
+                    </button>
                 </div>
             }
         </div>

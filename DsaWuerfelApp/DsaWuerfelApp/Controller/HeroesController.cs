@@ -1,5 +1,6 @@
 ﻿using DsaWuerfelApp.Core.Mappers;
 using DsaWuerfelApp.Services;
+using DsaWuerfelApp.Shared.Models;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,17 +19,40 @@ public class HeroesController : ControllerBase
 
     [HttpPost("upload")]
     [Consumes("multipart/form-data")]
-    public IActionResult UploadHero(IFormFile file)
+    public IActionResult UploadHeroes(List<IFormFile> files)
     {
-        if (file.Length == 0)
+        if (files == null || files.Count == 0)
         {
             return BadRequest();
         }
 
-        using var stream = file.OpenReadStream();
-        var dto = _xmlDeserializer.Deserialize(stream);
-        var hero = HeroMapper.Map(dto);
+        var createdHeroes = new List<Hero>();
 
+        foreach (var file in files)
+        {
+            if (file.Length == 0)
+            {
+                continue;
+            }
+
+            using var stream = file.OpenReadStream();
+            var dto = _xmlDeserializer.Deserialize(stream);
+            var hero = HeroMapper.Map(dto);
+
+            if (hero.Id == Guid.Empty)
+            {
+                hero.Id = Guid.NewGuid();
+            }
+
+            createdHeroes.Add(hero);
+        }
+
+        return Ok(createdHeroes);
+    }
+
+    [HttpDelete("{id:guid}")]
+    public IActionResult DeleteHero(Guid id)
+    {
         return Ok();
     }
 }

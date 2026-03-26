@@ -1,20 +1,16 @@
 using DsaWuerfelApp.Hubs;
 using DsaWuerfelApp.Services;
+
 using Microsoft.AspNetCore.StaticFiles;
 
 var builder = WebApplication.CreateBuilder(args);
-var provider = new FileExtensionContentTypeProvider
-{
-    Mappings =
-    {
-        [".glb"] = "model/gltf-binary"
-    }
-};
+var provider = new FileExtensionContentTypeProvider { Mappings = { [".glb"] = "model/gltf-binary" } };
 
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<SessionService>();
 builder.Services.AddSingleton<DiceService>();
+builder.Services.AddTransient<XmlHeroDeserializer>();
 
 builder.Services.AddCors(options =>
 {
@@ -44,15 +40,12 @@ app.UseHttpsRedirection();
 
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
-app.UseStaticFiles(new StaticFileOptions
-{
-    ContentTypeProvider = provider
-});
+app.UseStaticFiles(new StaticFileOptions { ContentTypeProvider = provider });
 
 app.UseRouting();
 
 app.MapControllers();
-app.MapHub<GameHub>("/gamehub"); 
-app.MapFallbackToFile("index.html"); 
+app.MapHub<GameHub>("/gamehub");
+app.MapFallbackToFile("index.html");
 
 app.Run();
