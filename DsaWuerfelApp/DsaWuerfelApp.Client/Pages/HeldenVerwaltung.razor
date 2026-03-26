@@ -5,14 +5,18 @@
 
     <div class="upload-section">
         <div class="drop-zone @DragClass"
+             @ref="DropZoneElement"
              @ondragenter="SetDragClass"
              @ondragleave="ClearDragClass"
              @ondragover="SetDragClass"
+             @onclick="OpenFilePickerAsync"
              @ondragenter:preventDefault="true"
              @ondragover:preventDefault="true"
              @ondragleave:preventDefault="true">
 
-            <InputFile OnChange="LoadFiles" multiple accept=".xml" class="file-input"/>
+            <div class="file-input-host">
+                <InputFile OnChange="LoadFiles" multiple accept=".xml" class="file-input"/>
+            </div>
             <p class="drop-zone-text">XML-Dateien hierhin ziehen oder klicken zum Auswählen</p>
         </div>
 

@@ -16,6 +16,7 @@
     border: 2px dashed #ccc;
     border-radius: 8px;
     transition: all 0.2s ease-in-out;
+    cursor: pointer;
 }
 
 .drop-zone.drag-active {
@@ -23,15 +24,22 @@
     border-color: #007bff;
 }
 
-.file-input {
+.file-input-host {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
     opacity: 0;
-    cursor: pointer;
-    z-index: 10;
+    pointer-events: none;
+}
+
+.file-input {
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .drop-zone-text {

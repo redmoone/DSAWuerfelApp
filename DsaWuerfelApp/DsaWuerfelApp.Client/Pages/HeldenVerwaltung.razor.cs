@@ -3,21 +3,44 @@ using DsaWuerfelApp.Shared.Models;
 
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.JSInterop;
 
 namespace DsaWuerfelApp.Client.Pages;
 
-public partial class HeldenVerwaltung : ComponentBase
+public partial class HeldenVerwaltung : ComponentBase, IAsyncDisposable
 {
     private const long MaxFileSize = 1024 * 1024 * 2;
     private const int MaxAllowedFiles = 15;
 
+    private IJSObjectReference? _dropZoneModule;
+    private bool _dropZoneRegistered;
+
     [Inject] private IHeroApiClient HeroApiClient { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
 
     protected List<Hero> Heroes { get; set; } = new();
     protected IReadOnlyList<IBrowserFile> SelectedFiles { get; set; } = Array.Empty<IBrowserFile>();
     protected Hero? SelectedHero { get; set; }
     protected string ErrorMessage { get; set; } = string.Empty;
     protected string DragClass { get; set; } = string.Empty;
+    protected ElementReference DropZoneElement { get; set; }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_dropZoneModule is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _dropZoneModule.InvokeVoidAsync("disposeHeroDropZone", DropZoneElement);
+            await _dropZoneModule.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
 
     protected void LoadFiles(InputFileChangeEventArgs e)
     {
@@ -87,5 +110,27 @@ public partial class HeldenVerwaltung : ComponentBase
     protected void ClearDragClass()
     {
         DragClass = string.Empty;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _dropZoneRegistered)
+        {
+            return;
+        }
+
+        _dropZoneModule = await JS.InvokeAsync<IJSObjectReference>("import", "./js/hero-dropzone.js");
+        await _dropZoneModule.InvokeVoidAsync("registerHeroDropZone", DropZoneElement);
+        _dropZoneRegistered = true;
+    }
+
+    protected async Task OpenFilePickerAsync()
+    {
+        if (_dropZoneModule is null)
+        {
+            return;
+        }
+
+        await _dropZoneModule.InvokeVoidAsync("openFilePicker", DropZoneElement);
     }
 }
