@@ -1,4 +1,6 @@
-﻿using DsaWuerfelApp.Client.Services;
+﻿using System.Xml;
+
+using DsaWuerfelApp.Client.Services;
 using DsaWuerfelApp.Shared.Models;
 
 using Microsoft.AspNetCore.Components;
@@ -42,12 +44,44 @@ public partial class HeldenVerwaltung : ComponentBase, IAsyncDisposable
         }
     }
 
-    protected void LoadFiles(InputFileChangeEventArgs e)
+    protected async Task LoadFiles(InputFileChangeEventArgs e)
     {
-        Console.WriteLine($"LoadFiles fired. Count: {e.FileCount}");
-        ErrorMessage = string.Empty;
         ClearDragClass();
-        SelectedFiles = e.GetMultipleFiles(MaxAllowedFiles);
+
+        var files = e.GetMultipleFiles(MaxAllowedFiles);
+        var validFiles = new List<IBrowserFile>();
+        var invalidExtensionFiles = new List<string>();
+        var invalidContentFiles = new List<string>();
+        var oversizedFiles = new List<string>();
+
+        foreach (var file in files)
+        {
+            if (!HasXmlExtension(file))
+            {
+                invalidExtensionFiles.Add(file.Name);
+                continue;
+            }
+
+            try
+            {
+                if (await HasValidXmlContentAsync(file))
+                {
+                    validFiles.Add(file);
+                }
+                else
+                {
+                    invalidContentFiles.Add(file.Name);
+                }
+            }
+            catch (IOException)
+            {
+                oversizedFiles.Add(file.Name);
+            }
+        }
+
+        SelectedFiles = validFiles;
+        ErrorMessage =
+            BuildValidationMessage(invalidExtensionFiles, invalidContentFiles, oversizedFiles, validFiles.Count);
     }
 
     protected async Task UploadFilesAsync()
@@ -132,5 +166,77 @@ public partial class HeldenVerwaltung : ComponentBase, IAsyncDisposable
         }
 
         await _dropZoneModule.InvokeVoidAsync("openFilePicker", DropZoneElement);
+    }
+
+    private static bool HasXmlExtension(IBrowserFile file)
+    {
+        return string.Equals(Path.GetExtension(file.Name), ".xml", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static async Task<bool> HasValidXmlContentAsync(IBrowserFile file)
+    {
+        var settings = new XmlReaderSettings
+        {
+            Async = true,
+            DtdProcessing = DtdProcessing.Prohibit,
+            XmlResolver = null,
+            MaxCharactersInDocument = MaxFileSize
+        };
+
+        using var stream = file.OpenReadStream(MaxFileSize);
+        try
+        {
+            using var reader = XmlReader.Create(stream, settings);
+
+            while (await reader.ReadAsync())
+            {
+                if (reader.NodeType == XmlNodeType.Element)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        catch (XmlException)
+        {
+            return false;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+    }
+
+    private static string BuildValidationMessage(
+        IReadOnlyCollection<string> invalidExtensionFiles,
+        IReadOnlyCollection<string> invalidContentFiles,
+        IReadOnlyCollection<string> oversizedFiles,
+        int validFileCount)
+    {
+        var messages = new List<string>();
+
+        if (invalidExtensionFiles.Count > 0)
+        {
+            messages.Add($".xml-Endung fehlt: {string.Join(", ", invalidExtensionFiles)}");
+        }
+
+        if (invalidContentFiles.Count > 0)
+        {
+            messages.Add($"kein gueltiges XML: {string.Join(", ", invalidContentFiles)}");
+        }
+
+        if (oversizedFiles.Count > 0)
+        {
+            messages.Add($"groesser als 2 MB: {string.Join(", ", oversizedFiles)}");
+        }
+
+        if (messages.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var prefix = validFileCount > 0 ? "Ignoriert" : "Keine Datei akzeptiert";
+        return $"{prefix}: {string.Join(" | ", messages)}";
     }
 }

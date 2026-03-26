@@ -1,61 +1,63 @@
 ﻿@page "/helden-verwaltung"
 
-<div class="helden-verwaltung-container">
-    <h2>Helden Verwaltung</h2>
+<div class="helden-verwaltung-page">
+    <div class="helden-verwaltung-container">
+        <h2 class="page-title">Helden Verwaltung</h2>
 
-    <div class="upload-section">
-        <div class="drop-zone @DragClass"
-             @ref="DropZoneElement"
-             @ondragenter="SetDragClass"
-             @ondragleave="ClearDragClass"
-             @ondragover="SetDragClass"
-             @onclick="OpenFilePickerAsync"
-             @ondragenter:preventDefault="true"
-             @ondragover:preventDefault="true"
-             @ondragleave:preventDefault="true">
+        <div class="upload-section">
+            <div class="drop-zone @DragClass"
+                 @ref="DropZoneElement"
+                 @ondragenter="SetDragClass"
+                 @ondragleave="ClearDragClass"
+                 @ondragover="SetDragClass"
+                 @onclick="OpenFilePickerAsync"
+                 @ondragenter:preventDefault="true"
+                 @ondragover:preventDefault="true"
+                 @ondragleave:preventDefault="true">
 
-            <div class="file-input-host">
-                <InputFile OnChange="LoadFiles" multiple accept=".xml" class="file-input"/>
+                <div class="file-input-host">
+                    <InputFile OnChange="LoadFiles" multiple accept=".xml" class="file-input"/>
+                </div>
+                <p class="drop-zone-text">XML-Dateien hierhin ziehen oder klicken zum Auswählen</p>
             </div>
-            <p class="drop-zone-text">XML-Dateien hierhin ziehen oder klicken zum Auswählen</p>
-        </div>
 
-        @if (SelectedFiles.Any())
-        {
-            <div class="selected-files">
-                <ul>
-                    @foreach (var file in SelectedFiles)
-                    {
-                        <li>@file.Name</li>
-                    }
-                </ul>
-                <button class="btn-upload" @onclick="UploadFilesAsync">Hochladen</button>
-            </div>
-        }
-    </div>
-
-    @if (!string.IsNullOrWhiteSpace(ErrorMessage))
-    {
-        <div class="alert-error">
-            @ErrorMessage
-        </div>
-    }
-
-    @if (Heroes.Any())
-    {
-        <div class="hero-list">
-            @foreach (var hero in Heroes)
+            @if (SelectedFiles.Any())
             {
-                <div class="hero-card @(hero == SelectedHero ? "selected" : "")"
-                     @onclick="() => SelectHero(hero)">
-                    <span class="hero-name">@hero.Name</span>
-                    <button class="btn-delete"
-                            @onclick="() => RemoveHeroAsync(hero)"
-                            @onclick:stopPropagation>
-                        Entfernen
-                    </button>
+                <div class="selected-files">
+                    <ul>
+                        @foreach (var file in SelectedFiles)
+                        {
+                            <li>@file.Name</li>
+                        }
+                    </ul>
+                    <button class="btn-upload" @onclick="UploadFilesAsync">Hochladen</button>
                 </div>
             }
         </div>
-    }
+
+        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+        {
+            <div class="alert-error">
+                @ErrorMessage
+            </div>
+        }
+
+        @if (Heroes.Any())
+        {
+            <div class="hero-list">
+                @foreach (var hero in Heroes)
+                {
+                    <div class="hero-card @(hero == SelectedHero ? "selected" : "")"
+                         @onclick="() => SelectHero(hero)">
+                        <span class="hero-name">@hero.Name</span>
+                        <button class="btn-delete"
+                                @onclick="() => RemoveHeroAsync(hero)"
+                                @onclick:stopPropagation>
+                            Entfernen
+                        </button>
+                    </div>
+                }
+            </div>
+        }
+    </div>
 </div>

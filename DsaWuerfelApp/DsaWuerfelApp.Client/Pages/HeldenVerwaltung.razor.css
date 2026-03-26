@@ -1,27 +1,57 @@
-﻿.helden-verwaltung-container {
-    max-width: 800px;
+.helden-verwaltung-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    color: var(--dsa-white);
+    background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('../images/background-wuerfel-scene.webp');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.helden-verwaltung-container {
+    max-width: 1100px;
+    width: 100%;
     margin: 0 auto;
-    padding: 1rem;
+    padding: 1.5rem;
+}
+
+.page-title {
+    margin: 0 0 1.5rem 0;
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--dsa-white);
+    border-bottom: 2px solid var(--dsa-gold);
+    padding-bottom: 0.75rem;
 }
 
 .upload-section {
     margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .drop-zone {
     position: relative;
     padding: 3rem;
     text-align: center;
-    background-color: #fafafa;
-    border: 2px dashed #ccc;
+    background-color: rgba(165, 165, 165, 0.85);
+    border: 2px dashed var(--dsa-gold);
     border-radius: 8px;
     transition: all 0.2s ease-in-out;
     cursor: pointer;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
 }
 
 .drop-zone.drag-active {
-    background-color: #e9ecef;
-    border-color: #007bff;
+    background-color: rgba(190, 190, 190, 0.92);
+    border-color: var(--dsa-gold);
+    box-shadow: 0 0 18px var(--dsa-gold-glow);
+    transform: translateY(-1px);
 }
 
 .file-input-host {
@@ -47,55 +77,72 @@
     z-index: 1;
     pointer-events: none;
     margin: 0;
-    color: #6c757d;
+    color: var(--dsa-blue);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
 .selected-files {
-    margin-top: 1rem;
     padding: 1rem;
-    background-color: #f8f9fa;
+    background-color: rgba(165, 165, 165, 0.85);
     border-radius: 8px;
-    border: 1px solid #e9ecef;
+    border: 2px solid var(--dsa-gold);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
 }
 
 .selected-files ul {
     list-style-type: none;
     padding: 0;
     margin: 0 0 1rem 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
 }
 
 .selected-files li {
-    padding: 0.25rem 0;
-    color: #495057;
+    padding: 0.5rem 0.9rem;
+    color: var(--dsa-white);
+    background-color: var(--pill-bg);
+    border: 2px solid var(--dsa-gold);
+    border-radius: 999px;
+    font-weight: 600;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
 }
 
 .btn-upload {
-    padding: 0.5rem 1rem;
-    background-color: #28a745;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
+    padding: 0.7rem 1.4rem;
+    background-color: var(--dsa-blue);
+    color: var(--dsa-gold);
+    border: 2px solid var(--dsa-gold);
+    border-radius: 999px;
     cursor: pointer;
-    font-weight: 600;
-    transition: background-color 0.2s ease-in-out;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 .btn-upload:hover {
-    background-color: #218838;
+    background-color: var(--dsa-gold);
+    color: var(--dsa-blue);
+    box-shadow: 0 0 10px var(--dsa-gold-glow);
 }
 
 .alert-error {
     padding: 1rem;
     margin-bottom: 1rem;
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+    background-color: rgba(106, 22, 38, 0.88);
+    color: #ffe3e8;
+    border: 2px solid #d67a8d;
     border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
 }
 
 .hero-list {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 0.75rem;
 }
 
@@ -103,41 +150,62 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 1rem;
     padding: 1rem;
-    background-color: #fff;
-    border: 1px solid #dee2e6;
+    background-color: rgba(165, 165, 165, 0.85);
+    border: 2px solid var(--dsa-gold);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
 }
 
 .hero-card:hover {
-    background-color: #f8f9fa;
-    border-color: #b3d7ff;
+    transform: translateY(-1px);
+    box-shadow: 0 0 12px var(--dsa-gold-glow);
 }
 
 .hero-card.selected {
-    background-color: #e6f2ff;
-    border-color: #007bff;
-    box-shadow: 0 0 0 1px #007bff;
+    background-color: rgba(190, 190, 190, 0.92);
+    border-color: var(--dsa-gold);
+    box-shadow: 0 0 16px var(--dsa-gold-glow);
 }
 
 .hero-name {
     font-weight: 600;
-    color: #212529;
+    color: var(--dsa-blue);
+    font-size: 1rem;
 }
 
 .btn-delete {
-    padding: 0.375rem 0.75rem;
-    background-color: #dc3545;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
+    padding: 0.45rem 0.95rem;
+    background-color: rgba(106, 22, 38, 0.9);
+    color: #ffe3e8;
+    border: 2px solid #d67a8d;
+    border-radius: 999px;
     cursor: pointer;
     font-size: 0.875rem;
-    transition: background-color 0.2s ease-in-out;
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: all 0.2s ease-in-out;
 }
 
 .btn-delete:hover {
-    background-color: #c82333;
+    background-color: #d67a8d;
+    color: #4e0d1a;
+}
+
+@media (max-width: 640px) {
+    .helden-verwaltung-container {
+        padding: 1rem;
+    }
+
+    .drop-zone {
+        padding: 2rem 1rem;
+    }
+
+    .hero-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }

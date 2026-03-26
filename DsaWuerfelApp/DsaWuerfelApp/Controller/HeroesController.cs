@@ -1,4 +1,7 @@
-﻿using DsaWuerfelApp.Core.Mappers;
+using System.Xml;
+
+using DsaWuerfelApp.Core.Dtos;
+using DsaWuerfelApp.Core.Mappers;
 using DsaWuerfelApp.Services;
 using DsaWuerfelApp.Shared.Models;
 
@@ -35,8 +38,27 @@ public class HeroesController : ControllerBase
                 continue;
             }
 
-            using var stream = file.OpenReadStream();
-            var dto = _xmlDeserializer.Deserialize(stream);
+            if (!string.Equals(Path.GetExtension(file.FileName), ".xml", StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest($"Datei '{file.FileName}' hat keine .xml-Endung.");
+            }
+
+            HeldenDatenDto dto;
+
+            try
+            {
+                using var stream = file.OpenReadStream();
+                dto = _xmlDeserializer.Deserialize(stream);
+            }
+            catch (InvalidOperationException)
+            {
+                return BadRequest($"Datei '{file.FileName}' enthaelt kein gueltiges XML.");
+            }
+            catch (XmlException)
+            {
+                return BadRequest($"Datei '{file.FileName}' enthaelt kein gueltiges XML.");
+            }
+
             var hero = HeroMapper.Map(dto);
 
             if (hero.Id == Guid.Empty)
