@@ -2,10 +2,12 @@ using System.Xml;
 
 using DsaWuerfelApp.Core.Dtos;
 using DsaWuerfelApp.Core.Mappers;
+using DsaWuerfelApp.Persistence;
 using DsaWuerfelApp.Services;
 using DsaWuerfelApp.Shared.Models;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace DsaWuerfelApp.Controller;
 
@@ -13,16 +15,29 @@ namespace DsaWuerfelApp.Controller;
 [Route("api/[controller]")]
 public class HeroesController : ControllerBase
 {
+    private readonly HeroDbContext _dbContext;
     private readonly XmlHeroDeserializer _xmlDeserializer;
 
-    public HeroesController(XmlHeroDeserializer xmlDeserializer)
+    public HeroesController(HeroDbContext dbContext, XmlHeroDeserializer xmlDeserializer)
     {
+        _dbContext = dbContext;
         _xmlDeserializer = xmlDeserializer;
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<List<Hero>>> GetHeroes()
+    {
+        var heroes = await _dbContext.Heroes
+            .AsNoTracking()
+            .OrderBy(hero => hero.Name)
+            .ToListAsync();
+
+        return Ok(heroes);
     }
 
     [HttpPost("upload")]
     [Consumes("multipart/form-data")]
-    public IActionResult UploadHeroes(List<IFormFile> files)
+    public async Task<IActionResult> UploadHeroes(List<IFormFile> files)
     {
         if (files == null || files.Count == 0)
         {
@@ -69,12 +84,29 @@ public class HeroesController : ControllerBase
             createdHeroes.Add(hero);
         }
 
+        if (createdHeroes.Count == 0)
+        {
+            return BadRequest("Keine gueltigen Dateien zum Import gefunden.");
+        }
+
+        await _dbContext.Heroes.AddRangeAsync(createdHeroes);
+        await _dbContext.SaveChangesAsync();
+
         return Ok(createdHeroes);
     }
 
     [HttpDelete("{id:guid}")]
-    public IActionResult DeleteHero(Guid id)
+    public async Task<IActionResult> DeleteHero(Guid id)
     {
+        var hero = await _dbContext.Heroes.FindAsync(id);
+        if (hero is null)
+        {
+            return NotFound();
+        }
+
+        _dbContext.Heroes.Remove(hero);
+        await _dbContext.SaveChangesAsync();
+
         return Ok();
     }
 }

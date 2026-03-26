@@ -9,6 +9,7 @@ namespace DsaWuerfelApp.Client.Services;
 
 public interface IHeroApiClient
 {
+    Task<List<Hero>> GetHeroesAsync();
     Task<List<Hero>> UploadHeroesAsync(IReadOnlyList<IBrowserFile> files, long maxFileSize);
     Task DeleteHeroAsync(Guid heroId);
 }
@@ -20,6 +21,12 @@ public class HeroApiClient : IHeroApiClient
     public HeroApiClient(HttpClient httpClient)
     {
         _httpClient = httpClient;
+    }
+
+    public async Task<List<Hero>> GetHeroesAsync()
+    {
+        var heroes = await _httpClient.GetFromJsonAsync<List<Hero>>("api/heroes");
+        return heroes ?? new List<Hero>();
     }
 
     public async Task<List<Hero>> UploadHeroesAsync(IReadOnlyList<IBrowserFile> files, long maxFileSize)

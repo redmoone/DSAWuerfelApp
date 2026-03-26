@@ -44,6 +44,18 @@ public partial class HeldenVerwaltung : ComponentBase, IAsyncDisposable
         }
     }
 
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Heroes = await HeroApiClient.GetHeroesAsync();
+        }
+        catch (HttpRequestException)
+        {
+            ErrorMessage = "Gespeicherte Helden konnten nicht geladen werden.";
+        }
+    }
+
     protected async Task LoadFiles(InputFileChangeEventArgs e)
     {
         ClearDragClass();
@@ -97,6 +109,7 @@ public partial class HeldenVerwaltung : ComponentBase, IAsyncDisposable
         {
             var uploadedHeroes = await HeroApiClient.UploadHeroesAsync(SelectedFiles, MaxFileSize);
             Heroes.AddRange(uploadedHeroes);
+            Heroes = Heroes.OrderBy(hero => hero.Name).ToList();
             SelectedFiles = Array.Empty<IBrowserFile>();
         }
         catch (IOException)

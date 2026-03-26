@@ -25,6 +25,9 @@ _ReSharper.Caches/
 artifacts/
 tmp/
 temp/
+*.db
+*.db-shm
+*.db-wal
 
 # VS / MSBuild
 .vs/
