@@ -2,36 +2,49 @@
 @using DsaWuerfelApp.Client.Services
 @implements IDisposable
 
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">DsaWuerfelApp</a>
+<div class="nav-shell">
+    <input id="nav-expanded" type="checkbox" title="Navigation umschalten" class="nav-toggle"/>
+
+    <div class="nav-panel">
+        <div class="nav-header">
+            <label for="nav-expanded" class="nav-expand-button" aria-label="Navigation umschalten">
+                <span></span>
+                <span></span>
+                <span></span>
+            </label>
+        </div>
+
         @if (!string.IsNullOrWhiteSpace(ActiveHeroName))
         {
-            <NavLink class="active-hero-nav" href="helden-verwaltung">@ActiveHeroName</NavLink>
+            <NavLink class="nav-link active-hero-pill" href="helden-verwaltung" ActiveClass="active-hero-pill-active"
+                     title="@ActiveHeroName">
+                <img src="icons/DasSchwarzeAuge.svg" class="nav-icon" alt=""/>
+                <span class="nav-text active-hero-name">@ActiveHeroName</span>
+            </NavLink>
         }
-    </div>
-</div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
-
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
+        <nav class="nav-links">
             <NavLink class="nav-link" href="wuerfel">
-                <span class="bi bi-dice-5-fill-nav-menu" aria-hidden="true"></span> Würfeln
+                <img src="icons/dice.svg" class="nav-icon" alt=""/>
+                <span class="nav-text">Würfeln</span>
             </NavLink>
-        </div>
-        <div class="nav-item px-3">
+
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <img src="icons/third-party.svg" class="nav-icon" alt=""/>
+                <span class="nav-text">Gamesessions</span>
+            </NavLink>
+
             <NavLink class="nav-link" href="kampf">
-                <span class="bi bi-shield-fill-nav-menu" aria-hidden="true"></span> Kampf
+                <img src="icons/sword.svg" class="nav-icon" alt=""/>
+                <span class="nav-text">Kampf</span>
             </NavLink>
-        </div>
-        <div class="nav-item px-3">
+
             <NavLink class="nav-link" href="helden-verwaltung">
-                <span class="bi bi-person-lines-fill" aria-hidden="true"></span> Heldenverwaltung
+                <img src="icons/file.svg" class="nav-icon" alt=""/>
+                <span class="nav-text">Heldenverwaltung</span>
             </NavLink>
-        </div>
-    </nav>
+        </nav>
+    </div>
 </div>
 
 @code {
@@ -52,5 +65,4 @@
     {
         InvokeAsync(StateHasChanged);
     }
-
 }
