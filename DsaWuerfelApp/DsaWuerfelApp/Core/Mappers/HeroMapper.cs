@@ -25,7 +25,21 @@ public static class HeroMapper
                 { "KO", dto.Eigenschaften.Konstitution.Akt },
                 { "KK", dto.Eigenschaften.Koerperkraft.Akt }
             },
-            Talente = dto.Talentliste.ToDictionary(t => t.Name, t => t.Wert)
+            Talente = dto.Talentliste.ToDictionary(
+                t => t.Name,
+                t => new TalentData { Wert = t.Wert, Probe = NormalizeProbe(t.Probe) })
         };
+    }
+
+    private static string NormalizeProbe(string? probe)
+    {
+        if (string.IsNullOrWhiteSpace(probe))
+        {
+            return string.Empty;
+        }
+
+        return string.Join('/',
+            probe.Split('/', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                .Select(part => part.ToUpperInvariant()));
     }
 }

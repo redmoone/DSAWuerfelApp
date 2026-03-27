@@ -1,19 +1,13 @@
-﻿using Microsoft.AspNetCore.SignalR.Client;
+﻿using DsaWuerfelApp.Shared;
+
 using Microsoft.AspNetCore.Components;
-using DsaWuerfelApp.Shared;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace DsaWuerfelApp.Client.Services;
 
 public class GameClient : IAsyncDisposable
 {
     private readonly HubConnection _hub;
-    
-    public event Action<string>? OnPlayerJoined;
-    public event Action<RollResult>? OnRollResultReceived;
-
-    public string? CurrentSessionId { get; private set; }
-    public string? MyUserName { get; private set; }
-    public bool IsConnected => _hub.State == HubConnectionState.Connected;
 
     public GameClient(NavigationManager nav)
     {
@@ -22,7 +16,7 @@ public class GameClient : IAsyncDisposable
             .WithAutomaticReconnect()
             .Build();
 
-        
+
         _hub.On<string>("PlayerJoined", (name) =>
         {
             OnPlayerJoined?.Invoke(name);
@@ -32,7 +26,26 @@ public class GameClient : IAsyncDisposable
         {
             OnRollResultReceived?.Invoke(result);
         });
+
+        _hub.On<TalentProbeResult>("ShowTalentProbeResult", (result) =>
+        {
+            OnTalentProbeResultReceived?.Invoke(result);
+        });
     }
+
+    public string? CurrentSessionId { get; private set; }
+    public string? MyUserName { get; private set; }
+    public bool IsConnected => _hub.State == HubConnectionState.Connected;
+
+    public async ValueTask DisposeAsync()
+    {
+        await _hub.DisposeAsync();
+        GC.SuppressFinalize(this);
+    }
+
+    public event Action<string>? OnPlayerJoined;
+    public event Action<RollResult>? OnRollResultReceived;
+    public event Action<TalentProbeResult>? OnTalentProbeResultReceived;
 
     public async Task StartAsync()
     {
@@ -57,18 +70,12 @@ public class GameClient : IAsyncDisposable
 
     public async Task RollDice(List<DiceGroup> dice, int modifier, string sessionId)
     {
-        var req = new RollRequest 
-        { 
-            Dice = dice, 
-            Modifier = modifier, 
-            SessionId = sessionId 
-        };
+        var req = new RollRequest { Dice = dice, Modifier = modifier, SessionId = sessionId };
         await _hub.InvokeAsync("RollDice", req);
     }
 
-    public async ValueTask DisposeAsync()
+    public async Task RollTalentProbe(TalentProbeRequest request)
     {
-        await _hub.DisposeAsync();
-        GC.SuppressFinalize(this);
+        await _hub.InvokeAsync("RollTalentProbe", request);
     }
 }

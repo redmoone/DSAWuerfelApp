@@ -20,16 +20,25 @@ public class HeroDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        var dictionaryConverter = new ValueConverter<Dictionary<string, int>, string>(
+        var attributeDictionaryConverter = new ValueConverter<Dictionary<string, int>, string>(
             value => JsonSerializer.Serialize(value, JsonOptions),
             value => JsonSerializer.Deserialize<Dictionary<string, int>>(value, JsonOptions) ??
                      new Dictionary<string, int>());
 
-        var dictionaryComparer = new ValueComparer<Dictionary<string, int>>(
+        var attributeDictionaryComparer = new ValueComparer<Dictionary<string, int>>(
             (left, right) => SerializeDictionary(left) == SerializeDictionary(right),
             value => SerializeDictionary(value).GetHashCode(),
             value => JsonSerializer.Deserialize<Dictionary<string, int>>(SerializeDictionary(value), JsonOptions) ??
                      new Dictionary<string, int>());
+
+        var talentDictionaryConverter = new ValueConverter<Dictionary<string, TalentData>, string>(
+            value => SerializeTalentDictionary(value),
+            value => DeserializeTalentDictionary(value));
+
+        var talentDictionaryComparer = new ValueComparer<Dictionary<string, TalentData>>(
+            (left, right) => SerializeTalentDictionary(left) == SerializeTalentDictionary(right),
+            value => SerializeTalentDictionary(value).GetHashCode(),
+            value => DeserializeTalentDictionary(SerializeTalentDictionary(value)));
 
         modelBuilder.Entity<Hero>(entity =>
         {
@@ -39,17 +48,55 @@ public class HeroDbContext : DbContext
             entity.Property(hero => hero.Geschlecht).HasMaxLength(100);
 
             entity.Property(hero => hero.Eigenschaften)
-                .HasConversion(dictionaryConverter)
-                .Metadata.SetValueComparer(dictionaryComparer);
+                .HasConversion(attributeDictionaryConverter)
+                .Metadata.SetValueComparer(attributeDictionaryComparer);
 
             entity.Property(hero => hero.Talente)
-                .HasConversion(dictionaryConverter)
-                .Metadata.SetValueComparer(dictionaryComparer);
+                .HasConversion(talentDictionaryConverter)
+                .Metadata.SetValueComparer(talentDictionaryComparer);
         });
     }
 
     private static string SerializeDictionary(Dictionary<string, int>? value)
     {
         return JsonSerializer.Serialize(value ?? new Dictionary<string, int>(), JsonOptions);
+    }
+
+    private static string SerializeTalentDictionary(Dictionary<string, TalentData>? value)
+    {
+        return JsonSerializer.Serialize(value ?? new Dictionary<string, TalentData>(), JsonOptions);
+    }
+
+    private static Dictionary<string, TalentData> DeserializeTalentDictionary(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return new Dictionary<string, TalentData>();
+        }
+
+        using var document = JsonDocument.Parse(value);
+        if (document.RootElement.ValueKind != JsonValueKind.Object)
+        {
+            return new Dictionary<string, TalentData>();
+        }
+
+        var talents = new Dictionary<string, TalentData>(StringComparer.Ordinal);
+        foreach (var property in document.RootElement.EnumerateObject())
+        {
+            talents[property.Name] = DeserializeTalent(property.Value);
+        }
+
+        return talents;
+    }
+
+    private static TalentData DeserializeTalent(JsonElement element)
+    {
+        return element.ValueKind switch
+        {
+            JsonValueKind.Number => new TalentData { Wert = element.GetInt32() },
+            JsonValueKind.Object => JsonSerializer.Deserialize<TalentData>(element.GetRawText(), JsonOptions) ??
+                                    new TalentData(),
+            _ => new TalentData()
+        };
     }
 }

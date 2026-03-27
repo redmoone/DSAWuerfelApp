@@ -13,11 +13,13 @@ public partial class RollHistory : IDisposable
     public void Dispose()
     {
         GameClient.OnRollResultReceived -= HandleRollResult;
+        GameClient.OnTalentProbeResultReceived -= HandleTalentProbeResult;
     }
 
     protected override void OnInitialized()
     {
         GameClient.OnRollResultReceived += HandleRollResult;
+        GameClient.OnTalentProbeResultReceived += HandleTalentProbeResult;
     }
 
     private void HandleRollResult(RollResult result)
@@ -35,5 +37,17 @@ public partial class RollHistory : IDisposable
     public void AddLocalRoll(RollResult result)
     {
         AddEntry(result);
+    }
+
+    private void HandleTalentProbeResult(TalentProbeResult result)
+    {
+        AddEntry(new RollResult
+        {
+            PlayerName = result.PlayerName,
+            Timestamp = result.Timestamp,
+            Rolls = result.Rolls,
+            Modifier = 0,
+            TotalSum = result.Rolls.Sum(roll => roll.Value)
+        });
     }
 }

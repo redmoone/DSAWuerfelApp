@@ -12,6 +12,7 @@ builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<SessionService>();
 builder.Services.AddSingleton<DiceService>();
+builder.Services.AddSingleton<TalentProbeService>();
 builder.Services.AddTransient<XmlHeroDeserializer>();
 builder.Services.AddDbContext<HeroDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("HeroesDb")));

@@ -26,9 +26,9 @@ public partial class Wuerfel : IDisposable
     private static readonly IReadOnlyList<string> DefaultProben =
     [
         "Klettern (MU/GE/KK)",
-        "Körperbeherrschung (GE/GE/KO)",
-        "Sinnesschärfe (KL/IN/IN)",
-        "Überreden (MU/IN/CH)",
+        "Koerperbeherrschung (GE/GE/KO)",
+        "Sinnesschaerfe (KL/IN/IN)",
+        "Ueberreden (MU/IN/CH)",
         "Verbergen (MU/IN/GE)"
     ];
 
@@ -41,6 +41,7 @@ public partial class Wuerfel : IDisposable
     private string? _error;
     private bool _isHiddenRoll;
     private RollSetResult? _last;
+    private TalentProbeResult? _lastProbeEvaluation;
     private int _modifier;
     private RollHistory _rollHistory = null!;
     private string? _selectedProbe;
@@ -56,7 +57,7 @@ public partial class Wuerfel : IDisposable
 
     private IReadOnlyList<string> AvailableProben =>
         _activeHero is { Talente.Count: > 0 }
-            ? _activeHero.Talente.Keys.OrderBy(name => name).ToList()
+            ? BuildTalentProben(_activeHero)
             : DefaultProben;
 
     private string ProbePlaceholder =>
@@ -65,12 +66,14 @@ public partial class Wuerfel : IDisposable
     public void Dispose()
     {
         GameClient.OnRollResultReceived -= HandleServerRoll;
+        GameClient.OnTalentProbeResultReceived -= HandleTalentProbeResult;
         ActiveHeroState.Changed -= HandleActiveHeroChanged;
     }
 
     protected override void OnInitialized()
     {
         GameClient.OnRollResultReceived += HandleServerRoll;
+        GameClient.OnTalentProbeResultReceived += HandleTalentProbeResult;
     }
 
     protected override async Task OnInitializedAsync()
@@ -82,13 +85,8 @@ public partial class Wuerfel : IDisposable
 
     private async void HandleServerRoll(RollResult result)
     {
-        _last = new RollSetResult(
-            result.Rolls.GroupBy(r => r.Sides).Select(g => new DiceGroup(g.Key, g.Count())).ToArray(),
-            result.Modifier,
-            result.Rolls.Select(r => new SingleRoll(r.Sides, r.Value)).ToArray(),
-            result.TotalSum - result.Modifier,
-            result.TotalSum
-        );
+        _lastProbeEvaluation = null;
+        _last = ToRollSetResult(result);
 
         await InvokeAsync(async () =>
         {
@@ -99,6 +97,11 @@ public partial class Wuerfel : IDisposable
 
             StateHasChanged();
         });
+    }
+
+    private async void HandleTalentProbeResult(TalentProbeResult result)
+    {
+        await ApplyTalentProbeResultAsync(result, addLocalHistory: false);
     }
 
     private async Task AddDie(int sides)
@@ -113,6 +116,7 @@ public partial class Wuerfel : IDisposable
         _selectedAttributes.Clear();
         _selectedProbe = null;
         _last = null;
+        _lastProbeEvaluation = null;
         _modifier = 0;
         await Update3DView();
     }
@@ -139,13 +143,11 @@ public partial class Wuerfel : IDisposable
     {
         if (!string.IsNullOrWhiteSpace(_selectedProbe))
         {
-            _selectedDice.Clear();
-            _selectedAttributes.Clear();
-            _selectedDice.AddRange([20, 20, 20]);
-            await Update3DView();
-            await Roll();
+            await ExecuteTalentProbeAsync();
             return;
         }
+
+        _lastProbeEvaluation = null;
 
         if (_selectedDice.Count == 0 && _selectedAttributes.Count > 0)
         {
@@ -200,7 +202,7 @@ public partial class Wuerfel : IDisposable
 
         if (!resp.IsSuccessStatusCode)
         {
-            _error = "Fehler beim Würfeln";
+            _error = "Fehler beim Wuerfeln";
             return;
         }
 
@@ -220,6 +222,128 @@ public partial class Wuerfel : IDisposable
                     .Select(r => new Shared.SingleRoll { Sides = r.Sides, Value = r.Value }).ToList()
             });
         }
+    }
+
+    private async Task ExecuteTalentProbeAsync()
+    {
+        var request = CreateTalentProbeRequest();
+        if (request is null)
+        {
+            return;
+        }
+
+        _error = null;
+        _lastProbeEvaluation = null;
+        _selectedDice.Clear();
+        _selectedAttributes.Clear();
+        _selectedDice.AddRange([20, 20, 20]);
+        await Update3DView();
+
+        try
+        {
+            if (GameClient.IsConnected && !string.IsNullOrEmpty(GameClient.CurrentSessionId))
+            {
+                request.SessionId = GameClient.CurrentSessionId!;
+                await GameClient.RollTalentProbe(request);
+            }
+            else
+            {
+                await RollTalentProbeOfflineAsync(request);
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private TalentProbeRequest? CreateTalentProbeRequest()
+    {
+        if (_activeHero is null)
+        {
+            _error = "Fuer eine Talentprobe muss ein aktiver Held gewaehlt sein.";
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(_selectedProbe))
+        {
+            _error = "Bitte zuerst ein Talent aus der Probensuche waehlen.";
+            return null;
+        }
+
+        foreach (var talentEntry in _activeHero.Talente)
+        {
+            if (!string.Equals(BuildTalentProbeLabel(talentEntry.Key, talentEntry.Value), _selectedProbe,
+                    StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var probeAttributes = ParseProbeAttributes(talentEntry.Value.Probe);
+            if (probeAttributes.Length != 3)
+            {
+                _error = $"Fuer {talentEntry.Key} ist keine vollstaendige Talentprobe hinterlegt.";
+                return null;
+            }
+
+            return new TalentProbeRequest
+            {
+                TalentName = talentEntry.Key,
+                TalentValue = talentEntry.Value.Wert,
+                Probe = string.Join('/', probeAttributes),
+                AttributeValues = CurrentAttributeValues.ToDictionary(entry => entry.Key, entry => entry.Value),
+                Modifier = _modifier
+            };
+        }
+
+        _error = "Die gewaehlte Probe konnte nicht aufgeloest werden.";
+        return null;
+    }
+
+    private async Task RollTalentProbeOfflineAsync(TalentProbeRequest request)
+    {
+        var response = await Http.PostAsJsonAsync("api/dice/talentprobe", request);
+        if (!response.IsSuccessStatusCode)
+        {
+            _error = "Fehler bei der Talentprobe";
+            return;
+        }
+
+        var result = await response.Content.ReadFromJsonAsync<TalentProbeResult>();
+        if (result is null)
+        {
+            _error = "Die Talentprobe konnte nicht gelesen werden.";
+            return;
+        }
+
+        result.PlayerName = "Du (Offline)";
+        await ApplyTalentProbeResultAsync(result, addLocalHistory: true);
+    }
+
+    private async Task ApplyTalentProbeResultAsync(TalentProbeResult result, bool addLocalHistory)
+    {
+        _lastProbeEvaluation = result;
+        _last = ToRollSetResult(result);
+
+        if (_dice3d != null)
+        {
+            await _dice3d.Roll(result.Rolls.Select(roll => roll.Value).ToArray());
+        }
+
+        if (addLocalHistory)
+        {
+            _rollHistory.AddLocalRoll(new RollResult
+            {
+                PlayerName = result.PlayerName,
+                Timestamp = result.Timestamp,
+                Rolls = result.Rolls.Select(roll => new Shared.SingleRoll { Sides = roll.Sides, Value = roll.Value })
+                    .ToList(),
+                Modifier = 0,
+                TotalSum = result.Rolls.Sum(roll => roll.Value)
+            });
+        }
+
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task AddAttribute(string shortName)
@@ -297,9 +421,74 @@ public partial class Wuerfel : IDisposable
 
     private int GetAttributeCount(string shortName) => _selectedAttributes.Count(a => a == shortName);
 
+    private static IReadOnlyList<string> BuildTalentProben(Hero hero)
+    {
+        return hero.Talente
+            .OrderBy(entry => entry.Key)
+            .Select(entry => BuildTalentProbeLabel(entry.Key, entry.Value))
+            .ToList();
+    }
+
+    private static string BuildTalentProbeLabel(string talentName, TalentData talent)
+    {
+        return string.IsNullOrWhiteSpace(talent.Probe) ? talentName : $"{talentName} ({talent.Probe})";
+    }
+
+    private static string[] ParseProbeAttributes(string? probe)
+    {
+        if (string.IsNullOrWhiteSpace(probe))
+        {
+            return [];
+        }
+
+        return probe.Split('/', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Select(part => part.ToUpperInvariant())
+            .ToArray();
+    }
+
+    private static RollSetResult ToRollSetResult(RollResult result)
+    {
+        return new RollSetResult(
+            result.Rolls.GroupBy(r => r.Sides).Select(g => new DiceGroup(g.Key, g.Count())).ToArray(),
+            result.Modifier,
+            result.Rolls.Select(r => new SingleRoll(r.Sides, r.Value)).ToArray(),
+            result.TotalSum - result.Modifier,
+            result.TotalSum);
+    }
+
+    private static RollSetResult ToRollSetResult(TalentProbeResult result)
+    {
+        var rolls = result.Rolls.Select(roll => new SingleRoll(roll.Sides, roll.Value)).ToArray();
+        var sum = rolls.Sum(roll => roll.Value);
+
+        return new RollSetResult(
+            rolls.GroupBy(roll => roll.Sides).Select(group => new DiceGroup(group.Key, group.Count())).ToArray(),
+            0,
+            rolls,
+            sum,
+            sum);
+    }
+
+    private static string FormatModifier(int modifier)
+    {
+        return modifier > 0 ? $"+{modifier}" : modifier.ToString();
+    }
+
+    private static string GetProbeStatusText(TalentProbeResult result)
+    {
+        return result.Status switch
+        {
+            TalentProbeStatus.Patzer => "Patzer",
+            TalentProbeStatus.GluecklicherWurf => "Gluecklicher Wurf",
+            TalentProbeStatus.Bestanden => $"Bestanden um {result.Margin}",
+            _ => $"Misslungen um {result.Margin}"
+        };
+    }
+
     private void HandleActiveHeroChanged()
     {
         _activeHero = ActiveHeroState.CurrentHero;
+        _lastProbeEvaluation = null;
         InvokeAsync(StateHasChanged);
     }
 

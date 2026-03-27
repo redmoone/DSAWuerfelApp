@@ -10,7 +10,13 @@ namespace DsaWuerfelApp.Controllers;
 public class DiceController : ControllerBase
 {
     private readonly DiceService _dice;
-    public DiceController(DiceService dice) => _dice = dice;
+    private readonly TalentProbeService _talentProbes;
+
+    public DiceController(DiceService dice, TalentProbeService talentProbes)
+    {
+        _dice = dice;
+        _talentProbes = talentProbes;
+    }
 
     [HttpPost("rollset")]
     public ActionResult RollSet([FromBody] RollSetRequest req)
@@ -18,6 +24,20 @@ public class DiceController : ControllerBase
         try
         {
             var result = _dice.RollSet(req.Dice, req.Modifier);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("talentprobe")]
+    public ActionResult<TalentProbeResult> RollTalentProbe([FromBody] TalentProbeRequest req)
+    {
+        try
+        {
+            var result = _talentProbes.RollTalentProbe(req);
             return Ok(result);
         }
         catch (Exception ex)

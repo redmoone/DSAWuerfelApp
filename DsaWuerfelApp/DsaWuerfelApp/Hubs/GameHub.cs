@@ -5,7 +5,8 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace DsaWuerfelApp.Hubs;
 
-public class GameHub(SessionService sessionService, DiceService diceService) : Hub
+public class GameHub(SessionService sessionService, DiceService diceService, TalentProbeService talentProbeService)
+    : Hub
 {
     public async Task<string> CreateSession(string userId, string userName)
     {
@@ -41,5 +42,19 @@ public class GameHub(SessionService sessionService, DiceService diceService) : H
         session.History.Add(result);
 
         await Clients.Group(request.SessionId).SendAsync("ShowRollResult", result);
+    }
+
+    public async Task RollTalentProbe(TalentProbeRequest request)
+    {
+        var session = sessionService.GetById(request.SessionId);
+        if (session == null) return;
+
+        var player = session.Players.FirstOrDefault(p => p.ConnectionId == Context.ConnectionId);
+        var playerName = player?.Name ?? "Jemand";
+
+        var result = talentProbeService.RollTalentProbe(request, playerName);
+        session.History.Add(TalentProbeService.ToRollResult(result));
+
+        await Clients.Group(request.SessionId).SendAsync("ShowTalentProbeResult", result);
     }
 }

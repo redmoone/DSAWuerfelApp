@@ -57,6 +57,37 @@
                 <ProbenSearch AvailableProben="AvailableProben" Placeholder="@ProbePlaceholder"
                               @bind-SelectedProbe="_selectedProbe"/>
             </div>
+
+            @if (_lastProbeEvaluation is not null)
+            {
+                <div class="probe-evaluation @(_lastProbeEvaluation.Success ? "success" : "failure")">
+                    <div class="probe-evaluation-header">
+                        <span class="probe-evaluation-name">@_lastProbeEvaluation.TalentName</span>
+                        <span class="probe-evaluation-status">@GetProbeStatusText(_lastProbeEvaluation)</span>
+                    </div>
+
+                    <div class="probe-evaluation-meta">
+                        <span>Probe: @_lastProbeEvaluation.Probe</span>
+                        <span>TaW: @_lastProbeEvaluation.TalentValue</span>
+                        <span>Mod.: @FormatModifier(_lastProbeEvaluation.Modifier)</span>
+                        <span>Effektiv: @_lastProbeEvaluation.EffectiveTalentValue</span>
+                        <span>Rest: @_lastProbeEvaluation.Rest</span>
+                    </div>
+
+                    <div class="probe-evaluation-rolls">
+                        @foreach (var detail in _lastProbeEvaluation.Details)
+                        {
+                            <div class="probe-roll-chip @(detail.Success ? "success" : "failure")">
+                                <span class="probe-roll-attribute">@detail.Attribute</span>
+                                <span class="probe-roll-values">@detail.Roll / @detail.TargetValue</span>
+                                <span class="probe-roll-rest">
+                                    Diff: @detail.Difference | Rest: @detail.RemainingRest
+                                </span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
         </div>
 
         <div class="action-block">
