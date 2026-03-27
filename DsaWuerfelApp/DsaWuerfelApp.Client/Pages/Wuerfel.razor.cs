@@ -1,7 +1,9 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
 
 using DsaWuerfelApp.Client.Components;
+using DsaWuerfelApp.Client.Services;
 using DsaWuerfelApp.Shared;
+using DsaWuerfelApp.Shared.Models;
 
 using Microsoft.AspNetCore.Components;
 
@@ -9,10 +11,32 @@ namespace DsaWuerfelApp.Client.Pages;
 
 public partial class Wuerfel : IDisposable
 {
+    private static readonly IReadOnlyDictionary<string, int> DefaultAttributeValues = new Dictionary<string, int>
+    {
+        ["MU"] = 14,
+        ["KL"] = 13,
+        ["IN"] = 15,
+        ["CH"] = 12,
+        ["FF"] = 15,
+        ["GE"] = 15,
+        ["KO"] = 14,
+        ["KK"] = 13
+    };
+
+    private static readonly IReadOnlyList<string> DefaultProben =
+    [
+        "Klettern (MU/GE/KK)",
+        "Körperbeherrschung (GE/GE/KO)",
+        "Sinnesschärfe (KL/IN/IN)",
+        "Überreden (MU/IN/CH)",
+        "Verbergen (MU/IN/GE)"
+    ];
+
     private readonly int[] _availableSides = [4, 6, 8, 10, 12, 20];
     private readonly List<string> _selectedAttributes = [];
     private readonly List<int> _selectedDice = [];
 
+    private Hero? _activeHero;
     private Dice3D _dice3d = null!;
     private string? _error;
     private bool _isHiddenRoll;
@@ -21,14 +45,40 @@ public partial class Wuerfel : IDisposable
     private RollHistory _rollHistory = null!;
     private string? _selectedProbe;
 
+    [Inject] public ActiveHeroState ActiveHeroState { get; set; } = null!;
     [Inject] public HttpClient Http { get; set; } = null!;
 
     private bool CanRoll => _selectedDice.Count > 0 || _selectedAttributes.Count > 0 ||
                             !string.IsNullOrWhiteSpace(_selectedProbe);
 
-    public void Dispose() => GameClient.OnRollResultReceived -= HandleServerRoll;
+    private IReadOnlyDictionary<string, int> CurrentAttributeValues =>
+        _activeHero?.Eigenschaften ?? DefaultAttributeValues;
 
-    protected override void OnInitialized() => GameClient.OnRollResultReceived += HandleServerRoll;
+    private IReadOnlyList<string> AvailableProben =>
+        _activeHero is { Talente.Count: > 0 }
+            ? _activeHero.Talente.Keys.OrderBy(name => name).ToList()
+            : DefaultProben;
+
+    private string ProbePlaceholder =>
+        _activeHero is null ? "Nach Proben suchen..." : $"Talente von {_activeHero.Name} durchsuchen...";
+
+    public void Dispose()
+    {
+        GameClient.OnRollResultReceived -= HandleServerRoll;
+        ActiveHeroState.Changed -= HandleActiveHeroChanged;
+    }
+
+    protected override void OnInitialized()
+    {
+        GameClient.OnRollResultReceived += HandleServerRoll;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ActiveHeroState.Changed += HandleActiveHeroChanged;
+        await ActiveHeroState.EnsureLoadedAsync();
+        _activeHero = ActiveHeroState.CurrentHero;
+    }
 
     private async void HandleServerRoll(RollResult result)
     {
@@ -76,7 +126,6 @@ public partial class Wuerfel : IDisposable
         if (index < 0 || index >= _selectedDice.Count) return;
         _selectedDice.RemoveAt(index);
 
-        // If we remove a d20 and we have attributes selected, also remove an attribute
         if (_selectedDice.Count < _selectedAttributes.Count)
         {
             _selectedAttributes.RemoveAt(_selectedAttributes.Count - 1);
@@ -98,7 +147,6 @@ public partial class Wuerfel : IDisposable
             return;
         }
 
-        // If we have selected attributes but no dice added yet, add them now before rolling
         if (_selectedDice.Count == 0 && _selectedAttributes.Count > 0)
         {
             for (int i = 0; i < _selectedAttributes.Count; i++)
@@ -197,7 +245,6 @@ public partial class Wuerfel : IDisposable
         {
             if (_selectedAttributes.Count == 3)
             {
-                var removedAttr = _selectedAttributes[0];
                 _selectedAttributes.RemoveAt(0);
             }
             else
@@ -249,6 +296,12 @@ public partial class Wuerfel : IDisposable
     }
 
     private int GetAttributeCount(string shortName) => _selectedAttributes.Count(a => a == shortName);
+
+    private void HandleActiveHeroChanged()
+    {
+        _activeHero = ActiveHeroState.CurrentHero;
+        InvokeAsync(StateHasChanged);
+    }
 
     public record DiceGroup(int Sides, int Count);
 

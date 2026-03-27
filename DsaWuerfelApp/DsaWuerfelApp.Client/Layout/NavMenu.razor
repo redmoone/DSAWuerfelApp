@@ -1,6 +1,14 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+@inject ActiveHeroState ActiveHeroState
+@using DsaWuerfelApp.Client.Services
+@implements IDisposable
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">DsaWuerfelApp</a>
+        @if (!string.IsNullOrWhiteSpace(ActiveHeroName))
+        {
+            <NavLink class="active-hero-nav" href="helden-verwaltung">@ActiveHeroName</NavLink>
+        }
     </div>
 </div>
 
@@ -25,3 +33,24 @@
         </div>
     </nav>
 </div>
+
+@code {
+    private string? ActiveHeroName => ActiveHeroState.CurrentHero?.Name;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ActiveHeroState.Changed += HandleActiveHeroChanged;
+        await ActiveHeroState.EnsureLoadedAsync();
+    }
+
+    public void Dispose()
+    {
+        ActiveHeroState.Changed -= HandleActiveHeroChanged;
+    }
+
+    private void HandleActiveHeroChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+}

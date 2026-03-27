@@ -29,10 +29,21 @@ public class HeroesController : ControllerBase
     {
         var heroes = await _dbContext.Heroes
             .AsNoTracking()
-            .OrderBy(hero => hero.Name)
+            .OrderByDescending(hero => hero.IsActive)
+            .ThenBy(hero => hero.Name)
             .ToListAsync();
 
         return Ok(heroes);
+    }
+
+    [HttpGet("active")]
+    public async Task<ActionResult<Hero?>> GetActiveHero()
+    {
+        var activeHero = await _dbContext.Heroes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(hero => hero.IsActive);
+
+        return Ok(activeHero);
     }
 
     [HttpPost("upload")]
@@ -108,5 +119,29 @@ public class HeroesController : ControllerBase
         await _dbContext.SaveChangesAsync();
 
         return Ok();
+    }
+
+    [HttpPut("{id:guid}/activate")]
+    public async Task<ActionResult<Hero>> ActivateHero(Guid id)
+    {
+        var hero = await _dbContext.Heroes.FirstOrDefaultAsync(existingHero => existingHero.Id == id);
+        if (hero is null)
+        {
+            return NotFound();
+        }
+
+        var activeHeroes = await _dbContext.Heroes
+            .Where(existingHero => existingHero.IsActive && existingHero.Id != id)
+            .ToListAsync();
+
+        foreach (var activeHero in activeHeroes)
+        {
+            activeHero.IsActive = false;
+        }
+
+        hero.IsActive = true;
+        await _dbContext.SaveChangesAsync();
+
+        return Ok(hero);
     }
 }

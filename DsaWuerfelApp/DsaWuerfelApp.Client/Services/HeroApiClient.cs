@@ -9,7 +9,9 @@ namespace DsaWuerfelApp.Client.Services;
 
 public interface IHeroApiClient
 {
+    Task<Hero?> GetActiveHeroAsync();
     Task<List<Hero>> GetHeroesAsync();
+    Task<Hero> SetActiveHeroAsync(Guid heroId);
     Task<List<Hero>> UploadHeroesAsync(IReadOnlyList<IBrowserFile> files, long maxFileSize);
     Task DeleteHeroAsync(Guid heroId);
 }
@@ -27,6 +29,20 @@ public class HeroApiClient : IHeroApiClient
     {
         var heroes = await _httpClient.GetFromJsonAsync<List<Hero>>("api/heroes");
         return heroes ?? new List<Hero>();
+    }
+
+    public async Task<Hero?> GetActiveHeroAsync()
+    {
+        return await _httpClient.GetFromJsonAsync<Hero?>("api/heroes/active");
+    }
+
+    public async Task<Hero> SetActiveHeroAsync(Guid heroId)
+    {
+        var response = await _httpClient.PutAsync($"api/heroes/{heroId}/activate", null);
+        response.EnsureSuccessStatusCode();
+
+        var hero = await response.Content.ReadFromJsonAsync<Hero>();
+        return hero ?? throw new HttpRequestException("Aktiver Held konnte nicht gelesen werden.");
     }
 
     public async Task<List<Hero>> UploadHeroesAsync(IReadOnlyList<IBrowserFile> files, long maxFileSize)

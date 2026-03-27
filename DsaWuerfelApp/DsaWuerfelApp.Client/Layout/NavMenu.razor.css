@@ -18,10 +18,47 @@
 .top-row {
     min-height: 3.5rem;
     background-color: rgba(0,0,0,0.4);
+    padding-right: 4.5rem;
+}
+
+.container-fluid {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
 }
 
 .navbar-brand {
     font-size: 1.1rem;
+}
+
+.active-hero-nav {
+    display: inline-flex;
+    align-items: center;
+    max-width: 140px;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background-color: var(--pill-bg);
+    border: 2px solid var(--dsa-gold);
+    color: var(--dsa-white) !important;
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.active-hero-nav:hover {
+    color: var(--dsa-white) !important;
+    background-color: rgba(212, 175, 55, 0.2);
+}
+
+.active-hero-nav:visited,
+.active-hero-nav:focus,
+.active-hero-nav:active {
+    color: var(--dsa-white) !important;
 }
 
 .bi {
@@ -90,15 +127,16 @@
 }
 
 @media (min-width: 641px) {
+    .top-row {
+        padding-right: 0;
+    }
+
     .navbar-toggler {
         display: none;
     }
 
     .nav-scrollable {
-        /* Never collapse the sidebar for wide screens */
         display: block;
-
-        /* Allow sidebar to scroll for tall menus */
         height: calc(100vh - 3.5rem);
         overflow-y: auto;
     }

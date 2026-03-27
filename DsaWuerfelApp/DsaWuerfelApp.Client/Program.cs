@@ -14,6 +14,7 @@ builder.Services.AddSingleton<GameClient>();
 builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddMudServices();
 builder.Services.AddScoped<IHeroApiClient, HeroApiClient>();
+builder.Services.AddScoped<ActiveHeroState>();
 
 
 await builder.Build().RunAsync();

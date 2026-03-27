@@ -54,10 +54,16 @@
     overflow: hidden;
     z-index: 100;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    max-height: calc(5 * 40px);
+    overflow-y: auto;
 }
 
 .dropdown-item {
-    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 15px;
+    box-sizing: border-box;
     color: var(--dsa-white);
     cursor: pointer;
     user-select: none;

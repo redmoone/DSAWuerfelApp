@@ -17,6 +17,7 @@ public partial class HeldenVerwaltung : ComponentBase, IAsyncDisposable
     private IJSObjectReference? _dropZoneModule;
     private bool _dropZoneRegistered;
 
+    [Inject] private ActiveHeroState ActiveHeroState { get; set; } = default!;
     [Inject] private IHeroApiClient HeroApiClient { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
 
@@ -49,6 +50,11 @@ public partial class HeldenVerwaltung : ComponentBase, IAsyncDisposable
         try
         {
             Heroes = await HeroApiClient.GetHeroesAsync();
+            Heroes = Heroes
+                .OrderByDescending(hero => hero.IsActive)
+                .ThenBy(hero => hero.Name)
+                .ToList();
+            ActiveHeroState.SetCurrentHero(Heroes.FirstOrDefault(hero => hero.IsActive));
         }
         catch (HttpRequestException)
         {
@@ -109,7 +115,10 @@ public partial class HeldenVerwaltung : ComponentBase, IAsyncDisposable
         {
             var uploadedHeroes = await HeroApiClient.UploadHeroesAsync(SelectedFiles, MaxFileSize);
             Heroes.AddRange(uploadedHeroes);
-            Heroes = Heroes.OrderBy(hero => hero.Name).ToList();
+            Heroes = Heroes
+                .OrderByDescending(hero => hero.IsActive)
+                .ThenBy(hero => hero.Name)
+                .ToList();
             SelectedFiles = Array.Empty<IBrowserFile>();
         }
         catch (IOException)
@@ -126,12 +135,36 @@ public partial class HeldenVerwaltung : ComponentBase, IAsyncDisposable
         }
     }
 
+    protected async Task SetActiveHeroAsync(Hero hero)
+    {
+        try
+        {
+            var activeHero = await HeroApiClient.SetActiveHeroAsync(hero.Id);
+
+            foreach (var existingHero in Heroes)
+            {
+                existingHero.IsActive = existingHero.Id == activeHero.Id;
+            }
+
+            ActiveHeroState.SetCurrentHero(activeHero);
+            Heroes = Heroes
+                .OrderByDescending(existingHero => existingHero.IsActive)
+                .ThenBy(existingHero => existingHero.Name)
+                .ToList();
+        }
+        catch (HttpRequestException)
+        {
+            ErrorMessage = "Aktiver Held konnte nicht gesetzt werden.";
+        }
+    }
+
     protected async Task RemoveHeroAsync(Hero hero)
     {
         try
         {
             await HeroApiClient.DeleteHeroAsync(hero.Id);
             Heroes.Remove(hero);
+            ActiveHeroState.ClearIfMatches(hero.Id);
 
             if (SelectedHero?.Id == hero.Id)
             {
@@ -169,16 +202,6 @@ public partial class HeldenVerwaltung : ComponentBase, IAsyncDisposable
         _dropZoneModule = await JS.InvokeAsync<IJSObjectReference>("import", "./js/hero-dropzone.js");
         await _dropZoneModule.InvokeVoidAsync("registerHeroDropZone", DropZoneElement);
         _dropZoneRegistered = true;
-    }
-
-    protected async Task OpenFilePickerAsync()
-    {
-        if (_dropZoneModule is null)
-        {
-            return;
-        }
-
-        await _dropZoneModule.InvokeVoidAsync("openFilePicker", DropZoneElement);
     }
 
     private static bool HasXmlExtension(IBrowserFile file)

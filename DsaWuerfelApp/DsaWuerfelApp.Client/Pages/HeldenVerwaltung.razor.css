@@ -89,15 +89,21 @@
     border-radius: 8px;
     border: 2px solid var(--dsa-gold);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
 }
 
-.selected-files ul {
+.selected-files-list {
     list-style-type: none;
     padding: 0;
-    margin: 0 0 1rem 0;
+    margin: 0;
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
+    flex: 1;
 }
 
 .selected-files li {
@@ -107,6 +113,7 @@
     border: 2px solid var(--dsa-gold);
     border-radius: 999px;
     font-weight: 600;
+    font-size: 0.875rem;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
 }
 
@@ -118,10 +125,12 @@
     border-radius: 999px;
     cursor: pointer;
     font-weight: 700;
+    font-size: 0.875rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     transition: all 0.2s ease-in-out;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    white-space: nowrap;
 }
 
 .btn-upload:hover {
@@ -156,25 +165,49 @@
     border: 2px solid var(--dsa-gold);
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.2s ease-in-out;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
-}
-
-.hero-card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 0 12px var(--dsa-gold-glow);
-}
-
-.hero-card.selected {
-    background-color: rgba(190, 190, 190, 0.92);
-    border-color: var(--dsa-gold);
-    box-shadow: 0 0 16px var(--dsa-gold-glow);
 }
 
 .hero-name {
     font-weight: 600;
     color: var(--dsa-blue);
     font-size: 1rem;
+}
+
+.hero-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.btn-activate {
+    padding: 0.45rem 0.95rem;
+    background-color: var(--dsa-blue);
+    color: var(--dsa-gold);
+    border: 2px solid var(--dsa-gold);
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-activate:hover {
+    background-color: var(--dsa-gold);
+    color: var(--dsa-blue);
+}
+
+.btn-activate.is-active {
+    background-color: rgba(244, 212, 107, 0.95);
+    color: var(--dsa-blue);
 }
 
 .btn-delete {
@@ -207,5 +240,10 @@
     .hero-card {
         flex-direction: column;
         align-items: flex-start;
+    }
+
+    .hero-actions {
+        width: 100%;
+        justify-content: flex-start;
     }
 }
