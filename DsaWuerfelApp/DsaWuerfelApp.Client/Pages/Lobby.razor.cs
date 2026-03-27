@@ -8,8 +8,9 @@ public partial class Lobby
 {
     private string _error = "";
     private string _joinCode = "";
-
     private string _userName = "";
+    private SessionMode CurrentMode { get; set; } = SessionMode.Join;
+
     [Inject] public GameClient Game { get; set; } = null!;
     [Inject] public NavigationManager Nav { get; set; } = null!;
 
@@ -23,6 +24,12 @@ public partial class Lobby
         if (string.IsNullOrWhiteSpace(_userName))
         {
             _error = "Bitte Namen eingeben";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_joinCode))
+        {
+            _error = "Bitte Session-Code eingeben";
             return;
         }
 
@@ -45,7 +52,24 @@ public partial class Lobby
             return;
         }
 
-        var code = await Game.CreateSession(_userName);
+        _ = await Game.CreateSession(_userName);
         Nav.NavigateTo("/wuerfel");
+    }
+
+    private void SetMode(SessionMode mode)
+    {
+        CurrentMode = mode;
+        _error = string.Empty;
+    }
+
+    private string GetModeClass(SessionMode mode)
+    {
+        return CurrentMode == mode ? "active" : string.Empty;
+    }
+
+    private enum SessionMode
+    {
+        Join,
+        Create
     }
 }

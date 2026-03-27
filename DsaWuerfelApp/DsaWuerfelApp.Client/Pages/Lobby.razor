@@ -1,38 +1,126 @@
-﻿@page "/"
+@page "/"
 
-<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
-    <MudPaper Class="pa-8" Elevation="4">
-        <MudText Typo="Typo.h3" Align="Align.Center" GutterBottom="true">🎲 DSA Würfel</MudText>
-        
-        <MudTextField @bind-Value="_userName" Label="Dein Name" Variant="Variant.Outlined" Class="mb-6" />
+<div class="lobby-page">
+    <div class="lobby-shell">
+        <section class="lobby-hero panel-surface">
+            <div class="hero-copy">
+                <p class="hero-eyebrow">Gamesessions</p>
+                <h1 class="hero-title">DSA Wuerfelrunde</h1>
+                <p class="hero-description">
+                    Starte eine neue Runde als Meister oder tritt mit einem Session-Code direkt deiner Gruppe bei.
+                </p>
+            </div>
 
-        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" panelClass="pa-6">
-            
-            <MudTabPanel Text="Beitreten" Icon="@Icons.Material.Filled.Login">
-                <MudStack Spacing="3">
-                    <MudTextField @bind-Value="_joinCode" Label="Session Code (z.B. X7K9)" 
-                                  Variant="Variant.Filled" Style="text-transform:uppercase" />
-                    
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" 
-                               OnClick="Join" Disabled="@string.IsNullOrWhiteSpace(_joinCode)">
-                        Beitreten
-                    </MudButton>
-                </MudStack>
-            </MudTabPanel>
+            <div class="hero-pills">
+                <div class="info-pill">Live Sitzungen</div>
+                <div class="info-pill">Goldenes DSA Layout</div>
+                <div class="info-pill">Direkt im Browser</div>
+            </div>
+        </section>
 
-            <MudTabPanel Text="Neue Runde" Icon="@Icons.Material.Filled.AddCircle">
-                <MudText Class="mb-4">Erstelle eine neue Runde als Meister.</MudText>
-                <MudButton Variant="Variant.Filled" Color="Color.Secondary" FullWidth="true"
-                           OnClick="Create">
-                    Session Erstellen
-                </MudButton>
-            </MudTabPanel>
-            
-        </MudTabs>
+        <section class="lobby-panel panel-surface">
+            <h2 class="panel-title">Session Eingang</h2>
 
-        @if (!string.IsNullOrEmpty(_error))
-        {
-            <MudAlert Severity="Severity.Error" Class="mt-4">@_error</MudAlert>
-        }
-    </MudPaper>
-</MudContainer>
+            <label class="input-group">
+                <span class="input-label">Dein Name</span>
+                <input class="session-input"
+                       @bind="_userName"
+                       @bind:event="oninput"
+                       maxlength="40"
+                       autocomplete="nickname"
+                       placeholder="Spielername eingeben"/>
+            </label>
+
+            <div class="mode-toggle" role="tablist" aria-label="Session Modus">
+                <button type="button"
+                        class="mode-pill @GetModeClass(SessionMode.Join)"
+                        @onclick="() => SetMode(SessionMode.Join)">
+                    Beitreten
+                </button>
+                <button type="button"
+                        class="mode-pill @GetModeClass(SessionMode.Create)"
+                        @onclick="() => SetMode(SessionMode.Create)">
+                    Neue Runde
+                </button>
+            </div>
+
+            @if (CurrentMode == SessionMode.Join)
+            {
+                <div class="mode-panel">
+                    <p class="mode-text">Gib den Session-Code deiner Gruppe ein und verbinde dich direkt mit der
+                        Runde.</p>
+
+                    <label class="input-group">
+                        <span class="input-label">Session Code</span>
+                        <input class="session-input session-code-input"
+                               @bind="_joinCode"
+                               @bind:event="oninput"
+                               maxlength="8"
+                               autocomplete="off"
+                               spellcheck="false"
+                               placeholder="z.B. X7K9"/>
+                    </label>
+
+                    <button type="button"
+                            class="session-btn"
+                            @onclick="Join"
+                            disabled="@string.IsNullOrWhiteSpace(_userName) || string.IsNullOrWhiteSpace(_joinCode)">
+                        Sitzung Beitreten
+                    </button>
+                </div>
+            }
+            else
+            {
+                <div class="mode-panel">
+                    <p class="mode-text">Erstelle eine neue Spielrunde. Du wirst sofort als erster Spieler
+                        verbunden.</p>
+
+                    <div class="create-callout">
+                        <span class="callout-label">Hinweis</span>
+                        <span class="callout-text">Der Session-Code wird nach dem Erstellen automatisch fuer deine Gruppe bereitgestellt.</span>
+                    </div>
+
+                    <button type="button"
+                            class="session-btn"
+                            @onclick="Create"
+                            disabled="@string.IsNullOrWhiteSpace(_userName)">
+                        Session Erstellen
+                    </button>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <div class="session-alert">@_error</div>
+            }
+        </section>
+
+        <aside class="lobby-side panel-surface">
+            <h2 class="panel-title">Ablauf</h2>
+
+            <ol class="steps-list">
+                <li class="step-item">
+                    <span class="step-index">1</span>
+                    <div>
+                        <strong>Name setzen</strong>
+                        <p>Waehle zuerst den Spielernamen, unter dem deine Wuerfe erscheinen sollen.</p>
+                    </div>
+                </li>
+                <li class="step-item">
+                    <span class="step-index">2</span>
+                    <div>
+                        <strong>Modus waehlen</strong>
+                        <p>Entweder einer vorhandenen Runde beitreten oder selbst eine Session starten.</p>
+                    </div>
+                </li>
+                <li class="step-item">
+                    <span class="step-index">3</span>
+                    <div>
+                        <strong>Loswuerfeln</strong>
+                        <p>Nach dem Verbinden landest du direkt auf der Wuerfelseite deiner Gruppe.</p>
+                    </div>
+                </li>
+            </ol>
+        </aside>
+    </div>
+</div>
