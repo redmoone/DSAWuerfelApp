@@ -230,12 +230,94 @@
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
+.forced-rolls-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px dashed rgba(212, 175, 55, 0.45);
+    background-color: rgba(12, 24, 43, 0.48);
+}
+
+.forced-rolls-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--dsa-gold);
+}
+
+.forced-rolls-input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--dsa-white);
+    outline: none;
+}
+
+.forced-rolls-input::placeholder {
+    color: rgba(255, 248, 220, 0.55);
+}
+
+.forced-rolls-input:focus {
+    border-color: rgba(255, 219, 103, 0.7);
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.16);
+}
+
+.forced-rolls-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.forced-rolls-button {
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--dsa-white);
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.forced-rolls-button:hover {
+    background-color: rgba(212, 175, 55, 0.16);
+    border-color: rgba(255, 219, 103, 0.65);
+    transform: translateY(-1px);
+}
+
+.forced-rolls-button.muted {
+    color: rgba(255, 248, 220, 0.72);
+}
+
 .probe-evaluation.success {
     background-color: rgba(18, 78, 54, 0.82);
 }
 
 .probe-evaluation.failure {
     background-color: rgba(102, 34, 29, 0.82);
+}
+
+.probe-evaluation.patzer {
+    background: linear-gradient(135deg, rgba(12, 12, 12, 0.94), rgba(36, 36, 36, 0.9));
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 10px 22px rgba(0, 0, 0, 0.45);
+}
+
+.probe-evaluation.glueck {
+    background: linear-gradient(135deg, rgba(120, 88, 14, 0.95), rgba(62, 44, 10, 0.9));
+    box-shadow: inset 0 0 0 1px rgba(255, 232, 166, 0.18), 0 10px 22px rgba(0, 0, 0, 0.35);
+}
+
+.probe-evaluation.patzer .probe-evaluation-status {
+    color: rgba(238, 238, 238, 0.92);
+}
+
+.probe-evaluation.glueck .probe-evaluation-status,
+.probe-evaluation.glueck .probe-evaluation-name {
+    color: #ffe08a;
 }
 
 .probe-evaluation-header {
@@ -294,6 +376,30 @@
 
 .probe-roll-chip.failure {
     box-shadow: inset 0 0 0 1px rgba(255, 120, 120, 0.35);
+}
+
+.probe-roll-chip.patzer {
+    background: linear-gradient(135deg, rgba(14, 14, 14, 0.92), rgba(34, 34, 34, 0.88));
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.probe-roll-chip.glueck {
+    background: linear-gradient(135deg, rgba(140, 103, 18, 0.9), rgba(74, 53, 12, 0.88));
+    border-color: rgba(255, 225, 140, 0.35);
+    box-shadow: inset 0 0 0 1px rgba(255, 232, 166, 0.16);
+}
+
+.probe-roll-chip.patzer .probe-roll-attribute,
+.probe-roll-chip.patzer .probe-roll-values,
+.probe-roll-chip.patzer .probe-roll-rest {
+    color: rgba(245, 245, 245, 0.92);
+}
+
+.probe-roll-chip.glueck .probe-roll-attribute,
+.probe-roll-chip.glueck .probe-roll-values,
+.probe-roll-chip.glueck .probe-roll-rest {
+    color: #ffe7a6;
 }
 
 .probe-roll-attribute {

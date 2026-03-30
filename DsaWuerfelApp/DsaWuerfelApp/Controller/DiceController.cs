@@ -1,4 +1,6 @@
-﻿using DsaWuerfelApp.Services;
+﻿using System.Diagnostics;
+
+using DsaWuerfelApp.Services;
 using DsaWuerfelApp.Shared;
 
 using Microsoft.AspNetCore.Mvc;
@@ -44,6 +46,12 @@ public class DiceController : ControllerBase
         {
             return BadRequest(new { error = ex.Message });
         }
+    }
+
+    [HttpGet("debug-mode")]
+    public ActionResult<bool> GetDebugMode()
+    {
+        return Ok(Debugger.IsAttached);
     }
 }
 

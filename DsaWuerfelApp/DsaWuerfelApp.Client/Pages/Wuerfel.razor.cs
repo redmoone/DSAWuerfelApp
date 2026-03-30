@@ -39,12 +39,14 @@ public partial class Wuerfel : IDisposable
     private Hero? _activeHero;
     private Dice3D _dice3d = null!;
     private string? _error;
+    private string _forcedRollsText = string.Empty;
     private bool _isHiddenRoll;
     private RollSetResult? _last;
     private TalentProbeResult? _lastProbeEvaluation;
     private int _modifier;
     private RollHistory _rollHistory = null!;
     private string? _selectedProbe;
+    private bool _showDebugForcedRolls;
 
     [Inject] public ActiveHeroState ActiveHeroState { get; set; } = null!;
     [Inject] public HttpClient Http { get; set; } = null!;
@@ -63,6 +65,8 @@ public partial class Wuerfel : IDisposable
     private string ProbePlaceholder =>
         _activeHero is null ? "Nach Proben suchen..." : $"Talente von {_activeHero.Name} durchsuchen...";
 
+    private bool ShowDebugForcedRolls => _showDebugForcedRolls;
+
     public void Dispose()
     {
         GameClient.OnRollResultReceived -= HandleServerRoll;
@@ -79,6 +83,7 @@ public partial class Wuerfel : IDisposable
     protected override async Task OnInitializedAsync()
     {
         ActiveHeroState.Changed += HandleActiveHeroChanged;
+        _showDebugForcedRolls = await GetDebugModeAsync();
         await ActiveHeroState.EnsureLoadedAsync();
         _activeHero = ActiveHeroState.CurrentHero;
     }
@@ -118,6 +123,7 @@ public partial class Wuerfel : IDisposable
         _last = null;
         _lastProbeEvaluation = null;
         _modifier = 0;
+        _forcedRollsText = string.Empty;
         await Update3DView();
     }
 
@@ -226,13 +232,13 @@ public partial class Wuerfel : IDisposable
 
     private async Task ExecuteTalentProbeAsync()
     {
+        _error = null;
         var request = CreateTalentProbeRequest();
         if (request is null)
         {
             return;
         }
 
-        _error = null;
         _lastProbeEvaluation = null;
         _selectedDice.Clear();
         _selectedAttributes.Clear();
@@ -286,12 +292,23 @@ public partial class Wuerfel : IDisposable
                 return null;
             }
 
+            List<int>? forcedRolls = null;
+            if (_showDebugForcedRolls)
+            {
+                forcedRolls = ParseForcedRolls();
+                if (!string.IsNullOrWhiteSpace(_forcedRollsText) && forcedRolls is null)
+                {
+                    return null;
+                }
+            }
+
             return new TalentProbeRequest
             {
                 TalentName = talentEntry.Key,
                 TalentValue = talentEntry.Value.Wert,
                 Probe = string.Join('/', probeAttributes),
                 AttributeValues = CurrentAttributeValues.ToDictionary(entry => entry.Key, entry => entry.Value),
+                ForcedRolls = forcedRolls,
                 Modifier = _modifier
             };
         }
@@ -344,6 +361,22 @@ public partial class Wuerfel : IDisposable
         }
 
         await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task<bool> GetDebugModeAsync()
+    {
+#if DEBUG
+        try
+        {
+            return await Http.GetFromJsonAsync<bool>("api/dice/debug-mode");
+        }
+        catch
+        {
+            return false;
+        }
+#else
+        return false;
+#endif
     }
 
     private async Task AddAttribute(string shortName)
@@ -421,6 +454,45 @@ public partial class Wuerfel : IDisposable
 
     private int GetAttributeCount(string shortName) => _selectedAttributes.Count(a => a == shortName);
 
+    private List<int>? ParseForcedRolls()
+    {
+        if (string.IsNullOrWhiteSpace(_forcedRollsText))
+        {
+            return null;
+        }
+
+        var parts = _forcedRollsText.Split([',', ';', '/', ' '], StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length != 3)
+        {
+            _error = "Testwuerfe muessen genau 3 Werte enthalten.";
+            return null;
+        }
+
+        var rolls = new List<int>(capacity: 3);
+        foreach (var part in parts)
+        {
+            if (!int.TryParse(part, out var roll) || roll is < 1 or > 20)
+            {
+                _error = "Testwuerfe muessen Zahlen von 1 bis 20 sein.";
+                return null;
+            }
+
+            rolls.Add(roll);
+        }
+
+        return rolls;
+    }
+
+    private void SetForcedRolls(string value)
+    {
+        _forcedRollsText = value;
+    }
+
+    private void ClearForcedRolls()
+    {
+        _forcedRollsText = string.Empty;
+    }
+
     private static IReadOnlyList<string> BuildTalentProben(Hero hero)
     {
         return hero.Talente
@@ -482,6 +554,27 @@ public partial class Wuerfel : IDisposable
             TalentProbeStatus.GluecklicherWurf => "Gluecklicher Wurf",
             TalentProbeStatus.Bestanden => $"Bestanden um {result.Margin}",
             _ => $"Misslungen um {result.Margin}"
+        };
+    }
+
+    private static string GetProbeEvaluationClass(TalentProbeResult result)
+    {
+        return result.Status switch
+        {
+            TalentProbeStatus.Patzer => "patzer",
+            TalentProbeStatus.GluecklicherWurf => "glueck",
+            TalentProbeStatus.Bestanden => "success",
+            _ => "failure"
+        };
+    }
+
+    private static string GetProbeRollChipClass(TalentProbeResult result, TalentProbeRollDetail detail)
+    {
+        return result.Status switch
+        {
+            TalentProbeStatus.Patzer => "patzer",
+            TalentProbeStatus.GluecklicherWurf => "glueck",
+            _ => detail.Success ? "success" : "failure"
         };
     }
 

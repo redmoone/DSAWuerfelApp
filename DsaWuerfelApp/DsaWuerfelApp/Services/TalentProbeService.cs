@@ -24,7 +24,7 @@ public class TalentProbeService(DiceService diceService)
                 throw new ArgumentException($"Missing attribute value for '{attribute}'.", nameof(request));
         }
 
-        var rollResult = diceService.RollSet([new DiceGroup(20, 3)], 0, playerName);
+        var rollResult = CreateRollResult(request.ForcedRolls, playerName);
         var attributeValues = probeAttributes
             .Select(attribute => request.AttributeValues[attribute])
             .ToArray();
@@ -70,6 +70,37 @@ public class TalentProbeService(DiceService diceService)
             Modifier = 0,
             TotalSum = result.Rolls.Sum(roll => roll.Value)
         };
+    }
+
+    private RollResult CreateRollResult(IReadOnlyList<int>? forcedRolls, string playerName)
+    {
+#if !DEBUG
+        return diceService.RollSet([new DiceGroup(20, 3)], 0, playerName);
+#else
+        if (forcedRolls is null)
+        {
+            return diceService.RollSet([new DiceGroup(20, 3)], 0, playerName);
+        }
+
+        if (forcedRolls.Count != 3)
+            throw new ArgumentException("ForcedRolls muessen genau 3 Werte enthalten.");
+
+        if (forcedRolls.Any(roll => roll is < 1 or > 20))
+            throw new ArgumentException("ForcedRolls duerfen nur Werte von 1 bis 20 enthalten.");
+
+        var rolls = forcedRolls
+            .Select(roll => new SingleRoll { Sides = 20, Value = roll })
+            .ToList();
+
+        return new RollResult
+        {
+            PlayerName = playerName,
+            Timestamp = DateTime.UtcNow,
+            Rolls = rolls,
+            Modifier = 0,
+            TotalSum = rolls.Sum(roll => roll.Value)
+        };
+#endif
     }
 
     private static List<TalentProbeRollDetail> BuildRollDetails(

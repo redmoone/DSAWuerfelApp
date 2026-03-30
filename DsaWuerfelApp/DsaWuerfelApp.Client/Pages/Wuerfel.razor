@@ -58,9 +58,28 @@
                               @bind-SelectedProbe="_selectedProbe"/>
             </div>
 
+            @if (ShowDebugForcedRolls)
+            {
+                <div class="forced-rolls-panel" title="Optionale Testwuerfe fuer die Talentprobe">
+                    <span class="forced-rolls-label">Testwuerfe</span>
+                    <input class="forced-rolls-input" @bind="_forcedRollsText" @bind:event="oninput"
+                           placeholder="z. B. 20,20,5"/>
+                    <div class="forced-rolls-actions">
+                        <button type="button" class="forced-rolls-button" @onclick='() => SetForcedRolls("20,20,5")'>
+                            Patzer
+                        </button>
+                        <button type="button" class="forced-rolls-button" @onclick='() => SetForcedRolls("1,1,13")'>
+                            Glueck
+                        </button>
+                        <button type="button" class="forced-rolls-button muted" @onclick="ClearForcedRolls">Leer
+                        </button>
+                    </div>
+                </div>
+            }
+
             @if (_lastProbeEvaluation is not null)
             {
-                <div class="probe-evaluation @(_lastProbeEvaluation.Success ? "success" : "failure")">
+                <div class="probe-evaluation @GetProbeEvaluationClass(_lastProbeEvaluation)">
                     <div class="probe-evaluation-header">
                         <span class="probe-evaluation-name">@_lastProbeEvaluation.TalentName</span>
                         <span class="probe-evaluation-status">@GetProbeStatusText(_lastProbeEvaluation)</span>
@@ -77,7 +96,7 @@
                     <div class="probe-evaluation-rolls">
                         @foreach (var detail in _lastProbeEvaluation.Details)
                         {
-                            <div class="probe-roll-chip @(detail.Success ? "success" : "failure")">
+                            <div class="probe-roll-chip @GetProbeRollChipClass(_lastProbeEvaluation, detail)">
                                 <span class="probe-roll-attribute">@detail.Attribute</span>
                                 <span class="probe-roll-values">@detail.Roll / @detail.TargetValue</span>
                                 <span class="probe-roll-rest">
