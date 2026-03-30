@@ -23,6 +23,12 @@ public sealed class ActiveHeroState
         }
 
         CurrentHero = await _heroApiClient.GetActiveHeroAsync();
+
+        if (CurrentHero is null)
+        {
+            CurrentHero = (await _heroApiClient.GetHeroesAsync()).FirstOrDefault();
+        }
+
         Changed?.Invoke();
     }
 
