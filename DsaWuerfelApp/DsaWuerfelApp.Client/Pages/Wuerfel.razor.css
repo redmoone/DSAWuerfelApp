@@ -352,52 +352,6 @@
     color: rgba(255, 248, 220, 0.72);
 }
 
-.bad-trait-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.bad-trait-chip {
-    display: inline-flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    min-width: 140px;
-    padding: 10px 14px;
-    border-radius: 999px;
-    border: 1px solid rgba(212, 175, 55, 0.4);
-    background-color: rgba(255, 255, 255, 0.08);
-    color: var(--dsa-white);
-    cursor: pointer;
-    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-}
-
-.bad-trait-chip:hover {
-    background-color: rgba(212, 175, 55, 0.16);
-    border-color: rgba(255, 219, 103, 0.65);
-    transform: translateY(-1px);
-}
-
-.bad-trait-chip.active {
-    background-color: rgba(212, 175, 55, 0.22);
-    border-color: rgba(255, 219, 103, 0.85);
-    box-shadow: 0 0 0 1px rgba(255, 219, 103, 0.25);
-}
-
-.bad-trait-summary {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.bad-trait-summary span {
-    padding: 6px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(212, 175, 55, 0.35);
-    background-color: rgba(12, 24, 43, 0.48);
-}
-
 .probe-evaluation.success {
     background-color: rgba(18, 78, 54, 0.82);
 }

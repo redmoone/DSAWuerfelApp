@@ -15,13 +15,7 @@ public partial class Wuerfel
     private IReadOnlyDictionary<string, int> CurrentSchlechteEigenschaften =>
         _activeHero?.SchlechteEigenschaften ?? EmptyBadTraitValues;
 
-    private IReadOnlyList<SchlechteEigenschaftSelection> AvailableSchlechteEigenschaften =>
-        CurrentSchlechteEigenschaften
-            .OrderBy(entry => entry.Key)
-            .Select(entry => new SchlechteEigenschaftSelection(entry.Key, entry.Value))
-            .ToList();
-
-    private SchlechteEigenschaftSelection? SelectedSchlechteEigenschaft => GetSelectedSchlechteEigenschaft();
+    private SelectedSchlechteEigenschaftData? SelectedSchlechteEigenschaft => GetSelectedSchlechteEigenschaft();
 
     private async void HandleSchlechteEigenschaftProbeResult(SchlechteEigenschaftProbeResult result)
     {
@@ -150,20 +144,19 @@ public partial class Wuerfel
         await InvokeAsync(StateHasChanged);
     }
 
-    private void ToggleSchlechteEigenschaftSelection(string name)
+    private Task HandleSelectedSchlechteEigenschaftChanged(string? name)
     {
-        if (string.IsNullOrWhiteSpace(name) || !CurrentSchlechteEigenschaften.ContainsKey(name))
+        if (string.IsNullOrWhiteSpace(name))
         {
-            return;
+            _selectedSchlechteEigenschaftName = null;
+            return Task.CompletedTask;
         }
 
-        _selectedSchlechteEigenschaftName =
-            string.Equals(_selectedSchlechteEigenschaftName, name, StringComparison.Ordinal)
-                ? null
-                : name;
+        _selectedSchlechteEigenschaftName = CurrentSchlechteEigenschaften.ContainsKey(name) ? name : null;
+        return Task.CompletedTask;
     }
 
-    private SchlechteEigenschaftSelection? GetSelectedSchlechteEigenschaft()
+    private SelectedSchlechteEigenschaftData? GetSelectedSchlechteEigenschaft()
     {
         if (string.IsNullOrWhiteSpace(_selectedSchlechteEigenschaftName) ||
             !CurrentSchlechteEigenschaften.TryGetValue(_selectedSchlechteEigenschaftName, out var value))
@@ -171,7 +164,7 @@ public partial class Wuerfel
             return null;
         }
 
-        return new SchlechteEigenschaftSelection(_selectedSchlechteEigenschaftName, value);
+        return new SelectedSchlechteEigenschaftData(_selectedSchlechteEigenschaftName, value);
     }
 
     private void EnsureSelectedSchlechteEigenschaftIsValid()
@@ -292,7 +285,7 @@ public partial class Wuerfel
         return result.Success ? "success" : "failure";
     }
 
-    private sealed record SchlechteEigenschaftSelection(string Name, int Wert);
+    private sealed record SelectedSchlechteEigenschaftData(string Name, int Wert);
 
     private sealed record AttributeProbeEvaluation(
         string Probe,

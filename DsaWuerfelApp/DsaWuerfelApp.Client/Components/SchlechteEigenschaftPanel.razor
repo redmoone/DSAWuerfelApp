@@ -1,0 +1,41 @@
+@if (!HasActiveHero)
+{
+    <p class="additional-info-empty">Waehle zuerst einen aktiven Helden.</p>
+}
+else if (SchlechteEigenschaften.Count == 0)
+{
+    <p class="additional-info-empty">Fuer den aktiven Helden wurden keine schlechten Eigenschaften gefunden.</p>
+}
+else
+{
+    <div class="bad-trait-list">
+        @foreach (var eigenschaft in SortedSchlechteEigenschaften)
+        {
+            <button type="button"
+                    class="bad-trait-chip @(IsSelected(eigenschaft.Key) ? "active" : "")"
+                    @onclick='() => HandleSelectionChanged(eigenschaft.Key)'>
+                <span>@eigenschaft.Key</span>
+                <span>@eigenschaft.Value</span>
+            </button>
+        }
+    </div>
+
+    @if (SelectedEigenschaft is { } selectedEigenschaft)
+    {
+        <div class="bad-trait-summary">
+            <span>Talentproben: @FormatModifier(selectedEigenschaft.Value)</span>
+            <span>Eigenschaftsproben: @FormatModifier(GetHalvedWert(selectedEigenschaft.Value))</span>
+        </div>
+
+        <button class="dsa-btn" @onclick="HandleDirectRollRequested">
+            W20 auf @selectedEigenschaft.Key
+        </button>
+    }
+    else
+    {
+        <p class="additional-info-empty">
+            Waehle eine relevante schlechte Eigenschaft, um ihre Erschwernis zu aktivieren oder direkt darauf zu
+            wuerfeln.
+        </p>
+    }
+}

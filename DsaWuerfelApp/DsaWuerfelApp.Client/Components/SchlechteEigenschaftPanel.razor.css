@@ -1,0 +1,82 @@
+.additional-info-empty {
+    margin: 0;
+    padding: 14px 16px;
+    border-radius: 8px;
+    background: rgba(9, 25, 48, 0.22);
+    color: rgba(255, 248, 220, 0.72);
+    line-height: 1.5;
+}
+
+.dsa-btn {
+    background-color: var(--dsa-blue);
+    color: var(--dsa-gold);
+    border: 2px solid var(--dsa-gold);
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease-in-out;
+}
+
+.dsa-btn:hover:not(:disabled) {
+    background-color: var(--dsa-gold);
+    color: var(--dsa-blue);
+    box-shadow: 0 0 10px var(--dsa-gold-glow);
+}
+
+.dsa-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: #888;
+    color: #ccc;
+}
+
+.bad-trait-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.bad-trait-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 140px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--dsa-white);
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.bad-trait-chip:hover {
+    background-color: rgba(212, 175, 55, 0.16);
+    border-color: rgba(255, 219, 103, 0.65);
+    transform: translateY(-1px);
+}
+
+.bad-trait-chip.active {
+    background-color: rgba(212, 175, 55, 0.22);
+    border-color: rgba(255, 219, 103, 0.85);
+    box-shadow: 0 0 0 1px rgba(255, 219, 103, 0.25);
+}
+
+.bad-trait-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.bad-trait-summary span {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    background-color: rgba(12, 24, 43, 0.48);
+    color: var(--dsa-white);
+}

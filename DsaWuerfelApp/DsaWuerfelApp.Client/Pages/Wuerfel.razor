@@ -259,47 +259,11 @@
 
         <div class="action-block">
             <h3 class="block-title">Schlechte Eigenschaften</h3>
-
-            @if (_activeHero is null)
-            {
-                <p class="additional-info-empty">Waehle zuerst einen aktiven Helden.</p>
-            }
-            else if (AvailableSchlechteEigenschaften.Count == 0)
-            {
-                <p class="additional-info-empty">Fuer den aktiven Helden wurden keine schlechten Eigenschaften
-                    gefunden.</p>
-            }
-            else
-            {
-                <div class="bad-trait-list">
-                    @foreach (var eigenschaft in AvailableSchlechteEigenschaften)
-                    {
-                        <button type="button"
-                                class="bad-trait-chip @(SelectedSchlechteEigenschaft?.Name == eigenschaft.Name ? "active" : "")"
-                                @onclick='() => ToggleSchlechteEigenschaftSelection(eigenschaft.Name)'>
-                            <span>@eigenschaft.Name</span>
-                            <span>@eigenschaft.Wert</span>
-                        </button>
-                    }
-                </div>
-
-                @if (SelectedSchlechteEigenschaft is { } selectedSchlechteEigenschaft)
-                {
-                    <div class="bad-trait-summary">
-                        <span>Talentproben: @FormatModifier(selectedSchlechteEigenschaft.Wert)</span>
-                        <span>Eigenschaftsproben: @FormatModifier(GetHalvedSchlechteEigenschaftWert(selectedSchlechteEigenschaft.Wert))</span>
-                    </div>
-
-                    <button class="dsa-btn" @onclick="ExecuteSchlechteEigenschaftProbeAsync">
-                        W20 auf @selectedSchlechteEigenschaft.Name
-                    </button>
-                }
-                else
-                {
-                    <p class="additional-info-empty">Waehle eine relevante schlechte Eigenschaft, um ihre Erschwernis zu
-                        aktivieren oder direkt darauf zu wuerfeln.</p>
-                }
-            }
+            <SchlechteEigenschaftPanel HasActiveHero="@(_activeHero is not null)"
+                                       SchlechteEigenschaften="CurrentSchlechteEigenschaften"
+                                       SelectedName="_selectedSchlechteEigenschaftName"
+                                       SelectedNameChanged="HandleSelectedSchlechteEigenschaftChanged"
+                                       OnDirectRollRequested="ExecuteSchlechteEigenschaftProbeAsync"/>
         </div>
 
         <div class="action-block">
