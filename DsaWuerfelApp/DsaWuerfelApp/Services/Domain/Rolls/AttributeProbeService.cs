@@ -10,13 +10,13 @@ public sealed class AttributeProbeService(DiceService diceService)
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        if (request.Attributes.Length == 0 || request.Attributes.Length > 3)
+        if (request.Attributes.Count == 0 || request.Attributes.Count > 3)
         {
             throw new ArgumentException("Es muessen zwischen 1 und 3 Eigenschaften ausgewaehlt werden.",
                 nameof(request));
         }
 
-        if (request.Attributes.Length != request.AttributeValues.Length)
+        if (request.Attributes.Count != request.AttributeValues.Length)
         {
             throw new ArgumentException("Eigenschaften und Eigenschaftswerte muessen deckungsgleich sein.",
                 nameof(request));
@@ -25,9 +25,10 @@ public sealed class AttributeProbeService(DiceService diceService)
         DiceService.ValidateModifier(request.BasisModifier);
 
         var timestamp = DateTime.UtcNow;
-        var rolls = diceService.RollDice([new DiceRollGroupDto(20, request.Attributes.Length)]);
+        var attributeNames = request.Attributes.ToArray();
+        var rolls = diceService.RollDice([new DiceRollGroupDto(20, request.Attributes.Count)]);
         var effectiveModifier = request.BasisModifier + request.SchlechteEigenschaftModifier;
-        var details = BuildDetails(request, rolls, effectiveModifier);
+        var details = BuildDetails(attributeNames, request.AttributeValues, rolls, effectiveModifier);
         var successCount = details.Count(detail => detail.Success);
         var equation = DiceResultFactory.CreateEquation(rolls, 0);
         var historyEntry = DiceResultFactory.CreateHistoryEntry(playerName, timestamp, equation);
@@ -35,7 +36,7 @@ public sealed class AttributeProbeService(DiceService diceService)
         return new AttributeRollResultDto(
             playerName,
             timestamp,
-            string.Join('/', request.Attributes),
+            request.Attributes.Label,
             request.BasisModifier,
             request.SchlechteEigenschaftName,
             request.SchlechteEigenschaftModifier,
@@ -44,28 +45,29 @@ public sealed class AttributeProbeService(DiceService diceService)
             successCount,
             details.Length - successCount,
             details,
-            BuildRequirement(request, rolls, effectiveModifier),
+            BuildRequirement(attributeNames, request, rolls, effectiveModifier),
             rolls,
             equation,
             historyEntry);
     }
 
     private static AttributeRollDetailDto[] BuildDetails(
-        ResolvedAttributeRollRequest request,
+        IReadOnlyList<string> attributeNames,
+        IReadOnlyList<int> attributeValues,
         IReadOnlyList<DiceRollDto> rolls,
         int effectiveModifier)
     {
-        var details = new List<AttributeRollDetailDto>(request.Attributes.Length);
+        var details = new List<AttributeRollDetailDto>(attributeNames.Count);
 
-        for (var index = 0; index < request.Attributes.Length; index++)
+        for (var index = 0; index < attributeNames.Count; index++)
         {
             var roll = rolls[index].Value;
-            var baseValue = request.AttributeValues[index];
+            var baseValue = attributeValues[index];
             var targetValue = Math.Clamp(baseValue - effectiveModifier, 0, 20);
             var difference = Math.Max(roll - targetValue, 0);
 
             details.Add(new AttributeRollDetailDto(
-                request.Attributes[index],
+                attributeNames[index],
                 baseValue,
                 targetValue,
                 roll,
@@ -77,11 +79,12 @@ public sealed class AttributeProbeService(DiceService diceService)
     }
 
     private static AttributeRollRequirementDto? BuildRequirement(
+        IReadOnlyList<string> attributeNames,
         ResolvedAttributeRollRequest request,
         IReadOnlyList<DiceRollDto> rolls,
         int effectiveModifier)
     {
-        if (request.Attributes.Length != 3)
+        if (attributeNames.Count != 3)
         {
             return null;
         }
@@ -89,20 +92,20 @@ public sealed class AttributeProbeService(DiceService diceService)
         var details = new List<AttributeRollRequirementDetailDto>(capacity: 3);
         var requiredCompensation = 0;
 
-        for (var index = 0; index < request.Attributes.Length; index++)
+        for (var index = 0; index < attributeNames.Count; index++)
         {
             var difference = Math.Max(rolls[index].Value - request.AttributeValues[index], 0);
             requiredCompensation += difference;
 
             details.Add(new AttributeRollRequirementDetailDto(
-                request.Attributes[index],
+                attributeNames[index],
                 request.AttributeValues[index],
                 rolls[index].Value,
                 difference));
         }
 
         return new AttributeRollRequirementDto(
-            string.Join('/', request.Attributes),
+            string.Join('/', attributeNames),
             request.BasisModifier,
             request.SchlechteEigenschaftName,
             request.SchlechteEigenschaftModifier,
@@ -114,7 +117,7 @@ public sealed class AttributeProbeService(DiceService diceService)
 }
 
 public sealed record ResolvedAttributeRollRequest(
-    string[] Attributes,
+    AttributeSelection Attributes,
     int[] AttributeValues,
     int BasisModifier,
     string? SchlechteEigenschaftName,

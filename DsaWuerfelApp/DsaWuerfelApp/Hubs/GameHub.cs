@@ -7,7 +7,8 @@ namespace DsaWuerfelApp.Hubs;
 
 public class GameHub(
     SessionService sessionService,
-    DiceWorkflowService diceWorkflowService)
+    DiceWorkflowService diceWorkflowService,
+    GameSessionRollPipeline gameSessionRollPipeline)
     : Hub
 {
     public async Task<SessionConnectionDto> CreateSession(string userId, string userName)
@@ -42,69 +43,41 @@ public class GameHub(
 
     public async Task RollFree(FreeRollRequestDto request)
     {
-        var session = GetSession(request.SessionId);
-        if (session is null)
-        {
-            return;
-        }
-
-        var result = diceWorkflowService.RollFree(request, ResolvePlayerName(session));
-        session.History.Add(result.HistoryEntry);
-
-        await Clients.Group(session.SessionId).SendAsync("ShowFreeRollResult", result);
+        await gameSessionRollPipeline.ExecuteAsync(
+            request.SessionId,
+            Context.ConnectionId,
+            playerName => Task.FromResult(diceWorkflowService.RollFree(request, playerName)),
+            result => result.HistoryEntry,
+            (sessionId, result) => Clients.Group(sessionId).SendAsync("ShowFreeRollResult", result));
     }
 
     public async Task RollTalent(TalentRollRequestDto request)
     {
-        var session = GetSession(request.SessionId);
-        if (session is null)
-        {
-            return;
-        }
-
-        var result = await diceWorkflowService.RollTalentAsync(request, ResolvePlayerName(session));
-        session.History.Add(result.HistoryEntry);
-
-        await Clients.Group(session.SessionId).SendAsync("ShowTalentRollResult", result);
+        await gameSessionRollPipeline.ExecuteAsync(
+            request.SessionId,
+            Context.ConnectionId,
+            playerName => diceWorkflowService.RollTalentAsync(request, playerName, Context.ConnectionAborted),
+            result => result.HistoryEntry,
+            (sessionId, result) => Clients.Group(sessionId).SendAsync("ShowTalentRollResult", result));
     }
 
     public async Task RollAttribute(AttributeRollRequestDto request)
     {
-        var session = GetSession(request.SessionId);
-        if (session is null)
-        {
-            return;
-        }
-
-        var result = await diceWorkflowService.RollAttributeAsync(request, ResolvePlayerName(session));
-        session.History.Add(result.HistoryEntry);
-
-        await Clients.Group(session.SessionId).SendAsync("ShowAttributeRollResult", result);
+        await gameSessionRollPipeline.ExecuteAsync(
+            request.SessionId,
+            Context.ConnectionId,
+            playerName => diceWorkflowService.RollAttributeAsync(request, playerName, Context.ConnectionAborted),
+            result => result.HistoryEntry,
+            (sessionId, result) => Clients.Group(sessionId).SendAsync("ShowAttributeRollResult", result));
     }
 
     public async Task RollBadTrait(BadTraitRollRequestDto request)
     {
-        var session = GetSession(request.SessionId);
-        if (session is null)
-        {
-            return;
-        }
-
-        var result = await diceWorkflowService.RollBadTraitAsync(request, ResolvePlayerName(session));
-        session.History.Add(result.HistoryEntry);
-
-        await Clients.Group(session.SessionId).SendAsync("ShowBadTraitRollResult", result);
-    }
-
-    private GameSession? GetSession(string? sessionId)
-    {
-        return string.IsNullOrWhiteSpace(sessionId)
-            ? null
-            : sessionService.GetById(sessionId);
-    }
-
-    private string ResolvePlayerName(GameSession session)
-    {
-        return session.Players.FirstOrDefault(player => player.ConnectionId == Context.ConnectionId)?.Name ?? "Jemand";
+        await gameSessionRollPipeline.ExecuteAsync(
+            request.SessionId,
+            Context.ConnectionId,
+            playerName => diceWorkflowService.RollBadTraitAsync(request, playerName, Context.ConnectionAborted),
+            result => result.HistoryEntry,
+            (sessionId, result) => Clients.Group(sessionId).SendAsync("ShowBadTraitRollResult", result));
     }
 }

@@ -63,7 +63,7 @@ public sealed partial class TalentCatalogService(IHostEnvironment environment)
 
         if (hero is not null && TryResolveTalent(hero, probeValue, out var resolvedTalent))
         {
-            var probeAttributes = ParseProbeAttributes(resolvedTalent.Talent.Probe);
+            var probeAttributes = ProbeAttributes.TryCreate(resolvedTalent.Talent.Probe)?.ToArray() ?? [];
             var attributeInfo = probeAttributes.Length == 0
                 ? "keine Eigenschaften hinterlegt"
                 : string.Join(", ", probeAttributes.Select(attribute =>
@@ -301,18 +301,6 @@ public sealed partial class TalentCatalogService(IHostEnvironment environment)
     private bool TryGetEntry(string talentName, out TalentCatalogEntry entry)
     {
         return _entriesByCanonical.Value.TryGetValue(CanonicalizeName(talentName), out entry!);
-    }
-
-    private static string[] ParseProbeAttributes(string? probe)
-    {
-        if (string.IsNullOrWhiteSpace(probe))
-        {
-            return [];
-        }
-
-        return probe.Split('/', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-            .Select(part => part.ToUpperInvariant())
-            .ToArray();
     }
 
     private static string? ExtractProbeFromLabel(string label)

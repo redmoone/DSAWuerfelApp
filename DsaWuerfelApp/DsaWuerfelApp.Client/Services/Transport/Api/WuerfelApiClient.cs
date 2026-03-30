@@ -1,0 +1,147 @@
+using System.Net.Http.Json;
+using System.Text.Json;
+
+using DsaWuerfelApp.Shared;
+
+namespace DsaWuerfelApp.Client.Services;
+
+public sealed class WuerfelApiClient(HttpClient httpClient) : IWuerfelApiClient
+{
+    public Task<DicePageContextDto> GetContextAsync(Guid? heroId, CancellationToken cancellationToken = default)
+    {
+        var uri = heroId.HasValue
+            ? $"api/dice/context?heroId={heroId.Value}"
+            : "api/dice/context";
+
+        return GetJsonAsync<DicePageContextDto>(uri, "Wuerfelkontext konnte nicht geladen werden.", cancellationToken);
+    }
+
+    public Task<ProbeInfoResultDto> GetProbeInfoAsync(
+        ProbeInfoRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        var parameters = new List<string>
+        {
+            $"probeValue={Uri.EscapeDataString(request.ProbeValue)}", $"modifier={request.Modifier}"
+        };
+
+        if (request.HeroId.HasValue)
+        {
+            parameters.Add($"heroId={request.HeroId.Value}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.BadTraitName))
+        {
+            parameters.Add($"badTraitName={Uri.EscapeDataString(request.BadTraitName)}");
+        }
+
+        return GetJsonAsync<ProbeInfoResultDto>(
+            $"api/dice/probe-info?{string.Join("&", parameters)}",
+            "Probeninfo konnte nicht geladen werden.",
+            cancellationToken);
+    }
+
+    public Task<FreeRollResultDto> RollFreeAsync(
+        FreeRollRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        return PostJsonAsync<FreeRollResultDto>(
+            "api/dice/free-roll",
+            request,
+            "Freier Wurf konnte nicht ausgefuehrt werden.",
+            cancellationToken);
+    }
+
+    public Task<TalentRollResultDto> RollTalentAsync(
+        TalentRollRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        return PostJsonAsync<TalentRollResultDto>(
+            "api/dice/talent-roll",
+            request,
+            "Talentprobe konnte nicht ausgefuehrt werden.",
+            cancellationToken);
+    }
+
+    public Task<AttributeRollResultDto> RollAttributeAsync(
+        AttributeRollRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        return PostJsonAsync<AttributeRollResultDto>(
+            "api/dice/attribute-roll",
+            request,
+            "Eigenschaftsprobe konnte nicht ausgefuehrt werden.",
+            cancellationToken);
+    }
+
+    public Task<BadTraitRollResultDto> RollBadTraitAsync(
+        BadTraitRollRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        return PostJsonAsync<BadTraitRollResultDto>(
+            "api/dice/bad-trait-roll",
+            request,
+            "Probe auf schlechte Eigenschaft konnte nicht ausgefuehrt werden.",
+            cancellationToken);
+    }
+
+    private async Task<T> GetJsonAsync<T>(string uri, string fallbackMessage, CancellationToken cancellationToken)
+    {
+        using var response = await httpClient.GetAsync(uri, cancellationToken);
+        await EnsureSuccessAsync(response, fallbackMessage, cancellationToken);
+
+        return await response.Content.ReadFromJsonAsync<T>(cancellationToken) ??
+               throw new InvalidOperationException(fallbackMessage);
+    }
+
+    private async Task<T> PostJsonAsync<T>(
+        string uri,
+        object request,
+        string fallbackMessage,
+        CancellationToken cancellationToken)
+    {
+        using var response = await httpClient.PostAsJsonAsync(uri, request, cancellationToken);
+        await EnsureSuccessAsync(response, fallbackMessage, cancellationToken);
+
+        return await response.Content.ReadFromJsonAsync<T>(cancellationToken) ??
+               throw new InvalidOperationException(fallbackMessage);
+    }
+
+    private static async Task EnsureSuccessAsync(
+        HttpResponseMessage response,
+        string fallbackMessage,
+        CancellationToken cancellationToken)
+    {
+        if (response.IsSuccessStatusCode)
+        {
+            return;
+        }
+
+        var apiError = await TryReadApiErrorAsync(response, cancellationToken);
+        throw new InvalidOperationException(string.IsNullOrWhiteSpace(apiError) ? fallbackMessage : apiError);
+    }
+
+    private static async Task<string?> TryReadApiErrorAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return null;
+            }
+
+            var apiError =
+                JsonSerializer.Deserialize<ApiError>(content, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+            return string.IsNullOrWhiteSpace(apiError?.Error) ? content : apiError.Error;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private sealed record ApiError(string? Error);
+}

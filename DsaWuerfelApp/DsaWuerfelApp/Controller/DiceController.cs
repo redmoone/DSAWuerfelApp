@@ -12,11 +12,13 @@ namespace DsaWuerfelApp.Controllers;
 public class DiceController(DiceWorkflowService workflow) : ControllerBase
 {
     [HttpGet("context")]
-    public async Task<ActionResult<DicePageContextDto>> GetContext([FromQuery] Guid? heroId)
+    public async Task<ActionResult<DicePageContextDto>> GetContext(
+        [FromQuery] Guid? heroId,
+        CancellationToken cancellationToken)
     {
         try
         {
-            var result = await workflow.GetContextAsync(heroId);
+            var result = await workflow.GetContextAsync(heroId, cancellationToken);
             return Ok(result);
         }
         catch (Exception ex)
@@ -30,12 +32,15 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
         [FromQuery] Guid? heroId,
         [FromQuery] string probeValue,
         [FromQuery] int modifier = 0,
-        [FromQuery] string? badTraitName = null)
+        [FromQuery] string? badTraitName = null,
+        CancellationToken cancellationToken = default)
     {
         try
         {
             var result =
-                await workflow.GetProbeInfoAsync(new ProbeInfoRequestDto(heroId, probeValue, modifier, badTraitName));
+                await workflow.GetProbeInfoAsync(
+                    new ProbeInfoRequestDto(heroId, probeValue, modifier, badTraitName),
+                    cancellationToken);
             return Ok(result);
         }
         catch (Exception ex)
@@ -59,11 +64,13 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
     }
 
     [HttpPost("talent-roll")]
-    public async Task<ActionResult<TalentRollResultDto>> RollTalent([FromBody] TalentRollRequestDto request)
+    public async Task<ActionResult<TalentRollResultDto>> RollTalent(
+        [FromBody] TalentRollRequestDto request,
+        CancellationToken cancellationToken)
     {
         try
         {
-            var result = await workflow.RollTalentAsync(request);
+            var result = await workflow.RollTalentAsync(request, cancellationToken: cancellationToken);
             return Ok(result);
         }
         catch (Exception ex)
@@ -73,11 +80,13 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
     }
 
     [HttpPost("attribute-roll")]
-    public async Task<ActionResult<AttributeRollResultDto>> RollAttribute([FromBody] AttributeRollRequestDto request)
+    public async Task<ActionResult<AttributeRollResultDto>> RollAttribute(
+        [FromBody] AttributeRollRequestDto request,
+        CancellationToken cancellationToken)
     {
         try
         {
-            var result = await workflow.RollAttributeAsync(request);
+            var result = await workflow.RollAttributeAsync(request, cancellationToken: cancellationToken);
             return Ok(result);
         }
         catch (Exception ex)
@@ -87,11 +96,13 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
     }
 
     [HttpPost("bad-trait-roll")]
-    public async Task<ActionResult<BadTraitRollResultDto>> RollBadTrait([FromBody] BadTraitRollRequestDto request)
+    public async Task<ActionResult<BadTraitRollResultDto>> RollBadTrait(
+        [FromBody] BadTraitRollRequestDto request,
+        CancellationToken cancellationToken)
     {
         try
         {
-            var result = await workflow.RollBadTraitAsync(request);
+            var result = await workflow.RollBadTraitAsync(request, cancellationToken: cancellationToken);
             return Ok(result);
         }
         catch (Exception ex)

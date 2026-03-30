@@ -16,7 +16,17 @@ builder.Services.AddSingleton<TalentProbeService>();
 builder.Services.AddSingleton<AttributeProbeService>();
 builder.Services.AddSingleton<SchlechteEigenschaftProbeService>();
 builder.Services.AddSingleton<TalentCatalogService>();
+builder.Services.AddScoped<IHeroReadRepository, HeroReadRepository>();
+builder.Services.AddScoped<HeroContextReader>();
+builder.Services.AddScoped<BadTraitResolver>();
+builder.Services.AddScoped<GetDicePageContextHandler>();
+builder.Services.AddScoped<GetProbeInfoHandler>();
+builder.Services.AddScoped<RollFreeHandler>();
+builder.Services.AddScoped<RollTalentHandler>();
+builder.Services.AddScoped<RollAttributeHandler>();
+builder.Services.AddScoped<RollBadTraitHandler>();
 builder.Services.AddScoped<DiceWorkflowService>();
+builder.Services.AddSingleton<GameSessionRollPipeline>();
 builder.Services.AddTransient<XmlHeroDeserializer>();
 builder.Services.AddDbContext<HeroDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("HeroesDb")));

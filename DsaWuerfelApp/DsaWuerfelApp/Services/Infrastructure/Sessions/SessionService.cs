@@ -1,32 +1,23 @@
 ﻿using System.Collections.Concurrent;
+
 using DsaWuerfelApp.Shared;
 
 namespace DsaWuerfelApp.Services;
 
 public class SessionService
 {
-    private readonly ConcurrentDictionary<string, GameSession> _sessions = new();
-    
     private readonly ConcurrentDictionary<string, string> _codeMap = new();
+    private readonly ConcurrentDictionary<string, GameSession> _sessions = new();
 
     public GameSession CreateSession(string masterUserId, string masterName)
     {
-        var session = new GameSession
-        {
-            MasterUserId = masterUserId,
-            JoinCode = GenerateJoinCode() 
-        };
+        var session = new GameSession { MasterUserId = masterUserId, JoinCode = GenerateJoinCode() };
 
-        session.Players.Add(new PlayerInfo 
-        { 
-            UserId = masterUserId, 
-            Name = masterName, 
-            IsMaster = true 
-        });
+        session.Players.Add(new PlayerInfo { UserId = masterUserId, Name = masterName, IsMaster = true });
 
         _sessions[session.SessionId] = session;
         _codeMap[session.JoinCode] = session.SessionId;
-        
+
         return session;
     }
 
@@ -36,10 +27,11 @@ public class SessionService
         {
             return _sessions.GetValueOrDefault(sessionId);
         }
+
         return null;
     }
-    
-    public GameSession? GetById(string sessionId) 
+
+    public GameSession? GetById(string sessionId)
         => _sessions.GetValueOrDefault(sessionId);
 
     public void AddPlayer(string sessionId, PlayerInfo player)
@@ -49,7 +41,7 @@ public class SessionService
             var existing = session.Players.FirstOrDefault(p => p.UserId == player.UserId);
             if (existing != null)
             {
-                existing.ConnectionId = player.ConnectionId; 
+                existing.ConnectionId = player.ConnectionId;
             }
             else
             {
