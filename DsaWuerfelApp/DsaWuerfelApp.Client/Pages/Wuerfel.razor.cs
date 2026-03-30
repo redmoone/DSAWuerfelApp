@@ -23,13 +23,13 @@ public partial class Wuerfel : IDisposable
         ["KK"] = 13
     };
 
-    private static readonly IReadOnlyList<string> DefaultProben =
+    private static readonly IReadOnlyList<ProbeSearchEntry> DefaultProben =
     [
-        "Klettern (MU/GE/KK)",
-        "Koerperbeherrschung (GE/GE/KO)",
-        "Sinnesschaerfe (KL/IN/IN)",
-        "Ueberreden (MU/IN/CH)",
-        "Verbergen (MU/IN/GE)"
+        BuildSelectableProbeSearchEntry("Klettern (MU/GE/KK)"),
+        BuildSelectableProbeSearchEntry("Koerperbeherrschung (GE/GE/KO)"),
+        BuildSelectableProbeSearchEntry("Sinnesschaerfe (KL/IN/IN)"),
+        BuildSelectableProbeSearchEntry("Ueberreden (MU/IN/CH)"),
+        BuildSelectableProbeSearchEntry("Verbergen (MU/IN/GE)")
     ];
 
     private readonly int[] _availableSides = [4, 6, 8, 10, 12, 20];
@@ -62,7 +62,7 @@ public partial class Wuerfel : IDisposable
     private IReadOnlyDictionary<string, int> CurrentAttributeValues =>
         _activeHero?.Eigenschaften ?? DefaultAttributeValues;
 
-    private IReadOnlyList<string> AvailableProben =>
+    private IReadOnlyList<ProbeSearchEntry> AvailableProben =>
         _activeHero is { Talente.Count: > 0 }
             ? BuildTalentProben(_activeHero)
             : DefaultProben;
@@ -89,6 +89,7 @@ public partial class Wuerfel : IDisposable
     {
         ActiveHeroState.Changed += HandleActiveHeroChanged;
         _showDebugForcedRolls = await GetDebugModeAsync();
+        await TalentCatalog.EnsureLoadedAsync(Http);
         await ActiveHeroState.EnsureLoadedAsync();
         _activeHero = ActiveHeroState.CurrentHero;
     }
@@ -670,8 +671,13 @@ public partial class Wuerfel : IDisposable
             return null;
         }
 
-        foreach (var talentEntry in _activeHero.Talente)
+        foreach (var talentEntry in BuildKnownTalentMap(_activeHero))
         {
+            if (!IsTalentRollable(talentEntry.Key, talentEntry.Value))
+            {
+                continue;
+            }
+
             if (string.Equals(BuildTalentProbeLabel(talentEntry.Key, talentEntry.Value), _selectedProbe,
                     StringComparison.Ordinal))
             {
@@ -682,12 +688,80 @@ public partial class Wuerfel : IDisposable
         return null;
     }
 
-    private static IReadOnlyList<string> BuildTalentProben(Hero hero)
+    private static IReadOnlyList<ProbeSearchEntry> BuildTalentProben(Hero hero)
     {
-        return hero.Talente
+        var knownTalents = BuildKnownTalentMap(hero);
+        var activeAlternatives = BuildActiveAlternativeLookup(knownTalents);
+
+        return knownTalents
             .OrderBy(entry => entry.Key)
-            .Select(entry => BuildTalentProbeLabel(entry.Key, entry.Value))
+            .Select(entry => IsTalentRollable(entry.Key, entry.Value)
+                ? BuildSelectableProbeSearchEntry(BuildTalentProbeLabel(entry.Key, entry.Value))
+                : BuildInactiveProbeSearchEntry(entry.Key, entry.Value, activeAlternatives))
             .ToList();
+    }
+
+    private static Dictionary<string, TalentData> BuildKnownTalentMap(Hero hero)
+    {
+        var knownTalents = hero.Talente.ToDictionary(
+            entry => entry.Key,
+            entry => new TalentData { Wert = entry.Value.Wert, Probe = entry.Value.Probe },
+            StringComparer.Ordinal);
+
+        var heroTalentNamesByCanonical = knownTalents.Keys
+            .Select(name => (Name: name, Canonical: TalentCatalog.CanonicalizeName(name)))
+            .Where(entry => !string.IsNullOrWhiteSpace(entry.Canonical))
+            .GroupBy(entry => entry.Canonical, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.First().Name, StringComparer.Ordinal);
+
+        foreach (var catalogEntry in TalentCatalog.EntriesByCanonical.Values)
+        {
+            var canonicalName = TalentCatalog.CanonicalizeName(catalogEntry.Name);
+            if (heroTalentNamesByCanonical.TryGetValue(canonicalName, out var existingTalentName))
+            {
+                var existingTalent = knownTalents[existingTalentName];
+                if (string.IsNullOrWhiteSpace(existingTalent.Probe))
+                {
+                    existingTalent.Probe = catalogEntry.Probe;
+                }
+
+                continue;
+            }
+
+            knownTalents[catalogEntry.Name] = new TalentData { Wert = 0, Probe = catalogEntry.Probe };
+        }
+
+        return knownTalents;
+    }
+
+    private static IReadOnlyDictionary<string, ProbeSearchAlternative> BuildActiveAlternativeLookup(
+        IReadOnlyDictionary<string, TalentData> knownTalents)
+    {
+        return knownTalents
+            .Where(entry => IsTalentRollable(entry.Key, entry.Value))
+            .OrderByDescending(entry => entry.Value.Wert)
+            .ThenBy(entry => entry.Key)
+            .GroupBy(entry => TalentCatalog.CanonicalizeName(entry.Key), StringComparer.Ordinal)
+            .Where(group => !string.IsNullOrWhiteSpace(group.Key))
+            .ToDictionary(
+                group => group.Key,
+                group =>
+                {
+                    var selectedTalent = group.First();
+                    var label = BuildTalentProbeLabel(selectedTalent.Key, selectedTalent.Value);
+                    return new ProbeSearchAlternative(label, label);
+                },
+                StringComparer.Ordinal);
+    }
+
+    private static bool IsTalentRollable(string talentName, TalentData talent)
+    {
+        if (talent.Wert > 0)
+        {
+            return true;
+        }
+
+        return TalentCatalog.TryGetEntry(talentName, out var catalogEntry) && catalogEntry.IsBasisTalent;
     }
 
     private string GetAttributeValueText(string attribute)
@@ -700,6 +774,50 @@ public partial class Wuerfel : IDisposable
         return string.IsNullOrWhiteSpace(talent.Probe)
             ? $"{talentName} [{talent.Wert}]"
             : $"{talentName} [{talent.Wert}] ({talent.Probe})";
+    }
+
+    private static ProbeSearchEntry BuildSelectableProbeSearchEntry(string label)
+    {
+        return new ProbeSearchEntry(label, label, true, []);
+    }
+
+    private static ProbeSearchEntry BuildInactiveProbeSearchEntry(
+        string talentName,
+        TalentData talent,
+        IReadOnlyDictionary<string, ProbeSearchAlternative> activeAlternatives)
+    {
+        var alternatives = BuildReplacementAlternatives(talentName, activeAlternatives);
+
+        return new ProbeSearchEntry(
+            BuildInactiveTalentLabel(talentName, talent),
+            null,
+            false,
+            alternatives);
+    }
+
+    private static IReadOnlyList<ProbeSearchAlternative> BuildReplacementAlternatives(
+        string talentName,
+        IReadOnlyDictionary<string, ProbeSearchAlternative> activeAlternatives)
+    {
+        if (!TalentCatalog.TryGetEntry(talentName, out var catalogEntry) || catalogEntry.AlternativeNames.Count == 0)
+        {
+            return Array.Empty<ProbeSearchAlternative>();
+        }
+
+        return catalogEntry.AlternativeNames
+            .Select(TalentCatalog.CanonicalizeName)
+            .Where(canonicalName => !string.IsNullOrWhiteSpace(canonicalName) &&
+                                    activeAlternatives.ContainsKey(canonicalName))
+            .Distinct(StringComparer.Ordinal)
+            .Select(canonicalName => activeAlternatives[canonicalName])
+            .ToList();
+    }
+
+    private static string BuildInactiveTalentLabel(string talentName, TalentData talent)
+    {
+        return string.IsNullOrWhiteSpace(talent.Probe)
+            ? $"{talentName} nicht aktiviert"
+            : $"{talentName} nicht aktiviert ({talent.Probe})";
     }
 
     private static string[] ParseProbeAttributes(string? probe)

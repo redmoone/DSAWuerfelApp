@@ -14,8 +14,33 @@
         <div class="search-dropdown">
             @foreach (var probe in FilteredProben)
             {
-                <div class="dropdown-item" @onclick="() => SelectProbe(probe)">
-                    @probe
+                <div class="dropdown-item @(probe.IsSelectable ? string.Empty : "inactive")"
+                     @onclick="() => HandleEntryClick(probe)">
+                    <div class="dropdown-item-content">
+                        <span class="dropdown-item-label">@probe.DisplayLabel</span>
+
+                        @if (!probe.IsSelectable)
+                        {
+                            @if (probe.Alternatives.Count > 0)
+                            {
+                                <div class="dropdown-item-alternatives">
+                                    @foreach (var alternative in probe.Alternatives)
+                                    {
+                                        <button type="button"
+                                                class="dropdown-alternative"
+                                                @onclick:stopPropagation="true"
+                                                @onclick="() => SelectProbe(alternative.Value)">
+                                            @alternative.Label
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="dropdown-item-note">Keine aktivierten Alternativen vorhanden.</span>
+                            }
+                        }
+                    </div>
                 </div>
             }
         </div>

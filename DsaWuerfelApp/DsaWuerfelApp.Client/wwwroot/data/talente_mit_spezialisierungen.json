@@ -1,0 +1,1190 @@
+[
+  {
+    "Name": "Anderthalbhänder",
+    "Kategorie": "Bewaffneter Nahkampf",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "BE-2",
+    "Ersatz": "Schwerter, Zweihandschwerter/-säbel",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Armbrust",
+    "Kategorie": "Fernkampf",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "BE-5",
+    "Ersatz": "Bogen",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Belagerungswaffen",
+    "Kategorie": "Fernkampf",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Blasrohr",
+    "Kategorie": "Fernkampf",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "BE-5",
+    "Ersatz": "",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Bogen",
+    "Kategorie": "Fernkampf",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "BE-3",
+    "Ersatz": "",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Diskus",
+    "Kategorie": "Fernkampf",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "BE-2",
+    "Ersatz": "",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Dolche",
+    "Kategorie": "Bewaffneter Nahkampf",
+    "Eigenschaften": "",
+    "Typ": "Basis",
+    "eBE": "BE-1",
+    "Ersatz": "Fechtwaffen, Raufen",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Fechtwaffen",
+    "Kategorie": "Bewaffneter Nahkampf",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "BE-1",
+    "Ersatz": "Dolche, Schwerter",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Hiebwaffen",
+    "Kategorie": "Bewaffneter Nahkampf",
+    "Eigenschaften": "",
+    "Typ": "Basis",
+    "eBE": "BE-4",
+    "Ersatz": "Säbel",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Infanteriewaffen",
+    "Kategorie": "Bewaffneter Nahkampf",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "BE-3",
+    "Ersatz": "Speere, Zweihand-Hiebwaffen",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Kettenstäbe",
+    "Kategorie": "Bewaffneter Nahkampf",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "BE-1",
+    "Ersatz": "Kettenwaffen, Zweihandflegel",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Kettenwaffen",
+    "Kategorie": "Bewaffneter Nahkampf",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "BE-3",
+    "Ersatz": "Kettenstäbe, Zweihandflegel",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Lanzenreiten",
+    "Kategorie": "Bew. Kampf; AT-Technik",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Peitsche",
+    "Kategorie": "Bew. Kampf; AT-Technik",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "BE-1",
+    "Ersatz": "",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Raufen",
+    "Kategorie": "Waffenlos",
+    "Eigenschaften": "",
+    "Typ": "Basis",
+    "eBE": "BE",
+    "Ersatz": "",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Ringen",
+    "Kategorie": "Waffenlos",
+    "Eigenschaften": "",
+    "Typ": "Basis",
+    "eBE": "BE",
+    "Ersatz": "",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Säbel",
+    "Kategorie": "Bewaffneter Nahkampf",
+    "Eigenschaften": "",
+    "Typ": "Basis",
+    "eBE": "BE-2",
+    "Ersatz": "Hiebwaffen, Schwerter",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Schleuder",
+    "Kategorie": "Fernkampf",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "BE-2",
+    "Ersatz": "",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Schwerter",
+    "Kategorie": "Bewaffneter Nahkampf",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "BE-2",
+    "Ersatz": "Anderthalbhänder, Fechtwaffen, Säbel",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Speere",
+    "Kategorie": "Bewaffneter Nahkampf",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "BE-3",
+    "Ersatz": "Infanteriewaffen",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Stäbe",
+    "Kategorie": "Bewaffneter Nahkampf",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "BE-2",
+    "Ersatz": "Speere",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Wurfbeile",
+    "Kategorie": "Fernkampf",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "BE-2",
+    "Ersatz": "Wurfspeere, Wurfmesser",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Wurfmesser",
+    "Kategorie": "Fernkampf",
+    "Eigenschaften": "",
+    "Typ": "Basis",
+    "eBE": "BE-3",
+    "Ersatz": "Wurfbeile, Wurfspeere",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Wurfspeere",
+    "Kategorie": "Fernkampf",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "BE-2",
+    "Ersatz": "Wurfbeile",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Zweihandflegel",
+    "Kategorie": "Bewaffneter Nahkampf",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "BE-3",
+    "Ersatz": "Infanteriewaffen, Kettenwaffen",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Zweihand-Hiebwaffen",
+    "Kategorie": "Bewaffneter Nahkampf",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "BE-3",
+    "Ersatz": "Hiebwaffen, Infanteriewaffen",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Zweihandschwerter/-säbel",
+    "Kategorie": "Bewaffneter Nahkampf",
+    "Eigenschaften": "",
+    "Typ": "Spezial",
+    "eBE": "BE-2",
+    "Ersatz": "Anderthalbhänder, Schwerter, Säbel",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Akrobatik",
+    "Kategorie": "Körperliche Talente",
+    "Eigenschaften": "(MU/GE/KK)",
+    "Typ": "Spezial",
+    "eBE": "BEx2",
+    "Ersatz": "Körperbeherrschung, Athletik",
+    "Spezialisierungen": "Balancieren, Bodenakrobatik, Schwingen, Sprünge, Winden"
+  },
+  {
+    "Name": "Athletik",
+    "Kategorie": "Körperliche Talente",
+    "Eigenschaften": "(GE/KO/KK)",
+    "Typ": "Basis",
+    "eBE": "BEx2",
+    "Ersatz": "Körperbeherrschung, Akrobatik",
+    "Spezialisierungen": "Hochsprung, Kraftakte, Langlauf, Sprint, Weitsprung"
+  },
+  {
+    "Name": "Fliegen",
+    "Kategorie": "Körperliche Talente",
+    "Eigenschaften": "(MU/IN/GE)",
+    "Typ": "Spezial",
+    "eBE": "BE",
+    "Ersatz": "Akrobatik",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Gaukeleien",
+    "Kategorie": "Körperliche Talente",
+    "Eigenschaften": "(MU/CH/FF)",
+    "Typ": "Spezial",
+    "eBE": "BEx2",
+    "Ersatz": "Taschendiebstahl, Falschspiel",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Klettern",
+    "Kategorie": "Körperliche Talente",
+    "Eigenschaften": "(MU/GE/KK)",
+    "Typ": "Basis",
+    "eBE": "BEx2",
+    "Ersatz": "Athletik, Akrobatik, Körperbeherrschung",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Körperbeherrschung",
+    "Kategorie": "Körperliche Talente",
+    "Eigenschaften": "(MU/IN/GE)",
+    "Typ": "Basis",
+    "eBE": "BEx2",
+    "Ersatz": "Akrobatik, Athletik",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Reiten",
+    "Kategorie": "Körperliche Talente",
+    "Eigenschaften": "(CH/GE/KK)",
+    "Typ": "Spezial",
+    "eBE": "BE-2",
+    "Ersatz": "Körperbeherrschung, Akrobatik",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Schleichen",
+    "Kategorie": "Körperliche Talente",
+    "Eigenschaften": "(MU/IN/GE)",
+    "Typ": "Basis",
+    "eBE": "BE",
+    "Ersatz": "Körperbeherrschung, Sich Verstecken",
+    "Spezialisierungen": "nach Gelände: Eis/Schnee, Gebäude, Geröll, Straßen, Wald/Dschungel"
+  },
+  {
+    "Name": "Schwimmen",
+    "Kategorie": "Körperliche Talente",
+    "Eigenschaften": "(GE/KO/KK)",
+    "Typ": "Basis",
+    "eBE": "BEx2",
+    "Ersatz": "Athletik",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Selbstbeherrschung",
+    "Kategorie": "Körperliche Talente",
+    "Eigenschaften": "(MU/KO/KK)",
+    "Typ": "Basis",
+    "eBE": "",
+    "Ersatz": "",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Sich Verstecken",
+    "Kategorie": "Körperliche Talente",
+    "Eigenschaften": "(MU/IN/GE)",
+    "Typ": "Basis",
+    "eBE": "BE-2",
+    "Ersatz": "Schleichen, Körperbeherrschung",
+    "Spezialisierungen": "Gebäude, Gebirge, Grasland, Eis/Schnee, Stadt, Wald/Dschungel, Wüste"
+  },
+  {
+    "Name": "Singen",
+    "Kategorie": "Körperliche Talente",
+    "Eigenschaften": "(IN/CH/CH) o. (IN/CH/KO)",
+    "Typ": "Basis",
+    "eBE": "BE-3",
+    "Ersatz": "",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Sinnenschärfe",
+    "Kategorie": "Körperliche Talente",
+    "Eigenschaften": "(KL/IN/IN) o. (KL/IN/FF)",
+    "Typ": "Basis",
+    "eBE": "",
+    "Ersatz": "",
+    "Spezialisierungen": "Hören, Riechen/Schmecken, Sehen, Tasten"
+  },
+  {
+    "Name": "Skifahren",
+    "Kategorie": "Körperliche Talente",
+    "Eigenschaften": "(GE/GE/KO)",
+    "Typ": "Spezial",
+    "eBE": "BE-2",
+    "Ersatz": "Athletik, Körperbeherrschung",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Stimmen Imitieren",
+    "Kategorie": "Körperliche Talente",
+    "Eigenschaften": "(KL/IN/CH)",
+    "Typ": "Spezial",
+    "eBE": "BE-4",
+    "Ersatz": "Gaukeleien (Bauchreden)",
+    "Spezialisierungen": "Haustiere, Jagdwild, Menschliche Stimmen, Raubtiere, Vögel"
+  },
+  {
+    "Name": "Tanzen",
+    "Kategorie": "Körperliche Talente",
+    "Eigenschaften": "(CH/GE/GE)",
+    "Typ": "Basis",
+    "eBE": "BEx2",
+    "Ersatz": "Körperbeherrschung, Akrobatik",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Taschendiebstahl",
+    "Kategorie": "Körperliche Talente",
+    "Eigenschaften": "(MU/IN/FF)",
+    "Typ": "Spezial",
+    "eBE": "BEx2",
+    "Ersatz": "Gaukeleien (Taschenspielereien)",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Zechen",
+    "Kategorie": "Körperliche Talente",
+    "Eigenschaften": "(IN/KO/KK)",
+    "Typ": "Basis",
+    "eBE": "",
+    "Ersatz": "",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Betören",
+    "Kategorie": "Gesellschaftliche Talente",
+    "Eigenschaften": "(IN/CH/CH)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Überreden, Überzeugen",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Etikette",
+    "Kategorie": "Gesellschaftliche Talente",
+    "Eigenschaften": "(KL/IN/CH)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Gassenwissen",
+    "Kategorie": "Gesellschaftliche Talente",
+    "Eigenschaften": "(KL/IN/CH)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Menschenkenntnis",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Lehren",
+    "Kategorie": "Gesellschaftliche Talente",
+    "Eigenschaften": "(KL/IN/CH)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Überzeugen",
+    "Spezialisierungen": "nach Talentgruppe"
+  },
+  {
+    "Name": "Menschenkenntnis",
+    "Kategorie": "Gesellschaftliche Talente",
+    "Eigenschaften": "(KL/IN/CH)",
+    "Typ": "Basis",
+    "eBE": "",
+    "Ersatz": "Heilkunde Seele",
+    "Spezialisierungen": "nach Kultur"
+  },
+  {
+    "Name": "Schauspielerei",
+    "Kategorie": "Gesellschaftliche Talente",
+    "Eigenschaften": "(MU/KL/CH)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Überreden",
+    "Spezialisierungen": "Komödie, Posse, Tragödie"
+  },
+  {
+    "Name": "Schriftlicher Ausdruck",
+    "Kategorie": "Gesellschaftliche Talente",
+    "Eigenschaften": "(KL/IN/IN)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "verwendete Sprache, Überzeugen (schriftliche Rhetorik)",
+    "Spezialisierungen": "Schreiber, Schriftsteller"
+  },
+  {
+    "Name": "Sich Verkleiden",
+    "Kategorie": "Gesellschaftliche Talente",
+    "Eigenschaften": "(MU/CH/GE)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Schauspielerei",
+    "Spezialisierungen": "anderer Stand, anderes Geschlecht, andere Rasse, fremde Kultur"
+  },
+  {
+    "Name": "Überreden",
+    "Kategorie": "Gesellschaftliche Talente",
+    "Eigenschaften": "(MU/IN/CH)",
+    "Typ": "Basis",
+    "eBE": "",
+    "Ersatz": "Überzeugen",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Überzeugen",
+    "Kategorie": "Gesellschaftliche Talente",
+    "Eigenschaften": "(KL/IN/CH)",
+    "Typ": "Basis",
+    "eBE": "",
+    "Ersatz": "Überreden",
+    "Spezialisierungen": "Öffentliches Rede (Demagogie, Plädoyer, Predigt), Einzelgespräche (Verhör, Bekehrung), Diskussions-Rhetorik, schriftliche Rhetorik"
+  },
+  {
+    "Name": "Fährtensuchen",
+    "Kategorie": "Naturtalente",
+    "Eigenschaften": "(KL/IN/IN) o. (KL/IN/KO)",
+    "Typ": "Basis",
+    "eBE": "",
+    "Ersatz": "Sinnenschärfe",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Fallenstellen",
+    "Kategorie": "Naturtalente",
+    "Eigenschaften": "(KL/FF/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Wildnisleben",
+    "Spezialisierungen": "Gruben, Schlingen, Speere"
+  },
+  {
+    "Name": "Fesseln/Entfesseln",
+    "Kategorie": "Naturtalente",
+    "Eigenschaften": "(FF/GE/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Seiler, Seefahrt, Akrobatik, Ringen, Taschendiebstahl",
+    "Spezialisierungen": "Entfesseln, Fesseln, Knotenkunde, Taue Spleißen, Netze Knüpfen"
+  },
+  {
+    "Name": "Fischen/Angeln",
+    "Kategorie": "Naturtalente",
+    "Eigenschaften": "(IN/FF/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Wildnisleben",
+    "Spezialisierungen": "Flüsse/Bäche, Hochseeangeln, Seen/Sumpf/Brackwasser, Strand/Riff, Seefischerei"
+  },
+  {
+    "Name": "Orientierung",
+    "Kategorie": "Naturtalente",
+    "Eigenschaften": "(KL/IN/IN)",
+    "Typ": "Basis",
+    "eBE": "",
+    "Ersatz": "Sternkunde",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Wettervorhersage",
+    "Kategorie": "Naturtalente",
+    "Eigenschaften": "(KL/IN/IN)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Sternkunde",
+    "Spezialisierungen": "nach Geländetyp/Region"
+  },
+  {
+    "Name": "Wildnisleben",
+    "Kategorie": "Naturtalente",
+    "Eigenschaften": "(IN/GE/KO)",
+    "Typ": "Basis",
+    "eBE": "",
+    "Ersatz": "Tierkunde, Pflanzenkunde",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Anatomie",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(MU/KL/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Heilkunde Wunden, Heilkunde Krankheiten",
+    "Spezialisierungen": "nach Spezies"
+  },
+  {
+    "Name": "Baukunst",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/KL/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Zimmermann, Maurer, Steinmetz",
+    "Spezialisierungen": "Hochbau (Wohn- und Repräsentationsgebäude), Tiefbau (Brücken, Kanäle, Straßen), Wehranlagen"
+  },
+  {
+    "Name": "Brettspiel",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/KL/IN)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Kriegskunst, Rechnen",
+    "Spezialisierungen": "nach Spiel"
+  },
+  {
+    "Name": "Geographie",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/KL/IN)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Sagen/Legenden",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Geschichtswissen",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/KL/IN)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Sagen/Legenden",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Gesteinskunde",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/IN/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Baukunst, Bergbau, Hüttenkunde, Steinmetz",
+    "Spezialisierungen": "Baugestein, Edelmetalle, Edelsteine"
+  },
+  {
+    "Name": "Götter/Kulte",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/KL/IN)",
+    "Typ": "Basis",
+    "eBE": "",
+    "Ersatz": "Geschichtswissen, Sagen/Legenden",
+    "Spezialisierungen": "je nach Glaubensausrichtung"
+  },
+  {
+    "Name": "Heraldik",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/KL/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Etikette",
+    "Spezialisierungen": "nach Staat"
+  },
+  {
+    "Name": "Hüttenkunde",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/IN/KO)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Alchimie, Grobschmied, Metallguss",
+    "Spezialisierungen": "nach Metall/Erz (Edelmetalle, Eisen/Stahl, Kupfer/Bronze/Messing, Zinn, Magische Metalle ...)"
+  },
+  {
+    "Name": "Kriegskunst",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(MU/KL/CH)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Brettspiel, Rechnen, Menschenkenntnis, Tierkunde",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Kryptographie",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/KL/IN)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Sprachenkunde, Rechnen",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Magiekunde",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/KL/IN)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Sagen/Legenden, Götter/Kulte",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Mechanik",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/KL/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Feinmechanik",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Pflanzenkunde",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/IN/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Wildnisleben",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Philosophie",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/KL/IN)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Götter/Kulte, Magiekunde, Geschichtswissen, Sagen/Legenden",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Rechnen",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/KL/IN)",
+    "Typ": "Basis",
+    "eBE": "",
+    "Ersatz": "",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Rechtskunde",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/KL/IN)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Etikette, Staatskunst",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Sagen/Legenden",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/IN/CH)",
+    "Typ": "Basis",
+    "eBE": "",
+    "Ersatz": "Geschichtswissen, Götter/Kulte",
+    "Spezialisierungen": "nach Kultur"
+  },
+  {
+    "Name": "Schätzen",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/IN/IN)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Handel, Juwelier, Feinm. (Goldschmied)",
+    "Spezialisierungen": "Antiquitäten, Materialwert, Schmuck, Handwerksgüter"
+  },
+  {
+    "Name": "Sprachenkunde",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/KL/IN)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "",
+    "Spezialisierungen": "nach Sprachfamilie"
+  },
+  {
+    "Name": "Staatskunst",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/IN/CH)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Hauswirtschaft, Rechtskunde (Staatsrecht)",
+    "Spezialisierungen": "Diplomatie, Intrige, Verwaltung"
+  },
+  {
+    "Name": "Sternkunde",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(KL/KL/IN)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Gabe Prophezeien (Astrologie) (+5)",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Tierkunde",
+    "Kategorie": "Wissenstalente",
+    "Eigenschaften": "(MU/KL/IN)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Viehzucht, Reiten, Wildnisleben",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Abrichten",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(MU/IN/CH)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Viehzucht, Tierkunde, Reiten",
+    "Spezialisierungen": "Dompteur, Echsenbändiger, Falkner, Hundeführer, Zureiter"
+  },
+  {
+    "Name": "Ackerbau",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(IN/FF/KO)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Viehzucht, Pflanzenkunde",
+    "Spezialisierungen": "evtl. nach angebauter Frucht oder nach Klimazone, zwergische Pilzzucht"
+  },
+  {
+    "Name": "Alchimie",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(MU/KL/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Kochen (Tränke), Pflanzenkunde",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Bergbau",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(IN/KO/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Steinmetz, Maurer, Baukunst, Gesteinskunde",
+    "Spezialisierungen": "Bergwerke, Kanalisiation, natürliche Höhlen, Sappeur, unterirdische Städte"
+  },
+  {
+    "Name": "Bogenbau",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/IN/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Holzbearbeitung, Feinmechanik, Grobschmied",
+    "Spezialisierungen": "Armbrust, Bogen, Bolzen/Pfeile, Torsionswaffen"
+  },
+  {
+    "Name": "Boote Fahren",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(GE/KO/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Seefahrt",
+    "Spezialisierungen": "Einmaster (Segeln), Flöße (Staken), Kanus/Kajaks (Paddeln), Ruderboote (Rudern), Eissegler"
+  },
+  {
+    "Name": "Brauer",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/FF/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Alchimie",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Drucker",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/FF/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Mechanik, Stoffe Färben, Alchimie, Metallguss",
+    "Spezialisierungen": "Buchdruck, Druckereitechnik, Pamphlete, Typographie"
+  },
+  {
+    "Name": "Fahrzeug Lenken",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(IN/CH/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "",
+    "Spezialisierungen": "Lastkarren, Streitwagen, Zuggespanne, Hunde- und Dachsschlitten"
+  },
+  {
+    "Name": "Falschspiel",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(MU/CH/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Gaukeleien (Taschenspielereien)",
+    "Spezialisierungen": "Würfel, Karten"
+  },
+  {
+    "Name": "Feinmechanik",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/FF/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "",
+    "Spezialisierungen": "Gold- und Silberschmied, Gravieren, Schlösser, Siegelstöcke, Trickwaffen/Fallen, Uhrwerke"
+  },
+  {
+    "Name": "Feuersteinbearbeitung",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/FF/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Steinmetz",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Fleischer",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/FF/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Viehzucht, Fischen/Angeln, Tierkunde, Kochen, Anatomie, Gerber/Kürschner (Trophäen)",
+    "Spezialisierungen": "Fische, Geflügel, Reptilien, Säugetiere"
+  },
+  {
+    "Name": "Gerber/Kürschner",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/FF/KO)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Alchimie, Fleischer",
+    "Spezialisierungen": "Gerber, Kürschner, Trophäen"
+  },
+  {
+    "Name": "Glaskunst",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(FF/FF/KO)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Juwelier",
+    "Spezialisierungen": "Fensterscheiben, Glasbläserei, Linsenschleifen, Spiegel"
+  },
+  {
+    "Name": "Grobschmied",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(FF/KO/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Metallguss",
+    "Spezialisierungen": "Drahtzieher/Sarwirker, Hufschmied, Plättner, Schwarzschmied, Spengler, Waffenschmied"
+  },
+  {
+    "Name": "Handel",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/IN/CH)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Hauswirtschaft, Geographie, Schätzen",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Hauswirtschaft",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(IN/CH/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Rechnen (Buchführung)",
+    "Spezialisierungen": "Bewirtung/Feiern, Personal, Vorratshaltung"
+  },
+  {
+    "Name": "Heilkunde Gift",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(MU/KL/IN)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Alchimie (Gifte), Heilkunde Krankheiten, Kochen (Tränke)",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Heilkunde Krankheiten",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(MU/KL/CH)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Heilkunde Gift",
+    "Spezialisierungen": "nach Region, Tierheilkunde"
+  },
+  {
+    "Name": "Heilkunde Seele",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(IN/CH/CH)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Menschenkenntnis, Überzeugen",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Heilkunde Wunden",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/CH/FF)",
+    "Typ": "Basis",
+    "eBE": "",
+    "Ersatz": "Anatomie",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Holzbearbeitung",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/FF/KK)",
+    "Typ": "Basis",
+    "eBE": "",
+    "Ersatz": "Zimmermann",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Instrumentenbauer",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/IN/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Holzbearbeitung, Feinmechanik",
+    "Spezialisierungen": "Blasintrumente, Saiteninstrumente, Tasteninstrumente, Trommeln"
+  },
+  {
+    "Name": "Kartographie",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/KL/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Orientierung, Sternkunde",
+    "Spezialisierungen": "Gebäude, Höhlen/Tunnel, Küsten/Meere, Landschaften, Stadt"
+  },
+  {
+    "Name": "Kochen",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/IN/FF)",
+    "Typ": "Basis",
+    "eBE": "",
+    "Ersatz": "Fleischer, Fischen/Angeln, Wildnisleben, Alchimie",
+    "Spezialisierungen": "Backen/Braten, Festmahle, Haltbarmachen, Marschversorgung, Tränke, Vorkoster"
+  },
+  {
+    "Name": "Kristallzucht",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/IN/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Alchimie",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Lederarbeiten",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/FF/FF)",
+    "Typ": "Basis",
+    "eBE": "",
+    "Ersatz": "Gerber/Kürschner, Schneidern",
+    "Spezialisierungen": "Gurte/Riemen,Lederkleidung, Lederrüstungen, Sättel, Schuhwerk"
+  },
+  {
+    "Name": "Malen/Zeichnen",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/IN/FF)",
+    "Typ": "Basis",
+    "eBE": "",
+    "Ersatz": "Kartographie, Steinmetz (Bildhauer), Tätowieren",
+    "Spezialisierungen": "Architektur, Landschaften, Porträt, technische Skizze"
+  },
+  {
+    "Name": "Maurer",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(FF/GE/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Baukunst",
+    "Spezialisierungen": "Steinbau, Steinguss, Ziegelbau"
+  },
+  {
+    "Name": "Metallguss",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/FF/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Hüttenkunde, Grobschmied",
+    "Spezialisierungen": "Klangkörper, Rohre, Reliefplatten/Statuen"
+  },
+  {
+    "Name": "Musizieren",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(IN/CH/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Schlösser Knacken",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(IN/FF/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Feinmechanik",
+    "Spezialisierungen": "Fallen, Schlösser"
+  },
+  {
+    "Name": "Schnaps Brennen",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/IN/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Alchimie, Brauer, Winzer",
+    "Spezialisierungen": "alchimistische Destillation, Beeren-/Obstbrände, Kornbrände, Kräuterschnäpse, Lagerung"
+  },
+  {
+    "Name": "Schneidern",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/FF/FF)",
+    "Typ": "Basis",
+    "eBE": "",
+    "Ersatz": "Webkunst, Lederarbeiten",
+    "Spezialisierungen": "Entwurf/Festgewänder, Flick-/Gebrauchsschneiderei, Maßschneidern, Tuchrüstungen"
+  },
+  {
+    "Name": "Seefahrt",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(FF/GE/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Boote Fahren",
+    "Spezialisierungen": "Ruderschiff, Segelschiff, Steuermann"
+  },
+  {
+    "Name": "Seiler",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(FF/FF/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Fesseln (Taue spleißen)",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Steinmetz",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(FF/FF/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Baukunst, Maurer, Bergbau, Malen/Zeichnen",
+    "Spezialisierungen": "Baugestein, Reliefs, Statuen"
+  },
+  {
+    "Name": "Steinschneider/Juwelier",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(IN/FF/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Feinmechanik, Kristallzüchter",
+    "Spezialisierungen": ""
+  },
+  {
+    "Name": "Stellmacher",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/FF/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Zimmermann, Grobschmied",
+    "Spezialisierungen": "Karren/Wagen, Schlitten, Streitwagen"
+  },
+  {
+    "Name": "Stoffe Färben",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/FF/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Alchimie, eventuell Drucker für Stoffdruck",
+    "Spezialisierungen": "alchimistische Farben, mineralische Farben, pflanzliche Farben, tierische Farben oder nach Art des Stoffes oder Stoffdruck"
+  },
+  {
+    "Name": "Tätowieren",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(IN/FF/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Malen/Zeichnen",
+    "Spezialisierungen": "Naturalistische Darstellungen, Ornamente, Zaubertätowierungen"
+  },
+  {
+    "Name": "Töpfern",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/FF/FF)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Maurer, Steinmetz",
+    "Spezialisierungen": "Gefäße, Statuetten, Ziegelei"
+  },
+  {
+    "Name": "Viehzucht",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/IN/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Tierkunde",
+    "Spezialisierungen": "nach Tierart: Rind, Schaf/Ziege, Schwein, Pferd, Hund, etc."
+  },
+  {
+    "Name": "Webkunst",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(FF/FF/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Schneidern",
+    "Spezialisierungen": "nach Material oder nach Technik (Häkeln, Klöppeln, Stricken, Teppichknüpfen, Weben)"
+  },
+  {
+    "Name": "Winzer",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/FF/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "",
+    "Spezialisierungen": "Wein, Fruchtweine, Schaumweine, Weinkenner"
+  },
+  {
+    "Name": "Zimmermann",
+    "Kategorie": "Handwerkstalente",
+    "Eigenschaften": "(KL/FF/KK)",
+    "Typ": "Spezial",
+    "eBE": "",
+    "Ersatz": "Holzbearbeitung",
+    "Spezialisierungen": "Dachdecker, Holzkonstruktionen, Schiffszimmermann, Schiffbau (erfordert die Talente Lesen/Schreiben, Malen/Zeichnen, Rechnen und Seefahrt jeweils auf TaW 4)"
+  }
+]
