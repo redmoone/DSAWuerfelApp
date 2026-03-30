@@ -13,20 +13,16 @@
 }
 
 .top-section {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr;
     align-items: stretch; 
     gap: 24px;
-    flex-wrap: wrap;
-
-
 }
 
 .history-area {
-    flex: 1;
-    min-width: 300px;
+    min-width: 0;
     height: 40vh;
+    min-height: 320px;
     overflow-y: auto;
     background-color: rgba(165, 165, 165, 0.85);
     border-radius: 8px;
@@ -45,6 +41,7 @@
     gap: 24px;
     width: 100%;
     flex-wrap: wrap;
+    grid-column: 1 / -1;
 }
 
 .dice-3d-box {
@@ -93,6 +90,68 @@
     gap: 20px;
     border: 2px solid var(--dsa-gold);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.additional-info-block {
+    min-height: 320px;
+    height: 40vh;
+}
+
+.additional-info-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.additional-info-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(212, 175, 55, 0.32);
+    background: rgba(9, 25, 48, 0.35);
+}
+
+.additional-info-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--dsa-gold);
+}
+
+.additional-info-text {
+    margin: 0;
+    line-height: 1.55;
+    color: rgba(255, 248, 220, 0.9);
+}
+
+.additional-info-empty {
+    margin: 0;
+    padding: 14px 16px;
+    border-radius: 8px;
+    background: rgba(9, 25, 48, 0.22);
+    color: rgba(255, 248, 220, 0.72);
+    line-height: 1.5;
+}
+
+.probe-search-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.probe-search-field {
+    flex: 1;
+    min-width: 0;
+}
+
+.probe-info-button {
+    flex-shrink: 0;
 }
 
 .block-title {
@@ -301,6 +360,10 @@
     background-color: rgba(102, 34, 29, 0.82);
 }
 
+.probe-evaluation.requirement {
+    background-color: rgba(20, 44, 86, 0.82);
+}
+
 .probe-evaluation.patzer {
     background: linear-gradient(135deg, rgba(12, 12, 12, 0.94), rgba(36, 36, 36, 0.9));
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 10px 22px rgba(0, 0, 0, 0.45);
@@ -417,4 +480,25 @@
 .probe-roll-rest {
     font-size: 0.8rem;
     color: rgba(255, 248, 220, 0.78);
+}
+
+@media (min-width: 1100px) {
+    .top-section {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .history-area {
+        grid-column: span 2;
+    }
+
+    .additional-info-block {
+        grid-column: span 1;
+    }
+}
+
+@media (max-width: 640px) {
+    .probe-search-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
 }

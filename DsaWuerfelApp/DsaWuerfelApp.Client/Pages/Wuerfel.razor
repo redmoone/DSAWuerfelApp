@@ -5,13 +5,102 @@
 
 <div class="wuerfel-page-container pa-4">
     <div class="top-section">
-        <div class="history-area" title="Historie der bisherigen Würfe">
+        <div class="history-area" title="Historie der bisherigen Wuerfe">
             <RollHistory @ref="_rollHistory"/>
+        </div>
+
+        <div class="action-block additional-info-block">
+            <h3 class="block-title">Zusaetzliche Informationen</h3>
+            <div class="additional-info-content">
+                @if (!string.IsNullOrWhiteSpace(_probeInfoText))
+                {
+                    <section class="additional-info-panel">
+                        <h4 class="additional-info-title">Probeninfo</h4>
+                        <p class="additional-info-text">@_probeInfoText</p>
+                    </section>
+                }
+
+                @if (_lastProbeEvaluation is not null)
+                {
+                    <section class="additional-info-panel">
+                        <h4 class="additional-info-title">Letzte Talentprobe</h4>
+                        <div class="probe-evaluation @GetProbeEvaluationClass(_lastProbeEvaluation)">
+                            <div class="probe-evaluation-header">
+                                <span class="probe-evaluation-name">@_lastProbeEvaluation.TalentName</span>
+                                <span class="probe-evaluation-status">@GetProbeStatusText(_lastProbeEvaluation)</span>
+                            </div>
+
+                            <div class="probe-evaluation-meta">
+                                <span>Probe: @_lastProbeEvaluation.Probe</span>
+                                <span>TaW: @_lastProbeEvaluation.TalentValue</span>
+                                <span>Mod.: @FormatModifier(_lastProbeEvaluation.Modifier)</span>
+                                <span>Effektiv: @_lastProbeEvaluation.EffectiveTalentValue</span>
+                                <span>Rest: @_lastProbeEvaluation.Rest</span>
+                            </div>
+
+                            <div class="probe-evaluation-rolls">
+                                @foreach (var detail in _lastProbeEvaluation.Details)
+                                {
+                                    <div class="probe-roll-chip @GetProbeRollChipClass(_lastProbeEvaluation, detail)">
+                                        <span class="probe-roll-attribute">@detail.Attribute</span>
+                                        <span class="probe-roll-values">@detail.Roll / @detail.TargetValue</span>
+                                        <span class="probe-roll-rest">
+                                            Diff: @detail.Difference | Rest: @detail.RemainingRest
+                                        </span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </section>
+                }
+
+                @if (_lastAttributeProbeRequirement is not null)
+                {
+                    <section class="additional-info-panel">
+                        <h4 class="additional-info-title">Dummy-Eigenschaftsprobe</h4>
+                        <div class="probe-evaluation requirement">
+                            <div class="probe-evaluation-header">
+                                <span class="probe-evaluation-name">@_lastAttributeProbeRequirement.Probe</span>
+                                <span class="probe-evaluation-status">
+                                    Benoetigter Probenwert: @_lastAttributeProbeRequirement.RequiredTalentValue
+                                </span>
+                            </div>
+
+                            <div class="probe-evaluation-meta">
+                                <span>Mod.: @FormatModifier(_lastAttributeProbeRequirement.Modifier)</span>
+                                <span>Ausgleich: @_lastAttributeProbeRequirement.RequiredCompensation</span>
+                            </div>
+
+                            <div class="probe-evaluation-rolls">
+                                @foreach (var detail in _lastAttributeProbeRequirement.Details)
+                                {
+                                    <div class="probe-roll-chip @GetAttributeRequirementChipClass(detail)">
+                                        <span class="probe-roll-attribute">@detail.Attribute</span>
+                                        <span class="probe-roll-values">@detail.Roll / @detail.BaseValue</span>
+                                        <span class="probe-roll-rest">
+                                            Benoetigter Ausgleich: @detail.Difference
+                                        </span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </section>
+                }
+
+                @if (string.IsNullOrWhiteSpace(_probeInfoText) && _lastProbeEvaluation is null &&
+                     _lastAttributeProbeRequirement is null)
+                {
+                    <p class="additional-info-empty">
+                        Waehle eine Probe und nutze den Info-Button, fuehre eine Talentprobe aus oder wuerfle mit drei
+                        Eigenschaften.
+                    </p>
+                }
+            </div>
         </div>
 
         <div class="middle-section">
             <div class="results-bar">
-                <h3 class="results-title">Ergebnisse und Würfeln</h3>
+                <h3 class="results-title">Ergebnisse und Wuerfeln</h3>
 
                 <div class="global-actions-bar">
                     <div class="left-actions">
@@ -20,7 +109,7 @@
                         <ModifierPill @bind-Value="_modifier"/>
 
                         <button class="dsa-btn-icon @(_isHiddenRoll ? "active" : "")" @onclick="ToggleHiddenRoll"
-                                title="@(_isHiddenRoll ? "Verdeckter Wurf" : "Öffentlicher Wurf")">
+                                title="@(_isHiddenRoll ? "Verdeckter Wurf" : "Oeffentlicher Wurf")">
                             <img src="icons/eye-closed.svg" class="btn-icon" alt="Auge"/>
                         </button>
 
@@ -31,13 +120,13 @@
 
                     <div class="right-actions">
                         <button class="dsa-btn" @onclick="ExecuteGlobalRoll" disabled="@(!CanRoll)">
-                            Würfeln
+                            Wuerfeln
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div class="dice-3d-box" title="3D Ansicht der gefallenen Würfel">
+            <div class="dice-3d-box" title="3D Ansicht der gefallenen Wuerfel">
                 <Dice3D @ref="_dice3d" OnDiceRemoved="HandleDiceRemoved"/>
             </div>
         </div>
@@ -52,10 +141,18 @@
         </div>
 
         <div class="action-block">
-            <h3 class="block-title">Probensuche & Ergebnis</h3>
-            <div title="Suche nach Talenten oder Zaubern für automatisierte Proben">
-                <ProbenSearch AvailableProben="AvailableProben" Placeholder="@ProbePlaceholder"
-                              @bind-SelectedProbe="_selectedProbe"/>
+            <h3 class="block-title">Probensuche</h3>
+            <div class="probe-search-row" title="Suche nach Talenten oder Zaubern fuer automatisierte Proben">
+                <div class="probe-search-field">
+                    <ProbenSearch @ref="_probenSearch" AvailableProben="AvailableProben" Placeholder="@ProbePlaceholder"
+                                  SelectedProbe="@(_selectedProbe ?? string.Empty)"
+                                  SelectedProbeChanged="HandleSelectedProbeChanged"/>
+                </div>
+                <MudIconButton Icon="@Icons.Material.Filled.Info" Variant="Variant.Filled"
+                               OnClick="ShowSelectedProbeInfo" Disabled="@string.IsNullOrWhiteSpace(_selectedProbe)"
+                               title="Zusatzinformationen zur ausgewaehlten Probe anzeigen"
+                               Class="rounded-circle probe-info-button"
+                               Style="width: 48px; height: 48px; background-color: var(--pill-bg); color: var(--dsa-white); border: 2px solid var(--dsa-gold);"/>
             </div>
 
             @if (ShowDebugForcedRolls)
@@ -71,39 +168,9 @@
                         <button type="button" class="forced-rolls-button" @onclick='() => SetForcedRolls("1,1,13")'>
                             Glueck
                         </button>
-                        <button type="button" class="forced-rolls-button muted" @onclick="ClearForcedRolls">Leer
+                        <button type="button" class="forced-rolls-button muted" @onclick="ClearForcedRolls">
+                            Leer
                         </button>
-                    </div>
-                </div>
-            }
-
-            @if (_lastProbeEvaluation is not null)
-            {
-                <div class="probe-evaluation @GetProbeEvaluationClass(_lastProbeEvaluation)">
-                    <div class="probe-evaluation-header">
-                        <span class="probe-evaluation-name">@_lastProbeEvaluation.TalentName</span>
-                        <span class="probe-evaluation-status">@GetProbeStatusText(_lastProbeEvaluation)</span>
-                    </div>
-
-                    <div class="probe-evaluation-meta">
-                        <span>Probe: @_lastProbeEvaluation.Probe</span>
-                        <span>TaW: @_lastProbeEvaluation.TalentValue</span>
-                        <span>Mod.: @FormatModifier(_lastProbeEvaluation.Modifier)</span>
-                        <span>Effektiv: @_lastProbeEvaluation.EffectiveTalentValue</span>
-                        <span>Rest: @_lastProbeEvaluation.Rest</span>
-                    </div>
-
-                    <div class="probe-evaluation-rolls">
-                        @foreach (var detail in _lastProbeEvaluation.Details)
-                        {
-                            <div class="probe-roll-chip @GetProbeRollChipClass(_lastProbeEvaluation, detail)">
-                                <span class="probe-roll-attribute">@detail.Attribute</span>
-                                <span class="probe-roll-values">@detail.Roll / @detail.TargetValue</span>
-                                <span class="probe-roll-rest">
-                                    Diff: @detail.Difference | Rest: @detail.RemainingRest
-                                </span>
-                            </div>
-                        }
                     </div>
                 </div>
             }
@@ -111,7 +178,7 @@
 
         <div class="action-block">
             <h3 class="block-title">Freier Wurf</h3>
-            <div title="Manuelle Auswahl der Würfel">
+            <div title="Manuelle Auswahl der Wuerfel">
                 <DiceControls AvailableSides="_availableSides" OnAddDie="AddDie"/>
             </div>
 

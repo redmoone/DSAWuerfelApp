@@ -37,13 +37,18 @@ public partial class Wuerfel : IDisposable
     private readonly List<int> _selectedDice = [];
 
     private Hero? _activeHero;
+    private RollArea _activeRollArea;
     private Dice3D _dice3d = null!;
     private string? _error;
     private string _forcedRollsText = string.Empty;
     private bool _isHiddenRoll;
     private RollSetResult? _last;
+    private AttributeProbeRequirement? _lastAttributeProbeRequirement;
     private TalentProbeResult? _lastProbeEvaluation;
     private int _modifier;
+    private AttributeProbeContext? _pendingAttributeProbeContext;
+    private string? _probeInfoText;
+    private ProbenSearch? _probenSearch;
     private RollHistory _rollHistory = null!;
     private string? _selectedProbe;
     private bool _showDebugForcedRolls;
@@ -92,6 +97,7 @@ public partial class Wuerfel : IDisposable
     {
         _lastProbeEvaluation = null;
         _last = ToRollSetResult(result);
+        ApplyAttributeProbeRequirement(_last);
 
         await InvokeAsync(async () =>
         {
@@ -111,20 +117,50 @@ public partial class Wuerfel : IDisposable
 
     private async Task AddDie(int sides)
     {
+        await SwitchRollAreaAsync(RollArea.FreeRoll);
         _selectedDice.Add(sides);
         await Update3DView();
     }
 
     private async Task Reset()
     {
+        await ResetRollAreaAsync();
+    }
+
+    private async Task ResetRollAreaAsync(bool clearProbeSearch = true)
+    {
         _selectedDice.Clear();
         _selectedAttributes.Clear();
-        _selectedProbe = null;
+        ClearSelectedProbe();
+        _pendingAttributeProbeContext = null;
+        _lastAttributeProbeRequirement = null;
         _last = null;
         _lastProbeEvaluation = null;
         _modifier = 0;
         _forcedRollsText = string.Empty;
+        _error = null;
+        _activeRollArea = RollArea.None;
         await Update3DView();
+
+        if (clearProbeSearch && _probenSearch is not null)
+        {
+            await _probenSearch.ClearAsync();
+        }
+    }
+
+    private async Task SwitchRollAreaAsync(RollArea targetArea)
+    {
+        if (_activeRollArea == targetArea)
+        {
+            return;
+        }
+
+        if (_activeRollArea != RollArea.None)
+        {
+            await ResetRollAreaAsync(clearProbeSearch: targetArea != RollArea.ProbeSearch);
+        }
+
+        _activeRollArea = targetArea;
     }
 
     private void ToggleHiddenRoll() => _isHiddenRoll = !_isHiddenRoll;
@@ -165,6 +201,7 @@ public partial class Wuerfel : IDisposable
             await Update3DView();
         }
 
+        _pendingAttributeProbeContext = CreateAttributeProbeContext();
         await Roll();
     }
 
@@ -213,6 +250,7 @@ public partial class Wuerfel : IDisposable
         }
 
         _last = await resp.Content.ReadFromJsonAsync<RollSetResult>();
+        ApplyAttributeProbeRequirement(_last);
 
         if (_last != null)
         {
@@ -239,6 +277,8 @@ public partial class Wuerfel : IDisposable
             return;
         }
 
+        _pendingAttributeProbeContext = null;
+        _lastAttributeProbeRequirement = null;
         _lastProbeEvaluation = null;
         _selectedDice.Clear();
         _selectedAttributes.Clear();
@@ -277,44 +317,39 @@ public partial class Wuerfel : IDisposable
             return null;
         }
 
-        foreach (var talentEntry in _activeHero.Talente)
+        var selectedTalent = GetSelectedTalent();
+        if (selectedTalent is null)
         {
-            if (!string.Equals(BuildTalentProbeLabel(talentEntry.Key, talentEntry.Value), _selectedProbe,
-                    StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            var probeAttributes = ParseProbeAttributes(talentEntry.Value.Probe);
-            if (probeAttributes.Length != 3)
-            {
-                _error = $"Fuer {talentEntry.Key} ist keine vollstaendige Talentprobe hinterlegt.";
-                return null;
-            }
-
-            List<int>? forcedRolls = null;
-            if (_showDebugForcedRolls)
-            {
-                forcedRolls = ParseForcedRolls();
-                if (!string.IsNullOrWhiteSpace(_forcedRollsText) && forcedRolls is null)
-                {
-                    return null;
-                }
-            }
-
-            return new TalentProbeRequest
-            {
-                TalentName = talentEntry.Key,
-                TalentValue = talentEntry.Value.Wert,
-                Probe = string.Join('/', probeAttributes),
-                AttributeValues = CurrentAttributeValues.ToDictionary(entry => entry.Key, entry => entry.Value),
-                ForcedRolls = forcedRolls,
-                Modifier = _modifier
-            };
+            _error = "Die gewaehlte Probe konnte nicht aufgeloest werden.";
+            return null;
         }
 
-        _error = "Die gewaehlte Probe konnte nicht aufgeloest werden.";
-        return null;
+        var probeAttributes = ParseProbeAttributes(selectedTalent.Value.Talent.Probe);
+        if (probeAttributes.Length != 3)
+        {
+            _error = $"Fuer {selectedTalent.Value.Name} ist keine vollstaendige Talentprobe hinterlegt.";
+            return null;
+        }
+
+        List<int>? forcedRolls = null;
+        if (_showDebugForcedRolls)
+        {
+            forcedRolls = ParseForcedRolls();
+            if (!string.IsNullOrWhiteSpace(_forcedRollsText) && forcedRolls is null)
+            {
+                return null;
+            }
+        }
+
+        return new TalentProbeRequest
+        {
+            TalentName = selectedTalent.Value.Name,
+            TalentValue = selectedTalent.Value.Talent.Wert,
+            Probe = string.Join('/', probeAttributes),
+            AttributeValues = CurrentAttributeValues.ToDictionary(entry => entry.Key, entry => entry.Value),
+            ForcedRolls = forcedRolls,
+            Modifier = _modifier
+        };
     }
 
     private async Task RollTalentProbeOfflineAsync(TalentProbeRequest request)
@@ -339,6 +374,8 @@ public partial class Wuerfel : IDisposable
 
     private async Task ApplyTalentProbeResultAsync(TalentProbeResult result, bool addLocalHistory)
     {
+        _pendingAttributeProbeContext = null;
+        _lastAttributeProbeRequirement = null;
         _lastProbeEvaluation = result;
         _last = ToRollSetResult(result);
 
@@ -363,6 +400,67 @@ public partial class Wuerfel : IDisposable
         await InvokeAsync(StateHasChanged);
     }
 
+    private async Task HandleSelectedProbeChanged(string selectedProbe)
+    {
+        if (!string.IsNullOrWhiteSpace(selectedProbe))
+        {
+            await SwitchRollAreaAsync(RollArea.ProbeSearch);
+            _selectedProbe = selectedProbe;
+            _probeInfoText = null;
+            return;
+        }
+
+        _selectedProbe = string.IsNullOrWhiteSpace(selectedProbe) ? null : selectedProbe;
+        _probeInfoText = null;
+
+        if (_activeRollArea == RollArea.ProbeSearch)
+        {
+            _activeRollArea = RollArea.None;
+        }
+    }
+
+    private void ClearSelectedProbe()
+    {
+        _selectedProbe = null;
+        _probeInfoText = null;
+    }
+
+    private Task ShowSelectedProbeInfo()
+    {
+        _probeInfoText = string.IsNullOrWhiteSpace(_probeInfoText)
+            ? BuildSelectedProbeInfoText()
+            : null;
+        return Task.CompletedTask;
+    }
+
+    private AttributeProbeContext? CreateAttributeProbeContext()
+    {
+        if (_selectedAttributes.Count != 3 || _selectedDice.Count != 3 || _selectedDice.Any(sides => sides != 20))
+        {
+            return null;
+        }
+
+        var attributes = _selectedAttributes.ToArray();
+        var attributeValues = attributes
+            .Select(attribute => CurrentAttributeValues.TryGetValue(attribute, out var value) ? value : 0)
+            .ToArray();
+
+        return new AttributeProbeContext(attributes, attributeValues, _modifier);
+    }
+
+    private void ApplyAttributeProbeRequirement(RollSetResult? result)
+    {
+        if (result is null || _pendingAttributeProbeContext is null)
+        {
+            _lastAttributeProbeRequirement = null;
+            _pendingAttributeProbeContext = null;
+            return;
+        }
+
+        _lastAttributeProbeRequirement = BuildAttributeProbeRequirement(_pendingAttributeProbeContext, result);
+        _pendingAttributeProbeContext = null;
+    }
+
     private async Task<bool> GetDebugModeAsync()
     {
 #if DEBUG
@@ -381,6 +479,8 @@ public partial class Wuerfel : IDisposable
 
     private async Task AddAttribute(string shortName)
     {
+        await SwitchRollAreaAsync(RollArea.Attributes);
+
         if (GetAttributeCount(shortName) >= 3)
         {
             _selectedAttributes.RemoveAll(a => a == shortName);
@@ -421,6 +521,8 @@ public partial class Wuerfel : IDisposable
 
     private async Task RemoveAttribute(string shortName)
     {
+        await SwitchRollAreaAsync(RollArea.Attributes);
+
         if (GetAttributeCount(shortName) == 0)
         {
             _selectedAttributes.Clear();
@@ -453,6 +555,74 @@ public partial class Wuerfel : IDisposable
     }
 
     private int GetAttributeCount(string shortName) => _selectedAttributes.Count(a => a == shortName);
+
+    private static AttributeProbeRequirement? BuildAttributeProbeRequirement(
+        AttributeProbeContext context,
+        RollSetResult result)
+    {
+        if (result.Rolls.Length != 3 || result.Rolls.Any(roll => roll.Sides != 20))
+        {
+            return null;
+        }
+
+        var details = new List<AttributeProbeRequirementDetail>(capacity: 3);
+        var requiredCompensation = 0;
+
+        for (var i = 0; i < 3; i++)
+        {
+            var roll = result.Rolls[i].Value;
+            var baseValue = context.AttributeValues[i];
+            var difference = Math.Max(roll - baseValue, 0);
+            requiredCompensation += difference;
+
+            details.Add(new AttributeProbeRequirementDetail(
+                context.Attributes[i],
+                baseValue,
+                roll,
+                difference));
+        }
+
+        return new AttributeProbeRequirement(
+            string.Join('/', context.Attributes),
+            context.Modifier,
+            Math.Max(context.Modifier + requiredCompensation, 0),
+            requiredCompensation,
+            details);
+    }
+
+    private string BuildSelectedProbeInfoText()
+    {
+        if (string.IsNullOrWhiteSpace(_selectedProbe))
+        {
+            return "Bitte zuerst eine Probe auswaehlen.";
+        }
+
+        var selectedTalent = GetSelectedTalent();
+        if (selectedTalent is { } talent)
+        {
+            var probeAttributes = ParseProbeAttributes(talent.Talent.Probe);
+            var attributeInfo = probeAttributes.Length == 0
+                ? "keine Eigenschaften hinterlegt"
+                : string.Join(", ", probeAttributes.Select(attribute =>
+                    $"{attribute} {GetAttributeValueText(attribute)}"));
+            var effectiveTalentValue = talent.Talent.Wert - _modifier;
+            var modifierInfo = effectiveTalentValue >= 0
+                ? $"Nach dem Modifikator {FormatModifier(_modifier)} bleiben {effectiveTalentValue} Ausgleichspunkte fuer Ueberschreitungen."
+                : $"Nach dem Modifikator {FormatModifier(_modifier)} liegt der effektive Talentwert bei {effectiveTalentValue}. Dadurch muessen alle drei Eigenschaftswuerfe jeweils um {Math.Abs(effectiveTalentValue)} Punkte niedriger geschafft werden.";
+
+            return
+                $"{talent.Name} hat aktuell TaW {talent.Talent.Wert}. Probe: {talent.Talent.Probe}. Verwendete Eigenschaften: {attributeInfo}. {modifierInfo}";
+        }
+
+        var probe = ExtractProbeFromLabel(_selectedProbe);
+        if (!string.IsNullOrWhiteSpace(probe))
+        {
+            return
+                $"Die ausgewaehlte Probe verwendet {probe}. Fuer heldenspezifische Zusatzinformationen bitte einen aktiven Helden waehlen.";
+        }
+
+        return $"Zur ausgewaehlten Probe '{_selectedProbe}' sind aktuell keine weiteren Informationen verfuegbar.";
+    }
 
     private List<int>? ParseForcedRolls()
     {
@@ -493,12 +663,36 @@ public partial class Wuerfel : IDisposable
         _forcedRollsText = string.Empty;
     }
 
+    private (string Name, TalentData Talent)? GetSelectedTalent()
+    {
+        if (_activeHero is null || string.IsNullOrWhiteSpace(_selectedProbe))
+        {
+            return null;
+        }
+
+        foreach (var talentEntry in _activeHero.Talente)
+        {
+            if (string.Equals(BuildTalentProbeLabel(talentEntry.Key, talentEntry.Value), _selectedProbe,
+                    StringComparison.Ordinal))
+            {
+                return (talentEntry.Key, talentEntry.Value);
+            }
+        }
+
+        return null;
+    }
+
     private static IReadOnlyList<string> BuildTalentProben(Hero hero)
     {
         return hero.Talente
             .OrderBy(entry => entry.Key)
             .Select(entry => BuildTalentProbeLabel(entry.Key, entry.Value))
             .ToList();
+    }
+
+    private string GetAttributeValueText(string attribute)
+    {
+        return CurrentAttributeValues.TryGetValue(attribute, out var value) ? value.ToString() : "?";
     }
 
     private static string BuildTalentProbeLabel(string talentName, TalentData talent)
@@ -518,6 +712,18 @@ public partial class Wuerfel : IDisposable
         return probe.Split('/', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
             .Select(part => part.ToUpperInvariant())
             .ToArray();
+    }
+
+    private static string? ExtractProbeFromLabel(string label)
+    {
+        var startIndex = label.LastIndexOf('(');
+        var endIndex = label.LastIndexOf(')');
+        if (startIndex < 0 || endIndex <= startIndex)
+        {
+            return null;
+        }
+
+        return label.Substring(startIndex + 1, endIndex - startIndex - 1);
     }
 
     private static RollSetResult ToRollSetResult(RollResult result)
@@ -580,12 +786,45 @@ public partial class Wuerfel : IDisposable
         };
     }
 
+    private static string GetAttributeRequirementChipClass(AttributeProbeRequirementDetail detail)
+    {
+        return detail.Difference == 0 ? "success" : "failure";
+    }
+
     private void HandleActiveHeroChanged()
     {
         _activeHero = ActiveHeroState.CurrentHero;
+        ClearSelectedProbe();
+        _pendingAttributeProbeContext = null;
+        _lastAttributeProbeRequirement = null;
         _lastProbeEvaluation = null;
+        _activeRollArea = RollArea.None;
+        _ = _probenSearch?.ClearAsync();
         InvokeAsync(StateHasChanged);
     }
+
+    private enum RollArea
+    {
+        None,
+        Attributes,
+        ProbeSearch,
+        FreeRoll
+    }
+
+    private sealed record AttributeProbeContext(string[] Attributes, int[] AttributeValues, int Modifier);
+
+    private sealed record AttributeProbeRequirement(
+        string Probe,
+        int Modifier,
+        int RequiredTalentValue,
+        int RequiredCompensation,
+        List<AttributeProbeRequirementDetail> Details);
+
+    private sealed record AttributeProbeRequirementDetail(
+        string Attribute,
+        int BaseValue,
+        int Roll,
+        int Difference);
 
     public record DiceGroup(int Sides, int Count);
 

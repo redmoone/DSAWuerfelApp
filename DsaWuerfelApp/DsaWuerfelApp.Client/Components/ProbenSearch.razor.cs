@@ -14,6 +14,7 @@ public partial class ProbenSearch
     ];
 
     private bool _isDropdownOpen;
+    private string _lastSelectedProbe = string.Empty;
 
     [Parameter] public IReadOnlyList<string>? AvailableProben { get; set; }
     [Parameter] public string Placeholder { get; set; } = "Nach Proben suchen...";
@@ -30,12 +31,33 @@ public partial class ProbenSearch
             ? ProbenSource
             : ProbenSource.Where(p => p.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
 
+    protected override void OnParametersSet()
+    {
+        if (string.Equals(_lastSelectedProbe, SelectedProbe, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        SearchTerm = SelectedProbe;
+        _lastSelectedProbe = SelectedProbe;
+    }
+
     private Task SelectProbe(string probe)
     {
         SelectedProbe = probe;
         SearchTerm = probe;
+        _lastSelectedProbe = probe;
         _isDropdownOpen = false;
         return SelectedProbeChanged.InvokeAsync(probe);
+    }
+
+    public async Task ClearAsync()
+    {
+        SearchTerm = string.Empty;
+        SelectedProbe = string.Empty;
+        _lastSelectedProbe = string.Empty;
+        _isDropdownOpen = false;
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task HandleInputClick()
@@ -48,8 +70,7 @@ public partial class ProbenSearch
             return;
         }
 
-        SearchTerm = string.Empty;
-        SelectedProbe = string.Empty;
+        await ClearAsync();
         await SelectedProbeChanged.InvokeAsync(string.Empty);
     }
 
