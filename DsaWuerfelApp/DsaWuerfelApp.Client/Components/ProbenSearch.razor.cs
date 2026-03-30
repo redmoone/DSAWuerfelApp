@@ -38,6 +38,21 @@ public partial class ProbenSearch
         return SelectedProbeChanged.InvokeAsync(probe);
     }
 
+    private async Task HandleInputClick()
+    {
+        _isDropdownOpen = true;
+
+        if (string.IsNullOrWhiteSpace(SelectedProbe) ||
+            !string.Equals(SearchTerm, SelectedProbe, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        SearchTerm = string.Empty;
+        SelectedProbe = string.Empty;
+        await SelectedProbeChanged.InvokeAsync(string.Empty);
+    }
+
     private async Task HandleBlur()
     {
         await Task.Delay(150);

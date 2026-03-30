@@ -5,6 +5,7 @@
            placeholder="@Placeholder"
            @bind="SearchTerm"
            @bind:event="oninput"
+           @onclick="HandleInputClick"
            @onfocus="() => _isDropdownOpen = true"
            @onblur="HandleBlur"/>
 

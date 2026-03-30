@@ -503,7 +503,9 @@ public partial class Wuerfel : IDisposable
 
     private static string BuildTalentProbeLabel(string talentName, TalentData talent)
     {
-        return string.IsNullOrWhiteSpace(talent.Probe) ? talentName : $"{talentName} ({talent.Probe})";
+        return string.IsNullOrWhiteSpace(talent.Probe)
+            ? $"{talentName} [{talent.Wert}]"
+            : $"{talentName} [{talent.Wert}] ({talent.Probe})";
     }
 
     private static string[] ParseProbeAttributes(string? probe)
