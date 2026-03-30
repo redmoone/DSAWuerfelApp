@@ -12,12 +12,17 @@ namespace DsaWuerfelApp.Controllers;
 public class DiceController : ControllerBase
 {
     private readonly DiceService _dice;
+    private readonly SchlechteEigenschaftProbeService _schlechteEigenschaftProben;
     private readonly TalentProbeService _talentProbes;
 
-    public DiceController(DiceService dice, TalentProbeService talentProbes)
+    public DiceController(
+        DiceService dice,
+        TalentProbeService talentProbes,
+        SchlechteEigenschaftProbeService schlechteEigenschaftProben)
     {
         _dice = dice;
         _talentProbes = talentProbes;
+        _schlechteEigenschaftProben = schlechteEigenschaftProben;
     }
 
     [HttpPost("rollset")]
@@ -40,6 +45,21 @@ public class DiceController : ControllerBase
         try
         {
             var result = _talentProbes.RollTalentProbe(req);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("schlechteeigenschaftprobe")]
+    public ActionResult<SchlechteEigenschaftProbeResult> RollSchlechteEigenschaftProbe(
+        [FromBody] SchlechteEigenschaftProbeRequest req)
+    {
+        try
+        {
+            var result = _schlechteEigenschaftProben.RollProbe(req);
             return Ok(result);
         }
         catch (Exception ex)

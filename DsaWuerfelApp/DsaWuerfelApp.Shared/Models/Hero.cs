@@ -8,6 +8,7 @@ public class Hero
     public string Geschlecht { get; set; } = string.Empty;
     public int Alter { get; set; }
     public Dictionary<string, int> Eigenschaften { get; set; } = new();
+    public Dictionary<string, int> SchlechteEigenschaften { get; set; } = new();
     public Dictionary<string, TalentData> Talente { get; set; } = new();
 }
 

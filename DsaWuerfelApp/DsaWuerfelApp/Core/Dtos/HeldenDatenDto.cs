@@ -12,6 +12,8 @@ public class HeldenDatenDto
     [XmlArray("talentliste")]
     [XmlArrayItem("talent")]
     public List<TalentDto> Talentliste { get; set; } = new();
+
+    [XmlIgnore] public List<SchlechteEigenschaftDto> SchlechteEigenschaften { get; set; } = new();
 }
 
 public class AngabenDto
@@ -54,4 +56,11 @@ public class TalentDto
     [XmlElement("wert")] public int Wert { get; set; }
 
     [XmlElement("probe")] public string Probe { get; set; } = string.Empty;
+}
+
+public class SchlechteEigenschaftDto
+{
+    public string Bezeichner { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public int Wert { get; set; }
 }

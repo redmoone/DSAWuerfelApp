@@ -17,6 +17,8 @@ public class TalentProbeRequest
     public Dictionary<string, int> AttributeValues { get; set; } = new();
     public List<int>? ForcedRolls { get; set; }
     public int Modifier { get; set; }
+    public string? SchlechteEigenschaftName { get; set; }
+    public int SchlechteEigenschaftWert { get; set; }
 }
 
 public class TalentProbeResult
@@ -27,6 +29,9 @@ public class TalentProbeResult
     public int TalentValue { get; set; }
     public string Probe { get; set; } = string.Empty;
     public int Modifier { get; set; }
+    public int BasisModifier { get; set; }
+    public string? SchlechteEigenschaftName { get; set; }
+    public int SchlechteEigenschaftModifier { get; set; }
     public int EffectiveTalentValue { get; set; }
     public List<SingleRoll> Rolls { get; set; } = [];
     public List<TalentProbeRollDetail> Details { get; set; } = [];

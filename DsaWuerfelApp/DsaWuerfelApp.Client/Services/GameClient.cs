@@ -31,6 +31,11 @@ public class GameClient : IAsyncDisposable
         {
             OnTalentProbeResultReceived?.Invoke(result);
         });
+
+        _hub.On<SchlechteEigenschaftProbeResult>("ShowSchlechteEigenschaftProbeResult", (result) =>
+        {
+            OnSchlechteEigenschaftProbeResultReceived?.Invoke(result);
+        });
     }
 
     public string? CurrentSessionId { get; private set; }
@@ -46,6 +51,7 @@ public class GameClient : IAsyncDisposable
     public event Action<string>? OnPlayerJoined;
     public event Action<RollResult>? OnRollResultReceived;
     public event Action<TalentProbeResult>? OnTalentProbeResultReceived;
+    public event Action<SchlechteEigenschaftProbeResult>? OnSchlechteEigenschaftProbeResultReceived;
 
     public async Task StartAsync()
     {
@@ -77,5 +83,10 @@ public class GameClient : IAsyncDisposable
     public async Task RollTalentProbe(TalentProbeRequest request)
     {
         await _hub.InvokeAsync("RollTalentProbe", request);
+    }
+
+    public async Task RollSchlechteEigenschaftProbe(SchlechteEigenschaftProbeRequest request)
+    {
+        await _hub.InvokeAsync("RollSchlechteEigenschaftProbe", request);
     }
 }

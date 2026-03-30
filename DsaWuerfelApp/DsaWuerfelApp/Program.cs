@@ -13,6 +13,7 @@ builder.Services.AddSignalR();
 builder.Services.AddSingleton<SessionService>();
 builder.Services.AddSingleton<DiceService>();
 builder.Services.AddSingleton<TalentProbeService>();
+builder.Services.AddSingleton<SchlechteEigenschaftProbeService>();
 builder.Services.AddTransient<XmlHeroDeserializer>();
 builder.Services.AddDbContext<HeroDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("HeroesDb")));
@@ -70,21 +71,23 @@ static void EnsureHeroSchema(HeroDbContext dbContext)
     command.CommandText = "PRAGMA table_info('Heroes');";
 
     using var reader = command.ExecuteReader();
-    var hasIsActiveColumn = false;
+    var existingColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
     while (reader.Read())
     {
-        if (string.Equals(reader.GetString(1), "IsActive", StringComparison.OrdinalIgnoreCase))
-        {
-            hasIsActiveColumn = true;
-            break;
-        }
+        existingColumns.Add(reader.GetString(1));
     }
 
     reader.Close();
 
-    if (!hasIsActiveColumn)
+    if (!existingColumns.Contains("IsActive"))
     {
         dbContext.Database.ExecuteSqlRaw("ALTER TABLE Heroes ADD COLUMN IsActive INTEGER NOT NULL DEFAULT 0;");
+    }
+
+    if (!existingColumns.Contains("SchlechteEigenschaften"))
+    {
+        dbContext.Database.ExecuteSqlRaw(
+            "ALTER TABLE Heroes ADD COLUMN SchlechteEigenschaften TEXT NOT NULL DEFAULT '{{}}';");
     }
 }

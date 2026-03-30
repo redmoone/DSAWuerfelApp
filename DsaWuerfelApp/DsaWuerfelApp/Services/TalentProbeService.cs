@@ -14,6 +14,9 @@ public class TalentProbeService(DiceService diceService)
         if (request.Modifier is < -999 or > 999)
             throw new ArgumentOutOfRangeException(nameof(request.Modifier));
 
+        if (request.SchlechteEigenschaftWert is < 0 or > 20)
+            throw new ArgumentOutOfRangeException(nameof(request.SchlechteEigenschaftWert));
+
         var probeAttributes = ParseProbeAttributes(request.Probe);
         if (probeAttributes.Length != 3)
             throw new ArgumentException("A talent probe requires exactly three attributes.", nameof(request));
@@ -31,7 +34,8 @@ public class TalentProbeService(DiceService diceService)
         var rollValues = rollResult.Rolls
             .Select(roll => roll.Value)
             .ToArray();
-        var evaluatedProbe = TalentProbe.Check(request.TalentValue, request.Modifier, attributeValues, rollValues);
+        var totalModifier = request.Modifier + request.SchlechteEigenschaftWert;
+        var evaluatedProbe = TalentProbe.Check(request.TalentValue, totalModifier, attributeValues, rollValues);
         var details = BuildRollDetails(probeAttributes, attributeValues, rollValues, evaluatedProbe);
         var probeSuccess = evaluatedProbe.Status is TalentProbeStatus.Bestanden or TalentProbeStatus.GluecklicherWurf;
 
@@ -42,7 +46,12 @@ public class TalentProbeService(DiceService diceService)
             TalentName = request.TalentName,
             TalentValue = request.TalentValue,
             Probe = string.Join('/', probeAttributes),
-            Modifier = request.Modifier,
+            Modifier = totalModifier,
+            BasisModifier = request.Modifier,
+            SchlechteEigenschaftName = string.IsNullOrWhiteSpace(request.SchlechteEigenschaftName)
+                ? null
+                : request.SchlechteEigenschaftName.Trim(),
+            SchlechteEigenschaftModifier = request.SchlechteEigenschaftWert,
             EffectiveTalentValue = evaluatedProbe.EffektiverWert,
             Rolls = rollResult.Rolls,
             Details = details,

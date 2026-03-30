@@ -25,10 +25,33 @@ public static class HeroMapper
                 { "KO", dto.Eigenschaften.Konstitution.Akt },
                 { "KK", dto.Eigenschaften.Koerperkraft.Akt }
             },
+            SchlechteEigenschaften = dto.SchlechteEigenschaften
+                .Where(vorteil => vorteil.Wert > 0)
+                .GroupBy(GetSchlechteEigenschaftName, StringComparer.Ordinal)
+                .Where(group => !string.IsNullOrWhiteSpace(group.Key))
+                .ToDictionary(group => group.Key, group => group.Max(vorteil => vorteil.Wert), StringComparer.Ordinal),
             Talente = dto.Talentliste.ToDictionary(
                 t => t.Name,
                 t => new TalentData { Wert = t.Wert, Probe = NormalizeProbe(t.Probe) })
         };
+    }
+
+    private static string GetSchlechteEigenschaftName(SchlechteEigenschaftDto dto)
+    {
+        if (!string.IsNullOrWhiteSpace(dto.Bezeichner))
+        {
+            return dto.Bezeichner.Trim();
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.Name))
+        {
+            return string.Empty;
+        }
+
+        var separatorIndex = dto.Name.LastIndexOf(':');
+        return separatorIndex > 0
+            ? dto.Name[..separatorIndex].Trim()
+            : dto.Name.Trim();
     }
 
     private static string NormalizeProbe(string? probe)

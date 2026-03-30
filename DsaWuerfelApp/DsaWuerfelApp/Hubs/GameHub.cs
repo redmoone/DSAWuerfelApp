@@ -5,7 +5,11 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace DsaWuerfelApp.Hubs;
 
-public class GameHub(SessionService sessionService, DiceService diceService, TalentProbeService talentProbeService)
+public class GameHub(
+    SessionService sessionService,
+    DiceService diceService,
+    TalentProbeService talentProbeService,
+    SchlechteEigenschaftProbeService schlechteEigenschaftProbeService)
     : Hub
 {
     public async Task<string> CreateSession(string userId, string userName)
@@ -56,5 +60,19 @@ public class GameHub(SessionService sessionService, DiceService diceService, Tal
         session.History.Add(TalentProbeService.ToRollResult(result));
 
         await Clients.Group(request.SessionId).SendAsync("ShowTalentProbeResult", result);
+    }
+
+    public async Task RollSchlechteEigenschaftProbe(SchlechteEigenschaftProbeRequest request)
+    {
+        var session = sessionService.GetById(request.SessionId);
+        if (session == null) return;
+
+        var player = session.Players.FirstOrDefault(p => p.ConnectionId == Context.ConnectionId);
+        var playerName = player?.Name ?? "Jemand";
+
+        var result = schlechteEigenschaftProbeService.RollProbe(request, playerName);
+        session.History.Add(SchlechteEigenschaftProbeService.ToRollResult(result));
+
+        await Clients.Group(request.SessionId).SendAsync("ShowSchlechteEigenschaftProbeResult", result);
     }
 }

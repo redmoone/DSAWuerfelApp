@@ -51,6 +51,10 @@ public class HeroDbContext : DbContext
                 .HasConversion(attributeDictionaryConverter)
                 .Metadata.SetValueComparer(attributeDictionaryComparer);
 
+            entity.Property(hero => hero.SchlechteEigenschaften)
+                .HasConversion(attributeDictionaryConverter)
+                .Metadata.SetValueComparer(attributeDictionaryComparer);
+
             entity.Property(hero => hero.Talente)
                 .HasConversion(talentDictionaryConverter)
                 .Metadata.SetValueComparer(talentDictionaryComparer);

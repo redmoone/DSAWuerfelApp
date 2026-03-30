@@ -76,6 +76,7 @@ public partial class Wuerfel : IDisposable
     {
         GameClient.OnRollResultReceived -= HandleServerRoll;
         GameClient.OnTalentProbeResultReceived -= HandleTalentProbeResult;
+        GameClient.OnSchlechteEigenschaftProbeResultReceived -= HandleSchlechteEigenschaftProbeResult;
         ActiveHeroState.Changed -= HandleActiveHeroChanged;
     }
 
@@ -83,6 +84,7 @@ public partial class Wuerfel : IDisposable
     {
         GameClient.OnRollResultReceived += HandleServerRoll;
         GameClient.OnTalentProbeResultReceived += HandleTalentProbeResult;
+        GameClient.OnSchlechteEigenschaftProbeResultReceived += HandleSchlechteEigenschaftProbeResult;
     }
 
     protected override async Task OnInitializedAsync()
@@ -92,13 +94,15 @@ public partial class Wuerfel : IDisposable
         await TalentCatalog.EnsureLoadedAsync(Http);
         await ActiveHeroState.EnsureLoadedAsync();
         _activeHero = ActiveHeroState.CurrentHero;
+        EnsureSelectedSchlechteEigenschaftIsValid();
     }
 
     private async void HandleServerRoll(RollResult result)
     {
         _lastProbeEvaluation = null;
+        _lastSchlechteEigenschaftProbe = null;
         _last = ToRollSetResult(result);
-        ApplyAttributeProbeRequirement(_last);
+        ApplyAttributeProbeResults(_last);
 
         await InvokeAsync(async () =>
         {
@@ -134,9 +138,11 @@ public partial class Wuerfel : IDisposable
         _selectedAttributes.Clear();
         ClearSelectedProbe();
         _pendingAttributeProbeContext = null;
+        _lastAttributeProbeEvaluation = null;
         _lastAttributeProbeRequirement = null;
         _last = null;
         _lastProbeEvaluation = null;
+        _lastSchlechteEigenschaftProbe = null;
         _modifier = 0;
         _forcedRollsText = string.Empty;
         _error = null;
@@ -191,6 +197,7 @@ public partial class Wuerfel : IDisposable
         }
 
         _lastProbeEvaluation = null;
+        _lastSchlechteEigenschaftProbe = null;
 
         if (_selectedDice.Count == 0 && _selectedAttributes.Count > 0)
         {
@@ -251,7 +258,7 @@ public partial class Wuerfel : IDisposable
         }
 
         _last = await resp.Content.ReadFromJsonAsync<RollSetResult>();
-        ApplyAttributeProbeRequirement(_last);
+        ApplyAttributeProbeResults(_last);
 
         if (_last != null)
         {
@@ -279,8 +286,10 @@ public partial class Wuerfel : IDisposable
         }
 
         _pendingAttributeProbeContext = null;
+        _lastAttributeProbeEvaluation = null;
         _lastAttributeProbeRequirement = null;
         _lastProbeEvaluation = null;
+        _lastSchlechteEigenschaftProbe = null;
         _selectedDice.Clear();
         _selectedAttributes.Clear();
         _selectedDice.AddRange([20, 20, 20]);
@@ -342,6 +351,8 @@ public partial class Wuerfel : IDisposable
             }
         }
 
+        var selectedSchlechteEigenschaft = SelectedSchlechteEigenschaft;
+
         return new TalentProbeRequest
         {
             TalentName = selectedTalent.Value.Name,
@@ -349,7 +360,9 @@ public partial class Wuerfel : IDisposable
             Probe = string.Join('/', probeAttributes),
             AttributeValues = CurrentAttributeValues.ToDictionary(entry => entry.Key, entry => entry.Value),
             ForcedRolls = forcedRolls,
-            Modifier = _modifier
+            Modifier = _modifier,
+            SchlechteEigenschaftName = selectedSchlechteEigenschaft?.Name,
+            SchlechteEigenschaftWert = selectedSchlechteEigenschaft?.Wert ?? 0
         };
     }
 
@@ -376,7 +389,9 @@ public partial class Wuerfel : IDisposable
     private async Task ApplyTalentProbeResultAsync(TalentProbeResult result, bool addLocalHistory)
     {
         _pendingAttributeProbeContext = null;
+        _lastAttributeProbeEvaluation = null;
         _lastAttributeProbeRequirement = null;
+        _lastSchlechteEigenschaftProbe = null;
         _lastProbeEvaluation = result;
         _last = ToRollSetResult(result);
 
@@ -436,7 +451,9 @@ public partial class Wuerfel : IDisposable
 
     private AttributeProbeContext? CreateAttributeProbeContext()
     {
-        if (_selectedAttributes.Count != 3 || _selectedDice.Count != 3 || _selectedDice.Any(sides => sides != 20))
+        if (_selectedAttributes.Count == 0 ||
+            _selectedDice.Count != _selectedAttributes.Count ||
+            _selectedDice.Any(sides => sides != 20))
         {
             return null;
         }
@@ -445,19 +462,28 @@ public partial class Wuerfel : IDisposable
         var attributeValues = attributes
             .Select(attribute => CurrentAttributeValues.TryGetValue(attribute, out var value) ? value : 0)
             .ToArray();
+        var selectedSchlechteEigenschaft = SelectedSchlechteEigenschaft;
 
-        return new AttributeProbeContext(attributes, attributeValues, _modifier);
+        return new AttributeProbeContext(
+            attributes,
+            attributeValues,
+            _modifier,
+            selectedSchlechteEigenschaft?.Name,
+            GetHalvedSchlechteEigenschaftWert(selectedSchlechteEigenschaft?.Wert ?? 0),
+            selectedSchlechteEigenschaft?.Wert ?? 0);
     }
 
-    private void ApplyAttributeProbeRequirement(RollSetResult? result)
+    private void ApplyAttributeProbeResults(RollSetResult? result)
     {
         if (result is null || _pendingAttributeProbeContext is null)
         {
+            _lastAttributeProbeEvaluation = null;
             _lastAttributeProbeRequirement = null;
             _pendingAttributeProbeContext = null;
             return;
         }
 
+        _lastAttributeProbeEvaluation = BuildAttributeProbeEvaluation(_pendingAttributeProbeContext, result);
         _lastAttributeProbeRequirement = BuildAttributeProbeRequirement(_pendingAttributeProbeContext, result);
         _pendingAttributeProbeContext = null;
     }
@@ -561,7 +587,7 @@ public partial class Wuerfel : IDisposable
         AttributeProbeContext context,
         RollSetResult result)
     {
-        if (result.Rolls.Length != 3 || result.Rolls.Any(roll => roll.Sides != 20))
+        if (context.Attributes.Length != 3 || result.Rolls.Length != 3 || result.Rolls.Any(roll => roll.Sides != 20))
         {
             return null;
         }
@@ -583,10 +609,15 @@ public partial class Wuerfel : IDisposable
                 difference));
         }
 
+        var effectiveModifier = context.BasisModifier + context.SchlechteEigenschaftTalentModifier;
+
         return new AttributeProbeRequirement(
             string.Join('/', context.Attributes),
-            context.Modifier,
-            Math.Max(context.Modifier + requiredCompensation, 0),
+            context.BasisModifier,
+            context.SchlechteEigenschaftName,
+            context.SchlechteEigenschaftTalentModifier,
+            effectiveModifier,
+            Math.Max(effectiveModifier + requiredCompensation, 0),
             requiredCompensation,
             details);
     }
@@ -598,6 +629,11 @@ public partial class Wuerfel : IDisposable
             return "Bitte zuerst eine Probe auswaehlen.";
         }
 
+        var selectedSchlechteEigenschaft = SelectedSchlechteEigenschaft;
+        var selectedSchlechteEigenschaftText = selectedSchlechteEigenschaft is null
+            ? string.Empty
+            : $" Relevante schlechte Eigenschaft: {selectedSchlechteEigenschaft.Name} {selectedSchlechteEigenschaft.Wert}. Dadurch wird die Talentprobe um {selectedSchlechteEigenschaft.Wert} und die Eigenschaftsprobe um {GetHalvedSchlechteEigenschaftWert(selectedSchlechteEigenschaft.Wert)} erschwert.";
+
         var selectedTalent = GetSelectedTalent();
         if (selectedTalent is { } talent)
         {
@@ -606,23 +642,25 @@ public partial class Wuerfel : IDisposable
                 ? "keine Eigenschaften hinterlegt"
                 : string.Join(", ", probeAttributes.Select(attribute =>
                     $"{attribute} {GetAttributeValueText(attribute)}"));
-            var effectiveTalentValue = talent.Talent.Wert - _modifier;
+            var effectiveModifier = _modifier + (selectedSchlechteEigenschaft?.Wert ?? 0);
+            var effectiveTalentValue = talent.Talent.Wert - effectiveModifier;
             var modifierInfo = effectiveTalentValue >= 0
-                ? $"Nach dem Modifikator {FormatModifier(_modifier)} bleiben {effectiveTalentValue} Ausgleichspunkte fuer Ueberschreitungen."
-                : $"Nach dem Modifikator {FormatModifier(_modifier)} liegt der effektive Talentwert bei {effectiveTalentValue}. Dadurch muessen alle drei Eigenschaftswuerfe jeweils um {Math.Abs(effectiveTalentValue)} Punkte niedriger geschafft werden.";
+                ? $"Nach dem Gesamtmodifikator {FormatModifier(effectiveModifier)} bleiben {effectiveTalentValue} Ausgleichspunkte fuer Ueberschreitungen."
+                : $"Nach dem Gesamtmodifikator {FormatModifier(effectiveModifier)} liegt der effektive Talentwert bei {effectiveTalentValue}. Dadurch muessen alle drei Eigenschaftswuerfe jeweils um {Math.Abs(effectiveTalentValue)} Punkte niedriger geschafft werden.";
 
             return
-                $"{talent.Name} hat aktuell TaW {talent.Talent.Wert}. Probe: {talent.Talent.Probe}. Verwendete Eigenschaften: {attributeInfo}. {modifierInfo}";
+                $"{talent.Name} hat aktuell TaW {talent.Talent.Wert}. Probe: {talent.Talent.Probe}. Verwendete Eigenschaften: {attributeInfo}. {modifierInfo}{selectedSchlechteEigenschaftText}";
         }
 
         var probe = ExtractProbeFromLabel(_selectedProbe);
         if (!string.IsNullOrWhiteSpace(probe))
         {
             return
-                $"Die ausgewaehlte Probe verwendet {probe}. Fuer heldenspezifische Zusatzinformationen bitte einen aktiven Helden waehlen.";
+                $"Die ausgewaehlte Probe verwendet {probe}. Fuer heldenspezifische Zusatzinformationen bitte einen aktiven Helden waehlen.{selectedSchlechteEigenschaftText}";
         }
 
-        return $"Zur ausgewaehlten Probe '{_selectedProbe}' sind aktuell keine weiteren Informationen verfuegbar.";
+        return
+            $"Zur ausgewaehlten Probe '{_selectedProbe}' sind aktuell keine weiteren Informationen verfuegbar.{selectedSchlechteEigenschaftText}";
     }
 
     private List<int>? ParseForcedRolls()
@@ -912,10 +950,13 @@ public partial class Wuerfel : IDisposable
     private void HandleActiveHeroChanged()
     {
         _activeHero = ActiveHeroState.CurrentHero;
+        EnsureSelectedSchlechteEigenschaftIsValid();
         ClearSelectedProbe();
         _pendingAttributeProbeContext = null;
+        _lastAttributeProbeEvaluation = null;
         _lastAttributeProbeRequirement = null;
         _lastProbeEvaluation = null;
+        _lastSchlechteEigenschaftProbe = null;
         _activeRollArea = RollArea.None;
         _ = _probenSearch?.ClearAsync();
         InvokeAsync(StateHasChanged);
@@ -929,11 +970,20 @@ public partial class Wuerfel : IDisposable
         FreeRoll
     }
 
-    private sealed record AttributeProbeContext(string[] Attributes, int[] AttributeValues, int Modifier);
+    private sealed record AttributeProbeContext(
+        string[] Attributes,
+        int[] AttributeValues,
+        int BasisModifier,
+        string? SchlechteEigenschaftName,
+        int SchlechteEigenschaftAttributModifier,
+        int SchlechteEigenschaftTalentModifier);
 
     private sealed record AttributeProbeRequirement(
         string Probe,
-        int Modifier,
+        int BasisModifier,
+        string? SchlechteEigenschaftName,
+        int SchlechteEigenschaftModifier,
+        int EffektiverModifier,
         int RequiredTalentValue,
         int RequiredCompensation,
         List<AttributeProbeRequirementDetail> Details);
