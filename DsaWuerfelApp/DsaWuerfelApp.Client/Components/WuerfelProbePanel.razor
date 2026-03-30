@@ -1,0 +1,41 @@
+<div class="probe-search-row" title="Suche nach Talenten oder Zaubern fuer automatisierte Proben">
+    <div class="probe-search-field">
+        <ProbenSearch AvailableProben="AvailableProben"
+                      Placeholder="@Placeholder"
+                      SelectedProbe="@SelectedProbe"
+                      SelectedProbeChanged="@SelectedProbeChanged"/>
+    </div>
+    <MudIconButton Icon="@Icons.Material.Filled.Info"
+                   Variant="Variant.Filled"
+                   OnClick="InfoRequested"
+                   Disabled="@(!CanShowInfo || IsBusy)"
+                   title="Zusatzinformationen zur ausgewaehlten Probe anzeigen"
+                   Class="rounded-circle probe-info-button"
+                   Style="width: 48px; height: 48px; background-color: var(--pill-bg); color: var(--dsa-white); border: 2px solid var(--dsa-gold);"/>
+</div>
+
+@if (ShowDebugForcedRolls)
+{
+    <div class="forced-rolls-panel" title="Optionale Testwuerfe fuer Talentproben oder direkte W20-Proben">
+        <span class="forced-rolls-label">Testwuerfe</span>
+        <input class="forced-rolls-input"
+               value="@ForcedRollsText"
+               @oninput="HandleForcedRollsChanged"
+               disabled="@IsBusy"
+               placeholder="z. B. 20,20,5 oder 6"/>
+        <div class="forced-rolls-actions">
+            <button type="button" class="forced-rolls-button" @onclick='() => PresetRequested.InvokeAsync("20,20,5")'
+                    disabled="@IsBusy">
+                Patzer
+            </button>
+            <button type="button" class="forced-rolls-button" @onclick='() => PresetRequested.InvokeAsync("1,1,13")'
+                    disabled="@IsBusy">
+                Glueck
+            </button>
+            <button type="button" class="forced-rolls-button muted" @onclick="ClearForcedRollsRequested"
+                    disabled="@IsBusy">
+                Leer
+            </button>
+        </div>
+    </div>
+}

@@ -21,7 +21,7 @@
 
                         @if (!probe.IsSelectable)
                         {
-                            @if (probe.Alternatives.Count > 0)
+                            @if (probe.Alternatives.Length > 0)
                             {
                                 <div class="dropdown-item-alternatives">
                                     @foreach (var alternative in probe.Alternatives)

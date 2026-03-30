@@ -1,0 +1,84 @@
+.probe-search-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.probe-search-field {
+    flex: 1;
+    min-width: 0;
+}
+
+.probe-info-button {
+    flex-shrink: 0;
+}
+
+.forced-rolls-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px dashed rgba(212, 175, 55, 0.45);
+    background-color: rgba(12, 24, 43, 0.48);
+}
+
+.forced-rolls-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--dsa-gold);
+}
+
+.forced-rolls-input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--dsa-white);
+    outline: none;
+}
+
+.forced-rolls-input::placeholder {
+    color: rgba(255, 248, 220, 0.55);
+}
+
+.forced-rolls-input:focus {
+    border-color: rgba(255, 219, 103, 0.7);
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.16);
+}
+
+.forced-rolls-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.forced-rolls-button {
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--dsa-white);
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.forced-rolls-button:hover {
+    background-color: rgba(212, 175, 55, 0.16);
+    border-color: rgba(255, 219, 103, 0.65);
+    transform: translateY(-1px);
+}
+
+.forced-rolls-button.muted {
+    color: rgba(255, 248, 220, 0.72);
+}
+
+@media (max-width: 640px) {
+    .probe-search-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}

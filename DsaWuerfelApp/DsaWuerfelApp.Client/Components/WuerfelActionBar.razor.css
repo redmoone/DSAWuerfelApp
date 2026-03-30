@@ -1,0 +1,111 @@
+.results-bar {
+    flex: 1;
+    min-height: 175px;
+    min-width: 320px;
+    background-color: rgba(165, 165, 165, 0.85);
+    border: 2px solid var(--dsa-gold);
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    padding: 16px 24px;
+    gap: 16px;
+}
+
+.results-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--dsa-white);
+    text-align: center;
+    border-bottom: 2px solid var(--dsa-gold);
+    padding-bottom: 8px;
+    width: 100%;
+}
+
+.global-actions-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.left-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.right-actions {
+    display: flex;
+    align-items: center;
+}
+
+.dsa-btn {
+    background-color: var(--dsa-blue);
+    color: var(--dsa-gold);
+    border: 2px solid var(--dsa-gold);
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease-in-out;
+}
+
+.dsa-btn:hover:not(:disabled) {
+    background-color: var(--dsa-gold);
+    color: var(--dsa-blue);
+    box-shadow: 0 0 10px var(--dsa-gold-glow);
+}
+
+.dsa-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: #888;
+    color: #ccc;
+}
+
+.dsa-btn-icon {
+    background-color: var(--pill-bg);
+    border: 2px solid var(--dsa-gold);
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.dsa-btn-icon:hover:not(:disabled) {
+    box-shadow: 0 0 10px var(--dsa-gold-glow);
+    transform: scale(1.05);
+}
+
+.dsa-btn-icon:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.dsa-btn-icon.active {
+    background-color: var(--dsa-gold);
+}
+
+.btn-icon {
+    width: 24px;
+    height: 24px;
+    filter: invert(1);
+}
+
+.dsa-btn-icon.active .btn-icon {
+    filter: none;
+}

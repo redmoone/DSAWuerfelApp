@@ -15,6 +15,8 @@ builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.H
 builder.Services.AddMudServices();
 builder.Services.AddScoped<IHeroApiClient, HeroApiClient>();
 builder.Services.AddScoped<ActiveHeroState>();
+builder.Services.AddScoped<WuerfelState>();
+builder.Services.AddScoped<WuerfelFacade>();
 
 
 await builder.Build().RunAsync();

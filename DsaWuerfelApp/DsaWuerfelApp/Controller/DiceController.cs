@@ -9,28 +9,14 @@ namespace DsaWuerfelApp.Controllers;
 
 [ApiController]
 [Route("api/dice")]
-public class DiceController : ControllerBase
+public class DiceController(DiceWorkflowService workflow) : ControllerBase
 {
-    private readonly DiceService _dice;
-    private readonly SchlechteEigenschaftProbeService _schlechteEigenschaftProben;
-    private readonly TalentProbeService _talentProbes;
-
-    public DiceController(
-        DiceService dice,
-        TalentProbeService talentProbes,
-        SchlechteEigenschaftProbeService schlechteEigenschaftProben)
-    {
-        _dice = dice;
-        _talentProbes = talentProbes;
-        _schlechteEigenschaftProben = schlechteEigenschaftProben;
-    }
-
-    [HttpPost("rollset")]
-    public ActionResult RollSet([FromBody] RollSetRequest req)
+    [HttpGet("context")]
+    public async Task<ActionResult<DicePageContextDto>> GetContext([FromQuery] Guid? heroId)
     {
         try
         {
-            var result = _dice.RollSet(req.Dice, req.Modifier);
+            var result = await workflow.GetContextAsync(heroId);
             return Ok(result);
         }
         catch (Exception ex)
@@ -39,12 +25,17 @@ public class DiceController : ControllerBase
         }
     }
 
-    [HttpPost("talentprobe")]
-    public ActionResult<TalentProbeResult> RollTalentProbe([FromBody] TalentProbeRequest req)
+    [HttpGet("probe-info")]
+    public async Task<ActionResult<ProbeInfoResultDto>> GetProbeInfo(
+        [FromQuery] Guid? heroId,
+        [FromQuery] string probeValue,
+        [FromQuery] int modifier = 0,
+        [FromQuery] string? badTraitName = null)
     {
         try
         {
-            var result = _talentProbes.RollTalentProbe(req);
+            var result =
+                await workflow.GetProbeInfoAsync(new ProbeInfoRequestDto(heroId, probeValue, modifier, badTraitName));
             return Ok(result);
         }
         catch (Exception ex)
@@ -53,13 +44,54 @@ public class DiceController : ControllerBase
         }
     }
 
-    [HttpPost("schlechteeigenschaftprobe")]
-    public ActionResult<SchlechteEigenschaftProbeResult> RollSchlechteEigenschaftProbe(
-        [FromBody] SchlechteEigenschaftProbeRequest req)
+    [HttpPost("free-roll")]
+    public ActionResult<FreeRollResultDto> RollFree([FromBody] FreeRollRequestDto request)
     {
         try
         {
-            var result = _schlechteEigenschaftProben.RollProbe(req);
+            var result = workflow.RollFree(request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("talent-roll")]
+    public async Task<ActionResult<TalentRollResultDto>> RollTalent([FromBody] TalentRollRequestDto request)
+    {
+        try
+        {
+            var result = await workflow.RollTalentAsync(request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("attribute-roll")]
+    public async Task<ActionResult<AttributeRollResultDto>> RollAttribute([FromBody] AttributeRollRequestDto request)
+    {
+        try
+        {
+            var result = await workflow.RollAttributeAsync(request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("bad-trait-roll")]
+    public async Task<ActionResult<BadTraitRollResultDto>> RollBadTrait([FromBody] BadTraitRollRequestDto request)
+    {
+        try
+        {
+            var result = await workflow.RollBadTraitAsync(request);
             return Ok(result);
         }
         catch (Exception ex)
@@ -74,5 +106,3 @@ public class DiceController : ControllerBase
         return Ok(Debugger.IsAttached);
     }
 }
-
-public record RollSetRequest(List<DiceGroup> Dice, int Modifier);

@@ -10,5 +10,5 @@ public class GameSession
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public ConcurrentBag<PlayerInfo> Players { get; set; } = [];
-    public ConcurrentBag<RollResult> History { get; set; } = [];
+    public ConcurrentBag<RollHistoryEntryDto> History { get; set; } = [];
 }

@@ -2,131 +2,122 @@ using DsaWuerfelApp.Shared;
 
 namespace DsaWuerfelApp.Services;
 
-public class TalentProbeService(DiceService diceService)
+public sealed class TalentProbeService(DiceService diceService)
 {
-    public TalentProbeResult RollTalentProbe(TalentProbeRequest request, string playerName = "Unbekannt")
+    public TalentRollResultDto RollTalentProbe(
+        ResolvedTalentRollRequest request,
+        string playerName = "Unbekannt")
     {
         ArgumentNullException.ThrowIfNull(request);
 
         if (string.IsNullOrWhiteSpace(request.TalentName))
-            throw new ArgumentException("TalentName is required.", nameof(request));
-
-        if (request.Modifier is < -999 or > 999)
-            throw new ArgumentOutOfRangeException(nameof(request.Modifier));
-
-        if (request.SchlechteEigenschaftWert is < 0 or > 20)
-            throw new ArgumentOutOfRangeException(nameof(request.SchlechteEigenschaftWert));
-
-        var probeAttributes = ParseProbeAttributes(request.Probe);
-        if (probeAttributes.Length != 3)
-            throw new ArgumentException("A talent probe requires exactly three attributes.", nameof(request));
-
-        foreach (var attribute in probeAttributes)
         {
-            if (!request.AttributeValues.ContainsKey(attribute))
-                throw new ArgumentException($"Missing attribute value for '{attribute}'.", nameof(request));
+            throw new ArgumentException("TalentName is required.", nameof(request));
         }
 
-        var rollResult = CreateRollResult(request.ForcedRolls, playerName);
-        var attributeValues = probeAttributes
-            .Select(attribute => request.AttributeValues[attribute])
-            .ToArray();
-        var rollValues = rollResult.Rolls
-            .Select(roll => roll.Value)
-            .ToArray();
-        var totalModifier = request.Modifier + request.SchlechteEigenschaftWert;
-        var evaluatedProbe = TalentProbe.Check(request.TalentValue, totalModifier, attributeValues, rollValues);
-        var details = BuildRollDetails(probeAttributes, attributeValues, rollValues, evaluatedProbe);
-        var probeSuccess = evaluatedProbe.Status is TalentProbeStatus.Bestanden or TalentProbeStatus.GluecklicherWurf;
+        DiceService.ValidateModifier(request.BasisModifier);
 
-        return new TalentProbeResult
+        if (request.SchlechteEigenschaftModifier is < 0 or > 20)
         {
-            PlayerName = playerName,
-            Timestamp = rollResult.Timestamp,
-            TalentName = request.TalentName,
-            TalentValue = request.TalentValue,
-            Probe = string.Join('/', probeAttributes),
-            Modifier = totalModifier,
-            BasisModifier = request.Modifier,
-            SchlechteEigenschaftName = string.IsNullOrWhiteSpace(request.SchlechteEigenschaftName)
+            throw new ArgumentOutOfRangeException(nameof(request.SchlechteEigenschaftModifier));
+        }
+
+        var probeAttributes = ParseProbeAttributes(request.Probe);
+        if (probeAttributes.Length != 3 || request.AttributeValues.Length != 3)
+        {
+            throw new ArgumentException("A talent probe requires exactly three attributes.", nameof(request));
+        }
+
+        var timestamp = DateTime.UtcNow;
+        var rolledDice = CreateRolls(request.ForcedRollsText);
+        var rollValues = rolledDice.Select(roll => roll.Value).ToArray();
+        var totalModifier = request.BasisModifier + request.SchlechteEigenschaftModifier;
+        var evaluatedProbe = TalentProbe.Check(request.TalentValue, totalModifier, request.AttributeValues, rollValues);
+        var details = BuildRollDetails(probeAttributes, request.AttributeValues, rollValues, evaluatedProbe);
+        var probeSuccess = evaluatedProbe.Status is TalentProbeStatus.Bestanden or TalentProbeStatus.GluecklicherWurf;
+        var equation = DiceResultFactory.CreateEquation(rolledDice, 0);
+        var historyEntry = DiceResultFactory.CreateHistoryEntry(playerName, timestamp, equation);
+
+        return new TalentRollResultDto(
+            playerName,
+            timestamp,
+            request.TalentName,
+            request.TalentValue,
+            string.Join('/', probeAttributes),
+            totalModifier,
+            request.BasisModifier,
+            string.IsNullOrWhiteSpace(request.SchlechteEigenschaftName)
                 ? null
                 : request.SchlechteEigenschaftName.Trim(),
-            SchlechteEigenschaftModifier = request.SchlechteEigenschaftWert,
-            EffectiveTalentValue = evaluatedProbe.EffektiverWert,
-            Rolls = rollResult.Rolls,
-            Details = details,
-            Status = evaluatedProbe.Status,
-            Rest = evaluatedProbe.Rest,
-            Success = probeSuccess,
-            Margin = evaluatedProbe.Status switch
+            request.SchlechteEigenschaftModifier,
+            evaluatedProbe.EffektiverWert,
+            rolledDice,
+            details,
+            evaluatedProbe.Status,
+            evaluatedProbe.Rest,
+            probeSuccess,
+            evaluatedProbe.Status switch
             {
                 TalentProbeStatus.Bestanden => evaluatedProbe.Rest,
                 TalentProbeStatus.NichtBestanden => Math.Abs(evaluatedProbe.Rest),
                 _ => 0
-            }
-        };
+            },
+            equation,
+            historyEntry);
     }
 
-    public static RollResult ToRollResult(TalentProbeResult result)
-    {
-        ArgumentNullException.ThrowIfNull(result);
-
-        return new RollResult
-        {
-            PlayerName = result.PlayerName,
-            Timestamp = result.Timestamp,
-            Rolls = result.Rolls,
-            Modifier = 0,
-            TotalSum = result.Rolls.Sum(roll => roll.Value)
-        };
-    }
-
-    private RollResult CreateRollResult(IReadOnlyList<int>? forcedRolls, string playerName)
+    private DiceRollDto[] CreateRolls(string? forcedRollsText)
     {
 #if !DEBUG
-        return diceService.RollSet([new DiceGroup(20, 3)], 0, playerName);
+        return diceService.RollDice([new DiceRollGroupDto(20, 3)]);
 #else
-        if (forcedRolls is null)
+        if (string.IsNullOrWhiteSpace(forcedRollsText))
         {
-            return diceService.RollSet([new DiceGroup(20, 3)], 0, playerName);
+            return diceService.RollDice([new DiceRollGroupDto(20, 3)]);
         }
 
+        var forcedRolls = ParseForcedRolls(forcedRollsText);
         if (forcedRolls.Count != 3)
-            throw new ArgumentException("ForcedRolls muessen genau 3 Werte enthalten.");
+        {
+            throw new ArgumentException("Testwuerfe muessen genau 3 Werte enthalten.");
+        }
 
         if (forcedRolls.Any(roll => roll is < 1 or > 20))
-            throw new ArgumentException("ForcedRolls duerfen nur Werte von 1 bis 20 enthalten.");
-
-        var rolls = forcedRolls
-            .Select(roll => new SingleRoll { Sides = 20, Value = roll })
-            .ToList();
-
-        return new RollResult
         {
-            PlayerName = playerName,
-            Timestamp = DateTime.UtcNow,
-            Rolls = rolls,
-            Modifier = 0,
-            TotalSum = rolls.Sum(roll => roll.Value)
-        };
+            throw new ArgumentException("Testwuerfe muessen Zahlen von 1 bis 20 sein.");
+        }
+
+        return forcedRolls
+            .Select(roll => new DiceRollDto(20, roll))
+            .ToArray();
 #endif
     }
 
-    private static List<TalentProbeRollDetail> BuildRollDetails(
+    private static List<int> ParseForcedRolls(string forcedRollsText)
+    {
+        return forcedRollsText
+            .Split([',', ';', '/', ' '], StringSplitOptions.RemoveEmptyEntries)
+            .Select(part => int.TryParse(part, out var roll)
+                ? roll
+                : throw new ArgumentException("Testwuerfe muessen Zahlen von 1 bis 20 sein."))
+            .ToList();
+    }
+
+    private static TalentRollDetailDto[] BuildRollDetails(
         IReadOnlyList<string> probeAttributes,
         IReadOnlyList<int> attributeValues,
         IReadOnlyList<int> rollValues,
         TalentProbe.Result evaluatedProbe)
     {
-        var details = new List<TalentProbeRollDetail>(capacity: 3);
+        var details = new List<TalentRollDetailDto>(capacity: 3);
         var remainingRest = Math.Max(evaluatedProbe.EffektiverWert, 0);
 
-        for (var i = 0; i < probeAttributes.Count; i++)
+        for (var index = 0; index < probeAttributes.Count; index++)
         {
             var targetValue = evaluatedProbe.EffektiverWert >= 0
-                ? attributeValues[i]
-                : attributeValues[i] + evaluatedProbe.EffektiverWert;
-            var difference = Math.Max(rollValues[i] - targetValue, 0);
+                ? attributeValues[index]
+                : attributeValues[index] + evaluatedProbe.EffektiverWert;
+            var difference = Math.Max(rollValues[index] - targetValue, 0);
             var success = true;
 
             if (difference > 0)
@@ -135,19 +126,17 @@ public class TalentProbeService(DiceService diceService)
                 success = evaluatedProbe.EffektiverWert >= 0 && remainingRest >= 0;
             }
 
-            details.Add(new TalentProbeRollDetail
-            {
-                Attribute = probeAttributes[i],
-                BaseValue = attributeValues[i],
-                TargetValue = targetValue,
-                Roll = rollValues[i],
-                Difference = difference,
-                RemainingRest = remainingRest,
-                Success = success
-            });
+            details.Add(new TalentRollDetailDto(
+                probeAttributes[index],
+                attributeValues[index],
+                targetValue,
+                rollValues[index],
+                difference,
+                remainingRest,
+                success));
         }
 
-        return details;
+        return details.ToArray();
     }
 
     private static string[] ParseProbeAttributes(string? probe)
@@ -167,19 +156,21 @@ public class TalentProbeService(DiceService diceService)
         public static Result Check(int talentWert, int erschwernis, int[] eigenschaften, int[] wuerfe)
         {
             if (eigenschaften.Length != 3 || wuerfe.Length != 3)
+            {
                 throw new ArgumentException("Es werden genau 3 Eigenschaften und 3 Wuerfe benoetigt.");
+            }
 
             var anzahlEinser = 0;
             var anzahlZwanziger = 0;
 
-            for (var i = 0; i < 3; i++)
+            for (var index = 0; index < 3; index++)
             {
-                if (wuerfe[i] == 1)
+                if (wuerfe[index] == 1)
                 {
                     anzahlEinser++;
                 }
 
-                if (wuerfe[i] == 20)
+                if (wuerfe[index] == 20)
                 {
                     anzahlZwanziger++;
                 }
@@ -202,15 +193,15 @@ public class TalentProbeService(DiceService diceService)
 
             var rest = Math.Max(effektiverWert, 0);
 
-            for (var i = 0; i < 3; i++)
+            for (var index = 0; index < 3; index++)
             {
                 var grenze = effektiverWert >= 0
-                    ? eigenschaften[i]
-                    : eigenschaften[i] + effektiverWert;
+                    ? eigenschaften[index]
+                    : eigenschaften[index] + effektiverWert;
 
-                if (wuerfe[i] > grenze)
+                if (wuerfe[index] > grenze)
                 {
-                    rest -= wuerfe[i] - grenze;
+                    rest -= wuerfe[index] - grenze;
                 }
             }
 
@@ -230,3 +221,13 @@ public class TalentProbeService(DiceService diceService)
         }
     }
 }
+
+public sealed record ResolvedTalentRollRequest(
+    string TalentName,
+    int TalentValue,
+    string Probe,
+    int[] AttributeValues,
+    int BasisModifier,
+    string? SchlechteEigenschaftName,
+    int SchlechteEigenschaftModifier,
+    string? ForcedRollsText);

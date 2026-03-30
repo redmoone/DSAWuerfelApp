@@ -1,0 +1,223 @@
+@using DsaWuerfelApp.Shared
+<div class="additional-info-content">
+    @if (!string.IsNullOrWhiteSpace(ProbeInfoText))
+    {
+        <section class="additional-info-panel">
+            <h4 class="additional-info-title">Probeninfo</h4>
+            <p class="additional-info-text">@ProbeInfoText</p>
+        </section>
+    }
+
+    @if (TalentResult is not null)
+    {
+        <section class="additional-info-panel">
+            <h4 class="additional-info-title">Letzte Talentprobe</h4>
+            <div class="probe-evaluation @GetProbeEvaluationClass(TalentResult)">
+                <div class="probe-evaluation-header">
+                    <span class="probe-evaluation-name">@TalentResult.TalentName</span>
+                    <span class="probe-evaluation-status">@GetProbeStatusText(TalentResult)</span>
+                </div>
+
+                <div class="probe-evaluation-meta">
+                    <span>Probe: @TalentResult.Probe</span>
+                    <span>TaW: @TalentResult.TalentValue</span>
+                    <span>Mod.: @FormatModifier(TalentResult.BasisModifier)</span>
+                    @if (TalentResult.SchlechteEigenschaftModifier > 0 &&
+                         !string.IsNullOrWhiteSpace(TalentResult.SchlechteEigenschaftName))
+                    {
+                        <span>@TalentResult.SchlechteEigenschaftName: @FormatModifier(TalentResult.SchlechteEigenschaftModifier)</span>
+                    }
+                    <span>Effektiv: @TalentResult.EffectiveTalentValue</span>
+                    <span>Rest: @TalentResult.Rest</span>
+                </div>
+
+                <div class="probe-evaluation-rolls">
+                    @foreach (var detail in TalentResult.Details)
+                    {
+                        <div class="probe-roll-chip @GetProbeRollChipClass(TalentResult, detail)">
+                            <span class="probe-roll-attribute">@detail.Attribute</span>
+                            <span class="probe-roll-values">@detail.Roll / @detail.TargetValue</span>
+                            <span class="probe-roll-rest">Diff: @detail.Difference | Rest: @detail.RemainingRest</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+    }
+
+    @if (AttributeResult is not null)
+    {
+        <section class="additional-info-panel">
+            <h4 class="additional-info-title">Letzte Eigenschaftsprobe</h4>
+            <div class="probe-evaluation @GetAttributeProbeEvaluationClass(AttributeResult)">
+                <div class="probe-evaluation-header">
+                    <span class="probe-evaluation-name">@AttributeResult.Probe</span>
+                    <span class="probe-evaluation-status">@GetAttributeProbeStatusText(AttributeResult)</span>
+                </div>
+
+                <div class="probe-evaluation-meta">
+                    <span>Mod.: @FormatModifier(AttributeResult.EffectiveModifier)</span>
+                    @if (AttributeResult.SchlechteEigenschaftModifier > 0 &&
+                         !string.IsNullOrWhiteSpace(AttributeResult.SchlechteEigenschaftName))
+                    {
+                        <span>@AttributeResult.SchlechteEigenschaftName: @FormatModifier(AttributeResult.SchlechteEigenschaftModifier)</span>
+                    }
+                </div>
+
+                <div class="probe-evaluation-rolls">
+                    @foreach (var detail in AttributeResult.Details)
+                    {
+                        <div class="probe-roll-chip @GetAttributeProbeRollChipClass(detail)">
+                            <span class="probe-roll-attribute">@detail.Attribute</span>
+                            <span class="probe-roll-values">@detail.Roll / @detail.TargetValue</span>
+                            <span class="probe-roll-rest">Diff: @detail.Difference</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (AttributeResult.Requirement is not null)
+            {
+                <h4 class="additional-info-title">3W20-Hilfe</h4>
+                <div class="probe-evaluation requirement">
+                    <div class="probe-evaluation-header">
+                        <span class="probe-evaluation-name">@AttributeResult.Requirement.Probe</span>
+                        <span class="probe-evaluation-status">
+                            Benoetigter Probenwert: @AttributeResult.Requirement.RequiredTalentValue
+                        </span>
+                    </div>
+
+                    <div class="probe-evaluation-meta">
+                        <span>Mod.: @FormatModifier(AttributeResult.Requirement.EffectiveModifier)</span>
+                        @if (AttributeResult.Requirement.SchlechteEigenschaftModifier > 0 &&
+                             !string.IsNullOrWhiteSpace(AttributeResult.Requirement.SchlechteEigenschaftName))
+                        {
+                            <span>@AttributeResult.Requirement.SchlechteEigenschaftName: @FormatModifier(AttributeResult.Requirement.SchlechteEigenschaftModifier)</span>
+                        }
+                        <span>Ausgleich: @AttributeResult.Requirement.RequiredCompensation</span>
+                    </div>
+
+                    <div class="probe-evaluation-rolls">
+                        @foreach (var detail in AttributeResult.Requirement.Details)
+                        {
+                            <div class="probe-roll-chip @GetAttributeRequirementChipClass(detail)">
+                                <span class="probe-roll-attribute">@detail.Attribute</span>
+                                <span class="probe-roll-values">@detail.Roll / @detail.BaseValue</span>
+                                <span class="probe-roll-rest">Benoetigter Ausgleich: @detail.Difference</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </section>
+    }
+
+    @if (BadTraitResult is not null)
+    {
+        <section class="additional-info-panel">
+            <h4 class="additional-info-title">Probe auf Schlechte Eigenschaft</h4>
+            <div class="probe-evaluation @GetBadTraitEvaluationClass(BadTraitResult)">
+                <div class="probe-evaluation-header">
+                    <span class="probe-evaluation-name">@BadTraitResult.EigenschaftName</span>
+                    <span class="probe-evaluation-status">@GetBadTraitStatusText(BadTraitResult)</span>
+                </div>
+
+                <div class="probe-evaluation-meta">
+                    <span>Wert: @BadTraitResult.EigenschaftWert</span>
+                    <span>Wurf: @BadTraitResult.Roll.Value</span>
+                    <span>Abstand: @BadTraitResult.Margin</span>
+                </div>
+            </div>
+        </section>
+    }
+
+    @if (string.IsNullOrWhiteSpace(ProbeInfoText) &&
+         TalentResult is null &&
+         AttributeResult is null &&
+         BadTraitResult is null)
+    {
+        <p class="additional-info-empty">
+            Waehle eine Probe und nutze den Info-Button, fuehre eine Talentprobe aus, wuerfle mit Eigenschaften oder
+            pruefe direkt auf eine schlechte Eigenschaft.
+        </p>
+    }
+</div>
+
+@code {
+    [Parameter] public string? ProbeInfoText { get; set; }
+    [Parameter] public TalentRollResultDto? TalentResult { get; set; }
+    [Parameter] public AttributeRollResultDto? AttributeResult { get; set; }
+    [Parameter] public BadTraitRollResultDto? BadTraitResult { get; set; }
+
+    private static string FormatModifier(int modifier)
+    {
+        return modifier > 0 ? $"+{modifier}" : modifier.ToString();
+    }
+
+    private static string GetProbeStatusText(TalentRollResultDto result)
+    {
+        return result.Status switch
+        {
+                TalentProbeStatus.Patzer => "Patzer",
+                TalentProbeStatus.GluecklicherWurf => "Gluecklicher Wurf",
+                TalentProbeStatus.Bestanden => $"Bestanden um {result.Margin}",
+                _ => $"Misslungen um {result.Margin}"
+        };
+    }
+
+    private static string GetProbeEvaluationClass(TalentRollResultDto result)
+    {
+        return result.Status switch
+        {
+                TalentProbeStatus.Patzer => "patzer",
+                TalentProbeStatus.GluecklicherWurf => "glueck",
+                TalentProbeStatus.Bestanden => "success",
+                _ => "failure"
+        };
+    }
+
+    private static string GetProbeRollChipClass(TalentRollResultDto result, TalentRollDetailDto detail)
+    {
+        return result.Status switch
+        {
+                TalentProbeStatus.Patzer => "patzer",
+                TalentProbeStatus.GluecklicherWurf => "glueck",
+                _ => detail.Success ? "success" : "failure"
+        };
+    }
+
+    private static string GetAttributeProbeStatusText(AttributeRollResultDto result)
+    {
+        return result.Success
+                ? $"Bestanden ({result.SuccessCount}/{result.Details.Length})"
+                : $"Misslungen ({result.FailureCount} fehlgeschlagen)";
+    }
+
+    private static string GetAttributeProbeEvaluationClass(AttributeRollResultDto result)
+    {
+        return result.Success ? "success" : "failure";
+    }
+
+    private static string GetAttributeProbeRollChipClass(AttributeRollDetailDto detail)
+    {
+        return detail.Success ? "success" : "failure";
+    }
+
+    private static string GetAttributeRequirementChipClass(AttributeRollRequirementDetailDto detail)
+    {
+        return detail.Difference == 0 ? "success" : "failure";
+    }
+
+    private static string GetBadTraitStatusText(BadTraitRollResultDto result)
+    {
+        return result.Status == SchlechteEigenschaftProbeStatus.Misslungen
+                ? "Misslungen - Eigenschaft setzt sich durch"
+                : "Bestanden - Held widersteht";
+    }
+
+    private static string GetBadTraitEvaluationClass(BadTraitRollResultDto result)
+    {
+        return result.Success ? "success" : "failure";
+    }
+
+}

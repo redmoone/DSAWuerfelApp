@@ -13,7 +13,10 @@ builder.Services.AddSignalR();
 builder.Services.AddSingleton<SessionService>();
 builder.Services.AddSingleton<DiceService>();
 builder.Services.AddSingleton<TalentProbeService>();
+builder.Services.AddSingleton<AttributeProbeService>();
 builder.Services.AddSingleton<SchlechteEigenschaftProbeService>();
+builder.Services.AddSingleton<TalentCatalogService>();
+builder.Services.AddScoped<DiceWorkflowService>();
 builder.Services.AddTransient<XmlHeroDeserializer>();
 builder.Services.AddDbContext<HeroDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("HeroesDb")));

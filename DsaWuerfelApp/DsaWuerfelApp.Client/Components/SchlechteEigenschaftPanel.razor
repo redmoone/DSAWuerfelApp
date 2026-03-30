@@ -12,9 +12,10 @@ else
         @foreach (var eigenschaft in SortedSchlechteEigenschaften)
         {
             <button type="button"
-                    class="bad-trait-chip @(IsSelected(eigenschaft.Key) ? "active" : "")"
-                    @onclick='() => HandleSelectionChanged(eigenschaft.Key)'>
-                <span>@eigenschaft.Key</span>
+                    class="bad-trait-chip @(IsSelected(eigenschaft.Name) ? "active" : "")"
+                    @onclick='() => HandleSelectionChanged(eigenschaft.Name)'
+                    disabled="@IsBusy">
+                <span>@eigenschaft.Name</span>
                 <span>@eigenschaft.Value</span>
             </button>
         }
@@ -23,12 +24,12 @@ else
     @if (SelectedEigenschaft is { } selectedEigenschaft)
     {
         <div class="bad-trait-summary">
-            <span>Talentproben: @FormatModifier(selectedEigenschaft.Value)</span>
-            <span>Eigenschaftsproben: @FormatModifier(GetHalvedWert(selectedEigenschaft.Value))</span>
+            <span>Talentproben: @FormatModifier(selectedEigenschaft.TalentModifier)</span>
+            <span>Eigenschaftsproben: @FormatModifier(selectedEigenschaft.AttributeModifier)</span>
         </div>
 
-        <button class="dsa-btn" @onclick="HandleDirectRollRequested">
-            W20 auf @selectedEigenschaft.Key
+        <button class="dsa-btn" @onclick="HandleDirectRollRequested" disabled="@IsBusy">
+            W20 auf @selectedEigenschaft.Name
         </button>
     }
     else

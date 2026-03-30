@@ -1,12 +1,12 @@
 ﻿<div class="chat-panel">
     <div class="chat-history-container">
-        @if (_history.Count == 0)
+        @if (Entries.Count == 0)
         {
             <MudText Typo="Typo.body2" Class="text-muted text-center my-4">Noch keine Würfe in dieser Session.</MudText>
         }
         
         <div class="d-flex flex-column">
-            @foreach (var log in _history)
+            @foreach (var log in Entries)
             {
                 <div class="chat-message">
                     <div class="d-flex align-baseline gap-2 mb-1">
@@ -15,7 +15,7 @@
                     </div>
                     
                     <div class="d-flex align-center flex-wrap gap-1">
-                        @for (int i = 0; i < log.Rolls.Count; i++)
+                        @for (int i = 0; i < log.Rolls.Length; i++)
                         {
                             var r = log.Rolls[i];
                             <div class="history-die-container">
@@ -24,7 +24,7 @@
                                 </div>
                             </div>
 
-                            @if (i < log.Rolls.Count - 1)
+                            @if (i < log.Rolls.Length - 1)
                             {
                                 <span class="math-symbol">+</span>
                             }

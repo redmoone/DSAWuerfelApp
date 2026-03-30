@@ -2,76 +2,75 @@ using DsaWuerfelApp.Shared;
 
 namespace DsaWuerfelApp.Services;
 
-public class SchlechteEigenschaftProbeService(DiceService diceService)
+public sealed class SchlechteEigenschaftProbeService(DiceService diceService)
 {
-    public SchlechteEigenschaftProbeResult RollProbe(
-        SchlechteEigenschaftProbeRequest request,
+    public BadTraitRollResultDto RollProbe(
+        ResolvedBadTraitRollRequest request,
         string playerName = "Unbekannt")
     {
         ArgumentNullException.ThrowIfNull(request);
 
         if (string.IsNullOrWhiteSpace(request.EigenschaftName))
+        {
             throw new ArgumentException("EigenschaftName is required.", nameof(request));
-
-        if (request.EigenschaftWert is < 0 or > 20)
-            throw new ArgumentOutOfRangeException(nameof(request.EigenschaftWert));
-
-        var rollResult = CreateRollResult(request.ForcedRoll, playerName);
-        var roll = rollResult.Rolls.Single();
-        var probeMisslungen = roll.Value <= request.EigenschaftWert;
-
-        return new SchlechteEigenschaftProbeResult
-        {
-            PlayerName = playerName,
-            Timestamp = rollResult.Timestamp,
-            EigenschaftName = request.EigenschaftName,
-            EigenschaftWert = request.EigenschaftWert,
-            TargetValue = request.EigenschaftWert,
-            Roll = roll,
-            Status = probeMisslungen
-                ? SchlechteEigenschaftProbeStatus.Misslungen
-                : SchlechteEigenschaftProbeStatus.Bestanden,
-            Success = !probeMisslungen,
-            EigenschaftSetztSichDurch = probeMisslungen,
-            Margin = Math.Abs(roll.Value - request.EigenschaftWert)
-        };
-    }
-
-    public static RollResult ToRollResult(SchlechteEigenschaftProbeResult result)
-    {
-        ArgumentNullException.ThrowIfNull(result);
-
-        return new RollResult
-        {
-            PlayerName = result.PlayerName,
-            Timestamp = result.Timestamp,
-            Rolls = [result.Roll],
-            Modifier = 0,
-            TotalSum = result.Roll.Value
-        };
-    }
-
-    private RollResult CreateRollResult(int? forcedRoll, string playerName)
-    {
-#if !DEBUG
-        return diceService.RollSet([new DiceGroup(20, 1)], 0, playerName);
-#else
-        if (forcedRoll is null)
-        {
-            return diceService.RollSet([new DiceGroup(20, 1)], 0, playerName);
         }
 
-        if (forcedRoll is < 1 or > 20)
-            throw new ArgumentException("ForcedRoll muss zwischen 1 und 20 liegen.", nameof(forcedRoll));
-
-        return new RollResult
+        if (request.EigenschaftWert is < 0 or > 20)
         {
-            PlayerName = playerName,
-            Timestamp = DateTime.UtcNow,
-            Rolls = [new SingleRoll { Sides = 20, Value = forcedRoll.Value }],
-            Modifier = 0,
-            TotalSum = forcedRoll.Value
-        };
+            throw new ArgumentOutOfRangeException(nameof(request.EigenschaftWert));
+        }
+
+        var timestamp = DateTime.UtcNow;
+        var roll = CreateRoll(request.ForcedRollsText);
+        var probeMisslungen = roll.Value <= request.EigenschaftWert;
+        var equation = DiceResultFactory.CreateEquation([roll], 0);
+        var historyEntry = DiceResultFactory.CreateHistoryEntry(playerName, timestamp, equation);
+
+        return new BadTraitRollResultDto(
+            playerName,
+            timestamp,
+            request.EigenschaftName,
+            request.EigenschaftWert,
+            request.EigenschaftWert,
+            roll,
+            probeMisslungen
+                ? SchlechteEigenschaftProbeStatus.Misslungen
+                : SchlechteEigenschaftProbeStatus.Bestanden,
+            !probeMisslungen,
+            probeMisslungen,
+            Math.Abs(roll.Value - request.EigenschaftWert),
+            equation,
+            historyEntry);
+    }
+
+    private DiceRollDto CreateRoll(string? forcedRollsText)
+    {
+#if !DEBUG
+        return diceService.RollDice([new DiceRollGroupDto(20, 1)]).Single();
+#else
+        if (string.IsNullOrWhiteSpace(forcedRollsText))
+        {
+            return diceService.RollDice([new DiceRollGroupDto(20, 1)]).Single();
+        }
+
+        var parts = forcedRollsText.Split([',', ';', '/', ' '], StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length != 1)
+        {
+            throw new ArgumentException(
+                "Fuer die direkte Probe auf eine schlechte Eigenschaft ist genau 1 Testwurf noetig.");
+        }
+
+        if (!int.TryParse(parts[0], out var roll) || roll is < 1 or > 20)
+        {
+            throw new ArgumentException("Testwuerfe muessen Zahlen von 1 bis 20 sein.");
+        }
+
+        return new DiceRollDto(20, roll);
 #endif
     }
 }
+
+public sealed record ResolvedBadTraitRollRequest(
+    string EigenschaftName,
+    int EigenschaftWert,
+    string? ForcedRollsText);

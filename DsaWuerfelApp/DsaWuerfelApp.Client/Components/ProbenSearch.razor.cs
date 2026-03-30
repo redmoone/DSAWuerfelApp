@@ -1,58 +1,59 @@
 using DsaWuerfelApp.Client.Services;
+using DsaWuerfelApp.Shared;
 
 using Microsoft.AspNetCore.Components;
 
 namespace DsaWuerfelApp.Client.Components;
 
-public sealed record ProbeSearchAlternative(string Label, string Value);
-
-public sealed record ProbeSearchEntry(
-    string DisplayLabel,
-    string? Value,
-    bool IsSelectable,
-    IReadOnlyList<ProbeSearchAlternative> Alternatives);
-
 public partial class ProbenSearch
 {
-    private readonly List<ProbeSearchEntry> _fallbackProben =
+    private readonly List<ProbeSearchEntryDto> _fallbackProben =
     [
         new("Klettern (MU/GE/KK)", "Klettern (MU/GE/KK)", true, []),
         new("Koerperbeherrschung (GE/GE/KO)", "Koerperbeherrschung (GE/GE/KO)", true, []),
         new("Sinnesschaerfe (KL/IN/IN)", "Sinnesschaerfe (KL/IN/IN)", true, []),
         new("Ueberreden (MU/IN/CH)", "Ueberreden (MU/IN/CH)", true, []),
-        new("Verbergen (MU/IN/AG)", "Verbergen (MU/IN/AG)", true, [])
+        new("Verbergen (MU/IN/GE)", "Verbergen (MU/IN/GE)", true, [])
     ];
 
     private bool _isDropdownOpen;
     private string _lastSelectedProbe = string.Empty;
 
-    [Parameter] public IReadOnlyList<ProbeSearchEntry>? AvailableProben { get; set; }
+    [Parameter] public IReadOnlyList<ProbeSearchEntryDto>? AvailableProben { get; set; }
     [Parameter] public string Placeholder { get; set; } = "Nach Proben suchen...";
     [Parameter] public string SelectedProbe { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> SelectedProbeChanged { get; set; }
 
     public string SearchTerm { get; set; } = string.Empty;
 
-    private IReadOnlyList<ProbeSearchEntry> ProbenSource =>
+    private IReadOnlyList<ProbeSearchEntryDto> ProbenSource =>
         AvailableProben is { Count: > 0 } ? AvailableProben : _fallbackProben;
 
-    private IEnumerable<ProbeSearchEntry> FilteredProben =>
+    private IEnumerable<ProbeSearchEntryDto> FilteredProben =>
         string.IsNullOrWhiteSpace(SearchTerm)
             ? ProbenSource.Where(probe => probe.IsSelectable)
             : ProbenSource.Where(MatchesSearchTerm);
 
     protected override void OnParametersSet()
     {
-        if (string.Equals(_lastSelectedProbe, SelectedProbe, StringComparison.Ordinal))
+        var resolvedDisplayLabel = ResolveDisplayLabel(SelectedProbe);
+
+        if (!string.Equals(_lastSelectedProbe, SelectedProbe, StringComparison.Ordinal))
         {
+            SearchTerm = resolvedDisplayLabel;
+            _lastSelectedProbe = SelectedProbe;
             return;
         }
 
-        SearchTerm = SelectedProbe;
-        _lastSelectedProbe = SelectedProbe;
+        if (!string.IsNullOrWhiteSpace(SelectedProbe) &&
+            string.Equals(SearchTerm, SelectedProbe, StringComparison.Ordinal) &&
+            !string.Equals(SearchTerm, resolvedDisplayLabel, StringComparison.Ordinal))
+        {
+            SearchTerm = resolvedDisplayLabel;
+        }
     }
 
-    private bool MatchesSearchTerm(ProbeSearchEntry probe)
+    private bool MatchesSearchTerm(ProbeSearchEntryDto probe)
     {
         if (probe.DisplayLabel.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
         {
@@ -77,39 +78,40 @@ public partial class ProbenSearch
     private Task SelectProbe(string probe)
     {
         SelectedProbe = probe;
-        SearchTerm = probe;
+        SearchTerm = ResolveDisplayLabel(probe);
         _lastSelectedProbe = probe;
         _isDropdownOpen = false;
         return SelectedProbeChanged.InvokeAsync(probe);
     }
 
-    private Task HandleEntryClick(ProbeSearchEntry probe)
+    private Task HandleEntryClick(ProbeSearchEntryDto probe)
     {
         return probe.IsSelectable && !string.IsNullOrWhiteSpace(probe.Value)
             ? SelectProbe(probe.Value)
             : Task.CompletedTask;
     }
 
-    public async Task ClearAsync()
-    {
-        SearchTerm = string.Empty;
-        SelectedProbe = string.Empty;
-        _lastSelectedProbe = string.Empty;
-        _isDropdownOpen = false;
-        await InvokeAsync(StateHasChanged);
-    }
-
     private async Task HandleInputClick()
     {
         _isDropdownOpen = true;
 
-        if (string.IsNullOrWhiteSpace(SelectedProbe) ||
-            !string.Equals(SearchTerm, SelectedProbe, StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(SelectedProbe))
         {
             return;
         }
 
-        await ClearAsync();
+        var resolvedDisplayLabel = ResolveDisplayLabel(SelectedProbe);
+        var matchesSelectedProbe = string.Equals(SearchTerm, SelectedProbe, StringComparison.Ordinal);
+        var matchesDisplayLabel = string.Equals(SearchTerm, resolvedDisplayLabel, StringComparison.Ordinal);
+
+        if (!matchesSelectedProbe && !matchesDisplayLabel)
+        {
+            return;
+        }
+
+        SelectedProbe = string.Empty;
+        SearchTerm = string.Empty;
+        _lastSelectedProbe = string.Empty;
         await SelectedProbeChanged.InvokeAsync(string.Empty);
     }
 
@@ -117,5 +119,26 @@ public partial class ProbenSearch
     {
         await Task.Delay(150);
         _isDropdownOpen = false;
+    }
+
+    private string ResolveDisplayLabel(string selectedProbe)
+    {
+        if (string.IsNullOrWhiteSpace(selectedProbe))
+        {
+            return string.Empty;
+        }
+
+        var probe = ProbenSource.FirstOrDefault(entry =>
+            string.Equals(entry.Value, selectedProbe, StringComparison.Ordinal));
+        if (probe is not null)
+        {
+            return probe.DisplayLabel;
+        }
+
+        var alternative = ProbenSource
+            .SelectMany(entry => entry.Alternatives)
+            .FirstOrDefault(entry => string.Equals(entry.Value, selectedProbe, StringComparison.Ordinal));
+
+        return alternative?.Label ?? selectedProbe;
     }
 }

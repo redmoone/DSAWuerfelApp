@@ -1,214 +1,38 @@
 @page "/wuerfel"
 @using DsaWuerfelApp.Client.Components
-@using DsaWuerfelApp.Client.Services
-@inject GameClient GameClient
 
 <div class="wuerfel-page-container pa-4">
     <div class="top-section">
         <div class="history-area" title="Historie der bisherigen Wuerfe">
-            <RollHistory @ref="_rollHistory"/>
+            <RollHistory Entries="View.History"/>
         </div>
 
         <div class="action-block additional-info-block">
             <h3 class="block-title">Zusaetzliche Informationen</h3>
-            <div class="additional-info-content">
-                @if (!string.IsNullOrWhiteSpace(_probeInfoText))
-                {
-                    <section class="additional-info-panel">
-                        <h4 class="additional-info-title">Probeninfo</h4>
-                        <p class="additional-info-text">@_probeInfoText</p>
-                    </section>
-                }
-
-                @if (_lastProbeEvaluation is not null)
-                {
-                    <section class="additional-info-panel">
-                        <h4 class="additional-info-title">Letzte Talentprobe</h4>
-                        <div class="probe-evaluation @GetProbeEvaluationClass(_lastProbeEvaluation)">
-                            <div class="probe-evaluation-header">
-                                <span class="probe-evaluation-name">@_lastProbeEvaluation.TalentName</span>
-                                <span class="probe-evaluation-status">@GetProbeStatusText(_lastProbeEvaluation)</span>
-                            </div>
-
-                            <div class="probe-evaluation-meta">
-                                <span>Probe: @_lastProbeEvaluation.Probe</span>
-                                <span>TaW: @_lastProbeEvaluation.TalentValue</span>
-                                <span>Mod.: @FormatModifier(_lastProbeEvaluation.Modifier)</span>
-                                @if (_lastProbeEvaluation.SchlechteEigenschaftModifier > 0 &&
-                                     !string.IsNullOrWhiteSpace(_lastProbeEvaluation.SchlechteEigenschaftName))
-                                {
-                                    <span>
-                                        @_lastProbeEvaluation.SchlechteEigenschaftName:
-                                        @FormatModifier(_lastProbeEvaluation.SchlechteEigenschaftModifier)
-                                    </span>
-                                }
-                                <span>Effektiv: @_lastProbeEvaluation.EffectiveTalentValue</span>
-                                <span>Rest: @_lastProbeEvaluation.Rest</span>
-                            </div>
-
-                            <div class="probe-evaluation-rolls">
-                                @foreach (var detail in _lastProbeEvaluation.Details)
-                                {
-                                    <div class="probe-roll-chip @GetProbeRollChipClass(_lastProbeEvaluation, detail)">
-                                        <span class="probe-roll-attribute">@detail.Attribute</span>
-                                        <span class="probe-roll-values">@detail.Roll / @detail.TargetValue</span>
-                                        <span class="probe-roll-rest">
-                                            Diff: @detail.Difference | Rest: @detail.RemainingRest
-                                        </span>
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                    </section>
-                }
-
-                @if (_lastAttributeProbeEvaluation is not null || _lastAttributeProbeRequirement is not null)
-                {
-                    <section class="additional-info-panel">
-                        @if (_lastAttributeProbeEvaluation is not null)
-                        {
-                            <h4 class="additional-info-title">Letzte Eigenschaftsprobe</h4>
-                            <div
-                                class="probe-evaluation @GetAttributeProbeEvaluationClass(_lastAttributeProbeEvaluation)">
-                                <div class="probe-evaluation-header">
-                                    <span class="probe-evaluation-name">@_lastAttributeProbeEvaluation.Probe</span>
-                                    <span class="probe-evaluation-status">
-                                        @GetAttributeProbeStatusText(_lastAttributeProbeEvaluation)
-                                    </span>
-                                </div>
-
-                                <div class="probe-evaluation-meta">
-                                    <span>Mod.: @FormatModifier(_lastAttributeProbeEvaluation.EffektiverModifier)</span>
-                                    @if (_lastAttributeProbeEvaluation.SchlechteEigenschaftModifier > 0 &&
-                                         !string.IsNullOrWhiteSpace(_lastAttributeProbeEvaluation.SchlechteEigenschaftName))
-                                    {
-                                        <span>
-                                            @_lastAttributeProbeEvaluation.SchlechteEigenschaftName:
-                                            @FormatModifier(_lastAttributeProbeEvaluation.SchlechteEigenschaftModifier)
-                                        </span>
-                                    }
-                                </div>
-
-                                <div class="probe-evaluation-rolls">
-                                    @foreach (var detail in _lastAttributeProbeEvaluation.Details)
-                                    {
-                                        <div class="probe-roll-chip @GetAttributeProbeRollChipClass(detail)">
-                                            <span class="probe-roll-attribute">@detail.Attribute</span>
-                                            <span class="probe-roll-values">@detail.Roll / @detail.TargetValue</span>
-                                            <span class="probe-roll-rest">Diff: @detail.Difference</span>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        }
-
-                        @if (_lastAttributeProbeRequirement is not null)
-                        {
-                            <h4 class="additional-info-title">3W20-Hilfe</h4>
-                            <div class="probe-evaluation requirement">
-                                <div class="probe-evaluation-header">
-                                    <span class="probe-evaluation-name">@_lastAttributeProbeRequirement.Probe</span>
-                                    <span class="probe-evaluation-status">
-                                        Benoetigter Probenwert: @_lastAttributeProbeRequirement.RequiredTalentValue
-                                    </span>
-                                </div>
-
-                                <div class="probe-evaluation-meta">
-                                    <span>Mod.: @FormatModifier(_lastAttributeProbeRequirement.EffektiverModifier)</span>
-                                    @if (_lastAttributeProbeRequirement.SchlechteEigenschaftModifier > 0 &&
-                                         !string.IsNullOrWhiteSpace(_lastAttributeProbeRequirement.SchlechteEigenschaftName))
-                                    {
-                                        <span>
-                                            @_lastAttributeProbeRequirement.SchlechteEigenschaftName:
-                                            @FormatModifier(_lastAttributeProbeRequirement.SchlechteEigenschaftModifier)
-                                        </span>
-                                    }
-                                    <span>Ausgleich: @_lastAttributeProbeRequirement.RequiredCompensation</span>
-                                </div>
-
-                                <div class="probe-evaluation-rolls">
-                                    @foreach (var detail in _lastAttributeProbeRequirement.Details)
-                                    {
-                                        <div class="probe-roll-chip @GetAttributeRequirementChipClass(detail)">
-                                            <span class="probe-roll-attribute">@detail.Attribute</span>
-                                            <span class="probe-roll-values">@detail.Roll / @detail.BaseValue</span>
-                                            <span class="probe-roll-rest">
-                                                Benoetigter Ausgleich: @detail.Difference
-                                            </span>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        }
-                    </section>
-                }
-
-                @if (_lastSchlechteEigenschaftProbe is not null)
-                {
-                    <section class="additional-info-panel">
-                        <h4 class="additional-info-title">Probe auf Schlechte Eigenschaft</h4>
-                        <div
-                            class="probe-evaluation @GetSchlechteEigenschaftProbeEvaluationClass(_lastSchlechteEigenschaftProbe)">
-                            <div class="probe-evaluation-header">
-                                <span
-                                    class="probe-evaluation-name">@_lastSchlechteEigenschaftProbe.EigenschaftName</span>
-                                <span class="probe-evaluation-status">
-                                    @GetSchlechteEigenschaftProbeStatusText(_lastSchlechteEigenschaftProbe)
-                                </span>
-                            </div>
-
-                            <div class="probe-evaluation-meta">
-                                <span>Wert: @_lastSchlechteEigenschaftProbe.EigenschaftWert</span>
-                                <span>Wurf: @_lastSchlechteEigenschaftProbe.Roll.Value</span>
-                                <span>Abstand: @_lastSchlechteEigenschaftProbe.Margin</span>
-                            </div>
-                        </div>
-                    </section>
-                }
-
-                @if (string.IsNullOrWhiteSpace(_probeInfoText) && _lastProbeEvaluation is null &&
-                     _lastAttributeProbeEvaluation is null &&
-                     _lastAttributeProbeRequirement is null &&
-                     _lastSchlechteEigenschaftProbe is null)
-                {
-                    <p class="additional-info-empty">
-                        Waehle eine Probe und nutze den Info-Button, fuehre eine Talentprobe aus, wuerfle mit
-                        Eigenschaften oder pruefe direkt auf eine schlechte Eigenschaft.
-                    </p>
-                }
-            </div>
+            <WuerfelInformationPanel ProbeInfoText="@View.ProbeInfoText"
+                                     TalentResult="View.LastTalentRoll"
+                                     AttributeResult="View.LastAttributeRoll"
+                                     BadTraitResult="View.LastBadTraitRoll"/>
         </div>
 
         <div class="middle-section">
-            <div class="results-bar">
-                <h3 class="results-title">Ergebnisse und Wuerfeln</h3>
-
-                <div class="global-actions-bar">
-                    <div class="left-actions">
-                        <RollEquation Result="_last"/>
-
-                        <ModifierPill @bind-Value="_modifier"/>
-
-                        <button class="dsa-btn-icon @(_isHiddenRoll ? "active" : "")" @onclick="ToggleHiddenRoll"
-                                title="@(_isHiddenRoll ? "Verdeckter Wurf" : "Oeffentlicher Wurf")">
-                            <img src="icons/eye-closed.svg" class="btn-icon" alt="Auge"/>
-                        </button>
-
-                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Variant="Variant.Filled"
-                                       OnClick="Reset" title="Tisch leeren" Class="rounded-circle"
-                                       Style="width: 48px; height: 48px; background-color: var(--pill-bg); color: var(--dsa-white); border: 2px solid var(--dsa-gold);"/>
-                    </div>
-
-                    <div class="right-actions">
-                        <button class="dsa-btn" @onclick="ExecuteGlobalRoll" disabled="@(!CanRoll)">
-                            Wuerfeln
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <WuerfelActionBar Result="View.CurrentEquation"
+                              Modifier="View.Modifier"
+                              ModifierChanged="HandleModifierChanged"
+                              IsHiddenRoll="View.IsHiddenRoll"
+                              ToggleHiddenRollRequested="ToggleHiddenRoll"
+                              ResetRequested="ResetAsync"
+                              RollRequested="ExecuteRollAsync"
+                              CanRoll="View.CanRoll"
+                              IsBusy="View.IsBusy"/>
 
             <div class="dice-3d-box" title="3D Ansicht der gefallenen Wuerfel">
-                <Dice3D @ref="_dice3d" OnDiceRemoved="HandleDiceRemoved"/>
+                <DiceViewport SelectedDice="View.SelectedDiceSides"
+                              ResultDiceSides="View.AnimatedDiceSides"
+                              ResultDiceValues="View.AnimatedDiceValues"
+                              PreviewVersion="View.PreviewVersion"
+                              ResultVersion="View.ResultVersion"
+                              OnDiceRemoved="HandleDiceRemovedAsync"/>
             </div>
         </div>
     </div>
@@ -216,65 +40,47 @@
     <div class="action-blocks-container">
         <div class="action-block">
             <h3 class="block-title">Eigenschaftsproben</h3>
-            <AttributePanel AttributeValues="CurrentAttributeValues" SelectedAttributes="_selectedAttributes"
-                            OnAttributeAdded="AddAttribute"
-                            OnAttributeRemoved="RemoveAttribute"/>
+            <AttributePanel AttributeValues="View.AttributeValues"
+                            SelectedAttributes="View.SelectedAttributes"
+                            OnAttributeAdded="AddAttributeAsync"
+                            OnAttributeRemoved="RemoveAttributeAsync"/>
         </div>
 
         <div class="action-block">
             <h3 class="block-title">Probensuche</h3>
-            <div class="probe-search-row" title="Suche nach Talenten oder Zaubern fuer automatisierte Proben">
-                <div class="probe-search-field">
-                    <ProbenSearch @ref="_probenSearch" AvailableProben="AvailableProben" Placeholder="@ProbePlaceholder"
-                                  SelectedProbe="@(_selectedProbe ?? string.Empty)"
-                                  SelectedProbeChanged="HandleSelectedProbeChanged"/>
-                </div>
-                <MudIconButton Icon="@Icons.Material.Filled.Info" Variant="Variant.Filled"
-                               OnClick="ShowSelectedProbeInfo" Disabled="@string.IsNullOrWhiteSpace(_selectedProbe)"
-                               title="Zusatzinformationen zur ausgewaehlten Probe anzeigen"
-                               Class="rounded-circle probe-info-button"
-                               Style="width: 48px; height: 48px; background-color: var(--pill-bg); color: var(--dsa-white); border: 2px solid var(--dsa-gold);"/>
-            </div>
-
-            @if (ShowDebugForcedRolls)
-            {
-                <div class="forced-rolls-panel" title="Optionale Testwuerfe fuer Talentproben oder direkte W20-Proben">
-                    <span class="forced-rolls-label">Testwuerfe</span>
-                    <input class="forced-rolls-input" @bind="_forcedRollsText" @bind:event="oninput"
-                           placeholder="z. B. 20,20,5 oder 6"/>
-                    <div class="forced-rolls-actions">
-                        <button type="button" class="forced-rolls-button" @onclick='() => SetForcedRolls("20,20,5")'>
-                            Patzer
-                        </button>
-                        <button type="button" class="forced-rolls-button" @onclick='() => SetForcedRolls("1,1,13")'>
-                            Glueck
-                        </button>
-                        <button type="button" class="forced-rolls-button muted" @onclick="ClearForcedRolls">
-                            Leer
-                        </button>
-                    </div>
-                </div>
-            }
+            <WuerfelProbePanel AvailableProben="View.AvailableProbes"
+                               Placeholder="@View.ProbePlaceholder"
+                               SelectedProbe="@(View.SelectedProbeValue ?? string.Empty)"
+                               SelectedProbeChanged="HandleSelectedProbeChangedAsync"
+                               InfoRequested="ToggleProbeInfoAsync"
+                               CanShowInfo="@(!string.IsNullOrWhiteSpace(View.SelectedProbeValue))"
+                               ShowDebugForcedRolls="View.ShowDebugForcedRolls"
+                               ForcedRollsText="@View.ForcedRollsText"
+                               ForcedRollsTextChanged="HandleForcedRollsChanged"
+                               PresetRequested="HandleForcedRollPreset"
+                               ClearForcedRollsRequested="ClearForcedRolls"
+                               IsBusy="View.IsBusy"/>
         </div>
 
         <div class="action-block">
             <h3 class="block-title">Schlechte Eigenschaften</h3>
-            <SchlechteEigenschaftPanel HasActiveHero="@(_activeHero is not null)"
-                                       SchlechteEigenschaften="CurrentSchlechteEigenschaften"
-                                       SelectedName="_selectedSchlechteEigenschaftName"
-                                       SelectedNameChanged="HandleSelectedSchlechteEigenschaftChanged"
-                                       OnDirectRollRequested="ExecuteSchlechteEigenschaftProbeAsync"/>
+            <SchlechteEigenschaftPanel HasActiveHero="View.HasActiveHero"
+                                       SchlechteEigenschaften="View.BadTraits"
+                                       SelectedName="@View.SelectedBadTraitName"
+                                       SelectedNameChanged="HandleSelectedBadTraitChanged"
+                                       OnDirectRollRequested="ExecuteBadTraitRollAsync"
+                                       IsBusy="View.IsBusy"/>
         </div>
 
         <div class="action-block">
             <h3 class="block-title">Freier Wurf</h3>
             <div title="Manuelle Auswahl der Wuerfel">
-                <DiceControls AvailableSides="_availableSides" OnAddDie="AddDie"/>
+                <DiceControls AvailableSides="_availableSides" OnAddDie="AddDieAsync"/>
             </div>
 
-            @if (!string.IsNullOrWhiteSpace(_error))
+            @if (!string.IsNullOrWhiteSpace(View.ErrorMessage))
             {
-                <MudAlert Severity="Severity.Error" Class="mt-3">@_error</MudAlert>
+                <MudAlert Severity="Severity.Error" Class="mt-3">@View.ErrorMessage</MudAlert>
             }
         </div>
     </div>

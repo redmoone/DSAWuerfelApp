@@ -1,4 +1,4 @@
-﻿using DsaWuerfelApp.Shared;
+using DsaWuerfelApp.Shared;
 
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -8,34 +8,22 @@ namespace DsaWuerfelApp.Client.Services;
 public class GameClient : IAsyncDisposable
 {
     private readonly HubConnection _hub;
+    private readonly string _userId = Guid.NewGuid().ToString("N");
 
-    public GameClient(NavigationManager nav)
+    public GameClient(NavigationManager navigationManager)
     {
         _hub = new HubConnectionBuilder()
-            .WithUrl(nav.ToAbsoluteUri("/gamehub"))
+            .WithUrl(navigationManager.ToAbsoluteUri("/gamehub"))
             .WithAutomaticReconnect()
             .Build();
 
-
-        _hub.On<string>("PlayerJoined", (name) =>
-        {
-            OnPlayerJoined?.Invoke(name);
-        });
-
-        _hub.On<RollResult>("ShowRollResult", (result) =>
-        {
-            OnRollResultReceived?.Invoke(result);
-        });
-
-        _hub.On<TalentProbeResult>("ShowTalentProbeResult", (result) =>
-        {
-            OnTalentProbeResultReceived?.Invoke(result);
-        });
-
-        _hub.On<SchlechteEigenschaftProbeResult>("ShowSchlechteEigenschaftProbeResult", (result) =>
-        {
-            OnSchlechteEigenschaftProbeResultReceived?.Invoke(result);
-        });
+        _hub.On<string>("PlayerJoined", name => OnPlayerJoined?.Invoke(name));
+        _hub.On<FreeRollResultDto>("ShowFreeRollResult", result => OnFreeRollResultReceived?.Invoke(result));
+        _hub.On<TalentRollResultDto>("ShowTalentRollResult", result => OnTalentRollResultReceived?.Invoke(result));
+        _hub.On<AttributeRollResultDto>("ShowAttributeRollResult",
+            result => OnAttributeRollResultReceived?.Invoke(result));
+        _hub.On<BadTraitRollResultDto>("ShowBadTraitRollResult",
+            result => OnBadTraitRollResultReceived?.Invoke(result));
     }
 
     public string? CurrentSessionId { get; private set; }
@@ -49,44 +37,52 @@ public class GameClient : IAsyncDisposable
     }
 
     public event Action<string>? OnPlayerJoined;
-    public event Action<RollResult>? OnRollResultReceived;
-    public event Action<TalentProbeResult>? OnTalentProbeResultReceived;
-    public event Action<SchlechteEigenschaftProbeResult>? OnSchlechteEigenschaftProbeResultReceived;
+    public event Action<FreeRollResultDto>? OnFreeRollResultReceived;
+    public event Action<TalentRollResultDto>? OnTalentRollResultReceived;
+    public event Action<AttributeRollResultDto>? OnAttributeRollResultReceived;
+    public event Action<BadTraitRollResultDto>? OnBadTraitRollResultReceived;
 
     public async Task StartAsync()
     {
-        if (!IsConnected) await _hub.StartAsync();
+        if (!IsConnected)
+        {
+            await _hub.StartAsync();
+        }
     }
-
 
     public async Task<string> CreateSession(string userName)
     {
         MyUserName = userName;
-        // Ruft Methode "CreateSession" im GameHub auf
-        var joinCode = await _hub.InvokeAsync<string>("CreateSession", "UserId_Placeholder", userName);
-        return joinCode;
+        var session = await _hub.InvokeAsync<SessionConnectionDto>("CreateSession", _userId, userName);
+        CurrentSessionId = session.SessionId;
+        return session.JoinCode;
     }
 
     public async Task<bool> JoinSession(string code, string userName)
     {
         MyUserName = userName;
-        var success = await _hub.InvokeAsync<bool>("JoinSession", code, "UserId_Placeholder", userName);
-        return success;
+        var session = await _hub.InvokeAsync<SessionConnectionDto?>("JoinSession", code, _userId, userName);
+        CurrentSessionId = session?.SessionId;
+        return session is not null;
     }
 
-    public async Task RollDice(List<DiceGroup> dice, int modifier, string sessionId)
+    public async Task RollFree(FreeRollRequestDto request)
     {
-        var req = new RollRequest { Dice = dice, Modifier = modifier, SessionId = sessionId };
-        await _hub.InvokeAsync("RollDice", req);
+        await _hub.InvokeAsync("RollFree", request);
     }
 
-    public async Task RollTalentProbe(TalentProbeRequest request)
+    public async Task RollTalent(TalentRollRequestDto request)
     {
-        await _hub.InvokeAsync("RollTalentProbe", request);
+        await _hub.InvokeAsync("RollTalent", request);
     }
 
-    public async Task RollSchlechteEigenschaftProbe(SchlechteEigenschaftProbeRequest request)
+    public async Task RollAttribute(AttributeRollRequestDto request)
     {
-        await _hub.InvokeAsync("RollSchlechteEigenschaftProbe", request);
+        await _hub.InvokeAsync("RollAttribute", request);
+    }
+
+    public async Task RollBadTrait(BadTraitRollRequestDto request)
+    {
+        await _hub.InvokeAsync("RollBadTrait", request);
     }
 }
