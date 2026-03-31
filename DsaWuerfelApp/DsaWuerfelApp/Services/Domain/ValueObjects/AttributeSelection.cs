@@ -1,19 +1,9 @@
+using DsaWuerfelApp.Shared;
+
 namespace DsaWuerfelApp.Services;
 
 public sealed class AttributeSelection
 {
-    private static readonly IReadOnlyDictionary<string, int> DefaultValues = new Dictionary<string, int>
-    {
-        ["MU"] = 14,
-        ["KL"] = 13,
-        ["IN"] = 15,
-        ["CH"] = 12,
-        ["FF"] = 15,
-        ["GE"] = 15,
-        ["KO"] = 14,
-        ["KK"] = 13
-    };
-
     private readonly string[] _values;
 
     private AttributeSelection(string[] values)
@@ -50,7 +40,7 @@ public sealed class AttributeSelection
                     return value;
                 }
 
-                return DefaultValues.TryGetValue(attribute, out var fallbackValue)
+                return HeroAttributeCatalog.TryGetDefaultValue(attribute, out var fallbackValue)
                     ? fallbackValue
                     : throw new InvalidOperationException($"Die Eigenschaft '{attribute}' ist nicht bekannt.");
             })

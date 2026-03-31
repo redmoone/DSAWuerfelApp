@@ -1,4 +1,3 @@
-using DsaWuerfelApp.Client.Services;
 using DsaWuerfelApp.Shared;
 
 using Microsoft.AspNetCore.Components;
@@ -7,14 +6,7 @@ namespace DsaWuerfelApp.Client.Components;
 
 public partial class ProbenSearch
 {
-    private readonly List<ProbeSearchEntryDto> _fallbackProben =
-    [
-        new("Klettern (MU/GE/KK)", "Klettern (MU/GE/KK)", true, []),
-        new("Koerperbeherrschung (GE/GE/KO)", "Koerperbeherrschung (GE/GE/KO)", true, []),
-        new("Sinnesschaerfe (KL/IN/IN)", "Sinnesschaerfe (KL/IN/IN)", true, []),
-        new("Ueberreden (MU/IN/CH)", "Ueberreden (MU/IN/CH)", true, []),
-        new("Verbergen (MU/IN/GE)", "Verbergen (MU/IN/GE)", true, [])
-    ];
+    private readonly IReadOnlyList<ProbeSearchEntryDto> _fallbackProben = DefaultProbeCatalog.CreateEntries();
 
     private bool _isDropdownOpen;
     private string _lastSelectedProbe = string.Empty;
@@ -60,19 +52,21 @@ public partial class ProbenSearch
             return true;
         }
 
-        var canonicalSearchTerm = TalentCatalog.CanonicalizeName(SearchTerm);
+        var canonicalSearchTerm = TalentCatalogText.CanonicalizeName(SearchTerm);
         if (string.IsNullOrWhiteSpace(canonicalSearchTerm))
         {
             return false;
         }
 
-        if (TalentCatalog.CanonicalizeName(probe.DisplayLabel).Contains(canonicalSearchTerm, StringComparison.Ordinal))
+        if (TalentCatalogText.CanonicalizeName(probe.DisplayLabel)
+            .Contains(canonicalSearchTerm, StringComparison.Ordinal))
         {
             return true;
         }
 
         return probe.Alternatives.Any(alternative =>
-            TalentCatalog.CanonicalizeName(alternative.Label).Contains(canonicalSearchTerm, StringComparison.Ordinal));
+            TalentCatalogText.CanonicalizeName(alternative.Label)
+                .Contains(canonicalSearchTerm, StringComparison.Ordinal));
     }
 
     private Task SelectProbe(string probe)

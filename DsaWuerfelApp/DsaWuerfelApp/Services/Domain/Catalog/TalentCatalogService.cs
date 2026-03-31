@@ -1,39 +1,13 @@
-using System.Globalization;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 
 using DsaWuerfelApp.Shared;
 using DsaWuerfelApp.Shared.Models;
 
 namespace DsaWuerfelApp.Services;
 
-public sealed partial class TalentCatalogService(IHostEnvironment environment)
+public sealed class TalentCatalogService(IHostEnvironment environment)
 {
-    private static readonly IReadOnlyDictionary<string, int> DefaultAttributeValues = new Dictionary<string, int>
-    {
-        ["MU"] = 14,
-        ["KL"] = 13,
-        ["IN"] = 15,
-        ["CH"] = 12,
-        ["FF"] = 15,
-        ["GE"] = 15,
-        ["KO"] = 14,
-        ["KK"] = 13
-    };
-
-    private static readonly string[] AttributeOrder = ["MU", "KL", "IN", "CH", "FF", "GE", "KO", "KK"];
-
-    private static readonly ProbeSearchEntryDto[] DefaultProben =
-    [
-        BuildSelectableProbeSearchEntry("Klettern (MU/GE/KK)"),
-        BuildSelectableProbeSearchEntry("Koerperbeherrschung (GE/GE/KO)"),
-        BuildSelectableProbeSearchEntry("Sinnesschaerfe (KL/IN/IN)"),
-        BuildSelectableProbeSearchEntry("Ueberreden (MU/IN/CH)"),
-        BuildSelectableProbeSearchEntry("Verbergen (MU/IN/GE)")
-    ];
-
     private readonly Lazy<IReadOnlyDictionary<string, TalentCatalogEntry>> _entriesByCanonical =
         new(() => LoadEntries(Path.Combine(environment.ContentRootPath, "Data", "talente_mit_spezialisierungen.json")));
 
@@ -43,7 +17,7 @@ public sealed partial class TalentCatalogService(IHostEnvironment environment)
             hero?.Id,
             hero?.Name,
             BuildAttributeValues(hero),
-            hero is { Talente.Count: > 0 } ? BuildTalentProben(hero) : DefaultProben,
+            hero is { Talente.Count: > 0 } ? BuildTalentProben(hero) : DefaultProbeCatalog.CreateEntries(),
             BuildBadTraits(hero),
             hero is null ? "Nach Proben suchen..." : $"Talente von {hero.Name} durchsuchen...",
             showDebugForcedRolls);
@@ -121,10 +95,13 @@ public sealed partial class TalentCatalogService(IHostEnvironment environment)
             return true;
         }
 
-        var canonicalTalentKey = CanonicalizeName(talentKey);
+        var canonicalTalentKey = TalentCatalogText.CanonicalizeName(talentKey);
         foreach (var entry in knownTalents)
         {
-            if (string.Equals(CanonicalizeName(entry.Key), canonicalTalentKey, StringComparison.Ordinal) &&
+            if (string.Equals(
+                    TalentCatalogText.CanonicalizeName(entry.Key),
+                    canonicalTalentKey,
+                    StringComparison.Ordinal) &&
                 IsTalentRollable(entry.Key, entry.Value))
             {
                 resolvedTalent = new ResolvedTalentData(entry.Key, entry.Value);
@@ -136,14 +113,14 @@ public sealed partial class TalentCatalogService(IHostEnvironment environment)
         return false;
     }
 
-    private AttributeValueDto[] BuildAttributeValues(Hero? hero)
+    private static AttributeValueDto[] BuildAttributeValues(Hero? hero)
     {
-        var source = hero?.Eigenschaften?.Count > 0 ? hero.Eigenschaften : DefaultAttributeValues;
+        var source = hero?.Eigenschaften?.Count > 0 ? hero.Eigenschaften : HeroAttributeCatalog.DefaultValues;
 
-        return AttributeOrder
+        return HeroAttributeCatalog.Order
             .Select(attribute => new AttributeValueDto(attribute, source.GetValueOrDefault(attribute)))
             .Concat(source
-                .Where(entry => !AttributeOrder.Contains(entry.Key, StringComparer.Ordinal))
+                .Where(entry => !HeroAttributeCatalog.Order.Contains(entry.Key, StringComparer.Ordinal))
                 .OrderBy(entry => entry.Key, StringComparer.Ordinal)
                 .Select(entry => new AttributeValueDto(entry.Key, entry.Value)))
             .ToArray();
@@ -188,14 +165,14 @@ public sealed partial class TalentCatalogService(IHostEnvironment environment)
             StringComparer.Ordinal);
 
         var heroTalentNamesByCanonical = knownTalents.Keys
-            .Select(name => (Name: name, Canonical: CanonicalizeName(name)))
+            .Select(name => (Name: name, Canonical: TalentCatalogText.CanonicalizeName(name)))
             .Where(entry => !string.IsNullOrWhiteSpace(entry.Canonical))
             .GroupBy(entry => entry.Canonical, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.First().Name, StringComparer.Ordinal);
 
         foreach (var catalogEntry in _entriesByCanonical.Value.Values)
         {
-            var canonicalName = CanonicalizeName(catalogEntry.Name);
+            var canonicalName = TalentCatalogText.CanonicalizeName(catalogEntry.Name);
             if (heroTalentNamesByCanonical.TryGetValue(canonicalName, out var existingTalentName))
             {
                 var existingTalent = knownTalents[existingTalentName];
@@ -220,7 +197,7 @@ public sealed partial class TalentCatalogService(IHostEnvironment environment)
             .Where(entry => IsTalentRollable(entry.Key, entry.Value))
             .OrderByDescending(entry => entry.Value.Wert)
             .ThenBy(entry => entry.Key, StringComparer.Ordinal)
-            .GroupBy(entry => CanonicalizeName(entry.Key), StringComparer.Ordinal)
+            .GroupBy(entry => TalentCatalogText.CanonicalizeName(entry.Key), StringComparer.Ordinal)
             .Where(group => !string.IsNullOrWhiteSpace(group.Key))
             .ToDictionary(
                 group => group.Key,
@@ -283,7 +260,7 @@ public sealed partial class TalentCatalogService(IHostEnvironment environment)
         }
 
         return catalogEntry.AlternativeNames
-            .Select(CanonicalizeName)
+            .Select(TalentCatalogText.CanonicalizeName)
             .Where(canonicalName => !string.IsNullOrWhiteSpace(canonicalName) &&
                                     activeAlternatives.ContainsKey(canonicalName))
             .Distinct(StringComparer.Ordinal)
@@ -300,7 +277,7 @@ public sealed partial class TalentCatalogService(IHostEnvironment environment)
 
     private bool TryGetEntry(string talentName, out TalentCatalogEntry entry)
     {
-        return _entriesByCanonical.Value.TryGetValue(CanonicalizeName(talentName), out entry!);
+        return _entriesByCanonical.Value.TryGetValue(TalentCatalogText.CanonicalizeName(talentName), out entry!);
     }
 
     private static string? ExtractProbeFromLabel(string label)
@@ -318,93 +295,6 @@ public sealed partial class TalentCatalogService(IHostEnvironment environment)
         return modifier > 0 ? $"+{modifier}" : modifier.ToString();
     }
 
-    public static string CanonicalizeName(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return string.Empty;
-        }
-
-        var normalized = NormalizeCatalogText(RemoveSpecializationSuffix(value));
-        normalized = WordBoundaryUndPattern().Replace(normalized, "/");
-
-        var decomposed = normalized.Normalize(NormalizationForm.FormD);
-        var builder = new StringBuilder(decomposed.Length);
-
-        foreach (var character in decomposed)
-        {
-            if (CharUnicodeInfo.GetUnicodeCategory(character) == UnicodeCategory.NonSpacingMark)
-            {
-                continue;
-            }
-
-            if (char.IsLetterOrDigit(character))
-            {
-                builder.Append(char.ToLowerInvariant(character));
-            }
-        }
-
-        return builder.ToString();
-    }
-
-    private static string NormalizeCatalogText(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return string.Empty;
-        }
-
-        var normalized = value.Trim()
-            .Replace("ÃƒÂ¤", "Ã¤", StringComparison.Ordinal)
-            .Replace("Ãƒâ€ž", "Ã„", StringComparison.Ordinal)
-            .Replace("ÃƒÂ¶", "Ã¶", StringComparison.Ordinal)
-            .Replace("Ãƒâ€“", "Ã–", StringComparison.Ordinal)
-            .Replace("ÃƒÂ¼", "Ã¼", StringComparison.Ordinal)
-            .Replace("ÃƒÅ“", "Ãœ", StringComparison.Ordinal)
-            .Replace("ÃƒÅ¸", "ÃŸ", StringComparison.Ordinal)
-            .Replace("ÃƒÂ©", "Ã©", StringComparison.Ordinal)
-            .Replace("ÃƒÂ¨", "Ã¨", StringComparison.Ordinal)
-            .Replace("ÃƒÂ¡", "Ã¡", StringComparison.Ordinal)
-            .Replace("ÃƒÂ³", "Ã³", StringComparison.Ordinal)
-            .Replace("Ã¢â‚¬â€œ", "-", StringComparison.Ordinal)
-            .Replace("Ã¢â‚¬â€", "-", StringComparison.Ordinal)
-            .Replace("Ã¢â‚¬Å¾", "\"", StringComparison.Ordinal)
-            .Replace("Ã¢â‚¬Å“", "\"", StringComparison.Ordinal)
-            .Replace("Ã¢â‚¬â„¢", "'", StringComparison.Ordinal);
-
-        if (normalized.Contains("\uFFFD", StringComparison.Ordinal))
-        {
-            try
-            {
-                var decoded = Encoding.UTF8.GetString(Encoding.Latin1.GetBytes(normalized)).Trim();
-                if (!decoded.Contains("\uFFFD", StringComparison.Ordinal))
-                {
-                    normalized = decoded;
-                }
-            }
-            catch
-            {
-            }
-        }
-
-        return normalized;
-    }
-
-    private static string RemoveSpecializationSuffix(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return string.Empty;
-        }
-
-        var normalized = NormalizeCatalogText(value);
-        var parenthesisIndex = normalized.IndexOf('(');
-
-        return parenthesisIndex >= 0
-            ? normalized[..parenthesisIndex].Trim()
-            : normalized;
-    }
-
     private static IReadOnlyDictionary<string, TalentCatalogEntry> LoadEntries(string path)
     {
         if (!File.Exists(path))
@@ -420,7 +310,7 @@ public sealed partial class TalentCatalogService(IHostEnvironment environment)
             return items
                 .Select(MapItem)
                 .Where(entry => !string.IsNullOrWhiteSpace(entry.Name))
-                .GroupBy(entry => CanonicalizeName(entry.Name), StringComparer.Ordinal)
+                .GroupBy(entry => TalentCatalogText.CanonicalizeName(entry.Name), StringComparer.Ordinal)
                 .Where(group => !string.IsNullOrWhiteSpace(group.Key))
                 .ToDictionary(
                     group => group.Key,
@@ -436,37 +326,14 @@ public sealed partial class TalentCatalogService(IHostEnvironment environment)
     private static TalentCatalogEntry MapItem(TalentCatalogItem item)
     {
         return new TalentCatalogEntry(
-            NormalizeCatalogText(item.Name),
-            NormalizeProbe(item.Eigenschaften),
-            string.Equals(NormalizeCatalogText(item.Typ), "Basis", StringComparison.OrdinalIgnoreCase),
-            ParseAlternatives(item.Ersatz));
+            TalentCatalogText.NormalizeCatalogText(item.Name),
+            TalentCatalogText.NormalizeProbe(item.Eigenschaften),
+            string.Equals(
+                TalentCatalogText.NormalizeCatalogText(item.Typ),
+                "Basis",
+                StringComparison.OrdinalIgnoreCase),
+            TalentCatalogText.ParseAlternatives(item.Ersatz));
     }
-
-    private static string NormalizeProbe(string? value)
-    {
-        return NormalizeCatalogText(value)
-            .Replace("(", string.Empty, StringComparison.Ordinal)
-            .Replace(")", string.Empty, StringComparison.Ordinal)
-            .Trim();
-    }
-
-    private static string[] ParseAlternatives(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return [];
-        }
-
-        return value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-            .Select(RemoveSpecializationSuffix)
-            .Select(NormalizeCatalogText)
-            .Where(alternative => !string.IsNullOrWhiteSpace(alternative))
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
-    }
-
-    [GeneratedRegex(@"\bund\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
-    private static partial Regex WordBoundaryUndPattern();
 
     private sealed record TalentCatalogEntry(
         string Name,

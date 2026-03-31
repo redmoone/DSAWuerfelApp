@@ -1,3 +1,4 @@
+using DsaWuerfelApp.Core.Mappers;
 using DsaWuerfelApp.Hubs;
 using DsaWuerfelApp.Persistence;
 using DsaWuerfelApp.Services;
@@ -27,7 +28,12 @@ builder.Services.AddScoped<RollAttributeHandler>();
 builder.Services.AddScoped<RollBadTraitHandler>();
 builder.Services.AddScoped<DiceWorkflowService>();
 builder.Services.AddSingleton<GameSessionRollPipeline>();
+builder.Services.AddTransient<HeroAttributesMapper>();
+builder.Services.AddTransient<HeroBadTraitsMapper>();
+builder.Services.AddTransient<HeroTalentsMapper>();
+builder.Services.AddTransient<HeroMapper>();
 builder.Services.AddTransient<XmlHeroDeserializer>();
+builder.Services.AddTransient<HeroImportService>();
 builder.Services.AddDbContext<HeroDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("HeroesDb")));
 

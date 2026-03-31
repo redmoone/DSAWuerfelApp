@@ -1,7 +1,3 @@
-using System.Xml;
-
-using DsaWuerfelApp.Core.Dtos;
-using DsaWuerfelApp.Core.Mappers;
 using DsaWuerfelApp.Persistence;
 using DsaWuerfelApp.Services;
 using DsaWuerfelApp.Shared.Models;
@@ -16,12 +12,12 @@ namespace DsaWuerfelApp.Controller;
 public class HeroesController : ControllerBase
 {
     private readonly HeroDbContext _dbContext;
-    private readonly XmlHeroDeserializer _xmlDeserializer;
+    private readonly HeroImportService _heroImportService;
 
-    public HeroesController(HeroDbContext dbContext, XmlHeroDeserializer xmlDeserializer)
+    public HeroesController(HeroDbContext dbContext, HeroImportService heroImportService)
     {
         _dbContext = dbContext;
-        _xmlDeserializer = xmlDeserializer;
+        _heroImportService = heroImportService;
     }
 
     [HttpGet]
@@ -48,62 +44,17 @@ public class HeroesController : ControllerBase
 
     [HttpPost("upload")]
     [Consumes("multipart/form-data")]
-    public async Task<IActionResult> UploadHeroes(List<IFormFile> files)
+    public async Task<IActionResult> UploadHeroes(List<IFormFile> files, CancellationToken cancellationToken)
     {
-        if (files == null || files.Count == 0)
+        try
         {
-            return BadRequest();
+            var createdHeroes = await _heroImportService.ImportAsync(files, cancellationToken);
+            return Ok(createdHeroes);
         }
-
-        var createdHeroes = new List<Hero>();
-
-        foreach (var file in files)
+        catch (HeroImportException exception)
         {
-            if (file.Length == 0)
-            {
-                continue;
-            }
-
-            if (!string.Equals(Path.GetExtension(file.FileName), ".xml", StringComparison.OrdinalIgnoreCase))
-            {
-                return BadRequest($"Datei '{file.FileName}' hat keine .xml-Endung.");
-            }
-
-            HeldenDatenDto dto;
-
-            try
-            {
-                using var stream = file.OpenReadStream();
-                dto = _xmlDeserializer.Deserialize(stream);
-            }
-            catch (InvalidOperationException)
-            {
-                return BadRequest($"Datei '{file.FileName}' enthaelt kein gueltiges XML.");
-            }
-            catch (XmlException)
-            {
-                return BadRequest($"Datei '{file.FileName}' enthaelt kein gueltiges XML.");
-            }
-
-            var hero = HeroMapper.Map(dto);
-
-            if (hero.Id == Guid.Empty)
-            {
-                hero.Id = Guid.NewGuid();
-            }
-
-            createdHeroes.Add(hero);
+            return BadRequest(exception.Message);
         }
-
-        if (createdHeroes.Count == 0)
-        {
-            return BadRequest("Keine gueltigen Dateien zum Import gefunden.");
-        }
-
-        await _dbContext.Heroes.AddRangeAsync(createdHeroes);
-        await _dbContext.SaveChangesAsync();
-
-        return Ok(createdHeroes);
     }
 
     [HttpDelete("{id:guid}")]
