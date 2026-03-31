@@ -24,7 +24,7 @@ public sealed class AttributeSelection
 
         if (attributes.Length == 0 || attributes.Length > 3)
         {
-            throw new InvalidOperationException("Es muessen zwischen 1 und 3 Eigenschaften ausgewaehlt werden.");
+            throw new InvalidOperationException("Es müssen zwischen 1 und 3 Eigenschaften ausgewählt werden.");
         }
 
         return new AttributeSelection(attributes);

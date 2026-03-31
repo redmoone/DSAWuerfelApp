@@ -14,7 +14,7 @@ public sealed class GetProbeInfoHandler(
 
         if (string.IsNullOrWhiteSpace(request.ProbeValue))
         {
-            throw new ArgumentException("Bitte zuerst eine Probe auswaehlen.", nameof(request));
+            throw new ArgumentException("Bitte zuerst eine Probe auswählen.", nameof(request));
         }
 
         var hero = await heroContextReader.LoadOptionalAsync(request.HeroId, cancellationToken);

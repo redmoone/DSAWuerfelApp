@@ -32,8 +32,8 @@ public sealed class ForcedRollValues
         if (values.Length != expectedCount)
         {
             throw new ArgumentException(expectedCount == 1
-                ? "Fuer die direkte Probe auf eine schlechte Eigenschaft ist genau 1 Testwurf noetig."
-                : $"Testwuerfe muessen genau {expectedCount} Werte enthalten.");
+                ? "Für die direkte Probe auf eine schlechte Eigenschaft ist genau 1 Testwurf nötig."
+                : $"Testwürfe müssen genau {expectedCount} Werte enthalten.");
         }
 
         return new ForcedRollValues(values);
@@ -55,7 +55,7 @@ public sealed class ForcedRollValues
     {
         if (!int.TryParse(value, out var parsedValue) || parsedValue is < 1 or > 20)
         {
-            throw new ArgumentException("Testwuerfe muessen Zahlen von 1 bis 20 sein.");
+            throw new ArgumentException("Testwürfe müssen Zahlen von 1 bis 20 sein.");
         }
 
         return parsedValue;

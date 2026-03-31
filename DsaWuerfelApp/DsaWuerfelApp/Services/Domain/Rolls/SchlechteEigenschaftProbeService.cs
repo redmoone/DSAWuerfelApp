@@ -56,7 +56,7 @@ public sealed class SchlechteEigenschaftProbeService(DiceService diceService)
         if (forcedRolls.Count != 1)
         {
             throw new ArgumentException(
-                "Fuer die direkte Probe auf eine schlechte Eigenschaft ist genau 1 Testwurf noetig.");
+                "Für die direkte Probe auf eine schlechte Eigenschaft ist genau 1 Testwurf nötig.");
         }
 
         return new DiceRollDto(20, forcedRolls.SingleValue);

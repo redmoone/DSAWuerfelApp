@@ -1,4 +1,4 @@
-<div class="probe-search-row" title="Suche nach Talenten oder Zaubern fuer automatisierte Proben">
+<div class="probe-search-row" title="Suche nach Talenten oder Zaubern für automatisierte Proben">
     <div class="probe-search-field">
         <ProbenSearch AvailableProben="AvailableProben"
                       Placeholder="@Placeholder"
@@ -9,15 +9,15 @@
                    Variant="Variant.Filled"
                    OnClick="InfoRequested"
                    Disabled="@(!CanShowInfo || IsBusy)"
-                   title="Zusatzinformationen zur ausgewaehlten Probe anzeigen"
+                   title="Zusatzinformationen zur ausgewählten Probe anzeigen"
                    Class="rounded-circle probe-info-button"
                    Style="width: 48px; height: 48px; background-color: var(--pill-bg); color: var(--dsa-white); border: 2px solid var(--dsa-gold);"/>
 </div>
 
 @if (ShowDebugForcedRolls)
 {
-    <div class="forced-rolls-panel" title="Optionale Testwuerfe fuer Talentproben oder direkte W20-Proben">
-        <span class="forced-rolls-label">Testwuerfe</span>
+    <div class="forced-rolls-panel" title="Optionale Testwürfe für Talentproben oder direkte W20-Proben">
+        <span class="forced-rolls-label">Testwürfe</span>
         <input class="forced-rolls-input"
                value="@ForcedRollsText"
                @oninput="HandleForcedRollsChanged"
@@ -30,7 +30,7 @@
             </button>
             <button type="button" class="forced-rolls-button" @onclick='() => PresetRequested.InvokeAsync("1,1,13")'
                     disabled="@IsBusy">
-                Glueck
+                Glück
             </button>
             <button type="button" class="forced-rolls-button muted" @onclick="ClearForcedRollsRequested"
                     disabled="@IsBusy">

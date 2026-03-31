@@ -32,7 +32,12 @@ public sealed class TalentProbeService(DiceService diceService)
         var rollValues = rolledDice.Select(roll => roll.Value).ToArray();
         var totalModifier = request.BasisModifier + request.SchlechteEigenschaftModifier;
         var evaluatedProbe = TalentProbe.Check(request.TalentValue, totalModifier, request.AttributeValues, rollValues);
-        var details = BuildRollDetails(request.Probe.ToArray(), request.AttributeValues, rollValues, evaluatedProbe);
+        var details = BuildRollDetails(
+            request.Probe.ToArray(),
+            request.AttributeValues,
+            rollValues,
+            request.TalentValue,
+            evaluatedProbe);
         var probeSuccess = evaluatedProbe.Status is TalentProbeStatus.Bestanden or TalentProbeStatus.GluecklicherWurf;
         var equation = DiceResultFactory.CreateEquation(rolledDice, 0);
         var historyEntry = DiceResultFactory.CreateHistoryEntry(playerName, timestamp, equation);
@@ -77,7 +82,7 @@ public sealed class TalentProbeService(DiceService diceService)
 
         if (forcedRolls.Count != 3)
         {
-            throw new ArgumentException("Testwuerfe muessen genau 3 Werte enthalten.");
+            throw new ArgumentException("Testwürfe müssen genau 3 Werte enthalten.");
         }
 
         return forcedRolls.ToDiceRolls(20);
@@ -88,10 +93,11 @@ public sealed class TalentProbeService(DiceService diceService)
         IReadOnlyList<string> probeAttributes,
         IReadOnlyList<int> attributeValues,
         IReadOnlyList<int> rollValues,
+        int talentValue,
         TalentProbe.Result evaluatedProbe)
     {
         var details = new List<TalentRollDetailDto>(capacity: 3);
-        var remainingRest = Math.Max(evaluatedProbe.EffektiverWert, 0);
+        var remainingRest = Math.Min(Math.Max(evaluatedProbe.EffektiverWert, 0), talentValue);
 
         for (var index = 0; index < probeAttributes.Count; index++)
         {
@@ -126,7 +132,7 @@ public sealed class TalentProbeService(DiceService diceService)
         {
             if (eigenschaften.Length != 3 || wuerfe.Length != 3)
             {
-                throw new ArgumentException("Es werden genau 3 Eigenschaften und 3 Wuerfe benoetigt.");
+                throw new ArgumentException("Es werden genau 3 Eigenschaften und 3 Würfe benötigt.");
             }
 
             var anzahlEinser = 0;
@@ -160,7 +166,7 @@ public sealed class TalentProbeService(DiceService diceService)
                 };
             }
 
-            var rest = Math.Max(effektiverWert, 0);
+            var rest = Math.Min(Math.Max(effektiverWert, 0), talentWert);
 
             for (var index = 0; index < 3; index++)
             {

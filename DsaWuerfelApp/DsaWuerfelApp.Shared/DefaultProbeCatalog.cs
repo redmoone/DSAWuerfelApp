@@ -5,9 +5,9 @@ public static class DefaultProbeCatalog
     private static readonly ProbeSearchEntryDto[] Entries =
     [
         CreateSelectable("Klettern (MU/GE/KK)"),
-        CreateSelectable("Koerperbeherrschung (GE/GE/KO)"),
-        CreateSelectable("Sinnesschaerfe (KL/IN/IN)"),
-        CreateSelectable("Ueberreden (MU/IN/CH)"),
+        CreateSelectable("Körperbeherrschung (GE/GE/KO)"),
+        CreateSelectable("Sinnenschärfe (KL/IN/IN)"),
+        CreateSelectable("Überreden (MU/IN/CH)"),
         CreateSelectable("Verbergen (MU/IN/GE)")
     ];
 

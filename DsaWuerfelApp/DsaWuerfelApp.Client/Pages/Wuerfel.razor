@@ -3,12 +3,12 @@
 
 <div class="wuerfel-page-container pa-4">
     <div class="top-section">
-        <div class="history-area" title="Historie der bisherigen Wuerfe">
+        <div class="history-area" title="Historie der bisherigen Würfe">
             <RollHistory Entries="View.History"/>
         </div>
 
         <div class="action-block additional-info-block">
-            <h3 class="block-title">Zusaetzliche Informationen</h3>
+            <h3 class="block-title">Zusätzliche Informationen</h3>
             <WuerfelInformationPanel ProbeInfoText="@View.ProbeInfoText"
                                      TalentResult="View.LastTalentRoll"
                                      AttributeResult="View.LastAttributeRoll"
@@ -26,7 +26,7 @@
                               CanRoll="View.CanRoll"
                               IsBusy="View.IsBusy"/>
 
-            <div class="dice-3d-box" title="3D Ansicht der gefallenen Wuerfel">
+            <div class="dice-3d-box" title="3D Ansicht der gefallenen Würfel">
                 <DiceViewport SelectedDice="View.SelectedDiceSides"
                               ResultDiceSides="View.AnimatedDiceSides"
                               ResultDiceValues="View.AnimatedDiceValues"
@@ -74,7 +74,7 @@
 
         <div class="action-block">
             <h3 class="block-title">Freier Wurf</h3>
-            <div title="Manuelle Auswahl der Wuerfel">
+            <div title="Manuelle Auswahl der Würfel">
                 <DiceControls AvailableSides="_availableSides" OnAddDie="AddDieAsync"/>
             </div>
 

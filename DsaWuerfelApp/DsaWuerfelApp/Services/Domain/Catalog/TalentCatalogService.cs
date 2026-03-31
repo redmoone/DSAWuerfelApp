@@ -8,6 +8,11 @@ namespace DsaWuerfelApp.Services;
 
 public sealed class TalentCatalogService(IHostEnvironment environment)
 {
+    private const string SelfControlTalentName = "Selbstbeherrschung";
+    private const string SenseSharpnessTalentName = "Sinnensch\u00E4rfe";
+    private const string WatchKeepingTalentName = "Wache halten";
+    private const string WatchKeepingFallbackProbe = "KL/IN/IN";
+
     private readonly Lazy<IReadOnlyDictionary<string, TalentCatalogEntry>> _entriesByCanonical =
         new(() => LoadEntries(Path.Combine(environment.ContentRootPath, "Data", "talente_mit_spezialisierungen.json")));
 
@@ -27,7 +32,7 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
     {
         if (string.IsNullOrWhiteSpace(probeValue))
         {
-            return new ProbeInfoResultDto("Bitte zuerst eine Probe auswaehlen.");
+            return new ProbeInfoResultDto("Bitte zuerst eine Probe auswählen.");
         }
 
         var badTrait = ResolveBadTrait(hero, badTraitName);
@@ -44,9 +49,10 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
                     $"{attribute} {GetAttributeValueText(hero, attribute)}"));
             var effectiveModifier = modifier + (badTrait?.TalentModifier ?? 0);
             var effectiveTalentValue = resolvedTalent.Talent.Wert - effectiveModifier;
+            var availableCompensation = Math.Min(Math.Max(effectiveTalentValue, 0), resolvedTalent.Talent.Wert);
             var modifierInfo = effectiveTalentValue >= 0
-                ? $"Nach dem Gesamtmodifikator {FormatModifier(effectiveModifier)} bleiben {effectiveTalentValue} Ausgleichspunkte fuer Ueberschreitungen."
-                : $"Nach dem Gesamtmodifikator {FormatModifier(effectiveModifier)} liegt der effektive Talentwert bei {effectiveTalentValue}. Dadurch muessen alle drei Eigenschaftswuerfe jeweils um {Math.Abs(effectiveTalentValue)} Punkte niedriger geschafft werden.";
+                ? $"Nach dem Gesamtmodifikator {FormatModifier(effectiveModifier)} bleiben {availableCompensation} Ausgleichspunkte für Überschreitungen."
+                : $"Nach dem Gesamtmodifikator {FormatModifier(effectiveModifier)} liegt der effektive Talentwert bei {effectiveTalentValue}. Dadurch müssen alle drei Eigenschaftswürfe jeweils um {Math.Abs(effectiveTalentValue)} Punkte niedriger geschafft werden.";
 
             return new ProbeInfoResultDto(
                 $"{resolvedTalent.Name} hat aktuell TaW {resolvedTalent.Talent.Wert}. Probe: {resolvedTalent.Talent.Probe}. Verwendete Eigenschaften: {attributeInfo}. {modifierInfo}{badTraitText}");
@@ -56,11 +62,11 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         if (!string.IsNullOrWhiteSpace(probe))
         {
             return new ProbeInfoResultDto(
-                $"Die ausgewaehlte Probe verwendet {probe}. Fuer heldenspezifische Zusatzinformationen bitte einen aktiven Helden waehlen.{badTraitText}");
+                $"Die ausgewählte Probe verwendet {probe}. Für heldenspezifische Zusatzinformationen bitte einen aktiven Helden wählen.{badTraitText}");
         }
 
         return new ProbeInfoResultDto(
-            $"Zur ausgewaehlten Probe '{probeValue}' sind aktuell keine weiteren Informationen verfuegbar.{badTraitText}");
+            $"Zur ausgewählten Probe '{probeValue}' sind aktuell keine weiteren Informationen verfügbar.{badTraitText}");
     }
 
     public ResolvedTalentData ResolveTalent(Hero hero, string talentKey)
@@ -70,7 +76,7 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
             return resolvedTalent;
         }
 
-        throw new InvalidOperationException("Die ausgewaehlte Probe konnte nicht aufgeloest werden.");
+        throw new InvalidOperationException("Die ausgewählte Probe konnte nicht aufgelöst werden.");
     }
 
     public BadTraitDto? ResolveBadTrait(Hero? hero, string? badTraitName)
@@ -91,7 +97,7 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
 
         if (knownTalents.TryGetValue(talentKey, out var talent) && IsTalentRollable(talentKey, talent))
         {
-            resolvedTalent = new ResolvedTalentData(talentKey, talent);
+            resolvedTalent = new ResolvedTalentData(talentKey, talent.Talent);
             return true;
         }
 
@@ -104,7 +110,7 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
                     StringComparison.Ordinal) &&
                 IsTalentRollable(entry.Key, entry.Value))
             {
-                resolvedTalent = new ResolvedTalentData(entry.Key, entry.Value);
+                resolvedTalent = new ResolvedTalentData(entry.Key, entry.Value.Talent);
                 return true;
             }
         }
@@ -152,16 +158,18 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         return knownTalents
             .OrderBy(entry => entry.Key, StringComparer.Ordinal)
             .Select(entry => IsTalentRollable(entry.Key, entry.Value)
-                ? BuildSelectableProbeSearchEntry(BuildTalentProbeLabel(entry.Key, entry.Value), entry.Key)
+                ? BuildSelectableProbeSearchEntry(BuildTalentProbeLabel(entry.Key, entry.Value.Talent), entry.Key)
                 : BuildInactiveProbeSearchEntry(entry.Key, entry.Value, activeAlternatives))
             .ToArray();
     }
 
-    private Dictionary<string, TalentData> BuildKnownTalentMap(Hero hero)
+    private Dictionary<string, KnownTalentEntry> BuildKnownTalentMap(Hero hero)
     {
         var knownTalents = hero.Talente.ToDictionary(
             entry => entry.Key,
-            entry => new TalentData { Wert = entry.Value.Wert, Probe = entry.Value.Probe },
+            entry => new KnownTalentEntry(
+                new TalentData { Wert = entry.Value.Wert, Probe = entry.Value.Probe },
+                true),
             StringComparer.Ordinal);
 
         var heroTalentNamesByCanonical = knownTalents.Keys
@@ -176,26 +184,127 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
             if (heroTalentNamesByCanonical.TryGetValue(canonicalName, out var existingTalentName))
             {
                 var existingTalent = knownTalents[existingTalentName];
-                if (string.IsNullOrWhiteSpace(existingTalent.Probe))
+                if (string.IsNullOrWhiteSpace(existingTalent.Talent.Probe))
                 {
-                    existingTalent.Probe = catalogEntry.Probe;
+                    existingTalent.Talent.Probe = catalogEntry.Probe;
                 }
 
                 continue;
             }
 
-            knownTalents[catalogEntry.Name] = new TalentData { Wert = 0, Probe = catalogEntry.Probe };
+            knownTalents[catalogEntry.Name] = new KnownTalentEntry(
+                new TalentData { Wert = 0, Probe = catalogEntry.Probe },
+                false);
         }
+
+        AddDerivedTalents(knownTalents);
 
         return knownTalents;
     }
 
+    private void AddDerivedTalents(Dictionary<string, KnownTalentEntry> knownTalents)
+    {
+        if (!TryCreateWatchKeepingTalent(knownTalents, out var watchKeepingTalent))
+        {
+            return;
+        }
+
+        knownTalents[WatchKeepingTalentName] = new KnownTalentEntry(watchKeepingTalent, true);
+    }
+
+    private bool TryCreateWatchKeepingTalent(
+        IReadOnlyDictionary<string, KnownTalentEntry> knownTalents,
+        out TalentData talent)
+    {
+        if (!TryGetOwnedTalent(knownTalents, SelfControlTalentName, out var selfControlTalent) ||
+            !TryGetOwnedTalent(knownTalents, SenseSharpnessTalentName, out var senseSharpnessTalent))
+        {
+            talent = null!;
+            return false;
+        }
+
+        var calculatedValue =
+            (selfControlTalent.Talent.Wert + (2 * senseSharpnessTalent.Talent.Wert) + 1) / 3;
+        var cappedValue = Math.Min(
+            calculatedValue,
+            Math.Min(
+                selfControlTalent.Talent.Wert * 2,
+                senseSharpnessTalent.Talent.Wert * 2));
+
+        talent = new TalentData
+        {
+            Wert = cappedValue,
+            Probe = ResolveWatchKeepingProbe(selfControlTalent.Talent, senseSharpnessTalent.Talent)
+        };
+
+        return true;
+    }
+
+    private bool TryGetOwnedTalent(
+        IReadOnlyDictionary<string, KnownTalentEntry> knownTalents,
+        string talentName,
+        out KnownTalentEntry talent)
+    {
+        if (knownTalents.TryGetValue(talentName, out talent!) && talent.IsOwnedByHero)
+        {
+            return true;
+        }
+
+        var canonicalTalentName = TalentCatalogText.CanonicalizeName(talentName);
+        foreach (var entry in knownTalents)
+        {
+            if (!entry.Value.IsOwnedByHero)
+            {
+                continue;
+            }
+
+            if (string.Equals(
+                    TalentCatalogText.CanonicalizeName(entry.Key),
+                    canonicalTalentName,
+                    StringComparison.Ordinal))
+            {
+                talent = entry.Value;
+                return true;
+            }
+        }
+
+        talent = null!;
+        return false;
+    }
+
+    private string ResolveWatchKeepingProbe(TalentData selfControlTalent, TalentData senseSharpnessTalent)
+    {
+        if (!string.IsNullOrWhiteSpace(senseSharpnessTalent.Probe))
+        {
+            return senseSharpnessTalent.Probe;
+        }
+
+        if (!string.IsNullOrWhiteSpace(selfControlTalent.Probe))
+        {
+            return selfControlTalent.Probe;
+        }
+
+        if (TryGetEntry(SenseSharpnessTalentName, out var senseSharpnessCatalogEntry) &&
+            !string.IsNullOrWhiteSpace(senseSharpnessCatalogEntry.Probe))
+        {
+            return senseSharpnessCatalogEntry.Probe;
+        }
+
+        if (TryGetEntry(SelfControlTalentName, out var selfControlCatalogEntry) &&
+            !string.IsNullOrWhiteSpace(selfControlCatalogEntry.Probe))
+        {
+            return selfControlCatalogEntry.Probe;
+        }
+
+        return WatchKeepingFallbackProbe;
+    }
+
     private IReadOnlyDictionary<string, ProbeSearchAlternativeDto> BuildActiveAlternativeLookup(
-        IReadOnlyDictionary<string, TalentData> knownTalents)
+        IReadOnlyDictionary<string, KnownTalentEntry> knownTalents)
     {
         return knownTalents
             .Where(entry => IsTalentRollable(entry.Key, entry.Value))
-            .OrderByDescending(entry => entry.Value.Wert)
+            .OrderByDescending(entry => entry.Value.Talent.Wert)
             .ThenBy(entry => entry.Key, StringComparer.Ordinal)
             .GroupBy(entry => TalentCatalogText.CanonicalizeName(entry.Key), StringComparer.Ordinal)
             .Where(group => !string.IsNullOrWhiteSpace(group.Key))
@@ -205,15 +314,15 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
                 {
                     var selectedTalent = group.First();
                     return new ProbeSearchAlternativeDto(
-                        BuildTalentProbeLabel(selectedTalent.Key, selectedTalent.Value),
+                        BuildTalentProbeLabel(selectedTalent.Key, selectedTalent.Value.Talent),
                         selectedTalent.Key);
                 },
                 StringComparer.Ordinal);
     }
 
-    private bool IsTalentRollable(string talentName, TalentData talent)
+    private bool IsTalentRollable(string talentName, KnownTalentEntry talent)
     {
-        if (talent.Wert > 0)
+        if (talent.IsOwnedByHero)
         {
             return true;
         }
@@ -240,11 +349,11 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
 
     private ProbeSearchEntryDto BuildInactiveProbeSearchEntry(
         string talentName,
-        TalentData talent,
+        KnownTalentEntry talent,
         IReadOnlyDictionary<string, ProbeSearchAlternativeDto> activeAlternatives)
     {
         return new ProbeSearchEntryDto(
-            BuildInactiveTalentLabel(talentName, talent),
+            BuildInactiveTalentLabel(talentName, talent.Talent),
             null,
             false,
             BuildReplacementAlternatives(talentName, activeAlternatives));
@@ -340,6 +449,12 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         string Probe,
         bool IsBasisTalent,
         IReadOnlyList<string> AlternativeNames);
+
+    private sealed class KnownTalentEntry(TalentData talent, bool isOwnedByHero)
+    {
+        public TalentData Talent { get; } = talent;
+        public bool IsOwnedByHero { get; } = isOwnedByHero;
+    }
 
     public sealed record ResolvedTalentData(string Name, TalentData Talent);
 

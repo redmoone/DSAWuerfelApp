@@ -83,7 +83,7 @@
                     <div class="probe-evaluation-header">
                         <span class="probe-evaluation-name">@AttributeResult.Requirement.Probe</span>
                         <span class="probe-evaluation-status">
-                            Benoetigter Probenwert: @AttributeResult.Requirement.RequiredTalentValue
+                            Benötigter Probenwert: @AttributeResult.Requirement.RequiredTalentValue
                         </span>
                     </div>
 
@@ -103,7 +103,7 @@
                             <div class="probe-roll-chip @GetAttributeRequirementChipClass(detail)">
                                 <span class="probe-roll-attribute">@detail.Attribute</span>
                                 <span class="probe-roll-values">@detail.Roll / @detail.BaseValue</span>
-                                <span class="probe-roll-rest">Benoetigter Ausgleich: @detail.Difference</span>
+                                <span class="probe-roll-rest">Benötigter Ausgleich: @detail.Difference</span>
                             </div>
                         }
                     </div>
@@ -137,8 +137,8 @@
          BadTraitResult is null)
     {
         <p class="additional-info-empty">
-            Waehle eine Probe und nutze den Info-Button, fuehre eine Talentprobe aus, wuerfle mit Eigenschaften oder
-            pruefe direkt auf eine schlechte Eigenschaft.
+            Wähle eine Probe und nutze den Info-Button, führe eine Talentprobe aus, würfle mit Eigenschaften oder
+            prüfe direkt auf eine schlechte Eigenschaft.
         </p>
     }
 </div>
@@ -159,7 +159,7 @@
         return result.Status switch
         {
                 TalentProbeStatus.Patzer => "Patzer",
-                TalentProbeStatus.GluecklicherWurf => "Gluecklicher Wurf",
+                TalentProbeStatus.GluecklicherWurf => "Glücklicher Wurf",
                 TalentProbeStatus.Bestanden => $"Bestanden um {result.Margin}",
                 _ => $"Misslungen um {result.Margin}"
         };

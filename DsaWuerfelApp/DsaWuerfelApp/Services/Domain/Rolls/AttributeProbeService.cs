@@ -12,13 +12,13 @@ public sealed class AttributeProbeService(DiceService diceService)
 
         if (request.Attributes.Count == 0 || request.Attributes.Count > 3)
         {
-            throw new ArgumentException("Es muessen zwischen 1 und 3 Eigenschaften ausgewaehlt werden.",
+            throw new ArgumentException("Es müssen zwischen 1 und 3 Eigenschaften ausgewählt werden.",
                 nameof(request));
         }
 
         if (request.Attributes.Count != request.AttributeValues.Length)
         {
-            throw new ArgumentException("Eigenschaften und Eigenschaftswerte muessen deckungsgleich sein.",
+            throw new ArgumentException("Eigenschaften und Eigenschaftswerte müssen deckungsgleich sein.",
                 nameof(request));
         }
 

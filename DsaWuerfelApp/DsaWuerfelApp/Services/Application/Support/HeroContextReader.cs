@@ -15,6 +15,6 @@ public sealed class HeroContextReader(IHeroReadRepository heroReadRepository)
     public async Task<Hero> LoadRequiredAsync(Guid heroId, CancellationToken cancellationToken = default)
     {
         return await heroReadRepository.GetByIdAsync(heroId, cancellationToken)
-               ?? throw new InvalidOperationException("Der ausgewaehlte Held konnte nicht geladen werden.");
+               ?? throw new InvalidOperationException("Der ausgewählte Held konnte nicht geladen werden.");
     }
 }

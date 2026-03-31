@@ -19,7 +19,7 @@ public sealed class ProbeAttributes
         if (attributes.Length != 3)
         {
             throw new InvalidOperationException(
-                "Fuer die ausgewaehlte Probe ist keine vollstaendige Talentprobe hinterlegt.");
+                "Für die ausgewählte Probe ist keine vollständige Talentprobe hinterlegt.");
         }
 
         return new ProbeAttributes(attributes);
@@ -37,7 +37,7 @@ public sealed class ProbeAttributes
             .Select(attribute => attributeValues.TryGetValue(attribute, out var value)
                 ? value
                 : throw new InvalidOperationException(
-                    $"Die Eigenschaft '{attribute}' ist fuer den Held nicht vorhanden."))
+                    $"Die Eigenschaft '{attribute}' ist für den Helden nicht vorhanden."))
             .ToArray();
     }
 

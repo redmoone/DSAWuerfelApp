@@ -8,7 +8,7 @@ public sealed class WuerfelRollCommandDispatcher(IEnumerable<IWuerfelRollDispatc
     {
         var strategy = strategies.FirstOrDefault(candidate => candidate.CanHandle())
                        ?? throw new InvalidOperationException(
-                           "Es konnte kein Transportweg fuer den Wurf gefunden werden.");
+                           "Es konnte kein Transportweg für den Wurf gefunden werden.");
 
         var result = await strategy.DispatchAsync(command, cancellationToken);
         if (result.HasImmediateResult)

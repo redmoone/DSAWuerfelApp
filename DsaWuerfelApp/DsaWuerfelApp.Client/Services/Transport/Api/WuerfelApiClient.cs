@@ -13,7 +13,7 @@ public sealed class WuerfelApiClient(HttpClient httpClient) : IWuerfelApiClient
             ? $"api/dice/context?heroId={heroId.Value}"
             : "api/dice/context";
 
-        return GetJsonAsync<DicePageContextDto>(uri, "Wuerfelkontext konnte nicht geladen werden.", cancellationToken);
+        return GetJsonAsync<DicePageContextDto>(uri, "Würfelkontext konnte nicht geladen werden.", cancellationToken);
     }
 
     public Task<ProbeInfoResultDto> GetProbeInfoAsync(
@@ -48,7 +48,7 @@ public sealed class WuerfelApiClient(HttpClient httpClient) : IWuerfelApiClient
         return PostJsonAsync<FreeRollResultDto>(
             "api/dice/free-roll",
             request,
-            "Freier Wurf konnte nicht ausgefuehrt werden.",
+            "Freier Wurf konnte nicht ausgeführt werden.",
             cancellationToken);
     }
 
@@ -59,7 +59,7 @@ public sealed class WuerfelApiClient(HttpClient httpClient) : IWuerfelApiClient
         return PostJsonAsync<TalentRollResultDto>(
             "api/dice/talent-roll",
             request,
-            "Talentprobe konnte nicht ausgefuehrt werden.",
+            "Talentprobe konnte nicht ausgeführt werden.",
             cancellationToken);
     }
 
@@ -70,7 +70,7 @@ public sealed class WuerfelApiClient(HttpClient httpClient) : IWuerfelApiClient
         return PostJsonAsync<AttributeRollResultDto>(
             "api/dice/attribute-roll",
             request,
-            "Eigenschaftsprobe konnte nicht ausgefuehrt werden.",
+            "Eigenschaftsprobe konnte nicht ausgeführt werden.",
             cancellationToken);
     }
 
@@ -81,7 +81,7 @@ public sealed class WuerfelApiClient(HttpClient httpClient) : IWuerfelApiClient
         return PostJsonAsync<BadTraitRollResultDto>(
             "api/dice/bad-trait-roll",
             request,
-            "Probe auf schlechte Eigenschaft konnte nicht ausgefuehrt werden.",
+            "Probe auf schlechte Eigenschaft konnte nicht ausgeführt werden.",
             cancellationToken);
     }
 

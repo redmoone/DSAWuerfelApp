@@ -14,18 +14,18 @@ public sealed class BadTraitResolver(TalentCatalogService talentCatalogService)
 
         return talentCatalogService.ResolveBadTrait(hero, badTraitName)
                ?? throw new InvalidOperationException(
-                   "Die ausgewaehlte schlechte Eigenschaft ist fuer den Held nicht vorhanden.");
+                   "Die ausgewählte schlechte Eigenschaft ist für den Helden nicht vorhanden.");
     }
 
     public BadTraitDto ResolveRequired(Hero hero, string? badTraitName)
     {
         if (string.IsNullOrWhiteSpace(badTraitName))
         {
-            throw new InvalidOperationException("Bitte zuerst eine relevante schlechte Eigenschaft waehlen.");
+            throw new InvalidOperationException("Bitte zuerst eine relevante schlechte Eigenschaft wählen.");
         }
 
         return talentCatalogService.ResolveBadTrait(hero, badTraitName)
                ?? throw new InvalidOperationException(
-                   "Die ausgewaehlte schlechte Eigenschaft ist fuer den Held nicht vorhanden.");
+                   "Die ausgewählte schlechte Eigenschaft ist für den Helden nicht vorhanden.");
     }
 }

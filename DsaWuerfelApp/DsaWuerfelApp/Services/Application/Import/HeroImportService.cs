@@ -18,7 +18,7 @@ public sealed class HeroImportService(
     {
         if (files is null || files.Count == 0)
         {
-            throw new HeroImportException("Keine Dateien zum Import uebergeben.");
+            throw new HeroImportException("Keine Dateien zum Import übergeben.");
         }
 
         var createdHeroes = new List<Hero>();
@@ -34,7 +34,7 @@ public sealed class HeroImportService(
 
         if (createdHeroes.Count == 0)
         {
-            throw new HeroImportException("Keine gueltigen Dateien zum Import gefunden.");
+            throw new HeroImportException("Keine gültigen Dateien zum Import gefunden.");
         }
 
         await dbContext.Heroes.AddRangeAsync(createdHeroes, cancellationToken);
@@ -72,11 +72,11 @@ public sealed class HeroImportService(
         }
         catch (InvalidOperationException)
         {
-            throw new HeroImportException($"Datei '{fileName}' enthaelt kein gueltiges XML.");
+            throw new HeroImportException($"Datei '{fileName}' enthält kein gültiges XML.");
         }
         catch (XmlException)
         {
-            throw new HeroImportException($"Datei '{fileName}' enthaelt kein gueltiges XML.");
+            throw new HeroImportException($"Datei '{fileName}' enthält kein gültiges XML.");
         }
     }
 
