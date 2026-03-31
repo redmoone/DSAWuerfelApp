@@ -1,6 +1,4 @@
-﻿<MudDivider Class="my-4" />
-
-<div class="d-flex justify-center flex-wrap gap-6 align-center">
+﻿<div class="d-flex justify-center flex-wrap gap-7 align-center">
     @foreach (var s in AvailableSides)
     {
         <div class="die-selector" @onclick="() => OnAddDie.InvokeAsync(s)">

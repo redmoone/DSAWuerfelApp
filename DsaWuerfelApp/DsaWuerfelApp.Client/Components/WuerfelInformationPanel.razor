@@ -1,10 +1,26 @@
 @using DsaWuerfelApp.Shared
 <div class="additional-info-content">
-    @if (!string.IsNullOrWhiteSpace(ProbeInfoText))
+    @if (HasProbeInfoContent(ProbeInfo))
     {
         <section class="additional-info-panel">
             <h4 class="additional-info-title">Probeninfo</h4>
-            <p class="additional-info-text">@ProbeInfoText</p>
+            @if (!string.IsNullOrWhiteSpace(ProbeInfo?.Text))
+            {
+                <p class="additional-info-text">@ProbeInfo!.Text</p>
+            }
+
+            @if (ProbeInfo is not null && ProbeInfo.Sections.Length > 0)
+            {
+                <div class="probe-info-sections">
+                    @foreach (var section in ProbeInfo.Sections)
+                    {
+                        <div class="probe-info-section">
+                            <span class="probe-info-section-label">@(section.Label)</span>
+                            <p class="probe-info-section-text">@(section.Text)</p>
+                        </div>
+                    }
+                </div>
+            }
         </section>
     }
 
@@ -45,70 +61,39 @@
         </section>
     }
 
-    @if (AttributeResult is not null)
+    @if (AttributeResult?.Requirement is not null)
     {
         <section class="additional-info-panel">
-            <h4 class="additional-info-title">Letzte Eigenschaftsprobe</h4>
-            <div class="probe-evaluation @GetAttributeProbeEvaluationClass(AttributeResult)">
+            <h4 class="additional-info-title">Freie Probe</h4>
+            <div class="probe-evaluation requirement">
                 <div class="probe-evaluation-header">
-                    <span class="probe-evaluation-name">@AttributeResult.Probe</span>
-                    <span class="probe-evaluation-status">@GetAttributeProbeStatusText(AttributeResult)</span>
+                    <span class="probe-evaluation-name">@AttributeResult.Requirement.Probe</span>
+                    <span class="probe-evaluation-status">
+                        Benötigter Probenwert: @AttributeResult.Requirement.RequiredTalentValue
+                    </span>
                 </div>
 
                 <div class="probe-evaluation-meta">
-                    <span>Mod.: @FormatModifier(AttributeResult.EffectiveModifier)</span>
-                    @if (AttributeResult.SchlechteEigenschaftModifier > 0 &&
-                         !string.IsNullOrWhiteSpace(AttributeResult.SchlechteEigenschaftName))
+                    <span>Mod.: @FormatModifier(AttributeResult.Requirement.EffectiveModifier)</span>
+                    @if (AttributeResult.Requirement.SchlechteEigenschaftModifier > 0 &&
+                         !string.IsNullOrWhiteSpace(AttributeResult.Requirement.SchlechteEigenschaftName))
                     {
-                        <span>@AttributeResult.SchlechteEigenschaftName: @FormatModifier(AttributeResult.SchlechteEigenschaftModifier)</span>
+                        <span>@AttributeResult.Requirement.SchlechteEigenschaftName: @FormatModifier(AttributeResult.Requirement.SchlechteEigenschaftModifier)</span>
                     }
+                    <span>Ausgleich: @AttributeResult.Requirement.RequiredCompensation</span>
                 </div>
 
                 <div class="probe-evaluation-rolls">
-                    @foreach (var detail in AttributeResult.Details)
+                    @foreach (var detail in AttributeResult.Requirement.Details)
                     {
-                        <div class="probe-roll-chip @GetAttributeProbeRollChipClass(detail)">
+                        <div class="probe-roll-chip @GetAttributeRequirementChipClass(detail)">
                             <span class="probe-roll-attribute">@detail.Attribute</span>
-                            <span class="probe-roll-values">@detail.Roll / @detail.TargetValue</span>
-                            <span class="probe-roll-rest">Diff: @detail.Difference</span>
+                            <span class="probe-roll-values">@detail.Roll / @detail.BaseValue</span>
+                            <span class="probe-roll-rest">Benötigter Ausgleich: @detail.Difference</span>
                         </div>
                     }
                 </div>
             </div>
-
-            @if (AttributeResult.Requirement is not null)
-            {
-                <h4 class="additional-info-title">3W20-Hilfe</h4>
-                <div class="probe-evaluation requirement">
-                    <div class="probe-evaluation-header">
-                        <span class="probe-evaluation-name">@AttributeResult.Requirement.Probe</span>
-                        <span class="probe-evaluation-status">
-                            Benötigter Probenwert: @AttributeResult.Requirement.RequiredTalentValue
-                        </span>
-                    </div>
-
-                    <div class="probe-evaluation-meta">
-                        <span>Mod.: @FormatModifier(AttributeResult.Requirement.EffectiveModifier)</span>
-                        @if (AttributeResult.Requirement.SchlechteEigenschaftModifier > 0 &&
-                             !string.IsNullOrWhiteSpace(AttributeResult.Requirement.SchlechteEigenschaftName))
-                        {
-                            <span>@AttributeResult.Requirement.SchlechteEigenschaftName: @FormatModifier(AttributeResult.Requirement.SchlechteEigenschaftModifier)</span>
-                        }
-                        <span>Ausgleich: @AttributeResult.Requirement.RequiredCompensation</span>
-                    </div>
-
-                    <div class="probe-evaluation-rolls">
-                        @foreach (var detail in AttributeResult.Requirement.Details)
-                        {
-                            <div class="probe-roll-chip @GetAttributeRequirementChipClass(detail)">
-                                <span class="probe-roll-attribute">@detail.Attribute</span>
-                                <span class="probe-roll-values">@detail.Roll / @detail.BaseValue</span>
-                                <span class="probe-roll-rest">Benötigter Ausgleich: @detail.Difference</span>
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
         </section>
     }
 
@@ -131,9 +116,9 @@
         </section>
     }
 
-    @if (string.IsNullOrWhiteSpace(ProbeInfoText) &&
+    @if (!HasProbeInfoContent(ProbeInfo) &&
          TalentResult is null &&
-         AttributeResult is null &&
+         AttributeResult?.Requirement is null &&
          BadTraitResult is null)
     {
         <p class="additional-info-empty">
@@ -144,10 +129,16 @@
 </div>
 
 @code {
-    [Parameter] public string? ProbeInfoText { get; set; }
+    [Parameter] public ProbeInfoResultDto? ProbeInfo { get; set; }
     [Parameter] public TalentRollResultDto? TalentResult { get; set; }
     [Parameter] public AttributeRollResultDto? AttributeResult { get; set; }
     [Parameter] public BadTraitRollResultDto? BadTraitResult { get; set; }
+
+    private static bool HasProbeInfoContent(ProbeInfoResultDto? probeInfo)
+    {
+        return probeInfo is not null &&
+               (!string.IsNullOrWhiteSpace(probeInfo.Text) || probeInfo.Sections.Length > 0);
+    }
 
     private static string FormatModifier(int modifier)
     {
@@ -184,23 +175,6 @@
                 TalentProbeStatus.GluecklicherWurf => "glueck",
                 _ => detail.Success ? "success" : "failure"
         };
-    }
-
-    private static string GetAttributeProbeStatusText(AttributeRollResultDto result)
-    {
-        return result.Success
-                ? $"Bestanden ({result.SuccessCount}/{result.Details.Length})"
-                : $"Misslungen ({result.FailureCount} fehlgeschlagen)";
-    }
-
-    private static string GetAttributeProbeEvaluationClass(AttributeRollResultDto result)
-    {
-        return result.Success ? "success" : "failure";
-    }
-
-    private static string GetAttributeProbeRollChipClass(AttributeRollDetailDto detail)
-    {
-        return detail.Success ? "success" : "failure";
     }
 
     private static string GetAttributeRequirementChipClass(AttributeRollRequirementDetailDto detail)

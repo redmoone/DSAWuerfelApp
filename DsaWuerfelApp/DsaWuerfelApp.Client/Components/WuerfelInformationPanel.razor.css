@@ -31,6 +31,36 @@
     color: rgba(255, 248, 220, 0.9);
 }
 
+.probe-info-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.probe-info-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.probe-info-section-label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--dsa-gold);
+}
+
+.probe-info-section-text {
+    margin: 0;
+    line-height: 1.55;
+    color: rgba(255, 248, 220, 0.9);
+}
+
 .additional-info-empty {
     margin: 0;
     padding: 14px 16px;

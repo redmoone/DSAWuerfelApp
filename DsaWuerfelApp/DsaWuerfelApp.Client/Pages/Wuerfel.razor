@@ -9,15 +9,19 @@
 
         <div class="action-block additional-info-block">
             <h3 class="block-title">Zusätzliche Informationen</h3>
-            <WuerfelInformationPanel ProbeInfoText="@View.ProbeInfoText"
-                                     TalentResult="View.LastTalentRoll"
-                                     AttributeResult="View.LastAttributeRoll"
-                                     BadTraitResult="View.LastBadTraitRoll"/>
+            <div class="action-block-body">
+                <WuerfelInformationPanel ProbeInfo="@View.ProbeInfo"
+                                         TalentResult="View.LastTalentRoll"
+                                         AttributeResult="View.LastAttributeRoll"
+                                         BadTraitResult="View.LastBadTraitRoll"/>
+            </div>
         </div>
 
         <div class="middle-section">
-            <WuerfelActionBar Result="View.CurrentEquation"
-                              Modifier="View.Modifier"
+            <WuerfelActionBar RollText="@View.RollText"
+                              RollTextChanged="HandleRollTextChanged"
+                              Modifier="@View.Modifier"
+                              DisplayModifier="@View.EffectiveModifier"
                               ModifierChanged="HandleModifierChanged"
                               IsHiddenRoll="View.IsHiddenRoll"
                               ToggleHiddenRollRequested="ToggleHiddenRoll"
@@ -40,48 +44,56 @@
     <div class="action-blocks-container">
         <div class="action-block">
             <h3 class="block-title">Eigenschaftsproben</h3>
-            <AttributePanel AttributeValues="View.AttributeValues"
-                            SelectedAttributes="View.SelectedAttributes"
-                            OnAttributeAdded="AddAttributeAsync"
-                            OnAttributeRemoved="RemoveAttributeAsync"/>
+            <div class="action-block-body action-block-scroll">
+                <AttributePanel AttributeValues="View.AttributeValues"
+                                SelectedAttributes="View.SelectedAttributes"
+                                OnAttributeAdded="AddAttributeAsync"
+                                OnAttributeRemoved="RemoveAttributeAsync"/>
+            </div>
         </div>
 
         <div class="action-block">
             <h3 class="block-title">Probensuche</h3>
-            <WuerfelProbePanel AvailableProben="View.AvailableProbes"
-                               Placeholder="@View.ProbePlaceholder"
-                               SelectedProbe="@(View.SelectedProbeValue ?? string.Empty)"
-                               SelectedProbeChanged="HandleSelectedProbeChangedAsync"
-                               InfoRequested="ToggleProbeInfoAsync"
-                               CanShowInfo="@(!string.IsNullOrWhiteSpace(View.SelectedProbeValue))"
-                               ShowDebugForcedRolls="View.ShowDebugForcedRolls"
-                               ForcedRollsText="@View.ForcedRollsText"
-                               ForcedRollsTextChanged="HandleForcedRollsChanged"
-                               PresetRequested="HandleForcedRollPreset"
-                               ClearForcedRollsRequested="ClearForcedRolls"
-                               IsBusy="View.IsBusy"/>
+            <div class="action-block-body action-block-scroll">
+                <WuerfelProbePanel AvailableProben="View.AvailableProbes"
+                                   Placeholder="@View.ProbePlaceholder"
+                                   SelectedProbe="@(View.SelectedProbeValue ?? string.Empty)"
+                                   SelectedProbeChanged="HandleSelectedProbeChangedAsync"
+                                   InfoRequested="ToggleProbeInfoAsync"
+                                   CanShowInfo="@(!string.IsNullOrWhiteSpace(View.SelectedProbeValue))"
+                                   ShowDebugForcedRolls="View.ShowDebugForcedRolls"
+                                   ForcedRollsText="@View.ForcedRollsText"
+                                   ForcedRollsTextChanged="HandleForcedRollsChanged"
+                                   PresetRequested="HandleForcedRollPreset"
+                                   ClearForcedRollsRequested="ClearForcedRolls"
+                                   IsBusy="View.IsBusy"/>
+            </div>
         </div>
 
         <div class="action-block">
             <h3 class="block-title">Schlechte Eigenschaften</h3>
-            <SchlechteEigenschaftPanel HasActiveHero="View.HasActiveHero"
-                                       SchlechteEigenschaften="View.BadTraits"
-                                       SelectedName="@View.SelectedBadTraitName"
-                                       SelectedNameChanged="HandleSelectedBadTraitChanged"
-                                       OnDirectRollRequested="ExecuteBadTraitRollAsync"
-                                       IsBusy="View.IsBusy"/>
+            <div class="action-block-body action-block-scroll">
+                <SchlechteEigenschaftPanel HasActiveHero="View.HasActiveHero"
+                                           SchlechteEigenschaften="View.BadTraits"
+                                           SelectedName="@View.SelectedBadTraitName"
+                                           SelectedNameChanged="HandleSelectedBadTraitChanged"
+                                           OnDirectRollRequested="ExecuteBadTraitRollAsync"
+                                           IsBusy="View.IsBusy"/>
+            </div>
         </div>
 
         <div class="action-block">
             <h3 class="block-title">Freier Wurf</h3>
-            <div title="Manuelle Auswahl der Würfel">
-                <DiceControls AvailableSides="_availableSides" OnAddDie="AddDieAsync"/>
-            </div>
+            <div class="action-block-body action-block-scroll">
+                <div title="Manuelle Auswahl der Würfel">
+                    <DiceControls AvailableSides="_availableSides" OnAddDie="AddDieAsync"/>
+                </div>
 
-            @if (!string.IsNullOrWhiteSpace(View.ErrorMessage))
-            {
-                <MudAlert Severity="Severity.Error" Class="mt-3">@View.ErrorMessage</MudAlert>
-            }
+                @if (!string.IsNullOrWhiteSpace(View.ErrorMessage))
+                {
+                    <MudAlert Severity="Severity.Error" Class="mt-3">@View.ErrorMessage</MudAlert>
+                }
+            </div>
         </div>
     </div>
 </div>

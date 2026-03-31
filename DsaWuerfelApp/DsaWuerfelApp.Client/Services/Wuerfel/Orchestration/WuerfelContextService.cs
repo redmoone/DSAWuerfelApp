@@ -19,7 +19,7 @@ public sealed class WuerfelContextService(
 
     public Task ToggleProbeInfoAsync()
     {
-        if (!string.IsNullOrWhiteSpace(state.Current.ProbeInfoText))
+        if (state.Current.ProbeInfo is not null)
         {
             state.SetProbeInfo(null);
             return Task.CompletedTask;
@@ -39,7 +39,7 @@ public sealed class WuerfelContextService(
         return operationRunner.RunAsync(async () =>
         {
             var result = await apiClient.GetProbeInfoAsync(request);
-            state.SetProbeInfo(result.Text);
+            state.SetProbeInfo(result);
         });
     }
 }

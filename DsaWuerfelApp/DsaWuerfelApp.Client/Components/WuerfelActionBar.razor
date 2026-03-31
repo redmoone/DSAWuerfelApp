@@ -3,9 +3,15 @@
 
     <div class="global-actions-bar">
         <div class="left-actions">
-            <RollEquation Result="Result"/>
+            <TextPill Value="@RollText"
+                      ValueChanged="@RollTextChanged"
+                      Placeholder="Würfeltext"
+                      Label="TEXT"
+                      Disabled="@IsBusy"/>
 
-            <ModifierPill Value="Modifier" ValueChanged="ModifierChanged"/>
+            <ModifierPill Value="@Modifier"
+                          DisplayValue="@CurrentDisplayModifier"
+                          ValueChanged="ModifierChanged"/>
 
             <button class="dsa-btn-icon @(IsHiddenRoll ? "active" : "")"
                     @onclick="ToggleHiddenRollRequested"

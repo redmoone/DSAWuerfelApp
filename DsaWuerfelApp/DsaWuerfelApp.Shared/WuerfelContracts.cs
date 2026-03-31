@@ -45,7 +45,11 @@ public sealed record ProbeInfoRequestDto(
     int Modifier,
     string? BadTraitName);
 
-public sealed record ProbeInfoResultDto(string Text);
+public sealed record ProbeInfoSectionDto(string Label, string Text);
+
+public sealed record ProbeInfoResultDto(
+    string? Text,
+    ProbeInfoSectionDto[] Sections);
 
 public sealed record FreeRollRequestDto(
     string? SessionId,

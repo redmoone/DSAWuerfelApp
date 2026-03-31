@@ -248,8 +248,13 @@
     "Eigenschaften": "(MU/GE/KK)",
     "Typ": "Spezial",
     "eBE": "BEx2",
-    "Ersatz": "Körperbeherrschung, Athletik",
-    "Spezialisierungen": "Balancieren, Bodenakrobatik, Schwingen, Sprünge, Winden"
+    "Ersatz": "Körperbeherrschung+5, Athletik+10",
+    "Spezialisierungen": "Balancieren, Bodenakrobatik, Schwingen, Sprünge, Winden",
+    "Zweck": "Willentliche Akrobatik, Balancieren, Schwingen, Salti, Winden, Entfesseln",
+    "Kernregel": "+1 Ausweichen je 3 volle TaP über 9; Voraussetzung Körperbeherrschung 4",
+    "Misslingen": "Sturz, Hängenbleiben, misslingendes Winden/Entfesseln",
+    "Modifikatoren": "BE, Enge, Fesseln, Sturzgefahr",
+    "Optional": "Vorteil Schlangenmensch"
   },
   {
     "Name": "Athletik",
@@ -257,8 +262,13 @@
     "Eigenschaften": "(GE/KO/KK)",
     "Typ": "Basis",
     "eBE": "BEx2",
-    "Ersatz": "Körperbeherrschung, Akrobatik",
-    "Spezialisierungen": "Hochsprung, Kraftakte, Langlauf, Sprint, Weitsprung"
+    "Ersatz": "Körperbeherrschung+5, Akrobatik+10",
+    "Spezialisierungen": "Hochsprung, Kraftakte, Langlauf, Sprint, Weitsprung",
+    "Zweck": "Sprint, Langlauf, Kraftakte, Sprungweite/-höhe",
+    "Kernregel": "Langlauf auf GE/KO/KO; erhöht GS, senkt AU-Verlust, stützt KK-Proben, steigert Sprünge",
+    "Misslingen": "langsamer, mehr AU-Verlust, Last/Sprung scheitert",
+    "Modifikatoren": "BE, Strecke, Last, Sprungdistanz",
+    "Optional": ""
   },
   {
     "Name": "Fliegen",
@@ -266,8 +276,13 @@
     "Eigenschaften": "(MU/IN/GE)",
     "Typ": "Spezial",
     "eBE": "BE",
-    "Ersatz": "Akrobatik",
-    "Spezialisierungen": ""
+    "Ersatz": "Akrobatik+10",
+    "Spezialisierungen": "Hexenbesen, Fliegender Teppich, weitere magische Fluggeräte",
+    "Zweck": "Magische Fluggeräte ohne Eigenwillen steuern",
+    "Kernregel": "Probe bei Manövern, Verfolgungsjagden, Fensterflug, Steilkehre, Looping",
+    "Misslingen": "Sturz, oft tödlich",
+    "Modifikatoren": "BE, Gerätetyp, Manöver",
+    "Optional": "Fliegende Wesen über Reiten"
   },
   {
     "Name": "Gaukeleien",
@@ -275,8 +290,13 @@
     "Eigenschaften": "(MU/CH/FF)",
     "Typ": "Spezial",
     "eBE": "BEx2",
-    "Ersatz": "Taschendiebstahl, Falschspiel",
-    "Spezialisierungen": ""
+    "Ersatz": "Falschspiel+10, Taschendiebstahl+10",
+    "Spezialisierungen": "Bauchreden, Feuerkunst, Jonglieren, Possenreißen, Taschenspielereien",
+    "Zweck": "Kleine Kunststücke, Ablenkung, Hütchenspiel",
+    "Kernregel": "Eigenschaften je Darbietung variabel; z.B. Bauchreden IN/CH/KO, Feuerspucken MU/CH/KO",
+    "Misslingen": "Blamage, Entdeckung, misslingende Ablenkung",
+    "Modifikatoren": "BE, Darbietungsart",
+    "Optional": ""
   },
   {
     "Name": "Klettern",
@@ -284,8 +304,13 @@
     "Eigenschaften": "(MU/GE/KK)",
     "Typ": "Basis",
     "eBE": "BEx2",
-    "Ersatz": "Athletik, Akrobatik, Körperbeherrschung",
-    "Spezialisierungen": ""
+    "Ersatz": "Akrobatik+5, Athletik+5, Körperbeherrschung+10",
+    "Spezialisierungen": "Bergsteigen, Eisklettern, Freiklettern, Seilklettern",
+    "Zweck": "Schwierige Klettertouren, Mauern, Klippen",
+    "Kernregel": "Längere Touren auf MU/GE/KO; TaP* ansammeln möglich",
+    "Misslingen": "Sturz, Festhängen, Tour scheitert",
+    "Modifikatoren": "Höhe, Griffmöglichkeiten, Kletterhilfen, Höhenangst, BE",
+    "Optional": "Sturzregeln beachten"
   },
   {
     "Name": "Körperbeherrschung",
@@ -293,8 +318,13 @@
     "Eigenschaften": "(MU/IN/GE)",
     "Typ": "Basis",
     "eBE": "BEx2",
-    "Ersatz": "Akrobatik, Athletik",
-    "Spezialisierungen": ""
+    "Ersatz": "Akrobatik+5, Athletik+10",
+    "Spezialisierungen": "Fallen, Sprünge, Standfestigkeit",
+    "Zweck": "Abrollen, Balance, Reaktionen, Stand halten",
+    "Kernregel": "Für intuitive Körperkontrolle; nicht für willentliche Akrobatik/Kraftakte",
+    "Misslingen": "Sturz, Ausrutscher, Umfallen",
+    "Modifikatoren": "Situationsschwere, BE",
+    "Optional": "Vorteil Balance, SF Standfest"
   },
   {
     "Name": "Reiten",
@@ -302,8 +332,13 @@
     "Eigenschaften": "(CH/GE/KK)",
     "Typ": "Spezial",
     "eBE": "BE-2",
-    "Ersatz": "Körperbeherrschung, Akrobatik",
-    "Spezialisierungen": ""
+    "Ersatz": "Körperbeherrschung+10, Akrobatik+15",
+    "Spezialisierungen": "Pferd/Esel/Muli, Kamel, Strauß, Reitechse, Flugechse, Hippogriff, goblinisches Reit-Wildschwein",
+    "Zweck": "Reittiere lenken; Galopp, Hindernisse, Gelände",
+    "Kernregel": "Unbekannte Reittiere mit Zuschlag; fliegende Wesen ohne passende Spezialisierung +5",
+    "Misslingen": "Kontrollverlust, Sturz, falsche Richtung",
+    "Modifikatoren": "Tempo, Gelände, Sprunghöhe/-länge, Tierart, BE",
+    "Optional": "Wichtig für Kampf zu Pferd"
   },
   {
     "Name": "Schleichen",
@@ -311,8 +346,13 @@
     "Eigenschaften": "(MU/IN/GE)",
     "Typ": "Basis",
     "eBE": "BE",
-    "Ersatz": "Körperbeherrschung, Sich Verstecken",
-    "Spezialisierungen": "nach Gelände: Eis/Schnee, Gebäude, Geröll, Straßen, Wald/Dschungel"
+    "Ersatz": "Körperbeherrschung+10, Sich Verstecken+10",
+    "Spezialisierungen": "Eis/Schnee, Gebäude, Geröll, Straßen, Wald/Dschungel",
+    "Zweck": "Geräuschlos bewegen, anschleichen",
+    "Kernregel": "Kann durch Sinnenschärfe gekontert werden; Meister kann verdeckt würfeln",
+    "Misslingen": "Geräusch, Entdeckung",
+    "Modifikatoren": "Boden, Rüstung, Schuhwerk, Gelände, BE",
+    "Optional": ""
   },
   {
     "Name": "Schwimmen",
@@ -320,8 +360,13 @@
     "Eigenschaften": "(GE/KO/KK)",
     "Typ": "Basis",
     "eBE": "BEx2",
-    "Ersatz": "Athletik",
-    "Spezialisierungen": ""
+    "Ersatz": "Athletik+10",
+    "Spezialisierungen": "Langstreckenschwimmen, Schnellschwimmen, Tauchen, Unterwasserkampf",
+    "Zweck": "Schwimmen, Tauchen, Last/Gefährten transportieren, UW-Kampf",
+    "Kernregel": "TaW 2 reicht fürs Überwasserhalten; guter TaW Vorbedingung Unterwasserkampf",
+    "Misslingen": "Erschöpfung, Untergehen, Transport/Kampf scheitert",
+    "Modifikatoren": "Wasserbewegtheit bis +8, Rüstung, BE",
+    "Optional": "AU begrenzt Strecke"
   },
   {
     "Name": "Selbstbeherrschung",
@@ -330,7 +375,12 @@
     "Typ": "Basis",
     "eBE": "",
     "Ersatz": "",
-    "Spezialisierungen": ""
+    "Spezialisierungen": "Erschöpfung Ignorieren, Schmerz Unterdrücken, Störungen Ignorieren, Wunden Ignorieren",
+    "Zweck": "Schmerz, Versuchung, Spott, Erschöpfung widerstehen",
+    "Kernregel": "Je ignoriertem Punkt Probenmodifikation +5; Wirkung 5 KR",
+    "Misslingen": "Zusammenbruch, Nachgeben, Kontrollverlust",
+    "Modifikatoren": "Jähzorn, Stolz u.ä. als Erschwernis",
+    "Optional": "MU/MU/KL bei innerer Beherrschung"
   },
   {
     "Name": "Sich Verstecken",
@@ -338,8 +388,13 @@
     "Eigenschaften": "(MU/IN/GE)",
     "Typ": "Basis",
     "eBE": "BE-2",
-    "Ersatz": "Schleichen, Körperbeherrschung",
-    "Spezialisierungen": "Gebäude, Gebirge, Grasland, Eis/Schnee, Stadt, Wald/Dschungel, Wüste"
+    "Ersatz": "Schleichen+10, Körperbeherrschung+15",
+    "Spezialisierungen": "Gebäude, Gebirge, Grasland, Eis/Schnee, Stadt, Wald/Dschungel, Wüste",
+    "Zweck": "Versteck blitzschnell finden und nutzen",
+    "Kernregel": "Kann verdeckt und vergleichend gegen Sinnenschärfe laufen",
+    "Misslingen": "schlechtes Versteck, zu spät",
+    "Modifikatoren": "Umgebung, Verfolger, BE",
+    "Optional": ""
   },
   {
     "Name": "Singen",
@@ -348,16 +403,26 @@
     "Typ": "Basis",
     "eBE": "BE-3",
     "Ersatz": "",
-    "Spezialisierungen": ""
+    "Spezialisierungen": "Balladenvortrag, Chorgesang, Mehrstimmigkeit, Operngesang",
+    "Zweck": "Sologesang, Eposvortrag, Begleitung",
+    "Kernregel": "Lautes Singen/Koloraturen auf IN/CH/KO",
+    "Misslingen": "schiefer Vortrag, Blamage",
+    "Modifikatoren": "BE",
+    "Optional": ""
   },
   {
     "Name": "Sinnenschärfe",
     "Kategorie": "Körperliche Talente",
     "Eigenschaften": "(KL/IN/IN) o. (KL/IN/FF)",
     "Typ": "Basis",
-    "eBE": "",
+    "eBE": "situationsabhängig bis BE",
     "Ersatz": "",
-    "Spezialisierungen": "Hören, Riechen/Schmecken, Sehen, Tasten"
+    "Spezialisierungen": "Hören, Riechen/Schmecken, Sehen, Tasten",
+    "Zweck": "Wahrnehmen: Hören, Riechen, Sehen, Tasten, Schmecken",
+    "Kernregel": "Meist KL/IN/IN, Tastsinn KL/IN/FF; Meister würfelt oft verdeckt",
+    "Misslingen": "nichts bemerkt oder Täuschung",
+    "Modifikatoren": "Umgebungslärm, Verletzungen, Herausragender/Eingeschränkter Sinn, BE",
+    "Optional": "oft passiver Teil vergleichender Proben"
   },
   {
     "Name": "Skifahren",
@@ -365,8 +430,13 @@
     "Eigenschaften": "(GE/GE/KO)",
     "Typ": "Spezial",
     "eBE": "BE-2",
-    "Ersatz": "Athletik, Körperbeherrschung",
-    "Spezialisierungen": ""
+    "Ersatz": "Athletik+10, Körperbeherrschung+15",
+    "Spezialisierungen": "",
+    "Zweck": "Schneefelder überwinden, Strecke steigern, Gefahren ausweichen",
+    "Kernregel": "Für Abfahrten und Sprünge hohe Zuschläge",
+    "Misslingen": "Sturz, Kontrollverlust",
+    "Modifikatoren": "Abfahrt, Sprünge, Schnee/Terrain, BE",
+    "Optional": "keine Spezialisierungen"
   },
   {
     "Name": "Stimmen Imitieren",
@@ -374,8 +444,13 @@
     "Eigenschaften": "(KL/IN/CH)",
     "Typ": "Spezial",
     "eBE": "BE-4",
-    "Ersatz": "Gaukeleien (Bauchreden)",
-    "Spezialisierungen": "Haustiere, Jagdwild, Menschliche Stimmen, Raubtiere, Vögel"
+    "Ersatz": "Gaukeleien(Bauchreden)+5",
+    "Spezialisierungen": "Haustiere, Jagdwild, Menschliche Stimmen, Raubtiere, Vögel",
+    "Zweck": "Tier- und Menschenstimmen nachahmen",
+    "Kernregel": "Gelegenheit zum Einprägen nötig; Meisterimitator für spontane Menschenstimmen ab TaW 15; Voraussetzung Sinnenschärfe 4",
+    "Misslingen": "falscher Ton, Entlarvung",
+    "Modifikatoren": "Übung, Zielstimme, BE",
+    "Optional": ""
   },
   {
     "Name": "Tanzen",
@@ -383,8 +458,13 @@
     "Eigenschaften": "(CH/GE/GE)",
     "Typ": "Basis",
     "eBE": "BEx2",
-    "Ersatz": "Körperbeherrschung, Akrobatik",
-    "Spezialisierungen": ""
+    "Ersatz": "Akrobatik+5, Körperbeherrschung+5",
+    "Spezialisierungen": "Ausdruckstänze, Formationstänze, Höfische Tänze, Kulttänze, Meditationstänze",
+    "Zweck": "Tanzen, gesellschaftliche/kultische Wirkung",
+    "Kernregel": "Höfische Tänze mit Etikette; fremde Tänze mit Kulturkunde; Voraussetzungen: Höfische Tänze Etikette 6+, Kulttänze Götter/Kulte 6+",
+    "Misslingen": "Blamage, Ansehensverlust",
+    "Modifikatoren": "BE, Etikette, Kulturkunde",
+    "Optional": ""
   },
   {
     "Name": "Taschendiebstahl",
@@ -392,8 +472,13 @@
     "Eigenschaften": "(MU/IN/FF)",
     "Typ": "Spezial",
     "eBE": "BEx2",
-    "Ersatz": "Gaukeleien (Taschenspielereien)",
-    "Spezialisierungen": ""
+    "Ersatz": "Gaukeleien(Taschenspielereien)+10",
+    "Spezialisierungen": "",
+    "Zweck": "Beutelschneiden, unbemerktes Stibitzen",
+    "Kernregel": "Gegen Sinnenschärfe vergleichbar; Voraussetzung Menschenkenntnis 4 für TaW >10",
+    "Misslingen": "Entdeckung, Verdacht",
+    "Modifikatoren": "Misstrauen des Opfers, Sperrigkeit, Ablenkung/Komplize, BE",
+    "Optional": "keine Spezialisierungen"
   },
   {
     "Name": "Zechen",
@@ -402,34 +487,54 @@
     "Typ": "Basis",
     "eBE": "",
     "Ersatz": "",
-    "Spezialisierungen": ""
+    "Spezialisierungen": "",
+    "Zweck": "Alkohol- und Rauschmittelverträglichkeit, Kater mindern",
+    "Kernregel": "Gelungene Probe wehrt Eigenschaftsabzüge und schweren Kopf ab",
+    "Misslingen": "Kater, Kontrollverlust, Abzüge, enthemmtes Verhalten",
+    "Modifikatoren": "Rauschmittelart, Menge",
+    "Optional": "keine Spezialisierungen"
   },
   {
     "Name": "Betören",
     "Kategorie": "Gesellschaftliche Talente",
     "Eigenschaften": "(IN/CH/CH)",
     "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Überreden, Überzeugen",
-    "Spezialisierungen": ""
+    "eBE": "BE-2",
+    "Ersatz": "Überreden+10, Überzeugen+10",
+    "Spezialisierungen": "nach Kultur",
+    "Zweck": "Anziehung erzeugen, Gegenüber gewogen machen",
+    "Kernregel": "Menschenkenntnis 4; kann durch Menschenkenntnis oder Betören gekontert werden; TaP* ansammeln möglich",
+    "Misslingen": "Abfuhr, Misstrauen",
+    "Modifikatoren": "harte Nuss, Spezies, Geschlecht, Kulturkreis, Einstellung, BE",
+    "Optional": ""
   },
   {
     "Name": "Etikette",
     "Kategorie": "Gesellschaftliche Talente",
     "Eigenschaften": "(KL/IN/CH)",
     "Typ": "Spezial",
-    "eBE": "",
+    "eBE": "BE-2",
     "Ersatz": "",
-    "Spezialisierungen": ""
+    "Spezialisierungen": "nach Kultur",
+    "Zweck": "Hofformen, Anrede, Wappen, Mode, Tafelsitten",
+    "Kernregel": "Meister kann verdeckt würfeln; voller Nutzen kulturabhängig/Kulturkunde",
+    "Misslingen": "Fauxpas, Blamage",
+    "Modifikatoren": "Kultur, Stand, Anlass, BE",
+    "Optional": ""
   },
   {
     "Name": "Gassenwissen",
     "Kategorie": "Gesellschaftliche Talente",
     "Eigenschaften": "(KL/IN/CH)",
     "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Menschenkenntnis",
-    "Spezialisierungen": ""
+    "eBE": "BE-4",
+    "Ersatz": "Menschenkenntnis+10",
+    "Spezialisierungen": "Beschatten, Hehlerei, Kontakte, Ortseinschätzung",
+    "Zweck": "Stadt einschätzen, richtige Leute, Unterschlupf, Gardisten, Kanäle, Fluchtwege",
+    "Kernregel": "Meister verdeckt; kulturelle Unterschiede relevant",
+    "Misslingen": "Fehleinschätzung, falsche Anlaufstelle, schlechter Ort",
+    "Modifikatoren": "Kulturfremde, Ortskenntnis, Innerer Kompass, Richtungssinn",
+    "Optional": ""
   },
   {
     "Name": "Lehren",
@@ -437,8 +542,13 @@
     "Eigenschaften": "(KL/IN/CH)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Überzeugen",
-    "Spezialisierungen": "nach Talentgruppe"
+    "Ersatz": "Überzeugen+10",
+    "Spezialisierungen": "nach Talentgruppe",
+    "Zweck": "Wissen/Fertigkeiten vermitteln, Unterricht",
+    "Kernregel": "TaW>10: Menschenkenntnis 4; relevant für Lernregeln",
+    "Misslingen": "Unterrichtsansatz scheitert, Lernfortschritt stockt",
+    "Modifikatoren": "Schüler, Stoff, Umstände",
+    "Optional": ""
   },
   {
     "Name": "Menschenkenntnis",
@@ -446,17 +556,27 @@
     "Eigenschaften": "(KL/IN/CH)",
     "Typ": "Basis",
     "eBE": "",
-    "Ersatz": "Heilkunde Seele",
-    "Spezialisierungen": "nach Kultur"
+    "Ersatz": "Heilkunde Seele+5",
+    "Spezialisierungen": "nach Kultur",
+    "Zweck": "Absichten, Verlässlichkeit, Gefühle, Motive einschätzen",
+    "Kernregel": "Meister verdeckt; vergleichend gegen Überreden möglich; fremde Spezies erschwert, fremde Kultur meist erschwert",
+    "Misslingen": "Fehleinschätzung, falsches Vertrauen",
+    "Modifikatoren": "Erfahrung der Zielperson, Spezies, Kulturkunde",
+    "Optional": ""
   },
   {
     "Name": "Schauspielerei",
     "Kategorie": "Gesellschaftliche Talente",
     "Eigenschaften": "(MU/KL/CH)",
     "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Überreden",
-    "Spezialisierungen": "Komödie, Posse, Tragödie"
+    "eBE": "rollenabhängig",
+    "Ersatz": "Überreden+10",
+    "Spezialisierungen": "Komödie, Posse, Tragödie",
+    "Zweck": "Rollen, Deklamation, Mimik, Bühnenhandwerk",
+    "Kernregel": "TaW>10: Etikette, Sich Verkleiden, Singen, Überreden, Überzeugen je 4",
+    "Misslingen": "unglaubwürdige Rolle, Blamage",
+    "Modifikatoren": "Rolle, Auftrittsform, Publikum",
+    "Optional": ""
   },
   {
     "Name": "Schriftlicher Ausdruck",
@@ -464,35 +584,55 @@
     "Eigenschaften": "(KL/IN/IN)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "verwendete Sprache, Überzeugen (schriftliche Rhetorik)",
-    "Spezialisierungen": "Schreiber, Schriftsteller"
+    "Ersatz": "verwendete Sprache+10, Überzeugen(schriftliche Rhetorik)+5",
+    "Spezialisierungen": "Schreiber, Schriftsteller",
+    "Zweck": "verständliche, stilvolle Texte; Briefe, Epen, Abhandlungen",
+    "Kernregel": "Voraussetzung Lesen/Schreiben[Schrift] 6",
+    "Misslingen": "unklarer, schwacher, unbrauchbarer Text",
+    "Modifikatoren": "Handschrift, Stilanspruch, Textsorte",
+    "Optional": ""
   },
   {
     "Name": "Sich Verkleiden",
     "Kategorie": "Gesellschaftliche Talente",
     "Eigenschaften": "(MU/CH/GE)",
     "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Schauspielerei",
-    "Spezialisierungen": "anderer Stand, anderes Geschlecht, andere Rasse, fremde Kultur"
+    "eBE": "0 bis BEx2",
+    "Ersatz": "Schauspielerei+10",
+    "Spezialisierungen": "anderer Stand, anderes Geschlecht, andere Rasse, fremde Kultur",
+    "Zweck": "Aussehen, Verhalten, Mode, Schminken, Identität tarnen",
+    "Kernregel": "offene Probe; TaP* können Überreden erleichtern; Gespräch ersetzt Verkleidung nicht",
+    "Misslingen": "Entlarvung, Verdacht, schlechte Tarnung",
+    "Modifikatoren": "Art der Verkleidung, Körpermerkmale, Situation",
+    "Optional": ""
   },
   {
     "Name": "Überreden",
     "Kategorie": "Gesellschaftliche Talente",
     "Eigenschaften": "(MU/IN/CH)",
     "Typ": "Basis",
-    "eBE": "",
-    "Ersatz": "Überzeugen",
-    "Spezialisierungen": ""
+    "eBE": "situativ bis BE-4; Betteln sichtbar gerüstet BEx2",
+    "Ersatz": "Überzeugen+10",
+    "Spezialisierungen": "Aufwiegeln, Betteln, Einschüchtern, Feilschen, Lügen",
+    "Zweck": "kurzfristig beeinflussen, herausreden, feilschen, lügen",
+    "Kernregel": "TaW>10: Menschenkenntnis 4; Feilschen: +0=5%, +1=10%, +2=15% ... +9=50%; Menschenkenntnis kann Lügen durchschauen",
+    "Misslingen": "Misstrauen, Ablehnung, Entlarvung",
+    "Modifikatoren": "Kultur, Einstellung, Klugheit des Opfers, Anlass",
+    "Optional": ""
   },
   {
     "Name": "Überzeugen",
     "Kategorie": "Gesellschaftliche Talente",
     "Eigenschaften": "(KL/IN/CH)",
-    "Typ": "Basis",
-    "eBE": "",
-    "Ersatz": "Überreden",
-    "Spezialisierungen": "Öffentliches Rede (Demagogie, Plädoyer, Predigt), Einzelgespräche (Verhör, Bekehrung), Diskussions-Rhetorik, schriftliche Rhetorik"
+    "Typ": "Spezial",
+    "eBE": "situativ bis BE-4",
+    "Ersatz": "Überreden+10",
+    "Spezialisierungen": "Öffentliche Rede(Demagogie, Plädoyer, Predigt), Einzelgespräch(Verhör, Bekehrung), Diskussions-Rhetorik, schriftliche Rhetorik",
+    "Zweck": "langfristige Meinungsänderung, Bekehrung, Predigt, Verhör",
+    "Kernregel": "Voraussetzung Menschenkenntnis 4; Wirkung mindestens einige Tage",
+    "Misslingen": "Widerstand, Ablehnung, Gegenreaktion",
+    "Modifikatoren": "Klugheit, Lebenseinstellung, Kultur, Einstellung des Opfers",
+    "Optional": ""
   },
   {
     "Name": "Fährtensuchen",
@@ -500,8 +640,13 @@
     "Eigenschaften": "(KL/IN/IN) o. (KL/IN/KO)",
     "Typ": "Basis",
     "eBE": "",
-    "Ersatz": "Sinnenschärfe",
-    "Spezialisierungen": ""
+    "Ersatz": "Sinnenschärfe+10",
+    "Spezialisierungen": "Eis/Schnee, Gebirge, Grasland, Stadt, Sumpf, Unterirdisch, Wald/Dschungel, Wüste",
+    "Zweck": "Spuren finden, verfolgen, auswerten",
+    "Kernregel": "Verfolgen: KL/IN/KO; Detailinfos: KL/IN/IN; Terrainwechsel meist Probe -7 bis +12; TaW>10: Sinnenschärfe 4",
+    "Misslingen": "Spur verloren, Fehldeutung",
+    "Modifikatoren": "Boden, Licht, Witterung, Wahrnehmungsbehinderung",
+    "Optional": "Meister verdeckt"
   },
   {
     "Name": "Fallenstellen",
@@ -509,8 +654,13 @@
     "Eigenschaften": "(KL/FF/KK)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Wildnisleben",
-    "Spezialisierungen": "Gruben, Schlingen, Speere"
+    "Ersatz": "Wildnisleben+10",
+    "Spezialisierungen": "Gruben, Schlingen, Speere",
+    "Zweck": "Wildfallen bauen, platzieren, tarnen",
+    "Kernregel": "pro TaP* 0,5 Rationen, min. 1; Platzieren ca. 1 h; TaW>10: Wildnisleben 4; TaW 6+ auch für intelligente Wesen schwerer zu entdecken",
+    "Misslingen": "Fallen leer; Patzer: Mehrzahl unbrauchbar",
+    "Modifikatoren": "Umgebung, Köderwahl, Tierkunde als Hilfe",
+    "Optional": ""
   },
   {
     "Name": "Fesseln/Entfesseln",
@@ -518,17 +668,27 @@
     "Eigenschaften": "(FF/GE/KK)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Seiler, Seefahrt, Akrobatik, Ringen, Taschendiebstahl",
-    "Spezialisierungen": "Entfesseln, Fesseln, Knotenkunde, Taue Spleißen, Netze Knüpfen"
+    "Ersatz": "Seiler+10, Seefahrt+10, Entfesseln: Akrobatik(Winden)+5, Gaukeleien(passende Spez)+10, Taschendiebstahl+10, Ringen-PA+10",
+    "Spezialisierungen": "Entfesseln, Fesseln, Knotenkunde, Taue Spleißen, Netze Knüpfen",
+    "Zweck": "binden, lösen, Knoten, Taue, Netze",
+    "Kernregel": "Ersatztalente teils nur für Entfesseln oder passende Spezialisierung",
+    "Misslingen": "Knoten hält nicht / sitzt falsch / Flucht scheitert",
+    "Modifikatoren": "Material, Enge, Zeit, Bewegungsfreiheit",
+    "Optional": ""
   },
   {
     "Name": "Fischen/Angeln",
     "Kategorie": "Naturtalente",
     "Eigenschaften": "(IN/FF/KK)",
     "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Wildnisleben",
-    "Spezialisierungen": "Flüsse/Bäche, Hochseeangeln, Seen/Sumpf/Brackwasser, Strand/Riff, Seefischerei"
+    "eBE": "BE bei bestimmten Angelarten",
+    "Ersatz": "Wildnisleben+10",
+    "Spezialisierungen": "Flüsse/Bäche, Hochseeangeln, Seen/Sumpf/Brackwasser, Strand/Riff, Seefischerei",
+    "Zweck": "Fischfang, Gewässer einschätzen, Nahrung",
+    "Kernregel": "Probe auf Fang; je TaP* 0,5 Rationen, min. 1; stündlich möglich; Gewässerbewertung ggf. IN/IN/KL",
+    "Misslingen": "kein brauchbarer Fang",
+    "Modifikatoren": "Gewässertyp, Köderwahl, Angelart",
+    "Optional": ""
   },
   {
     "Name": "Orientierung",
@@ -536,8 +696,13 @@
     "Eigenschaften": "(KL/IN/IN)",
     "Typ": "Basis",
     "eBE": "",
-    "Ersatz": "Sternkunde",
-    "Spezialisierungen": ""
+    "Ersatz": "Sternkunde+10",
+    "Spezialisierungen": "Dschungel, Eis/Schnee, Gebirge, Grasland, Meer, Stadt, Unterirdisch, Wald, Wüste",
+    "Zweck": "Himmelsrichtungen, Wegfinden, Raumgefühl",
+    "Kernregel": "Meister verdeckt; in Extremgelände/Gebäudelabyrinthen besonders wichtig",
+    "Misslingen": "verirrt, falsche Richtung",
+    "Modifikatoren": "gleichförmige Umgebung, Helmblickfeld bis +3, Richtungssinn, Innerer Kompass, Geländekunde, Ortskundig",
+    "Optional": ""
   },
   {
     "Name": "Wettervorhersage",
@@ -545,17 +710,27 @@
     "Eigenschaften": "(KL/IN/IN)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Sternkunde",
-    "Spezialisierungen": "nach Geländetyp/Region"
+    "Ersatz": "Wildnisleben+10",
+    "Spezialisierungen": "nach Geländetyp/Region",
+    "Zweck": "Schlechtwetter früh erkennen, Vorsorge",
+    "Kernregel": "Meister verdeckt; passende Geländekunde als Hilfstalent",
+    "Misslingen": "Wetterumschwung überrascht",
+    "Modifikatoren": "Geländetyp, Region, Wetterkonstanz, Ortsfremde",
+    "Optional": ""
   },
   {
     "Name": "Wildnisleben",
     "Kategorie": "Naturtalente",
     "Eigenschaften": "(IN/GE/KO)",
     "Typ": "Basis",
-    "eBE": "",
-    "Ersatz": "Tierkunde, Pflanzenkunde",
-    "Spezialisierungen": ""
+    "eBE": "situativ; beim Einschätzen irrelevant",
+    "Ersatz": "Tierkunde+10, Pflanzenkunde+10",
+    "Spezialisierungen": "Dschungel, Eis/Schnee, Gebirge, Meer, Steppe, Sumpf, Wald, Wüste",
+    "Zweck": "Lager, Feuer, Brennstoff, Jagdstellen, Überleben draußen",
+    "Kernregel": "Meister verdeckt; Geländekunde/Ortskenntnis können erleichtern",
+    "Misslingen": "schlechter Lagerplatz, nasse Ausrüstung, Ressourcenfehler",
+    "Modifikatoren": "Umgebung, Bekanntheit des Geländes, Wetter",
+    "Optional": ""
   },
   {
     "Name": "Anatomie",
@@ -563,8 +738,13 @@
     "Eigenschaften": "(MU/KL/FF)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Heilkunde Wunden, Heilkunde Krankheiten",
-    "Spezialisierungen": "nach Spezies"
+    "Ersatz": "Heilkunde Wunden+5, Heilkunde Krankheiten+10",
+    "Spezialisierungen": "nach Spezies",
+    "Zweck": "Körperbau, Organe, Schwachstellen",
+    "Kernregel": "Voraussetzung keine Totenangst; TaW 10+: waffenlos gegen menschenähnliche Ziele +1 TP",
+    "Misslingen": "falsche Einordnung, Fehlbehandlung",
+    "Modifikatoren": "Speziesfremde, Zustand des Körpers",
+    "Optional": "oft Hilfstalent"
   },
   {
     "Name": "Baukunst",
@@ -572,8 +752,13 @@
     "Eigenschaften": "(KL/KL/FF)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Zimmermann, Maurer, Steinmetz",
-    "Spezialisierungen": "Hochbau (Wohn- und Repräsentationsgebäude), Tiefbau (Brücken, Kanäle, Straßen), Wehranlagen"
+    "Ersatz": "Zimmermann+10, Maurer+10, Steinmetz+10",
+    "Spezialisierungen": "Hochbau(Wohn- und Repräsentationsgebäude), Tiefbau(Brücken, Kanäle, Straßen), Wehranlagen",
+    "Zweck": "Bauten planen, Konstruktion beurteilen, Bau überwachen",
+    "Kernregel": "Voraussetzung Lesen/Schreiben 4, Malen/Zeichnen 5, Rechnen 5",
+    "Misslingen": "Planungsfehler, instabile Konstruktion, Fehleinschätzung",
+    "Modifikatoren": "Bauart, Material, Maßstab",
+    "Optional": ""
   },
   {
     "Name": "Brettspiel",
@@ -581,8 +766,13 @@
     "Eigenschaften": "(KL/KL/IN)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Kriegskunst, Rechnen",
-    "Spezialisierungen": "nach Spiel"
+    "Ersatz": "Kriegskunst(Strategie)+10, Rechnen+10",
+    "Spezialisierungen": "nach Spiel",
+    "Zweck": "Regeln, Technik, Kombinationen, Stellungseinschätzung",
+    "Kernregel": "offene Probe für Spielstärke/Wettstreit naheliegend",
+    "Misslingen": "Fehlzug, Fehleinschätzung, Niederlage",
+    "Modifikatoren": "Spieltyp, Gegnerstärke",
+    "Optional": ""
   },
   {
     "Name": "Geographie",
@@ -590,8 +780,13 @@
     "Eigenschaften": "(KL/KL/IN)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Sagen/Legenden",
-    "Spezialisierungen": ""
+    "Ersatz": "Sagen/Legenden+10",
+    "Spezialisierungen": "nach Region",
+    "Zweck": "Landschaften, Klima, Böden, Flüsse, Pässe, Regionen",
+    "Kernregel": "kulturelle Detailfragen ohne Kulturkunde erschwert; Sitten eher Etikette, Mythen eher Sagen/Legenden oder Götter/Kulte",
+    "Misslingen": "falsche Regionalinfos, Fehlplanung",
+    "Modifikatoren": "Kulturkunde, Regionenfremde, Detailtiefe",
+    "Optional": ""
   },
   {
     "Name": "Geschichtswissen",
@@ -599,8 +794,13 @@
     "Eigenschaften": "(KL/KL/IN)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Sagen/Legenden",
-    "Spezialisierungen": ""
+    "Ersatz": "Sagen/Legenden+10, passende Fach-Talente+10",
+    "Spezialisierungen": "nach Kultur; Bau- und Kunstgeschichte, Militär-, Religions-, Wissenschaftsgeschichte",
+    "Zweck": "Historie, alte Quellen, Einordnung, Bewertung",
+    "Kernregel": "Voraussetzung Lesen/Schreiben 4; ohne Kulturkunde oft erschwert",
+    "Misslingen": "falsche Datierung, Fehlinterpretation",
+    "Modifikatoren": "Quellenlage, Kulturkunde, Thema",
+    "Optional": ""
   },
   {
     "Name": "Gesteinskunde",
@@ -608,8 +808,13 @@
     "Eigenschaften": "(KL/IN/FF)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Baukunst, Bergbau, Hüttenkunde, Steinmetz",
-    "Spezialisierungen": "Baugestein, Edelmetalle, Edelsteine"
+    "Ersatz": "Steinmetz+5, Bergbau+10, Baukunst+10, Steinschneider+10, Hüttenkunde+10",
+    "Spezialisierungen": "Baugestein, Edelmetalle, Edelsteine",
+    "Zweck": "Gestein/Erz/Edelstein bestimmen, Bauzweck prüfen, Erzadern/Schürfstellen finden",
+    "Kernregel": "Materialeigenschaften, Baueignung, Bodensuche nach Erz/Edelmetallen/Edelsteinen",
+    "Misslingen": "Fehlbestimmung, wertlose Suche, falsche Materialeinschätzung",
+    "Modifikatoren": "Gesteinsart, Probequalität, Umgebung, Fachnähe",
+    "Optional": ""
   },
   {
     "Name": "Götter/Kulte",
@@ -617,8 +822,13 @@
     "Eigenschaften": "(KL/KL/IN)",
     "Typ": "Basis",
     "eBE": "",
-    "Ersatz": "Geschichtswissen, Sagen/Legenden",
-    "Spezialisierungen": "je nach Glaubensausrichtung"
+    "Ersatz": "Geschichtswissen+10, Sagen/Legenden+10",
+    "Spezialisierungen": "je nach Glaubensausrichtung",
+    "Zweck": "Riten, Bekenntnisse, Heiligenlegenden, geziemende Anreden/Verbeugungen",
+    "Kernregel": "Eigener Glaube; TaW 7+ erlaubt Vertiefung anderer Religionen; fremde Religionen ohne passende Kulturkunde erschwert",
+    "Misslingen": "ritueller Fauxpas, falsche Anrede, Irrtum über Glaubensinhalte",
+    "Modifikatoren": "Kulturkunde, Fremdreligion, Sektennähe, Detailgrad",
+    "Optional": ""
   },
   {
     "Name": "Heraldik",
@@ -626,8 +836,13 @@
     "Eigenschaften": "(KL/KL/FF)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Etikette",
-    "Spezialisierungen": "nach Staat"
+    "Ersatz": "Etikette+10",
+    "Spezialisierungen": "nach Staat",
+    "Zweck": "Wappen, Feldzeichen, Helmzieren, Erblinien, Regimenterfarben erkennen",
+    "Kernregel": "Herkunft, Zweiglinie, Fälschung/Phantasiewappen; kulturabhängig",
+    "Misslingen": "falsche Zuordnung, gefälschtes Wappen nicht erkannt",
+    "Modifikatoren": "Kulturkunde, Sichtbarkeit, Komplexität, Staatsfremdheit",
+    "Optional": ""
   },
   {
     "Name": "Hüttenkunde",
@@ -635,8 +850,13 @@
     "Eigenschaften": "(KL/IN/KO)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Alchimie, Grobschmied, Metallguss",
-    "Spezialisierungen": "nach Metall/Erz (Edelmetalle, Eisen/Stahl, Kupfer/Bronze/Messing, Zinn, Magische Metalle ...)"
+    "Ersatz": "Alchimie+10, Metallguss+10, Grobschmied+15",
+    "Spezialisierungen": "nach Metall/Erz (Edelmetalle, Eisen/Stahl, Kupfer/Bronze/Messing, Zinn, Magische Metalle ...)",
+    "Zweck": "Metalle aus Erz gewinnen, Legierungen herstellen, Metallwaren/Erzadern bewerten",
+    "Kernregel": "Schlüsselwissen zwischen Bergbau und Schmiede; Qualität von Metall und Erz einschätzen",
+    "Misslingen": "schlechte Schmelze/Legierung, Fehleinschätzung von Ware oder Ader",
+    "Modifikatoren": "Metallart, Erzqualität, Ofen/Verfahren, Reinheit",
+    "Optional": ""
   },
   {
     "Name": "Kriegskunst",
@@ -644,8 +864,13 @@
     "Eigenschaften": "(MU/KL/CH)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Brettspiel, Rechnen, Menschenkenntnis, Tierkunde",
-    "Spezialisierungen": ""
+    "Ersatz": "Brett-/Kartenspiel+10; Rechnen, Menschenkenntnis, Tierkunde situativ",
+    "Spezialisierungen": "Logistik, Militärgeschichte, Monstren, Seegefechte, Strategie, Taktik",
+    "Zweck": "Schlachten lenken, Truppen bewegen/versorgen/motivieren, Gegner/Terrain beurteilen",
+    "Kernregel": "Strategie, Taktik, Hauptmannsentscheidungen; wichtig für Kampfeinschätzung",
+    "Misslingen": "falscher Plan, schlechte Aufstellung, Fehlurteil über Gegner/Terrain",
+    "Modifikatoren": "Truppenstärke, Informationslage, Gelände, Zeitdruck, Gegnertyp",
+    "Optional": "Zwergisch zusätzlich Drachenbekämpfung"
   },
   {
     "Name": "Kryptographie",
@@ -653,8 +878,13 @@
     "Eigenschaften": "(KL/KL/IN)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Sprachenkunde, Rechnen",
-    "Spezialisierungen": ""
+    "Ersatz": "Rechnen+10, Sprachenkunde+10",
+    "Spezialisierungen": "",
+    "Zweck": "Texte ver- und entschlüsseln, Geheimschriften analysieren",
+    "Kernregel": "Meister kann verdeckt würfeln; Entschlüsselung meist als längerfristiger Talenteinsatz mit TaP*-Ansammlung",
+    "Misslingen": "Fehldeutung, kein Fortschritt, falsche Klartextannahme",
+    "Modifikatoren": "Verschlüsselungssystem, Textmenge, Hinweise, Zeit",
+    "Optional": "Voraussetzung L/S 6, Rechnen 6, Sprachenkunde 4, M/Z 4"
   },
   {
     "Name": "Magiekunde",
@@ -662,8 +892,13 @@
     "Eigenschaften": "(KL/KL/IN)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Sagen/Legenden, Götter/Kulte",
-    "Spezialisierungen": ""
+    "Ersatz": "Sagen/Legenden+10, Götter/Kulte+10(Sphärologie)",
+    "Spezialisierungen": "Artefaktherstellung, Dämonologie, Elementarismus, Magiehistorie, Magietheorie, Magische Analyse, Sphärologie, Zauberpraxis, Zauberwerkstatt",
+    "Zweck": "Zauberwirkungen, Artefakte, Spuren, arkane Hintergründe erkennen/deuten",
+    "Kernregel": "Auch für Nichtzauberer; Zauberpraxis erkennt Gesten/Formeln/Wirkungen; TaW >10 nur mit Lesen/Schreiben 6",
+    "Misslingen": "falsche Deutung von Zauber, Artefakt oder Spur",
+    "Modifikatoren": "Spezialisierung, Beobachtungsnähe, Vorwissen, Magiegebiet",
+    "Optional": ""
   },
   {
     "Name": "Mechanik",
@@ -671,8 +906,13 @@
     "Eigenschaften": "(KL/KL/FF)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Feinmechanik",
-    "Spezialisierungen": ""
+    "Ersatz": "Feinmechanik+10",
+    "Spezialisierungen": "Belagerungswaffen, Kräne/Hebewerke/Mahlwerke, Materialkunde, Pumpen und Wasserkraft, Windkraft",
+    "Zweck": "Hebelgesetze, Reibung, Flaschenzug, schiefe Ebene; Geräte planen/prüfen",
+    "Kernregel": "Improvisierte Geräte per Probe; komplexe Konstruktionen mit Zuschlag bzw. TaP*-Ansammlung; Meister kann verdeckt würfeln",
+    "Misslingen": "Gerät funktioniert nicht oder versagt erst im Einsatz",
+    "Modifikatoren": "Komplexität, Material, Bauqualität, Probelauf",
+    "Optional": "nützlich für Armbrüste/Belagerungswaffen; TaW >10 nur mit L/S, M/Z, Rechnen 6"
   },
   {
     "Name": "Pflanzenkunde",
@@ -680,8 +920,13 @@
     "Eigenschaften": "(KL/IN/FF)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Wildnisleben",
-    "Spezialisierungen": ""
+    "Ersatz": "Wildnisleben+10",
+    "Spezialisierungen": "nach Gelände: Dschungel, Gebirge, Grasland, Meer, Steppe, Sumpf, Tundra, Wald, Wüste",
+    "Zweck": "Pflanzen suchen, bestimmen, Heil-/Giftstoffe gewinnen, Elixiere brauen",
+    "Kernregel": "Drei Einsatzfelder: Suche, Bestimmung, Brauen; Bestimmungs- und Brauproben können verdeckt laufen",
+    "Misslingen": "Pflanze nicht gefunden, falsch bestimmt, gefährlicher Fehltrank",
+    "Modifikatoren": "Gelände, Saison, Pflanzenart, Verarbeitungsaufwand",
+    "Optional": ""
   },
   {
     "Name": "Philosophie",
@@ -689,8 +934,13 @@
     "Eigenschaften": "(KL/KL/IN)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Götter/Kulte, Magiekunde, Geschichtswissen, Sagen/Legenden",
-    "Spezialisierungen": ""
+    "Ersatz": "Götter/Kulte+10, Magiekunde+10, Geschichtswissen+15, Sagen/Legenden+15",
+    "Spezialisierungen": "",
+    "Zweck": "Denkschulen, Logik, Ethik, Erkenntnistheorie, Kosmogonie",
+    "Kernregel": "Vergleich von Weltbildern und Lehrsystemen unabhängig vom Glaubensbekenntnis",
+    "Misslingen": "Fehlschluss, falsche Schule/Lehre, schlechte Argumentation",
+    "Modifikatoren": "Abstraktionsgrad, Thema, Quellenlage",
+    "Optional": ""
   },
   {
     "Name": "Rechnen",
@@ -699,7 +949,12 @@
     "Typ": "Basis",
     "eBE": "",
     "Ersatz": "",
-    "Spezialisierungen": ""
+    "Spezialisierungen": "Arithmetik, Buchführung, Geometrie",
+    "Zweck": "Zählen, Grundrechenarten, Geometrie, Zinseszins, höhere Mathematik",
+    "Kernregel": "TaW 0 nur zählen; 1-2 mühselig; 3 Grundrechenarten; 4 Mindestbasis vieler Wissenstalente; ab 6 höhere Mathematik",
+    "Misslingen": "Rechenfehler, falsche Kalkulation",
+    "Modifikatoren": "Komplexität, Hilfsmittel, Zeit",
+    "Optional": ""
   },
   {
     "Name": "Rechtskunde",
@@ -707,8 +962,13 @@
     "Eigenschaften": "(KL/KL/IN)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Etikette, Staatskunst",
-    "Spezialisierungen": ""
+    "Ersatz": "Etikette+10, Staatskunst+10",
+    "Spezialisierungen": "Gildenrecht, Kirchenrecht, Strafrecht, Staatsrecht oder nach jeweiligem Staat",
+    "Zweck": "Rechtssysteme von Ländern, Gilden, Kirchen; Vergehen vermeiden/handhaben",
+    "Kernregel": "Meister kann verdeckt würfeln; Kulturkunde modifiziert vorhandene oder fehlende Rechtsnähe",
+    "Misslingen": "Rechtsirrtum, falsches Verhalten gegenüber Obrigkeit/Gericht",
+    "Modifikatoren": "Staat, Rechtsgebiet, Kulturkunde, Fallkomplexität",
+    "Optional": ""
   },
   {
     "Name": "Sagen/Legenden",
@@ -716,8 +976,13 @@
     "Eigenschaften": "(KL/IN/CH)",
     "Typ": "Basis",
     "eBE": "",
-    "Ersatz": "Geschichtswissen, Götter/Kulte",
-    "Spezialisierungen": "nach Kultur"
+    "Ersatz": "Geschichtswissen+10, Götter/Kulte+10",
+    "Spezialisierungen": "nach Kultur",
+    "Zweck": "Mythen, Götter/Heroen, Bräuche, mündliche und schriftliche Überlieferung",
+    "Kernregel": "Eigene Kultur meist ohne Probe; fremde Völker ohne passende Kulturkunde erschwert",
+    "Misslingen": "falsche Sage, irreführender Brauch, Mythos verwechselt",
+    "Modifikatoren": "Kulturkunde, Fremdkultur, Seltenheit, Quellenlage",
+    "Optional": ""
   },
   {
     "Name": "Schätzen",
@@ -725,8 +990,13 @@
     "Eigenschaften": "(KL/IN/IN)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Handel, Juwelier, Feinm. (Goldschmied)",
-    "Spezialisierungen": "Antiquitäten, Materialwert, Schmuck, Handwerksgüter"
+    "Ersatz": "Feinmechanik(Goldschmied)+5, Handel+5, Steinschneider/Juwelier+5",
+    "Spezialisierungen": "Antiquitäten, Materialwert, Schmuck, Handwerksgüter",
+    "Zweck": "Marktwert und Verkaufspreis materieller Gegenstände erkennen",
+    "Kernregel": "Meister kann verdeckt würfeln; betrifft materielle Werte, nicht Entfernungen/Baustoffmengen",
+    "Misslingen": "Über-/Unterbewertung, Fehlkauf, schlechter Verkauf",
+    "Modifikatoren": "Zustand, Seltenheit, Echtheit, Warengruppe",
+    "Optional": ""
   },
   {
     "Name": "Sprachenkunde",
@@ -735,7 +1005,12 @@
     "Typ": "Spezial",
     "eBE": "",
     "Ersatz": "",
-    "Spezialisierungen": "nach Sprachfamilie"
+    "Spezialisierungen": "nach Sprachfamilie",
+    "Zweck": "Verwandtschaft von Sprachen/Schriften erkennen, Dialekte und Sprachentwicklung deuten",
+    "Kernregel": "Erlaubt Schlüsse von bekannter auf unbekannte verwandte Sprache/Schrift; nötig für manche alten Fremdsprachen",
+    "Misslingen": "falsche Zuordnung, Dialekt/Schrift fehlgedeutet",
+    "Modifikatoren": "Nähe der Sprachfamilie, Kenntnis verwandter Sprache, Schriftsystem",
+    "Optional": ""
   },
   {
     "Name": "Staatskunst",
@@ -743,8 +1018,13 @@
     "Eigenschaften": "(KL/IN/CH)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Hauswirtschaft, Rechtskunde (Staatsrecht)",
-    "Spezialisierungen": "Diplomatie, Intrige, Verwaltung"
+    "Ersatz": "Hauswirtschaft+10, Rechtskunde(Staatsrecht)+10",
+    "Spezialisierungen": "Diplomatie, Intrige, Verwaltung",
+    "Zweck": "Herrschaftsformen, Staatsfinanzen, Zusammenleben von Staaten und Völkern",
+    "Kernregel": "Theoriewissen für Diplomaten, Beamte, Adlige; Politik- und Verwaltungsverständnis",
+    "Misslingen": "politische Fehleinschätzung, Verwaltungs-/Diplomatiefehler",
+    "Modifikatoren": "Staatsfremdheit, Komplexität, Informationslage",
+    "Optional": ""
   },
   {
     "Name": "Sternkunde",
@@ -752,8 +1032,13 @@
     "Eigenschaften": "(KL/KL/IN)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Gabe Prophezeien (Astrologie) (+5)",
-    "Spezialisierungen": ""
+    "Ersatz": "Gabe Prophezeien(Astrologie)+5",
+    "Spezialisierungen": "Himmelskartographie, Horoskope, Navigation, Zeitbestimmung",
+    "Zweck": "Sterne zur Deutung, Navigation, Zeitmessung und Himmelsbeobachtung nutzen",
+    "Kernregel": "Astrologie, Navigation, Zeitbestimmung und Theorie des Himmelslaufs; TaW >10 nur mit Sprache/Schrift, Rechnen, Sinnenschärfe 6",
+    "Misslingen": "falscher Kurs, falsche Zeitbestimmung, Fehlhoroskop",
+    "Modifikatoren": "Sicht, Wetter, Instrumente, Jahreszeit, Region",
+    "Optional": ""
   },
   {
     "Name": "Tierkunde",
@@ -761,8 +1046,13 @@
     "Eigenschaften": "(MU/KL/IN)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Viehzucht, Reiten, Wildnisleben",
-    "Spezialisierungen": ""
+    "Ersatz": "je nach Wesen Reiten+10, Viehzucht+10 oder Wildnisleben+10",
+    "Spezialisierungen": "Drachen, Jagdwild, Meeresgetier, Monstren, Nutztiere, Raubtiere, Schädlinge, Vielbeiner, Vögel oder nach Region",
+    "Zweck": "Tierarten bestimmen, Verhalten vorausahnen, Jagd unterstützen, Grundanatomie kennen",
+    "Kernregel": "Auch unbekannte Tiere per Vergleich mit vertrauten Arten einschätzen",
+    "Misslingen": "Art/Verhalten falsch eingeschätzt, Jagdfehler",
+    "Modifikatoren": "Wesenart, Regionsfremdheit, Beobachtungsqualität, Spezialgebiet",
+    "Optional": ""
   },
   {
     "Name": "Abrichten",
@@ -770,8 +1060,13 @@
     "Eigenschaften": "(MU/IN/CH)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Viehzucht, Tierkunde, Reiten",
-    "Spezialisierungen": "Dompteur, Echsenbändiger, Falkner, Hundeführer, Zureiter"
+    "Ersatz": "je nach Wesen Reiten+10, Tierkunde+10, Viehzucht+10",
+    "Spezialisierungen": "Dompteur, Echsenbändiger, Falkner, Hundeführer, Zureiter",
+    "Zweck": "Tieren Kunststücke, Gehorsam und Spezialausbildung beibringen",
+    "Kernregel": "TaP* meist ansammeln; Fehlversuche +2 je gescheiterter Probe; Schwierigkeit nach Kunststück, Lernfähigkeit und Loyalität; TaW >10 nur mit Tierkunde 4",
+    "Misslingen": "kein Fortschritt, steigende Erschwernis, Ausbildung scheitert",
+    "Modifikatoren": "Kunststückschwierigkeit, Fehlversuche, Loyalität, Tierart",
+    "Optional": ""
   },
   {
     "Name": "Ackerbau",
@@ -779,8 +1074,13 @@
     "Eigenschaften": "(IN/FF/KO)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Viehzucht, Pflanzenkunde",
-    "Spezialisierungen": "evtl. nach angebauter Frucht oder nach Klimazone, zwergische Pilzzucht"
+    "Ersatz": "Viehzucht+10, Pflanzenkunde+10",
+    "Spezialisierungen": "evtl. nach angebauter Frucht oder nach Klimazone, zwergische Pilzzucht",
+    "Zweck": "Boden, Aussaat, Ernte, Feldbestellung, Lagerung; Nutzpflanzen und Nahrungswert erkennen",
+    "Kernregel": "Erkennt auch fremde Nutzpflanzen, Wert und Haltbarkeit von Nahrungsmitteln; umfasst Umgang mit Pflug, Hacke, Dreschflegel",
+    "Misslingen": "schlechte Aussaat/Ernte, falsche Haltbarkeit, Nutzpflanze verkannt",
+    "Modifikatoren": "Boden, Klima, Saison, Fruchtart, Lagerbedingungen",
+    "Optional": ""
   },
   {
     "Name": "Alchimie",
@@ -788,8 +1088,13 @@
     "Eigenschaften": "(MU/KL/FF)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Kochen (Tränke), Pflanzenkunde",
-    "Spezialisierungen": ""
+    "Ersatz": "Kochen(Tränke)+10, Pflanzenkunde+10",
+    "Spezialisierungen": "Brandmittel, Gifte, Laborpraxis, Zauber-Elixiere, Farben/Lacke, Materialveredelung, Theoretische Alchimie",
+    "Zweck": "Mixturen, Chemikalien, Analyse unbekannter Stoffe",
+    "Kernregel": "Meister setzt Zuschlag; Rezeptur+Zutaten nötig; Voraussetzung L/S 4, Rechnen 4; Labor oder Untersuchungsausrüstung",
+    "Misslingen": "Fehlanalyse, Fehlmischung, Stinkwolke bis Explosion",
+    "Modifikatoren": "Rezeptur, Zutatenqualität, Labor, Gefährlichkeit",
+    "Optional": ""
   },
   {
     "Name": "Bergbau",
@@ -797,8 +1102,13 @@
     "Eigenschaften": "(IN/KO/KK)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Steinmetz, Maurer, Baukunst, Gesteinskunde",
-    "Spezialisierungen": "Bergwerke, Kanalisiation, natürliche Höhlen, Sappeur, unterirdische Städte"
+    "Ersatz": "Baukunst+10, Gesteinskunde+10, Maurer+10, Steinmetz+10",
+    "Spezialisierungen": "Bergwerke, Kanalisation, natürliche Höhlen, Sappeur, unterirdische Städte",
+    "Zweck": "Schächte/Tunnel anlegen, Untergrundanlagen beurteilen",
+    "Kernregel": "Erkennt Erbauer, Umbauten, bauliche Schwächen; Voraussetzung für TaW>10: Gesteinskunde 4",
+    "Misslingen": "Fehlanlage, Fehlbeurteilung, übersehene Gefahr",
+    "Modifikatoren": "Gestein, Belüftung, Entwässerung, Komplexität",
+    "Optional": ""
   },
   {
     "Name": "Bogenbau",
@@ -806,8 +1116,13 @@
     "Eigenschaften": "(KL/IN/FF)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Holzbearbeitung, Feinmechanik, Grobschmied",
-    "Spezialisierungen": "Armbrust, Bogen, Bolzen/Pfeile, Torsionswaffen"
+    "Ersatz": "Holzbearbeitung+10, Feinmechanik+10, Grobschmied+15 nur Armbrüste",
+    "Spezialisierungen": "Armbrust, Bogen, Bolzen/Pfeile, Torsionswaffen",
+    "Zweck": "Schusswaffen/Geschosse bauen, Qualität einschätzen",
+    "Kernregel": "Einzige Fertigkeit für spannungsbasierte Schusswaffen; Voraussetzung Holzbearbeitung 4",
+    "Misslingen": "unbrauchbare, ungenaue oder gefährliche Waffe/Munition",
+    "Modifikatoren": "Waffentyp, Material, Spannkraft, Präzisionsanspruch",
+    "Optional": ""
   },
   {
     "Name": "Boote Fahren",
@@ -815,8 +1130,13 @@
     "Eigenschaften": "(GE/KO/KK)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Seefahrt",
-    "Spezialisierungen": "Einmaster (Segeln), Flöße (Staken), Kanus/Kajaks (Paddeln), Ruderboote (Rudern), Eissegler"
+    "Ersatz": "Seefahrt+5",
+    "Spezialisierungen": "Einmaster(Segeln), Flöße(Staken), Kanus/Kajaks(Paddeln), Ruderboote(Rudern), Eissegler",
+    "Zweck": "Kleine Wasserfahrzeuge bewegen",
+    "Kernregel": "Stillwasser oft ohne Probe; Segeln, Wildwasser, Manöver mit Probe; große Schiffe über Seefahrt",
+    "Misslingen": "Abtreiben, Kenter-/Unfallgefahr, Kontrollverlust",
+    "Modifikatoren": "Gewässer, Wetter, Fahrzeugtyp, Manöver",
+    "Optional": ""
   },
   {
     "Name": "Brauer",
@@ -824,8 +1144,13 @@
     "Eigenschaften": "(KL/FF/KK)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Alchimie",
-    "Spezialisierungen": ""
+    "Ersatz": "Alchimie+10",
+    "Spezialisierungen": "",
+    "Zweck": "Stärkebasierte Gärgetränke herstellen, lagern, beurteilen",
+    "Kernregel": "Kennt Getreidelagerung und Gebräuqualität",
+    "Misslingen": "verdorbenes, schwaches oder ungenießbares Gebräu",
+    "Modifikatoren": "Rohstoff, Gärung, Lagerung, Reinheit",
+    "Optional": ""
   },
   {
     "Name": "Drucker",
@@ -833,8 +1158,13 @@
     "Eigenschaften": "(KL/FF/KK)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Mechanik, Stoffe Färben, Alchimie, Metallguss",
-    "Spezialisierungen": "Buchdruck, Druckereitechnik, Pamphlete, Typographie"
+    "Ersatz": "Mechanik+10, Stoffe Färben+10, Alchimie+10, Metallguss+15",
+    "Spezialisierungen": "Buchdruck, Druckereitechnik, Pamphlete, Typographie",
+    "Zweck": "Drucksatz, Farben, Druckstöcke, Pressen",
+    "Kernregel": "Voraussetzung L/S 6, Mechanik 4, Malen/Zeichnen 4",
+    "Misslingen": "unsauberer Druck, beschädigter Satz, Pressfehler",
+    "Modifikatoren": "Vorlage, Typensatz, Farbqualität, Pressentechnik",
+    "Optional": ""
   },
   {
     "Name": "Fahrzeug Lenken",
@@ -843,7 +1173,12 @@
     "Typ": "Spezial",
     "eBE": "",
     "Ersatz": "",
-    "Spezialisierungen": "Lastkarren, Streitwagen, Zuggespanne, Hunde- und Dachsschlitten"
+    "Spezialisierungen": "Lastkarren, Streitwagen, Zuggespanne, Hunde- und Dachsschlitten",
+    "Zweck": "Wagen/Gespanne steuern, Manöver fahren",
+    "Kernregel": "Schwierigkeit nach Fahrzeug und Zugtierzahl; vierspännige Rennkutsche schon bei langsam +4",
+    "Misslingen": "Kontrollverlust, Kollision, Umkippen, Gespann scheut",
+    "Modifikatoren": "Fahrzeugtyp, Zugtiere, Tempo, Gelände, Manöver",
+    "Optional": "Streitwagen wichtig für Reiterkampf"
   },
   {
     "Name": "Falschspiel",
@@ -851,8 +1186,13 @@
     "Eigenschaften": "(MU/CH/FF)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Gaukeleien (Taschenspielereien)",
-    "Spezialisierungen": "Würfel, Karten"
+    "Ersatz": "Gaukeleien(Taschenspielereien)+10",
+    "Spezialisierungen": "Würfel, Karten",
+    "Zweck": "Bei Glücksspielen betrügen, Manipulation verbergen",
+    "Kernregel": "Menschenkenntnis 4; Meister oft verdeckt; hohes Falschspiel/Sinnenschärfe erkennt Betrug",
+    "Misslingen": "Entdeckung, Streit, Strafe",
+    "Modifikatoren": "Spielart, Ablenkung, Gegenspieler, Kontrolle",
+    "Optional": ""
   },
   {
     "Name": "Feinmechanik",
@@ -861,7 +1201,12 @@
     "Typ": "Spezial",
     "eBE": "",
     "Ersatz": "",
-    "Spezialisierungen": "Gold- und Silberschmied, Gravieren, Schlösser, Siegelstöcke, Trickwaffen/Fallen, Uhrwerke"
+    "Spezialisierungen": "Gold- und Silberschmied, Gravieren, Schlösser, Siegelstöcke, Trickwaffen/Fallen, Uhrwerke",
+    "Zweck": "Kleinstmechanik, Schmuck, Gravuren, Schlösser, Präzisionsarbeit",
+    "Kernregel": "Voraussetzung Malen/Zeichnen 4",
+    "Misslingen": "klemmender Mechanismus, Wertverlust, Bruch",
+    "Modifikatoren": "Feinheit, Material, Werkzeug, Komplexität",
+    "Optional": ""
   },
   {
     "Name": "Feuersteinbearbeitung",
@@ -869,8 +1214,13 @@
     "Eigenschaften": "(KL/FF/FF)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Steinmetz",
-    "Spezialisierungen": ""
+    "Ersatz": "Steinmetz+10",
+    "Spezialisierungen": "",
+    "Zweck": "Werkzeuge, Klingen, Spitzen aus Feuerstein/Vulkanglas",
+    "Kernregel": "Weiterverarbeitung teils auch mit Holzbearbeitung; sehr scharf möglich, aber spröde",
+    "Misslingen": "brüchiges, stumpfes oder unbrauchbares Werkzeug",
+    "Modifikatoren": "Steinart, Schlagtechnik, Weiterverarbeitung",
+    "Optional": ""
   },
   {
     "Name": "Fleischer",
@@ -878,8 +1228,13 @@
     "Eigenschaften": "(KL/FF/KK)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Viehzucht, Fischen/Angeln, Tierkunde, Kochen, Anatomie, Gerber/Kürschner (Trophäen)",
-    "Spezialisierungen": "Fische, Geflügel, Reptilien, Säugetiere"
+    "Ersatz": "Anatomie+10, Fischen/Angeln+10, Kochen+10, Tierkunde+10, Viehzucht+10, Gerber/Kürschner(Trophäen)+10",
+    "Spezialisierungen": "Fische, Geflügel, Reptilien, Säugetiere",
+    "Zweck": "Schlachten, verwerten, konservieren, Fleisch beurteilen",
+    "Kernregel": "TaW 10+: +1 TP gegen grob ähnliches Schlachtvieh; nicht kumulativ mit Anatomie",
+    "Misslingen": "Verderb, Materialverlust, schlechte Zerlegung",
+    "Modifikatoren": "Tierart, Zustand, Hygiene, Haltbarmachung",
+    "Optional": ""
   },
   {
     "Name": "Gerber/Kürschner",
@@ -887,8 +1242,13 @@
     "Eigenschaften": "(KL/FF/KO)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Alchimie, Fleischer",
-    "Spezialisierungen": "Gerber, Kürschner, Trophäen"
+    "Ersatz": "Alchimie+10, Fleischer+10",
+    "Spezialisierungen": "Gerber, Kürschner, Trophäen",
+    "Zweck": "Häute/Felle haltbar machen, Leder/Pelz/Trophäen",
+    "Kernregel": "Beurteilt Wert und Qualität von Pelz- und Lederwaren",
+    "Misslingen": "verdorbene Haut, Haarverlust, Wertverlust",
+    "Modifikatoren": "Tierart, Frische, Chemikalien, Verarbeitung",
+    "Optional": ""
   },
   {
     "Name": "Glaskunst",
@@ -896,8 +1256,13 @@
     "Eigenschaften": "(FF/FF/KO)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Juwelier",
-    "Spezialisierungen": "Fensterscheiben, Glasbläserei, Linsenschleifen, Spiegel"
+    "Ersatz": "Steinschneider/Juwelier+10",
+    "Spezialisierungen": "Fensterscheiben, Glasbläserei, Linsenschleifen, Spiegel",
+    "Zweck": "Glaswaren herstellen, Qualität/Wert beurteilen",
+    "Kernregel": "Umfasst Gebrauchs- und Feinglas",
+    "Misslingen": "Sprung, Trübung, Verzug, Bruch",
+    "Modifikatoren": "Glasart, Reinheit, Hitze, Formgenauigkeit",
+    "Optional": ""
   },
   {
     "Name": "Grobschmied",
@@ -905,8 +1270,13 @@
     "Eigenschaften": "(FF/KO/KK)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Metallguss",
-    "Spezialisierungen": "Drahtzieher/Sarwirker, Hufschmied, Plättner, Schwarzschmied, Spengler, Waffenschmied"
+    "Ersatz": "Metallguss+15",
+    "Spezialisierungen": "Drahtzieher/Sarwirker, Hufschmied, Plättner, Schwarzschmied, Spengler, Waffenschmied",
+    "Zweck": "Geschmiedete Metallwaren, Waffen, Rüstungen, Beschläge",
+    "Kernregel": "Für Schmiedearbeit, nicht Guss; Reparatur und Neubau je nach Teilgebiet",
+    "Misslingen": "Riss, schlechte Härte, Verzug, unbrauchbares Werkstück",
+    "Modifikatoren": "Metall, Esse, Werkzeug, Werkstückgröße",
+    "Optional": ""
   },
   {
     "Name": "Handel",
@@ -914,8 +1284,13 @@
     "Eigenschaften": "(KL/IN/CH)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Hauswirtschaft, Geographie, Schätzen",
-    "Spezialisierungen": ""
+    "Ersatz": "Hauswirtschaft+10, Geographie+15, Schätzen+15",
+    "Spezialisierungen": "nach Region oder Warengruppe, z.B. Korn, Metalle, Sklaven, Geldwechsel",
+    "Zweck": "Preise, Ankauf/Verkauf, Transport, Münzen bewerten/tauschen",
+    "Kernregel": "Voraussetzung Rechnen 4; umfasst auch Geldwechsel und Marktkenntnis",
+    "Misslingen": "Fehlkauf, Verlustgeschäft, Falschbewertung",
+    "Modifikatoren": "Marktlage, Region, Warengruppe, Informationsstand",
+    "Optional": ""
   },
   {
     "Name": "Hauswirtschaft",
@@ -923,8 +1298,13 @@
     "Eigenschaften": "(IN/CH/FF)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Rechnen (Buchführung)",
-    "Spezialisierungen": "Bewirtung/Feiern, Personal, Vorratshaltung"
+    "Ersatz": "Rechnen(Buchführung)+10",
+    "Spezialisierungen": "Bewirtung/Feiern, Personal, Vorratshaltung",
+    "Zweck": "Haushalt führen, Vorräte, Dienstboten, Gäste, Feste",
+    "Kernregel": "Nützlich für Herbergen, Tempel, große Haushalte",
+    "Misslingen": "Chaos, Mangel, schlechte Bewirtung, Personalfehler",
+    "Modifikatoren": "Haushaltsgröße, Gästezahl, Vorratslage, Personal",
+    "Optional": ""
   },
   {
     "Name": "Heilkunde Gift",
@@ -932,8 +1312,13 @@
     "Eigenschaften": "(MU/KL/IN)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Alchimie (Gifte), Heilkunde Krankheiten, Kochen (Tränke)",
-    "Spezialisierungen": ""
+    "Ersatz": "Alchimie(Gifte)+5, Heilkunde Krankheiten+10, Kochen(Tränke)+10",
+    "Spezialisierungen": "alchimistische/Zaubergifte, mineralische, pflanzliche, tierische; Atem-, Einnahme-, Kontakt-, Waffengifte; Tierheilkunde",
+    "Zweck": "Gifte erkennen, behandeln, Folgeschaden mindern",
+    "Kernregel": "Erkennen +1/2 Giftstufe; Behandlung +Giftstufe; Nachbehandlung nach 12h +1/2 Giftstufe; Behandlung/Nachbehandlung heilen TaP* LeP",
+    "Misslingen": "keine Heilung; Patzer/Fehlschlag nach Start: +1W6 SP",
+    "Modifikatoren": "Giftstufe, Giftart, Symptomklarheit, Zeit",
+    "Optional": "Zeiten: 5 KR/1 SR/1 SR"
   },
   {
     "Name": "Heilkunde Krankheiten",
@@ -941,8 +1326,13 @@
     "Eigenschaften": "(MU/KL/CH)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Heilkunde Gift",
-    "Spezialisierungen": "nach Region, Tierheilkunde"
+    "Ersatz": "Heilkunde Gift+10",
+    "Spezialisierungen": "nach Region, Tierheilkunde",
+    "Zweck": "Krankheiten diagnostizieren, behandeln, nachbehandeln",
+    "Kernregel": "Erkennen +1/2 Stufe; Behandlung +Stufe; tägliche Nachbehandlung +1/2 Stufe; Behandlung/Nachbehandlung heilen TaP* LeP",
+    "Misslingen": "erste Probe: keine Heilung; spätere Probe: Heilung stoppt, +1W6 SP",
+    "Modifikatoren": "Krankheitsstufe, Symptomklarheit, Region, Zeit",
+    "Optional": "Zeiten: 1 SR/6 SR/täglich 6 SR"
   },
   {
     "Name": "Heilkunde Seele",
@@ -950,8 +1340,13 @@
     "Eigenschaften": "(IN/CH/CH)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Menschenkenntnis, Überzeugen",
-    "Spezialisierungen": ""
+    "Ersatz": "Menschenkenntnis+10, Überzeugen+10",
+    "Spezialisierungen": "",
+    "Zweck": "Magische/geistige Schäden, Schlechte Eigenschaften lindern",
+    "Kernregel": "Magische Ursachen: +3x ZfP*; akut gegen Schlechte Eigenschaft: Probe +2x Wert, Erfolg 1h um 1W6+TaP* gesenkt, Misslingen +1W6",
+    "Misslingen": "Verschlimmerung, neue/erhöhte Schlechte Eigenschaft, geistige Einbuße",
+    "Modifikatoren": "wie Gesellschaftstalente, Schwere, magische Ursache",
+    "Optional": "Dauertherapie: Zuschlag 18-Eigenschaftswert; 1 Tag Klausur"
   },
   {
     "Name": "Heilkunde Wunden",
@@ -959,8 +1354,13 @@
     "Eigenschaften": "(KL/CH/FF)",
     "Typ": "Basis",
     "eBE": "",
-    "Ersatz": "Anatomie",
-    "Spezialisierungen": ""
+    "Ersatz": "Anatomie+10",
+    "Spezialisierungen": "Brüche/Quetschungen, Innere Verletzungen, Schnitte, Tierheilkunde, Verbrennungen, Zahnleiden",
+    "Zweck": "Erste Hilfe, Blutstillung, Wundheilung fördern, Nachbehandlung",
+    "Kernregel": "Erste Hilfe bei 0/-LeP: +2x unter 0, Dauer 2x unter 0 KR-TaP*, min 2 KR; Erfolg 1 LeP. Heilförderung: 1. Probe 4 SR; 2. Probe 6 SR, 1/2 Punktüberschuss als LeP, je 7 TaP* heilt 1 Wunde sofort; tägliche Nachbehandlung 6 SR, je 3 TaP* +1 LeP",
+    "Misslingen": "Erste Hilfe: +1W6 SP; 2./Nachbehandlung: 24h Heilstopp, +1W6 SP",
+    "Modifikatoren": "+3 einfache Gliedmaßenwunde, +5 Kopf/Rumpf oberflächlich, +7 Bruch, +9 Schädel, +12 innere/schwerste Gliedmaßen, +15 fast-tödliche Kopf/Rumpf; Werkzeug/Verbände",
+    "Optional": ""
   },
   {
     "Name": "Holzbearbeitung",
@@ -968,8 +1368,13 @@
     "Eigenschaften": "(KL/FF/KK)",
     "Typ": "Basis",
     "eBE": "",
-    "Ersatz": "Zimmermann",
-    "Spezialisierungen": ""
+    "Ersatz": "Zimmermann+5",
+    "Spezialisierungen": "Beinschnitzerei, Holzkunde, Holzwaffen, Küfer/Wagner, Möbelschreinerei/Tischlerei, Schnitzen",
+    "Zweck": "Holz-/Beinobjekte herstellen, reparieren, schnitzen",
+    "Kernregel": "komplizierte Holzgeräte/Kunstschnitzerei erschwert; TaP* für künstlerischen Eindruck",
+    "Misslingen": "bruchig, instabil, unbrauchbar",
+    "Modifikatoren": "Komplexität, Material, Zeit, Werkzeug",
+    "Optional": ""
   },
   {
     "Name": "Instrumentenbauer",
@@ -977,8 +1382,13 @@
     "Eigenschaften": "(KL/IN/FF)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Holzbearbeitung, Feinmechanik",
-    "Spezialisierungen": "Blasintrumente, Saiteninstrumente, Tasteninstrumente, Trommeln"
+    "Ersatz": "Holzbearbeitung+10, Feinmechanik+10",
+    "Spezialisierungen": "Blasinstrumente, Saiteninstrumente, Tasteninstrumente, Trommeln",
+    "Zweck": "Instrumente bauen, reparieren, Wert/Qualität schätzen",
+    "Kernregel": "Voraussetzung Holzbearbeitung 4, Feinmechanik 4, Musizieren 4",
+    "Misslingen": "verstimmt, schlecht klingend, unbrauchbar",
+    "Modifikatoren": "Instrumentengruppe, Material, Feinheit, Stimmung",
+    "Optional": ""
   },
   {
     "Name": "Kartographie",
@@ -986,8 +1396,13 @@
     "Eigenschaften": "(KL/KL/FF)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Orientierung, Sternkunde",
-    "Spezialisierungen": "Gebäude, Höhlen/Tunnel, Küsten/Meere, Landschaften, Stadt"
+    "Ersatz": "Orientierung+10, Sternkunde+10",
+    "Spezialisierungen": "Gebäude, Höhlen/Tunnel, Küsten/Meere, Landschaften, Stadt",
+    "Zweck": "Karten/Pläne, Distanzen, Höhlen/Gebäude/Landschaften",
+    "Kernregel": "Voraussetzung Malen/Zeichnen 4; kartierte Gebiete erleichtern Orientierung; Kartenlesen ohne Talent fehleranfällig",
+    "Misslingen": "Fehlplan, Fehlinterpretation, falsche Distanz",
+    "Modifikatoren": "Gelände, Maßstab, Genauigkeit, Vorerkundung",
+    "Optional": ""
   },
   {
     "Name": "Kochen",
@@ -995,8 +1410,13 @@
     "Eigenschaften": "(KL/IN/FF)",
     "Typ": "Basis",
     "eBE": "",
-    "Ersatz": "Fleischer, Fischen/Angeln, Wildnisleben, Alchimie",
-    "Spezialisierungen": "Backen/Braten, Festmahle, Haltbarmachen, Marschversorgung, Tränke, Vorkoster"
+    "Ersatz": "Alchimie(Tränke)+10, Fleischer+10, Fischen/Angeln+10, Wildnisleben+10",
+    "Spezialisierungen": "Backen/Braten, Festmahle, Haltbarmachen, Marschversorgung, Tränke, Vorkoster",
+    "Zweck": "Speisen, Tränke, Vorrat, Marschverpflegung",
+    "Kernregel": "knapp gelungen=essbar; 3 TaP*=genießbar; 6 TaP*=schmackhaft",
+    "Misslingen": "verbrannt, fad, verdorben",
+    "Modifikatoren": "Zutaten, Herd, Zeit, Anlass",
+    "Optional": ""
   },
   {
     "Name": "Kristallzucht",
@@ -1004,8 +1424,13 @@
     "Eigenschaften": "(KL/IN/FF)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Alchimie",
-    "Spezialisierungen": ""
+    "Ersatz": "Alchimie+15",
+    "Spezialisierungen": "",
+    "Zweck": "Kristalle nach Farbe, Struktur, Eigenschaft züchten",
+    "Kernregel": "Schmelze/Lösung unter konstanten oder regelmäßig veränderten Bedingungen führen",
+    "Misslingen": "trüb, rissig, gewöhnlich, wertlos",
+    "Modifikatoren": "Reinheit, Stabilität, Temperatur, Zeit",
+    "Optional": "v.a. Zwerge"
   },
   {
     "Name": "Lederarbeiten",
@@ -1013,8 +1438,13 @@
     "Eigenschaften": "(KL/FF/FF)",
     "Typ": "Basis",
     "eBE": "",
-    "Ersatz": "Gerber/Kürschner, Schneidern",
-    "Spezialisierungen": "Gurte/Riemen,Lederkleidung, Lederrüstungen, Sättel, Schuhwerk"
+    "Ersatz": "Gerber/Kürschner+10, Schneidern+10",
+    "Spezialisierungen": "Gurte/Riemen, Lederkleidung, Lederrüstungen, Sättel, Schuhwerk",
+    "Zweck": "Lederwaren herstellen, flicken, beurteilen",
+    "Kernregel": "Schuster können Lederrüstungen vollständig wiederherstellen",
+    "Misslingen": "schlechter Sitz, Nahtfehler, nur provisorisch repariert",
+    "Modifikatoren": "Lederart, Passform, Verschleiß, Werkzeug",
+    "Optional": ""
   },
   {
     "Name": "Malen/Zeichnen",
@@ -1022,8 +1452,13 @@
     "Eigenschaften": "(KL/IN/FF)",
     "Typ": "Basis",
     "eBE": "",
-    "Ersatz": "Kartographie, Steinmetz (Bildhauer), Tätowieren",
-    "Spezialisierungen": "Architektur, Landschaften, Porträt, technische Skizze"
+    "Ersatz": "Kartographie+10, Steinmetz(Bildhauer)+10, Tätowieren+5",
+    "Spezialisierungen": "Architektur, Landschaften, Porträt, technische Skizze",
+    "Zweck": "Bilder, Porträts, Skizzen, Entwürfe",
+    "Kernregel": "TaP* bestimmen künstlerischen Eindruck",
+    "Misslingen": "unähnlich, unbrauchbare Skizze",
+    "Modifikatoren": "Sujet, Detailgrad, Zeit, Material",
+    "Optional": ""
   },
   {
     "Name": "Maurer",
@@ -1031,8 +1466,13 @@
     "Eigenschaften": "(FF/GE/KK)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Baukunst",
-    "Spezialisierungen": "Steinbau, Steinguss, Ziegelbau"
+    "Ersatz": "Baukunst+10",
+    "Spezialisierungen": "Steinbau, Steinguss, Ziegelbau",
+    "Zweck": "Mauern, Bögen, Gewölbe, Mörtel/Gussgranit, Materialbedarf",
+    "Kernregel": "beurteilt Qualität/Einsturzgefahr von Stein-/Ziegelbauten",
+    "Misslingen": "instabil, falsche Mischung, Materialfehler",
+    "Modifikatoren": "Bauart, Material, Größe, Statik",
+    "Optional": ""
   },
   {
     "Name": "Metallguss",
@@ -1040,8 +1480,13 @@
     "Eigenschaften": "(KL/FF/KK)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Hüttenkunde, Grobschmied",
-    "Spezialisierungen": "Klangkörper, Rohre, Reliefplatten/Statuen"
+    "Ersatz": "Hüttenkunde+10, Grobschmied+10",
+    "Spezialisierungen": "Klangkörper, Rohre, Reliefplatten/Statuen",
+    "Zweck": "Gusswaren, Rohre, Reliefs, Statuen",
+    "Kernregel": "Voraussetzung Hüttenkunde 4; Legierung, Aufheiz-/Abkühlzeiten, Formenbau",
+    "Misslingen": "Fehlguss, Riss, Lunker, unbrauchbares Werk",
+    "Modifikatoren": "Metall, Form, Größe, Kühlung",
+    "Optional": ""
   },
   {
     "Name": "Musizieren",
@@ -1050,7 +1495,12 @@
     "Typ": "Spezial",
     "eBE": "",
     "Ersatz": "",
-    "Spezialisierungen": ""
+    "Spezialisierungen": "Blechblasinstrumente, Flöten, Harfen, Kapellmeister/Dirigent, Lauten, Rhythmusinstrumente, Streichinstrumente, Tasteninstrumente",
+    "Zweck": "Vortrag, Geld verdienen, Unterkunft sichern, Tiere besänftigen",
+    "Kernregel": "einfach gelungen=hörbar; 4 TaP*=damit Geld verdienen",
+    "Misslingen": "schräg, Blamage, Wirkung bleibt aus",
+    "Modifikatoren": "Instrument, Raum, Publikum, Schwierigkeit",
+    "Optional": "Wettstreit meist offene Probe"
   },
   {
     "Name": "Schlösser Knacken",
@@ -1058,8 +1508,13 @@
     "Eigenschaften": "(IN/FF/FF)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Feinmechanik",
-    "Spezialisierungen": "Fallen, Schlösser"
+    "Ersatz": "Feinmechanik+5",
+    "Spezialisierungen": "Fallen, Schlösser",
+    "Zweck": "Schlösser öffnen, mechanische Fallen entschärfen",
+    "Kernregel": "untrainiert: FF-Probe mind. +7; Draht/Haarnadel -1, Dietrich -2; nur 1 Versuch pro Held",
+    "Misslingen": "Werkzeug bricht, Folgeversuche erschwert; Falle löst aus",
+    "Modifikatoren": "Schlossart, Werkzeug, Zeit, Komplexität",
+    "Optional": "zwergische Kombinationsschlösser/gestaffelte Fallen via längerfristiger Talenteinsatz"
   },
   {
     "Name": "Schnaps Brennen",
@@ -1067,8 +1522,13 @@
     "Eigenschaften": "(KL/IN/FF)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Alchimie, Brauer, Winzer",
-    "Spezialisierungen": "alchimistische Destillation, Beeren-/Obstbrände, Kornbrände, Kräuterschnäpse, Lagerung"
+    "Ersatz": "Alchimie+5, Brauer+10, Winzer+10",
+    "Spezialisierungen": "alchimistische Destillation, Beeren-/Obstbrände, Kornbrände, Kräuterschnäpse, Lagerung",
+    "Zweck": "Schnaps destillieren, lagern, beurteilen",
+    "Kernregel": "Brennerei oder transportable Destille nötig; aus fast jedem Alkohol trinkbarer Schnaps",
+    "Misslingen": "ungenießbar, schwach, verunreinigt",
+    "Modifikatoren": "Ausgangsgetränk, Destille, Reinheit, Lagerung",
+    "Optional": ""
   },
   {
     "Name": "Schneidern",
@@ -1076,8 +1536,13 @@
     "Eigenschaften": "(KL/FF/FF)",
     "Typ": "Basis",
     "eBE": "",
-    "Ersatz": "Webkunst, Lederarbeiten",
-    "Spezialisierungen": "Entwurf/Festgewänder, Flick-/Gebrauchsschneiderei, Maßschneidern, Tuchrüstungen"
+    "Ersatz": "Lederarbeiten+10, Webkunst+10",
+    "Spezialisierungen": "Entwurf/Festgewänder, Flick-/Gebrauchsschneiderei, Maßschneidern, Tuchrüstungen",
+    "Zweck": "flicken, ändern, Kleidung/Tuchrüstung herstellen, Qualität schätzen",
+    "Kernregel": "von Flickarbeit bis Wunderwerk aus schlichtem Stoff",
+    "Misslingen": "schlechter Sitz, Nahtfehler, Wertverlust",
+    "Modifikatoren": "Stoffart, Passform, Zuschnitt, Verzierung",
+    "Optional": ""
   },
   {
     "Name": "Seefahrt",
@@ -1085,8 +1550,13 @@
     "Eigenschaften": "(FF/GE/KK)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Boote Fahren",
-    "Spezialisierungen": "Ruderschiff, Segelschiff, Steuermann"
+    "Ersatz": "Boote Fahren+10",
+    "Spezialisierungen": "Ruderschiff, Segelschiff, Steuermann",
+    "Zweck": "mehrmastige Schiffe bedienen, instand halten, navigieren",
+    "Kernregel": "Steuermann-Spezialisierung für Mannschaftsorganisation und Navigation",
+    "Misslingen": "Fehlkurs, Manöverfehler, Schiffsschaden",
+    "Modifikatoren": "Schiffstyp, Wetter, See, Mannschaft",
+    "Optional": "kleine Wasserfahrzeuge über Boote Fahren"
   },
   {
     "Name": "Seiler",
@@ -1094,8 +1564,13 @@
     "Eigenschaften": "(FF/FF/KK)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Fesseln (Taue spleißen)",
-    "Spezialisierungen": ""
+    "Ersatz": "Fesseln(Taue spleißen)+10",
+    "Spezialisierungen": "",
+    "Zweck": "Seile/Stricke herstellen, bewerten, reparieren, spleißen",
+    "Kernregel": "Herstellung braucht Reeperbahn; Spleißen/Altseilverwertung mobil möglich",
+    "Misslingen": "zu schwach, schlecht gespleißt, wertlos",
+    "Modifikatoren": "Material, Stärke, Länge, Zugbelastung",
+    "Optional": ""
   },
   {
     "Name": "Steinmetz",
@@ -1103,8 +1578,13 @@
     "Eigenschaften": "(FF/FF/KK)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Baukunst, Maurer, Bergbau, Malen/Zeichnen",
-    "Spezialisierungen": "Baugestein, Reliefs, Statuen"
+    "Ersatz": "Baukunst+10, Bergbau+10, Malen/Zeichnen+10, Maurer+10",
+    "Spezialisierungen": "Baugestein, Reliefs, Statuen",
+    "Zweck": "Skulpturen/Reliefs, Baugestein, Steinbauten prüfen",
+    "Kernregel": "Voraussetzung Gesteinskunde 4; prüft Gebäude/Steinbrücken, nicht Tunnel/Stollen",
+    "Misslingen": "Fehlbeurteilung, Materialfehler, unsauberes Werk",
+    "Modifikatoren": "Gesteinsart, Detailgrad, Bauart, Größe",
+    "Optional": ""
   },
   {
     "Name": "Steinschneider/Juwelier",
@@ -1112,8 +1592,13 @@
     "Eigenschaften": "(IN/FF/FF)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Feinmechanik, Kristallzüchter",
-    "Spezialisierungen": ""
+    "Ersatz": "Feinmechanik+10, Kristallzucht+10",
+    "Spezialisierungen": "",
+    "Zweck": "Edelsteine/Kristalle schneiden, schleifen, polieren, einfassen; Schmuck schätzen",
+    "Kernregel": "TaW >10 nur mit Gesteinskunde 4",
+    "Misslingen": "Sprung, Wertverlust, schlechter Schliff",
+    "Modifikatoren": "Steinart, Reinheit, Fassung, Präzision",
+    "Optional": ""
   },
   {
     "Name": "Stellmacher",
@@ -1121,8 +1606,13 @@
     "Eigenschaften": "(KL/FF/KK)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Zimmermann, Grobschmied",
-    "Spezialisierungen": "Karren/Wagen, Schlitten, Streitwagen"
+    "Ersatz": "Zimmermann+10",
+    "Spezialisierungen": "Karren/Wagen, Schlitten, Streitwagen",
+    "Zweck": "Kutschen/Schlitten bauen und instand halten",
+    "Kernregel": "Voraussetzung Holzbearbeitung 4, Lederarbeiten 4, Grobschmied 4",
+    "Misslingen": "instabil, Achs-/Rahmenfehler, unbrauchbar",
+    "Modifikatoren": "Fahrzeugtyp, Material, Belastung, Präzision",
+    "Optional": ""
   },
   {
     "Name": "Stoffe Färben",
@@ -1130,8 +1620,13 @@
     "Eigenschaften": "(KL/FF/KK)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Alchimie, eventuell Drucker für Stoffdruck",
-    "Spezialisierungen": "alchimistische Farben, mineralische Farben, pflanzliche Farben, tierische Farben oder nach Art des Stoffes oder Stoffdruck"
+    "Ersatz": "Alchimie+10, Drucker(Stoffdruck)+10",
+    "Spezialisierungen": "alchimistische Farben, mineralische Farben, pflanzliche Farben, tierische Farben, nach Art des Stoffes, Stoffdruck",
+    "Zweck": "Stoff/Leder dauerhaft färben, Herkunft/Wert der Färbung beurteilen",
+    "Kernregel": "Stoffdruck als Spezialfall",
+    "Misslingen": "ausbleichend, auswaschend, stoffschädigend",
+    "Modifikatoren": "Farbstoffart, Material, Fixierung, Druck",
+    "Optional": ""
   },
   {
     "Name": "Tätowieren",
@@ -1139,8 +1634,13 @@
     "Eigenschaften": "(IN/FF/FF)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Malen/Zeichnen",
-    "Spezialisierungen": "Naturalistische Darstellungen, Ornamente, Zaubertätowierungen"
+    "Ersatz": "Malen/Zeichnen+10",
+    "Spezialisierungen": "Naturalistische Darstellung, Ornamente, Zaubertätowierungen",
+    "Zweck": "dauerhafte Hautbilder, Motivplatzierung, Farbmenge",
+    "Kernregel": "Voraussetzung Malen/Zeichnen 4; nur Tätowierer fertigen dauerhafte Hautbilder",
+    "Misslingen": "unschön, schlecht platziert, verwaschen",
+    "Modifikatoren": "Hauttyp, Motiv, Farbe, Größe",
+    "Optional": "Luloa-Hautmalerei über Malen/Zeichnen"
   },
   {
     "Name": "Töpfern",
@@ -1148,8 +1648,13 @@
     "Eigenschaften": "(KL/FF/FF)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Maurer, Steinmetz",
-    "Spezialisierungen": "Gefäße, Statuetten, Ziegelei"
+    "Ersatz": "Maurer+10, Steinmetz+10",
+    "Spezialisierungen": "Gefäße, Statuetten, Ziegelei",
+    "Zweck": "Töpferwaren, Improvisationsgefäße, Bau-/Schmuckziegel, Ton/Lehm beurteilen",
+    "Kernregel": "auch ungebrannte Notgefäße; bewertet Ton- und Steingutwaren sowie Stabilität von Ziegelkonstruktionen",
+    "Misslingen": "rissig, schief, undicht, instabil",
+    "Modifikatoren": "Tonerde, Brennen, Form, Größe, Ziegelqualität",
+    "Optional": ""
   },
   {
     "Name": "Viehzucht",
@@ -1157,8 +1662,13 @@
     "Eigenschaften": "(KL/IN/KK)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Tierkunde",
-    "Spezialisierungen": "nach Tierart: Rind, Schaf/Ziege, Schwein, Pferd, Hund, etc."
+    "Ersatz": "Tierkunde+10",
+    "Spezialisierungen": "nach Tierart: Rind, Schaf/Ziege, Schwein, Pferd, Hund etc.",
+    "Zweck": "Nutztiere halten, füttern, beurteilen, Zuchtauswahl",
+    "Kernregel": "kennt Futter, Weideflächen, Marktqualität; erkennt bestimmte Nutztierschäden/-krankheiten; wählt gute Zuchttiere",
+    "Misslingen": "Fehlkauf, schlechte Zuchtwahl, Haltungsfehler, Krankheit übersehen",
+    "Modifikatoren": "Tierart, Blutlinie, Futter, Stallung, Markt, Krankheitsanzeichen",
+    "Optional": ""
   },
   {
     "Name": "Webkunst",
@@ -1166,8 +1676,13 @@
     "Eigenschaften": "(FF/FF/KK)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Schneidern",
-    "Spezialisierungen": "nach Material oder nach Technik (Häkeln, Klöppeln, Stricken, Teppichknüpfen, Weben)"
+    "Ersatz": "Schneidern+10",
+    "Spezialisierungen": "nach Material oder nach Technik(Häkeln, Klöppeln, Stricken, Teppichknüpfen, Weben)",
+    "Zweck": "Stoffe/Tuche aus Garn oder Fäden herstellen, Qualität/Preis beurteilen",
+    "Kernregel": "meist Webstuhl nötig; umfasst auch andere Faden-zu-Stoff-Techniken",
+    "Misslingen": "unregelmäßig, locker, fehlerhaft, wertlos",
+    "Modifikatoren": "Material, Technik, Webstuhl, Muster, Feinheit",
+    "Optional": ""
   },
   {
     "Name": "Winzer",
@@ -1176,7 +1691,12 @@
     "Typ": "Spezial",
     "eBE": "",
     "Ersatz": "",
-    "Spezialisierungen": "Wein, Fruchtweine, Schaumweine, Weinkenner"
+    "Spezialisierungen": "Wein, Fruchtweine, Schaumweine, Weinkenner",
+    "Zweck": "Anbaugebiete, Kelterei, Reifezeiten, Weinbeurteilung",
+    "Kernregel": "umfasst auch Herstellung von Schaum- und Fruchtweinen",
+    "Misslingen": "schwacher, verdorbener, falsch behandelter Wein",
+    "Modifikatoren": "Rebsorte/Frucht, Boden, Kelterung, Reifezeit, Lagerung",
+    "Optional": ""
   },
   {
     "Name": "Zimmermann",
@@ -1184,7 +1704,12 @@
     "Eigenschaften": "(KL/FF/KK)",
     "Typ": "Spezial",
     "eBE": "",
-    "Ersatz": "Holzbearbeitung",
-    "Spezialisierungen": "Dachdecker, Holzkonstruktionen, Schiffszimmermann, Schiffbau (erfordert die Talente Lesen/Schreiben, Malen/Zeichnen, Rechnen und Seefahrt jeweils auf TaW 4)"
+    "Ersatz": "Holzbearbeitung+10",
+    "Spezialisierungen": "Dachdecker, Holzkonstruktionen, Schiffszimmermann, Schiffbau",
+    "Zweck": "große Holzbauten, Statik, Verbindungen, Wert/Stabilität von Holzkonstruktionen",
+    "Kernregel": "für Treppen, Dachbalken, Masten etc.; TaW>10 nur mit Holzbearbeitung 4; Schiffbau: Lesen/Schreiben 4, Malen/Zeichnen 4, Rechnen 4, Seefahrt 4",
+    "Misslingen": "instabil, schlecht verbunden, statischer Fehler",
+    "Modifikatoren": "Holzart, Größe, Verbindung, Statik, Witterung",
+    "Optional": ""
   }
 ]

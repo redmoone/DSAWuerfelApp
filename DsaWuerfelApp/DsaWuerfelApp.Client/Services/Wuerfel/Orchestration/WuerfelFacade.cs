@@ -78,6 +78,11 @@ public sealed class WuerfelFacade(
         selectionService.SetModifier(modifier);
     }
 
+    public void SetRollText(string rollText)
+    {
+        selectionService.SetRollText(rollText);
+    }
+
     public void ToggleHiddenRoll()
     {
         selectionService.ToggleHiddenRoll();

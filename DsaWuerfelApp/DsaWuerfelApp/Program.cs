@@ -59,7 +59,10 @@ using (var scope = app.Services.CreateScope())
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseWebAssemblyDebugging();
+    if (builder.Configuration.GetValue("WebAssemblyDebugging:Enabled", false))
+    {
+        app.UseWebAssemblyDebugging();
+    }
 }
 else
 {

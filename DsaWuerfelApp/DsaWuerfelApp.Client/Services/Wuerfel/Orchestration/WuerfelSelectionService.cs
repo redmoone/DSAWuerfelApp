@@ -123,6 +123,11 @@ public sealed class WuerfelSelectionService(WuerfelState state)
         state.SetModifier(modifier);
     }
 
+    public void SetRollText(string rollText)
+    {
+        state.SetRollText(rollText);
+    }
+
     public void ToggleHiddenRoll()
     {
         state.ToggleHiddenRoll();

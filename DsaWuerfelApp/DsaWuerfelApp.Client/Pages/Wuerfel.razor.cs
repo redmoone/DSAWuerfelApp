@@ -72,6 +72,12 @@ public partial class Wuerfel : IDisposable
         return Task.CompletedTask;
     }
 
+    private Task HandleRollTextChanged(string rollText)
+    {
+        Facade.SetRollText(rollText);
+        return Task.CompletedTask;
+    }
+
     private Task ToggleHiddenRoll()
     {
         Facade.ToggleHiddenRoll();

@@ -30,11 +30,11 @@ public sealed class WuerfelState
             SelectedProbeValue = null,
             SelectedBadTraitName = selectedBadTraitName,
             Modifier = 0,
+            RollText = string.Empty,
             ForcedRollsText = string.Empty,
-            ProbeInfoText = null,
+            ProbeInfo = null,
             ErrorMessage = null,
             ActiveArea = WuerfelArea.None,
-            CurrentEquation = null,
             LastTalentRoll = null,
             LastAttributeRoll = null,
             LastBadTraitRoll = null,
@@ -65,6 +65,11 @@ public sealed class WuerfelState
     public void SetModifier(int modifier)
     {
         Update(Current with { Modifier = modifier, ErrorMessage = null });
+    }
+
+    public void SetRollText(string rollText)
+    {
+        Update(Current with { RollText = rollText, ErrorMessage = null });
     }
 
     public void SetForcedRollsText(string forcedRollsText)
@@ -131,7 +136,7 @@ public sealed class WuerfelState
         Update(Current with
         {
             SelectedProbeValue = string.IsNullOrWhiteSpace(selectedProbeValue) ? null : selectedProbeValue,
-            ProbeInfoText = null,
+            ProbeInfo = null,
             ErrorMessage = null,
             ActiveArea = string.IsNullOrWhiteSpace(selectedProbeValue) && Current.ActiveArea == WuerfelArea.ProbeSearch
                 ? WuerfelArea.None
@@ -139,9 +144,9 @@ public sealed class WuerfelState
         });
     }
 
-    public void SetProbeInfo(string? probeInfoText)
+    public void SetProbeInfo(ProbeInfoResultDto? probeInfo)
     {
-        Update(Current with { ProbeInfoText = probeInfoText, ErrorMessage = null });
+        Update(Current with { ProbeInfo = probeInfo, ErrorMessage = null });
     }
 
     public void ApplyFreeRollResult(FreeRollResultDto result)
@@ -175,7 +180,6 @@ public sealed class WuerfelState
 
         Update(Current with
         {
-            CurrentEquation = equation,
             LastTalentRoll = talentRollResult,
             LastAttributeRoll = attributeRollResult,
             LastBadTraitRoll = badTraitRollResult,
@@ -195,10 +199,10 @@ public sealed class WuerfelState
             SelectedDiceSides = Array.Empty<int>(),
             SelectedProbeValue = clearSelectedProbe ? null : state.SelectedProbeValue,
             Modifier = 0,
+            RollText = string.Empty,
             ForcedRollsText = string.Empty,
-            ProbeInfoText = clearSelectedProbe ? null : state.ProbeInfoText,
+            ProbeInfo = clearSelectedProbe ? null : state.ProbeInfo,
             ErrorMessage = null,
-            CurrentEquation = null,
             LastTalentRoll = null,
             LastAttributeRoll = null,
             LastBadTraitRoll = null,
@@ -236,14 +240,14 @@ public sealed record WuerfelViewState
     public string? SelectedProbeValue { get; init; }
     public string? SelectedBadTraitName { get; init; }
     public int Modifier { get; init; }
+    public string RollText { get; init; } = string.Empty;
     public bool IsHiddenRoll { get; init; }
     public string ForcedRollsText { get; init; } = string.Empty;
-    public string? ProbeInfoText { get; init; }
+    public ProbeInfoResultDto? ProbeInfo { get; init; }
     public bool ShowDebugForcedRolls { get; init; }
     public bool IsBusy { get; init; }
     public string? ErrorMessage { get; init; }
     public WuerfelArea ActiveArea { get; init; }
-    public RollEquationDto? CurrentEquation { get; init; }
     public TalentRollResultDto? LastTalentRoll { get; init; }
     public AttributeRollResultDto? LastAttributeRoll { get; init; }
     public BadTraitRollResultDto? LastBadTraitRoll { get; init; }
@@ -255,8 +259,23 @@ public sealed record WuerfelViewState
 
     public bool HasActiveHero => ActiveHeroId.HasValue;
 
+    public int ActiveBadTraitModifier => ActiveArea switch
+    {
+        WuerfelArea.ProbeSearch => SelectedBadTrait?.TalentModifier ?? 0,
+        WuerfelArea.Attributes => SelectedBadTrait?.AttributeModifier ?? 0,
+        _ => 0
+    };
+
+    public int EffectiveModifier => Modifier + ActiveBadTraitModifier;
+
     public bool CanRoll =>
         SelectedDiceSides.Count > 0 ||
         SelectedAttributes.Count > 0 ||
         !string.IsNullOrWhiteSpace(SelectedProbeValue);
+
+    private BadTraitDto? SelectedBadTrait =>
+        string.IsNullOrWhiteSpace(SelectedBadTraitName)
+            ? null
+            : BadTraits.FirstOrDefault(trait =>
+                string.Equals(trait.Name, SelectedBadTraitName, StringComparison.Ordinal));
 }
