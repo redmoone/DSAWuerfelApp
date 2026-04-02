@@ -5,10 +5,12 @@ namespace DsaWuerfelApp.Client.Services;
 public sealed class WuerfelFacade(
     WuerfelState state,
     GameClient gameClient,
+    SessionState sessionState,
     WuerfelSelectionService selectionService,
     WuerfelContextService contextService,
     WuerfelContextSubscription contextSubscription,
     WuerfelSignalREventBridge signalREventBridge,
+    WuerfelSessionBridge sessionBridge,
     WuerfelUiOperationRunner operationRunner,
     WuerfelRollCommandDispatcher rollCommandDispatcher)
 {
@@ -21,7 +23,9 @@ public sealed class WuerfelFacade(
             return;
         }
 
+        await sessionState.EnsureLoadedAsync();
         signalREventBridge.Attach();
+        sessionBridge.Attach();
         await contextSubscription.AttachAsync();
         _isAttached = true;
     }
@@ -34,6 +38,7 @@ public sealed class WuerfelFacade(
         }
 
         signalREventBridge.Detach();
+        sessionBridge.Detach();
         contextSubscription.Detach();
         _isAttached = false;
     }

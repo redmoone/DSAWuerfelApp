@@ -5,6 +5,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+      <UserSecretsId>dsa-wuerfelapp-server-8d8ce66b-bd98-4d85-a52d-3f7198fe7f26</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>

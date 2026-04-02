@@ -1,0 +1,137 @@
+@if (Sessions.Count == 0)
+{
+    <div class="session-tree-empty">@EmptyText</div>
+}
+else
+{
+    <div class="session-tree">
+        @foreach (var session in Sessions)
+        {
+            var isExpanded = _expandedSessionIds.Contains(session.SessionId);
+            var isActive = string.Equals(session.SessionId, ActiveSessionId, StringComparison.Ordinal);
+            var canManage = ShowManagement && CanManage(session);
+            var isEditing = string.Equals(_editingSessionId, session.SessionId, StringComparison.Ordinal);
+
+            <section class="session-node @(isActive ? "active" : string.Empty)">
+                <div class="session-header">
+                    <button type="button"
+                            class="session-toggle"
+                            @onclick="() => ToggleExpanded(session.SessionId)"
+                            aria-expanded="@isExpanded">
+                        <span class="session-chevron @(isExpanded ? "expanded" : string.Empty)">&gt;</span>
+                        <span class="session-summary">
+                            <span class="session-name">@session.Name</span>
+                            @if (isActive)
+                            {
+                                <span class="session-status">Aktiv</span>
+                            }
+                        </span>
+                    </button>
+
+                    <div class="session-header-meta">
+                        @if (!isActive)
+                        {
+                            <button type="button"
+                                    class="session-icon-btn secondary"
+                                    title="Session oeffnen"
+                                    aria-label="Session oeffnen"
+                                    @onclick="() => OpenAsync(session.SessionId)">
+                                <img src="icons/enter.svg" class="session-icon" alt=""/>
+                            </button>
+                        }
+
+                        <button type="button"
+                                class="session-icon-btn secondary"
+                                title="Session verlassen"
+                                aria-label="Session verlassen"
+                                @onclick="() => LeaveAsync(session)">
+                            <img src="icons/leave.svg" class="session-icon" alt=""/>
+                        </button>
+
+                        @if (ShowManagement && canManage && !isEditing)
+                        {
+                            <button type="button"
+                                    class="session-icon-btn secondary"
+                                    title="Session umbenennen"
+                                    aria-label="Session umbenennen"
+                                    @onclick="() => BeginRename(session)">
+                                <img src="icons/edit.svg" class="session-icon" alt=""/>
+                            </button>
+                            <button type="button"
+                                    class="session-icon-btn danger"
+                                    title="Session loeschen"
+                                    aria-label="Session loeschen"
+                                    @onclick="() => DeleteAsync(session)">
+                                <img src="icons/trash.svg" class="session-icon" alt=""/>
+                            </button>
+                        }
+
+                        @if (ShowJoinCode)
+                        {
+                            @if (ShowCopyButton)
+                            {
+                                <button type="button"
+                                        class="session-code-btn"
+                                        title="Code kopieren"
+                                        aria-label="Code kopieren"
+                                        @onclick="() => CopyJoinCodeAsync(session.JoinCode)">
+                                    <span class="session-code">@session.JoinCode</span>
+                                    <img src="icons/copy.svg" class="session-icon" alt=""/>
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="session-code">@session.JoinCode</span>
+                            }
+                        }
+                    </div>
+                </div>
+
+                @if (isExpanded)
+                {
+                    <div class="session-body">
+                        @if (canManage && isEditing)
+                        {
+                            <div class="session-manage">
+                                <input class="session-edit-input"
+                                       @bind="_editingName"
+                                       @bind:event="oninput"
+                                       maxlength="80"
+                                       placeholder="Sessionname"/>
+
+                                <div class="session-manage-actions">
+                                    <button type="button"
+                                            class="session-action-btn"
+                                            @onclick="() => SaveRenameAsync(session.SessionId)">
+                                        Speichern
+                                    </button>
+                                    <button type="button"
+                                            class="session-action-btn secondary"
+                                            @onclick="CancelRename">
+                                        Abbrechen
+                                    </button>
+                                </div>
+                            </div>
+                        }
+
+                        <div class="session-members">
+                            @foreach (var player in session.Players)
+                            {
+                                <div class="session-member @(player.IsMaster ? "master" : string.Empty)">
+                                    <span class="session-member-presence @(player.IsOnline ? "online" : "offline")"
+                                          title="@(player.IsOnline ? "Online" : "Offline")"
+                                          aria-hidden="true"></span>
+                                    @if (player.IsMaster)
+                                    {
+                                        <span class="session-member-role">Meister</span>
+                                    }
+                                    <span class="session-member-name">@player.Name</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </section>
+        }
+    </div>
+}

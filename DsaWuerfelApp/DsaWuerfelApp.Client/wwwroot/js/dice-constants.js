@@ -1,5 +1,5 @@
 ﻿export const SUPERSAMPLE = 1.5;
-export const DICE_SCALE = 1.25;
+export const DICE_SCALE = 1.45;
 export const USE_EDGE_OUTLINE = false;
 
 export const diceRotations = {

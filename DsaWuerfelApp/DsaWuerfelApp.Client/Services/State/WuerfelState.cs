@@ -64,7 +64,7 @@ public sealed class WuerfelState
 
     public void SetModifier(int modifier)
     {
-        Update(Current with { Modifier = modifier, ErrorMessage = null });
+        Update(Current with { Modifier = modifier, SelectedBadTraitName = null, ErrorMessage = null });
     }
 
     public void SetRollText(string rollText)
@@ -147,6 +147,11 @@ public sealed class WuerfelState
     public void SetProbeInfo(ProbeInfoResultDto? probeInfo)
     {
         Update(Current with { ProbeInfo = probeInfo, ErrorMessage = null });
+    }
+
+    public void SetHistory(IReadOnlyList<RollHistoryEntryDto> history)
+    {
+        Update(Current with { History = history.ToArray() });
     }
 
     public void ApplyFreeRollResult(FreeRollResultDto result)

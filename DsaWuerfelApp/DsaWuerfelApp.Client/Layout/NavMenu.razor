@@ -1,4 +1,7 @@
 @inject ActiveHeroState ActiveHeroState
+@inject AuthState AuthState
+@inject SessionState SessionState
+@using DsaWuerfelApp.Client.Components
 @using DsaWuerfelApp.Client.Services
 @implements IDisposable
 
@@ -13,6 +16,14 @@
                 <span></span>
             </label>
         </div>
+
+        @if (AuthState.Current.IsAuthenticated && AuthState.Current.User is not null)
+        {
+            <div class="account-pill">
+                <div class="account-primary">@AuthState.Current.User.DisplayName</div>
+                <div class="account-secondary">@AuthState.Current.User.Email</div>
+            </div>
+        }
 
         @if (!string.IsNullOrWhiteSpace(ActiveHeroName))
         {
@@ -44,6 +55,18 @@
                 <span class="nav-text">Heldenverwaltung</span>
             </NavLink>
         </nav>
+
+        @if (AuthState.Current.IsAuthenticated)
+        {
+            <section class="session-panel">
+                <h3 class="session-panel-title">Sessions</h3>
+                <SessionTree Sessions="SessionState.Sessions"
+                             ActiveSessionId="@SessionState.ActiveSessionId"
+                             EmptyText="Noch keine sichtbaren Sessions. Erstelle eine Runde oder tritt einer bei."
+                             ShowJoinCode="false"
+                             ShowManagement="false"/>
+            </section>
+        }
     </div>
 </div>
 
@@ -52,17 +75,24 @@
 
     protected override async Task OnInitializedAsync()
     {
-        ActiveHeroState.Changed += HandleActiveHeroChanged;
+        ActiveHeroState.Changed += HandleStateChanged;
+        AuthState.Changed += HandleStateChanged;
+        SessionState.Changed += HandleStateChanged;
+
         await ActiveHeroState.EnsureLoadedAsync();
+        await AuthState.EnsureLoadedAsync();
+        await SessionState.EnsureLoadedAsync();
     }
 
     public void Dispose()
     {
-        ActiveHeroState.Changed -= HandleActiveHeroChanged;
+        ActiveHeroState.Changed -= HandleStateChanged;
+        AuthState.Changed -= HandleStateChanged;
+        SessionState.Changed -= HandleStateChanged;
     }
 
-    private void HandleActiveHeroChanged()
+    private void HandleStateChanged()
     {
-        InvokeAsync(StateHasChanged);
+        _ = InvokeAsync(StateHasChanged);
     }
 }

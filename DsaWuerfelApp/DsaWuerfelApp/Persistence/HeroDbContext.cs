@@ -16,6 +16,11 @@ public class HeroDbContext : DbContext
     {
     }
 
+    public DbSet<AuthUser> AuthUsers => Set<AuthUser>();
+    public DbSet<MagicLinkToken> MagicLinkTokens => Set<MagicLinkToken>();
+    public DbSet<SessionRecord> SessionRecords => Set<SessionRecord>();
+    public DbSet<SessionParticipantRecord> SessionParticipantRecords => Set<SessionParticipantRecord>();
+    public DbSet<SessionRollHistoryRecord> SessionRollHistoryRecords => Set<SessionRollHistoryRecord>();
     public DbSet<Hero> Heroes => Set<Hero>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -58,6 +63,59 @@ public class HeroDbContext : DbContext
             entity.Property(hero => hero.Talente)
                 .HasConversion(talentDictionaryConverter)
                 .Metadata.SetValueComparer(talentDictionaryComparer);
+        });
+
+        modelBuilder.Entity<AuthUser>(entity =>
+        {
+            entity.HasKey(user => user.Id);
+            entity.Property(user => user.Email).HasMaxLength(320);
+            entity.Property(user => user.DisplayName).HasMaxLength(120);
+            entity.HasIndex(user => user.Email).IsUnique();
+        });
+
+        modelBuilder.Entity<MagicLinkToken>(entity =>
+        {
+            entity.HasKey(token => token.Id);
+            entity.Property(token => token.Email).HasMaxLength(320);
+            entity.Property(token => token.TokenHash).HasMaxLength(64);
+            entity.Property(token => token.RedirectPath).HasMaxLength(512);
+            entity.Property(token => token.RequestIp).HasMaxLength(128);
+            entity.HasIndex(token => token.TokenHash).IsUnique();
+            entity.HasIndex(token => new { token.Email, token.RequestedAtUtc });
+        });
+
+        modelBuilder.Entity<SessionRecord>(entity =>
+        {
+            entity.ToTable("GameSessions");
+            entity.HasKey(session => session.Id);
+            entity.Property(session => session.Name).HasMaxLength(120);
+            entity.Property(session => session.JoinCode).HasMaxLength(12);
+            entity.Property(session => session.MasterUserId).HasMaxLength(64);
+            entity.HasIndex(session => session.JoinCode).IsUnique();
+            entity.HasIndex(session => session.MasterUserId);
+            entity.HasMany(session => session.Participants)
+                .WithOne(participant => participant.Session)
+                .HasForeignKey(participant => participant.SessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SessionParticipantRecord>(entity =>
+        {
+            entity.ToTable("SessionParticipants");
+            entity.HasKey(participant => new { participant.SessionId, participant.UserId });
+            entity.Property(participant => participant.UserId).HasMaxLength(64);
+            entity.Property(participant => participant.Name).HasMaxLength(120);
+            entity.Property(participant => participant.AvatarUrl).HasMaxLength(512);
+            entity.HasIndex(participant => participant.UserId);
+        });
+
+        modelBuilder.Entity<SessionRollHistoryRecord>(entity =>
+        {
+            entity.ToTable("SessionRollHistory");
+            entity.HasKey(history => history.Id);
+            entity.Property(history => history.PlayerName).HasMaxLength(120);
+            entity.Property(history => history.RollsJson).HasColumnType("TEXT");
+            entity.HasIndex(history => new { history.SessionId, history.TimestampUtc });
         });
     }
 

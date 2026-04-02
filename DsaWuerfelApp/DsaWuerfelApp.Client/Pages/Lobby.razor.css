@@ -96,6 +96,12 @@
     grid-column: 1 / -1;
 }
 
+.lobby-side-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
 .panel-title {
     margin: 0;
     padding-bottom: 0.75rem;
@@ -192,6 +198,14 @@
     background-color: rgba(28, 46, 74, 0.18);
 }
 
+.mode-caption {
+    color: var(--dsa-gold);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
 .mode-text {
     margin: 0;
     color: rgba(28, 46, 74, 0.92);
@@ -258,6 +272,12 @@
     box-shadow: none;
 }
 
+.secondary-btn {
+    min-width: auto;
+    background-color: transparent;
+    color: var(--dsa-blue);
+}
+
 .session-alert {
     padding: 1rem;
     border-radius: 8px;
@@ -266,6 +286,42 @@
     color: #ffe3e8;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
     font-weight: 600;
+}
+
+.session-success {
+    padding: 1rem;
+    border-radius: 8px;
+    border: 2px solid rgba(84, 138, 100, 0.88);
+    background-color: rgba(28, 92, 52, 0.88);
+    color: #e8ffef;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+    font-weight: 600;
+}
+
+.account-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    border-radius: 8px;
+    border: 2px solid rgba(212, 175, 55, 0.65);
+    background-color: rgba(28, 46, 74, 0.18);
+}
+
+.account-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--dsa-blue);
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.account-value {
+    color: var(--dsa-blue);
+    font-size: 1rem;
 }
 
 .steps-list {
@@ -346,5 +402,10 @@
     .session-btn {
         width: 100%;
         align-self: stretch;
+    }
+
+    .account-strip {
+        align-items: stretch;
+        flex-direction: column;
     }
 }
