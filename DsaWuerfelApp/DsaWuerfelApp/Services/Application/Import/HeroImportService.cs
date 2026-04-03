@@ -40,7 +40,25 @@ public sealed class HeroImportService(
         using var content = new StreamContent(zipMemoryStream);
         content.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
 
-        var response = await httpClient.PostAsync("/api/convert", content, cancellationToken);
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient.PostAsync("/api/convert", content, cancellationToken);
+        }
+        catch (HttpRequestException)
+        {
+            var target = httpClient.BaseAddress is null
+                ? "das konfigurierte Java-Backend"
+                : httpClient.BaseAddress.ToString().TrimEnd('/');
+
+            throw new HeroImportException(
+                $"Das Java-Backend ist nicht erreichbar ({target}). Pruefe, ob der Helden-Microservice laeuft.");
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new HeroImportException("Das Java-Backend hat nicht rechtzeitig geantwortet.");
+        }
+
         if (!response.IsSuccessStatusCode)
         {
             var errorMessage = await response.Content.ReadAsStringAsync(cancellationToken);

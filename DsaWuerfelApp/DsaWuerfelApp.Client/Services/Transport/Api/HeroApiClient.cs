@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
 using DsaWuerfelApp.Shared.Models;
@@ -27,13 +28,47 @@ public class HeroApiClient : IHeroApiClient
 
     public async Task<List<Hero>> GetHeroesAsync()
     {
-        var heroes = await _httpClient.GetFromJsonAsync<List<Hero>>("api/heroes");
+        var response = await _httpClient.GetAsync("api/heroes");
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            errorMessage = string.IsNullOrWhiteSpace(errorMessage)
+                ? "Helden konnten nicht geladen werden."
+                : errorMessage.Trim();
+
+            throw new HttpRequestException(errorMessage);
+        }
+
+        if (response.StatusCode == HttpStatusCode.NoContent ||
+            response.Content.Headers.ContentLength == 0)
+        {
+            return new List<Hero>();
+        }
+
+        var heroes = await response.Content.ReadFromJsonAsync<List<Hero>>();
         return heroes ?? new List<Hero>();
     }
 
     public async Task<Hero?> GetActiveHeroAsync()
     {
-        return await _httpClient.GetFromJsonAsync<Hero?>("api/heroes/active");
+        var response = await _httpClient.GetAsync("api/heroes/active");
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            errorMessage = string.IsNullOrWhiteSpace(errorMessage)
+                ? "Aktiver Held konnte nicht geladen werden."
+                : errorMessage.Trim();
+
+            throw new HttpRequestException(errorMessage);
+        }
+
+        if (response.StatusCode == HttpStatusCode.NoContent ||
+            response.Content.Headers.ContentLength == 0)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<Hero?>();
     }
 
     public async Task<Hero> SetActiveHeroAsync(Guid heroId)

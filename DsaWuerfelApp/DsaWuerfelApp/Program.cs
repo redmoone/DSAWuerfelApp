@@ -11,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = new FileExtensionContentTypeProvider { Mappings = { [".glb"] = "model/gltf-binary" } };
+var javaMicroserviceBaseUrl = builder.Configuration["JavaMicroservice:BaseUrl"] ?? "http://localhost:8080";
+var javaMicroserviceTimeoutSeconds = builder.Configuration.GetValue<int?>("JavaMicroservice:TimeoutSeconds") ?? 30;
 
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
@@ -72,7 +74,8 @@ builder.Services.AddCors(options =>
 });
 builder.Services.AddHttpClient("JavaMicroservice", client =>
 {
-    client.BaseAddress = new Uri("http://localhost:8080");
+    client.BaseAddress = new Uri(javaMicroserviceBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(javaMicroserviceTimeoutSeconds);
 });
 var app = builder.Build();
 
