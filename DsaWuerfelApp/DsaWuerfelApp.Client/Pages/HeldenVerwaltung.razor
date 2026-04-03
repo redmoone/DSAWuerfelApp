@@ -15,9 +15,9 @@
                    @ondragleave:preventDefault="true">
 
                 <div class="file-input-host">
-                    <InputFile OnChange="LoadFiles" multiple accept=".xml" class="file-input"/>
+                    <InputFile OnChange="LoadFiles" multiple accept=".hld,.zip,.xml" class="file-input"/>
                 </div>
-                <p class="drop-zone-text">XML-Dateien hierhin ziehen oder klicken zum Auswählen</p>
+                <p class="drop-zone-text">XML- oder ZIP-Dateien hierhin ziehen oder klicken zum Auswählen</p>
             </label>
 
             @if (SelectedFiles.Any())

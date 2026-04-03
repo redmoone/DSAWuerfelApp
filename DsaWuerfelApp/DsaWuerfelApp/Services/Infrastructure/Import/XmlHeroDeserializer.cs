@@ -1,3 +1,4 @@
+using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
@@ -8,29 +9,36 @@ namespace DsaWuerfelApp.Services;
 
 public class XmlHeroDeserializer
 {
-    public HeldenDatenDto Deserialize(Stream xmlStream)
+    public IReadOnlyList<(HeldenDatenDto Dto, byte[] RawXml)> DeserializeMultiple(Stream xmlStream)
     {
         ArgumentNullException.ThrowIfNull(xmlStream);
 
         var settings = new XmlReaderSettings
         {
-            DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null, MaxCharactersInDocument = 1024 * 1024 * 2
+            DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null, MaxCharactersInDocument = 1024 * 1024 * 10
         };
 
         using var reader = XmlReader.Create(xmlStream, settings);
         var document = XDocument.Load(reader, LoadOptions.None);
         var serializer = new XmlSerializer(typeof(HeldenDatenDto));
 
-        if (serializer.Deserialize(document.CreateReader()) is not HeldenDatenDto dto)
+        var result = new List<(HeldenDatenDto, byte[])>();
+
+        foreach (var datenNode in document.Descendants("daten"))
         {
-            throw new InvalidOperationException();
+            using var nodeReader = datenNode.CreateReader();
+            if (serializer.Deserialize(nodeReader) is HeldenDatenDto dto)
+            {
+                dto.SchlechteEigenschaften = ExtractSchlechteEigenschaften(datenNode);
+                var rawXml = Encoding.UTF8.GetBytes(datenNode.ToString());
+                result.Add((dto, rawXml));
+            }
         }
 
-        dto.SchlechteEigenschaften = ExtractSchlechteEigenschaften(document);
-        return dto;
+        return result;
     }
 
-    private static List<SchlechteEigenschaftDto> ExtractSchlechteEigenschaften(XDocument document)
+    private static List<SchlechteEigenschaftDto> ExtractSchlechteEigenschaften(XElement document)
     {
         return document.Descendants("vorteil")
             .Where(IsSchlechteEigenschaft)

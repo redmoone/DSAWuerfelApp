@@ -2,6 +2,7 @@ using DsaWuerfelApp.Core.Mappers;
 using DsaWuerfelApp.Hubs;
 using DsaWuerfelApp.Persistence;
 using DsaWuerfelApp.Services;
+using DsaWuerfelApp.Services.Application.Import;
 using DsaWuerfelApp.Services.Auth;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -69,7 +70,10 @@ builder.Services.AddCors(options =>
                 .AllowAnyMethod();
         });
 });
-
+builder.Services.AddHttpClient("JavaMicroservice", client =>
+{
+    client.BaseAddress = new Uri("http://localhost:8080");
+});
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())

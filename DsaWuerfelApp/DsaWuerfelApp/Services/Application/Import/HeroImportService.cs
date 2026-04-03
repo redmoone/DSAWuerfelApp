@@ -1,16 +1,17 @@
-using System.Xml;
+using System.IO.Compression;
+using System.Net.Http.Headers;
 
-using DsaWuerfelApp.Core.Dtos;
 using DsaWuerfelApp.Core.Mappers;
 using DsaWuerfelApp.Persistence;
 using DsaWuerfelApp.Shared.Models;
 
-namespace DsaWuerfelApp.Services;
+namespace DsaWuerfelApp.Services.Application.Import;
 
 public sealed class HeroImportService(
     HeroDbContext dbContext,
     XmlHeroDeserializer xmlHeroDeserializer,
-    HeroMapper heroMapper)
+    HeroMapper heroMapper,
+    IHttpClientFactory httpClientFactory)
 {
     public async Task<IReadOnlyList<Hero>> ImportAsync(
         IReadOnlyCollection<IFormFile>? files,
@@ -21,20 +22,48 @@ public sealed class HeroImportService(
             throw new HeroImportException("Keine Dateien zum Import übergeben.");
         }
 
-        var createdHeroes = new List<Hero>();
-
-        foreach (var file in files)
+        using var zipMemoryStream = new MemoryStream();
+        using (var archive = new ZipArchive(zipMemoryStream, ZipArchiveMode.Create, true))
         {
-            var hero = await ImportFileAsync(file, cancellationToken);
-            if (hero is not null)
+            foreach (var file in files)
             {
-                createdHeroes.Add(hero);
+                var entry = archive.CreateEntry(file.FileName, CompressionLevel.Fastest);
+                await using var entryStream = entry.Open();
+                await using var fileStream = file.OpenReadStream();
+                await fileStream.CopyToAsync(entryStream, cancellationToken);
             }
         }
 
-        if (createdHeroes.Count == 0)
+        zipMemoryStream.Position = 0;
+
+        var httpClient = httpClientFactory.CreateClient("JavaMicroservice");
+        using var content = new StreamContent(zipMemoryStream);
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
+
+        var response = await httpClient.PostAsync("/api/convert", content, cancellationToken);
+        if (!response.IsSuccessStatusCode)
         {
-            throw new HeroImportException("Keine gültigen Dateien zum Import gefunden.");
+            throw new HeroImportException("Das Java-Backend konnte die Dateien nicht verarbeiten.");
+        }
+
+        await using var enrichedXmlStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        var deserializedHeroes = xmlHeroDeserializer.DeserializeMultiple(enrichedXmlStream);
+
+        if (deserializedHeroes.Count == 0)
+        {
+            throw new HeroImportException("Keine gültigen Helden in den Dateien gefunden.");
+        }
+
+        var createdHeroes = new List<Hero>();
+        foreach (var (dto, rawXml) in deserializedHeroes)
+        {
+            var hero = heroMapper.Map(dto);
+            hero.Id = Guid.NewGuid();
+            hero.SourceXml = rawXml;
+            hero.SourceFileName = $"{hero.Name}.xml";
+            hero.ImportVersion = HeroImportVersioning.CurrentVersion;
+            hero.ImportedAtUtc = DateTime.UtcNow;
+            createdHeroes.Add(hero);
         }
 
         await dbContext.Heroes.AddRangeAsync(createdHeroes, cancellationToken);
@@ -47,14 +76,20 @@ public sealed class HeroImportService(
     {
         ArgumentNullException.ThrowIfNull(existingHero);
 
-        if (existingHero.SourceXml is not { Length: > 0 })
+        if (existingHero.SourceXml is null || existingHero.SourceXml.Length == 0)
         {
             throw new HeroImportException($"Held '{existingHero.Name}' besitzt kein gespeichertes Import-XML.");
         }
 
         using var stream = new MemoryStream(existingHero.SourceXml, writable: false);
-        var dto = Deserialize(existingHero.SourceFileName ?? existingHero.Name, stream);
-        var importedHero = heroMapper.Map(dto);
+        var deserializedHeroes = xmlHeroDeserializer.DeserializeMultiple(stream);
+
+        if (deserializedHeroes.Count == 0)
+        {
+            throw new HeroImportException("Kein gültiges XML für den Reimport gefunden.");
+        }
+
+        var importedHero = heroMapper.Map(deserializedHeroes[0].Dto);
 
         existingHero.Name = importedHero.Name;
         existingHero.Geschlecht = importedHero.Geschlecht;
@@ -66,60 +101,5 @@ public sealed class HeroImportService(
         existingHero.ImportedAtUtc = DateTime.UtcNow;
 
         return existingHero;
-    }
-
-    private async Task<Hero?> ImportFileAsync(IFormFile file, CancellationToken cancellationToken)
-    {
-        if (file.Length == 0)
-        {
-            return null;
-        }
-
-        ValidateExtension(file.FileName);
-
-        await using var sourceStream = file.OpenReadStream();
-        using var buffer = new MemoryStream();
-        await sourceStream.CopyToAsync(buffer, cancellationToken);
-
-        var xmlBytes = buffer.ToArray();
-        using var deserializeStream = new MemoryStream(xmlBytes, writable: false);
-        var dto = Deserialize(file.FileName, deserializeStream);
-        var hero = heroMapper.Map(dto);
-
-        if (hero.Id == Guid.Empty)
-        {
-            hero.Id = Guid.NewGuid();
-        }
-
-        hero.SourceXml = xmlBytes;
-        hero.SourceFileName = file.FileName;
-        hero.ImportVersion = HeroImportVersioning.CurrentVersion;
-        hero.ImportedAtUtc = DateTime.UtcNow;
-
-        return hero;
-    }
-
-    private HeldenDatenDto Deserialize(string fileName, Stream stream)
-    {
-        try
-        {
-            return xmlHeroDeserializer.Deserialize(stream);
-        }
-        catch (InvalidOperationException)
-        {
-            throw new HeroImportException($"Datei '{fileName}' enthält kein gültiges XML.");
-        }
-        catch (XmlException)
-        {
-            throw new HeroImportException($"Datei '{fileName}' enthält kein gültiges XML.");
-        }
-    }
-
-    private static void ValidateExtension(string fileName)
-    {
-        if (!string.Equals(Path.GetExtension(fileName), ".xml", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new HeroImportException($"Datei '{fileName}' hat keine .xml-Endung.");
-        }
     }
 }

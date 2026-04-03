@@ -1,6 +1,4 @@
-﻿using System.Xml;
-
-using DsaWuerfelApp.Client.Services;
+﻿using DsaWuerfelApp.Client.Services;
 using DsaWuerfelApp.Shared.Models;
 
 using Microsoft.AspNetCore.Components;
@@ -11,7 +9,7 @@ namespace DsaWuerfelApp.Client.Pages;
 
 public partial class HeldenVerwaltung : ComponentBase, IAsyncDisposable
 {
-    private const long MaxFileSize = 1024 * 1024 * 2;
+    private const long MaxFileSize = 1024 * 1024 * 5;
     private const int MaxAllowedFiles = 15;
 
     private IJSObjectReference? _dropZoneModule;
@@ -62,44 +60,34 @@ public partial class HeldenVerwaltung : ComponentBase, IAsyncDisposable
         }
     }
 
-    protected async Task LoadFiles(InputFileChangeEventArgs e)
+    protected void LoadFiles(InputFileChangeEventArgs e)
     {
         ClearDragClass();
 
         var files = e.GetMultipleFiles(MaxAllowedFiles);
         var validFiles = new List<IBrowserFile>();
         var invalidExtensionFiles = new List<string>();
-        var invalidContentFiles = new List<string>();
         var oversizedFiles = new List<string>();
 
         foreach (var file in files)
         {
-            if (!HasXmlExtension(file))
+            if (!HasValidExtension(file))
             {
                 invalidExtensionFiles.Add(file.Name);
                 continue;
             }
 
-            try
-            {
-                if (await HasValidXmlContentAsync(file))
-                {
-                    validFiles.Add(file);
-                }
-                else
-                {
-                    invalidContentFiles.Add(file.Name);
-                }
-            }
-            catch (IOException)
+            if (file.Size > MaxFileSize)
             {
                 oversizedFiles.Add(file.Name);
+                continue;
             }
+
+            validFiles.Add(file);
         }
 
         SelectedFiles = validFiles;
-        ErrorMessage =
-            BuildValidationMessage(invalidExtensionFiles, invalidContentFiles, oversizedFiles, validFiles.Count);
+        ErrorMessage = BuildValidationMessage(invalidExtensionFiles, oversizedFiles, validFiles.Count);
     }
 
     protected async Task UploadFilesAsync()
@@ -120,10 +108,6 @@ public partial class HeldenVerwaltung : ComponentBase, IAsyncDisposable
                 .ThenBy(hero => hero.Name)
                 .ToList();
             SelectedFiles = Array.Empty<IBrowserFile>();
-        }
-        catch (IOException)
-        {
-            ErrorMessage = "Eine oder mehrere Dateien überschreiten die maximal erlaubte Größe von 2 MB.";
         }
         catch (HttpRequestException)
         {
@@ -204,49 +188,14 @@ public partial class HeldenVerwaltung : ComponentBase, IAsyncDisposable
         _dropZoneRegistered = true;
     }
 
-    private static bool HasXmlExtension(IBrowserFile file)
+    private static bool HasValidExtension(IBrowserFile file)
     {
-        return string.Equals(Path.GetExtension(file.Name), ".xml", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static async Task<bool> HasValidXmlContentAsync(IBrowserFile file)
-    {
-        var settings = new XmlReaderSettings
-        {
-            Async = true,
-            DtdProcessing = DtdProcessing.Prohibit,
-            XmlResolver = null,
-            MaxCharactersInDocument = MaxFileSize
-        };
-
-        using var stream = file.OpenReadStream(MaxFileSize);
-        try
-        {
-            using var reader = XmlReader.Create(stream, settings);
-
-            while (await reader.ReadAsync())
-            {
-                if (reader.NodeType == XmlNodeType.Element)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-        catch (XmlException)
-        {
-            return false;
-        }
-        catch (InvalidOperationException)
-        {
-            return false;
-        }
+        var ext = Path.GetExtension(file.Name).ToLowerInvariant();
+        return ext == ".xml" || ext == ".zip" || ext == ".hld";
     }
 
     private static string BuildValidationMessage(
         IReadOnlyCollection<string> invalidExtensionFiles,
-        IReadOnlyCollection<string> invalidContentFiles,
         IReadOnlyCollection<string> oversizedFiles,
         int validFileCount)
     {
@@ -254,17 +203,12 @@ public partial class HeldenVerwaltung : ComponentBase, IAsyncDisposable
 
         if (invalidExtensionFiles.Count > 0)
         {
-            messages.Add($".xml-Endung fehlt: {string.Join(", ", invalidExtensionFiles)}");
-        }
-
-        if (invalidContentFiles.Count > 0)
-        {
-            messages.Add($"kein gueltiges XML: {string.Join(", ", invalidContentFiles)}");
+            messages.Add($"Ungültige Dateiendung: {string.Join(", ", invalidExtensionFiles)}");
         }
 
         if (oversizedFiles.Count > 0)
         {
-            messages.Add($"groesser als 2 MB: {string.Join(", ", oversizedFiles)}");
+            messages.Add($"Zu groß (max 5MB): {string.Join(", ", oversizedFiles)}");
         }
 
         if (messages.Count == 0)
