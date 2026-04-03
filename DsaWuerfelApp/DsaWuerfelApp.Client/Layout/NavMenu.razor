@@ -25,16 +25,17 @@
             </div>
         }
 
-        @if (!string.IsNullOrWhiteSpace(ActiveHeroName))
-        {
-            <NavLink class="nav-link active-hero-pill" href="helden-verwaltung" ActiveClass="active-hero-pill-active"
-                     title="@ActiveHeroName">
-                <img src="icons/DasSchwarzeAuge.svg" class="nav-icon" alt=""/>
-                <span class="nav-text active-hero-name">@ActiveHeroName</span>
-            </NavLink>
-        }
-
         <nav class="nav-links">
+            @if (!string.IsNullOrWhiteSpace(ActiveHeroName))
+            {
+                <NavLink class="nav-link active-hero-pill" href="helden-verwaltung"
+                         ActiveClass="active-hero-pill-active"
+                         title="@ActiveHeroName">
+                    <img src="icons/DasSchwarzeAuge.svg" class="nav-icon" alt=""/>
+                    <span class="nav-text active-hero-name">@ActiveHeroName</span>
+                </NavLink>
+            }
+
             <NavLink class="nav-link" href="wuerfel">
                 <img src="icons/dice.svg" class="nav-icon" alt=""/>
                 <span class="nav-text">Würfeln</span>
