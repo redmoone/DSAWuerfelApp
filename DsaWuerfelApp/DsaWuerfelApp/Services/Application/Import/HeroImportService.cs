@@ -43,7 +43,12 @@ public sealed class HeroImportService(
         var response = await httpClient.PostAsync("/api/convert", content, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            throw new HeroImportException("Das Java-Backend konnte die Dateien nicht verarbeiten.");
+            var errorMessage = await response.Content.ReadAsStringAsync(cancellationToken);
+            errorMessage = string.IsNullOrWhiteSpace(errorMessage)
+                ? "Das Java-Backend konnte die Dateien nicht verarbeiten."
+                : errorMessage.Trim();
+
+            throw new HeroImportException(errorMessage);
         }
 
         await using var enrichedXmlStream = await response.Content.ReadAsStreamAsync(cancellationToken);

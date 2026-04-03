@@ -109,9 +109,11 @@ public partial class HeldenVerwaltung : ComponentBase, IAsyncDisposable
                 .ToList();
             SelectedFiles = Array.Empty<IBrowserFile>();
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException exception)
         {
-            ErrorMessage = "Fehler bei der Kommunikation mit dem Server.";
+            ErrorMessage = string.IsNullOrWhiteSpace(exception.Message)
+                ? "Fehler bei der Kommunikation mit dem Server."
+                : exception.Message;
         }
         catch (Exception)
         {

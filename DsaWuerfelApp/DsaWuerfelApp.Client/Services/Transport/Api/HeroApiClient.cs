@@ -57,7 +57,15 @@ public class HeroApiClient : IHeroApiClient
         }
 
         var response = await _httpClient.PostAsync("api/heroes/upload", content);
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            errorMessage = string.IsNullOrWhiteSpace(errorMessage)
+                ? "Fehler bei der Kommunikation mit dem Server."
+                : errorMessage.Trim();
+
+            throw new HttpRequestException(errorMessage);
+        }
 
         var heroes = await response.Content.ReadFromJsonAsync<List<Hero>>();
         return heroes ?? new List<Hero>();
