@@ -68,7 +68,7 @@ public sealed class AuthController(MagicLinkService magicLinkService) : Controll
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             BuildPrincipal(verificationResult.User),
-            new AuthenticationProperties { IsPersistent = true, ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30) });
+            new AuthenticationProperties { IsPersistent = true });
 
         return Redirect(verificationResult.RedirectPath);
     }

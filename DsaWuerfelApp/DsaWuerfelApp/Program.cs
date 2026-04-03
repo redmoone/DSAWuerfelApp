@@ -6,16 +6,31 @@ using DsaWuerfelApp.Services.Application.Import;
 using DsaWuerfelApp.Services.Auth;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = new FileExtensionContentTypeProvider { Mappings = { [".glb"] = "model/gltf-binary" } };
+var authSessionLifetimeDays = Math.Max(1, builder.Configuration.GetValue<int?>("AuthSession:LifetimeDays") ?? 180);
 var javaMicroserviceBaseUrl = builder.Configuration["JavaMicroservice:BaseUrl"] ?? "http://localhost:8080";
 var javaMicroserviceTimeoutSeconds = builder.Configuration.GetValue<int?>("JavaMicroservice:TimeoutSeconds") ?? 30;
+var dataProtectionApplicationName = builder.Configuration["DataProtection:ApplicationName"] ?? "DsaWuerfelApp";
+var dataProtectionKeysPath = builder.Configuration["DataProtection:KeysPath"];
+if (string.IsNullOrWhiteSpace(dataProtectionKeysPath))
+{
+    dataProtectionKeysPath = builder.Environment.IsDevelopment()
+        ? Path.Combine(builder.Environment.ContentRootPath, "artifacts", "data-protection-keys")
+        : "/var/lib/dsawuerfelapp/data-protection-keys";
+}
+
+Directory.CreateDirectory(dataProtectionKeysPath);
 
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath))
+    .SetApplicationName(dataProtectionApplicationName);
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -25,7 +40,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
         options.LoginPath = "/";
         options.SlidingExpiration = true;
-        options.ExpireTimeSpan = TimeSpan.FromDays(30);
+        options.ExpireTimeSpan = TimeSpan.FromDays(authSessionLifetimeDays);
     });
 builder.Services.AddAuthorization();
 builder.Services.Configure<MagicLinkAuthOptions>(builder.Configuration.GetSection(MagicLinkAuthOptions.SectionName));
