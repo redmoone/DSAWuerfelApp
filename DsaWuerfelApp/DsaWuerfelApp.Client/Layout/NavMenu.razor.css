@@ -65,28 +65,26 @@
 }
 
 .account-pill {
-    display: none;
-    padding: 0.85rem 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+    min-height: 3.25rem;
+    padding: 0.6rem;
+    border-radius: 999px;
     border: 2px solid var(--dsa-gold);
-    border-radius: 18px;
-    background: rgba(12, 24, 43, 0.5);
+    background-color: var(--pill-bg);
+    color: var(--dsa-white);
     box-shadow: 0 0 10px rgba(212, 175, 55, 0.12);
 }
 
-.account-primary {
+.account-email {
+    flex: 1 1 auto;
+    min-width: 0;
     overflow: hidden;
     color: var(--dsa-white);
-    font-size: 0.92rem;
+    font-size: 0.95rem;
     font-weight: 700;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.account-secondary {
-    overflow: hidden;
-    margin-top: 0.2rem;
-    color: rgba(255, 248, 220, 0.68);
-    font-size: 0.72rem;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -190,15 +188,12 @@
         min-height: 3.25rem;
     }
 
-    .nav-toggle:checked ~ .nav-panel .account-pill {
-        display: block;
-    }
-
     .nav-panel ::deep .nav-link.active-hero-pill {
         display: flex;
     }
 
-    .nav-panel ::deep .nav-link {
+    .nav-panel ::deep .nav-link,
+    .account-pill {
         justify-content: center;
         width: 3.25rem;
         height: 3.25rem;
@@ -206,12 +201,18 @@
         padding: 0;
     }
 
-    .nav-toggle:checked ~ .nav-panel ::deep .nav-link {
+    .account-email {
+        display: none;
+    }
+
+    .nav-toggle:checked ~ .nav-panel ::deep .nav-link,
+    .nav-toggle:checked ~ .nav-panel .account-pill {
         justify-content: flex-start;
         width: 100%;
         padding: 0.6rem 0.85rem;
     }
 
+    .nav-toggle:checked ~ .nav-panel .account-email,
     .nav-toggle:checked ~ .nav-panel .nav-text {
         display: inline;
     }
@@ -236,7 +237,6 @@
 }
 
 @media (max-width: 640px) {
-    .account-pill,
     .session-panel {
         display: flex;
     }

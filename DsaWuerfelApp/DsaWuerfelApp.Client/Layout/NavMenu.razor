@@ -17,15 +17,16 @@
             </label>
         </div>
 
-        @if (AuthState.Current.IsAuthenticated && AuthState.Current.User is not null)
-        {
-            <div class="account-pill">
-                <div class="account-primary">@AuthState.Current.User.DisplayName</div>
-                <div class="account-secondary">@AuthState.Current.User.Email</div>
-            </div>
-        }
-
         <nav class="nav-links">
+            @if (AuthState.Current.IsAuthenticated && AuthState.Current.User is not null)
+            {
+                <div class="account-pill" title="@AuthState.Current.User.Email"
+                     aria-label="@AuthState.Current.User.Email">
+                    <img src="icons/avatar.svg" class="nav-icon account-icon" alt=""/>
+                    <span class="account-email">@AuthState.Current.User.Email</span>
+                </div>
+            }
+
             @if (!string.IsNullOrWhiteSpace(ActiveHeroName))
             {
                 <NavLink class="nav-link active-hero-pill" href="helden-verwaltung"
