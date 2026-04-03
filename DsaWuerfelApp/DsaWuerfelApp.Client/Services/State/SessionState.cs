@@ -225,6 +225,25 @@ public sealed class SessionState : IDisposable
         }
     }
 
+    public async Task RenamePlayerAsync(string sessionId, string playerName)
+    {
+        try
+        {
+            await _gameClient.StartAsync();
+            await _gameClient.RenamePlayer(sessionId, playerName);
+            await RefreshAsync();
+
+            if (string.Equals(ActiveSessionId, sessionId, StringComparison.Ordinal))
+            {
+                await LoadActiveSessionAsync(sessionId, persistSelection: false);
+            }
+        }
+        catch (HubException exception)
+        {
+            throw new InvalidOperationException(exception.Message, exception);
+        }
+    }
+
     public async Task DeleteSessionAsync(string sessionId)
     {
         try
@@ -399,6 +418,25 @@ public sealed class SessionState : IDisposable
 
     private void HandleSessionsChanged()
     {
-        _ = RefreshAsync();
+        _ = HandleSessionsChangedAsync();
+    }
+
+    private async Task HandleSessionsChangedAsync()
+    {
+        await RefreshAsync();
+
+        if (string.IsNullOrWhiteSpace(ActiveSessionId))
+        {
+            return;
+        }
+
+        try
+        {
+            await LoadActiveSessionAsync(ActiveSessionId, persistSelection: false);
+        }
+        catch
+        {
+            await ClearActiveSessionAsync(clearClientState: true);
+        }
     }
 }

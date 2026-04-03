@@ -89,6 +89,8 @@ public sealed record TalentRollResultDto(
     string Probe,
     int Modifier,
     int BasisModifier,
+    string? SpecializationName,
+    int SpecializationModifier,
     string? SchlechteEigenschaftName,
     int SchlechteEigenschaftModifier,
     int EffectiveTalentValue,

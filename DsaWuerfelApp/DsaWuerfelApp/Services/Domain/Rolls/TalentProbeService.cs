@@ -22,6 +22,11 @@ public sealed class TalentProbeService(DiceService diceService)
             throw new ArgumentOutOfRangeException(nameof(request.SchlechteEigenschaftModifier));
         }
 
+        if (request.SpecializationModifier is not 0 and not -2)
+        {
+            throw new ArgumentOutOfRangeException(nameof(request.SpecializationModifier));
+        }
+
         if (request.Probe.Count != 3 || request.AttributeValues.Length != 3)
         {
             throw new ArgumentException("A talent probe requires exactly three attributes.", nameof(request));
@@ -30,7 +35,8 @@ public sealed class TalentProbeService(DiceService diceService)
         var timestamp = DateTime.UtcNow;
         var rolledDice = CreateRolls(request.ForcedRolls);
         var rollValues = rolledDice.Select(roll => roll.Value).ToArray();
-        var totalModifier = request.BasisModifier + request.SchlechteEigenschaftModifier;
+        var totalModifier = request.BasisModifier + request.SpecializationModifier +
+                            request.SchlechteEigenschaftModifier;
         var evaluatedProbe = TalentProbe.Check(request.TalentValue, totalModifier, request.AttributeValues, rollValues);
         var details = BuildRollDetails(
             request.Probe.ToArray(),
@@ -50,6 +56,10 @@ public sealed class TalentProbeService(DiceService diceService)
             request.Probe.Label,
             totalModifier,
             request.BasisModifier,
+            string.IsNullOrWhiteSpace(request.SpecializationName)
+                ? null
+                : request.SpecializationName.Trim(),
+            request.SpecializationModifier,
             string.IsNullOrWhiteSpace(request.SchlechteEigenschaftName)
                 ? null
                 : request.SchlechteEigenschaftName.Trim(),
@@ -203,6 +213,8 @@ public sealed record ResolvedTalentRollRequest(
     ProbeAttributes Probe,
     int[] AttributeValues,
     int BasisModifier,
+    string? SpecializationName,
+    int SpecializationModifier,
     string? SchlechteEigenschaftName,
     int SchlechteEigenschaftModifier,
     ForcedRollValues? ForcedRolls);

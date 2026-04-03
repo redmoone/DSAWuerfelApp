@@ -274,6 +274,44 @@ public class SessionService
         }
     }
 
+    public GameSession RenamePlayer(string sessionId, string userId, string? playerName)
+    {
+        lock (_syncRoot)
+        {
+            EnsureLoaded();
+
+            var session = GetRequiredSession(sessionId);
+            EnsureMember(session, userId);
+
+            var resolvedName = ResolveRequiredPlayerName(playerName);
+
+            using var scope = _scopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<HeroDbContext>();
+            var record = dbContext.SessionRecords
+                             .Include(current => current.Participants)
+                             .SingleOrDefault(current => current.Id == sessionId) ??
+                         throw new InvalidOperationException("Session wurde nicht gefunden.");
+
+            var participant = record.Participants
+                                  .FirstOrDefault(current =>
+                                      string.Equals(current.UserId, userId, StringComparison.Ordinal)) ??
+                              throw new InvalidOperationException("Spieler ist nicht Teil dieser Session.");
+
+            participant.Name = resolvedName;
+            dbContext.SaveChanges();
+
+            var player = session.Players.FirstOrDefault(current =>
+                string.Equals(current.UserId, userId, StringComparison.Ordinal));
+
+            if (player is not null)
+            {
+                player.Name = resolvedName;
+            }
+
+            return session;
+        }
+    }
+
     public IReadOnlyList<string> DeleteSession(string sessionId, string userId)
     {
         lock (_syncRoot)
@@ -623,6 +661,13 @@ public class SessionService
         return string.IsNullOrWhiteSpace(sessionName)
             ? "Unbenannte Session"
             : sessionName.Trim();
+    }
+
+    private static string ResolveRequiredPlayerName(string? playerName)
+    {
+        return string.IsNullOrWhiteSpace(playerName)
+            ? throw new InvalidOperationException("Bitte einen Spielernamen eingeben.")
+            : playerName.Trim();
     }
 
     private static string NormalizeJoinCode(string code)

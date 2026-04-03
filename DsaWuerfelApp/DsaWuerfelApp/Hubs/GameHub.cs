@@ -147,6 +147,23 @@ public class GameHub(
         await NotifySessionsChangedAsync(session.Players.Select(player => player.UserId));
     }
 
+    public async Task RenamePlayer(string sessionId, string? playerName)
+    {
+        var userId = GetRequiredUserId();
+        GameSession session;
+
+        try
+        {
+            session = sessionService.RenamePlayer(sessionId, userId, playerName);
+        }
+        catch (InvalidOperationException exception)
+        {
+            throw new HubException(exception.Message);
+        }
+
+        await NotifySessionsChangedAsync(session.Players.Select(player => player.UserId));
+    }
+
     public async Task DeleteSession(string sessionId)
     {
         var userId = GetRequiredUserId();

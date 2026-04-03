@@ -38,6 +38,11 @@
                     <span>Probe: @TalentResult.Probe</span>
                     <span>TaW: @TalentResult.TalentValue</span>
                     <span>Mod.: @FormatModifier(TalentResult.BasisModifier)</span>
+                    @if (TalentResult.SpecializationModifier != 0 &&
+                         !string.IsNullOrWhiteSpace(TalentResult.SpecializationName))
+                    {
+                        <span>Spez.: @TalentResult.SpecializationName (@FormatModifier(TalentResult.SpecializationModifier))</span>
+                    }
                     @if (TalentResult.SchlechteEigenschaftModifier > 0 &&
                          !string.IsNullOrWhiteSpace(TalentResult.SchlechteEigenschaftName))
                     {

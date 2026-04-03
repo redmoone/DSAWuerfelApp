@@ -52,20 +52,26 @@ public partial class ProbenSearch
             return true;
         }
 
-        var canonicalSearchTerm = TalentCatalogText.CanonicalizeName(SearchTerm);
+        if (probe.Alternatives.Any(alternative =>
+                alternative.Label.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        var canonicalSearchTerm = TalentCatalogText.CanonicalizeText(SearchTerm);
         if (string.IsNullOrWhiteSpace(canonicalSearchTerm))
         {
             return false;
         }
 
-        if (TalentCatalogText.CanonicalizeName(probe.DisplayLabel)
+        if (TalentCatalogText.CanonicalizeText(probe.DisplayLabel)
             .Contains(canonicalSearchTerm, StringComparison.Ordinal))
         {
             return true;
         }
 
         return probe.Alternatives.Any(alternative =>
-            TalentCatalogText.CanonicalizeName(alternative.Label)
+            TalentCatalogText.CanonicalizeText(alternative.Label)
                 .Contains(canonicalSearchTerm, StringComparison.Ordinal));
     }
 

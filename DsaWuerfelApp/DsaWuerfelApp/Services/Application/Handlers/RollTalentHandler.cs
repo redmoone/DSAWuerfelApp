@@ -27,6 +27,8 @@ public sealed class RollTalentHandler(
                 probe,
                 probe.ResolveValues(hero.Eigenschaften),
                 request.Modifier,
+                talent.SpecializationName,
+                talent.SpecializationModifier,
                 badTrait?.Name,
                 badTrait?.TalentModifier ?? 0,
                 ForcedRollValues.CreateOptional(request.ForcedRollsText, 3)),

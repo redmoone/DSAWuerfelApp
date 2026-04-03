@@ -10,6 +10,9 @@ public partial class SessionTree
 {
     private readonly HashSet<string> _expandedSessionIds = new(StringComparer.Ordinal);
     private string _editingName = string.Empty;
+    private string _editingPlayerName = string.Empty;
+    private string? _editingPlayerSessionId;
+    private string? _editingPlayerUserId;
     private string? _editingSessionId;
 
     [Inject] public AuthState AuthState { get; set; } = null!;
@@ -23,6 +26,7 @@ public partial class SessionTree
     [Parameter] public bool ShowJoinCode { get; set; } = true;
     [Parameter] public bool ShowCopyButton { get; set; }
     [Parameter] public bool ShowManagement { get; set; } = true;
+    [Parameter] public bool ShowPlayerEditing { get; set; } = true;
 
     protected override void OnParametersSet()
     {
@@ -38,6 +42,15 @@ public partial class SessionTree
             Sessions.All(session => !string.Equals(session.SessionId, _editingSessionId, StringComparison.Ordinal)))
         {
             CancelRename();
+        }
+
+        if (!string.IsNullOrWhiteSpace(_editingPlayerSessionId) &&
+            Sessions.All(session =>
+                !string.Equals(session.SessionId, _editingPlayerSessionId, StringComparison.Ordinal) ||
+                session.Players.All(player =>
+                    !string.Equals(player.UserId, _editingPlayerUserId, StringComparison.Ordinal))))
+        {
+            CancelPlayerRename();
         }
     }
 
@@ -68,6 +81,28 @@ public partial class SessionTree
         _editingName = string.Empty;
     }
 
+    private bool CanEditPlayer(SessionPlayerDto player)
+    {
+        var currentUserId = AuthState.Current.User?.Id;
+        return ShowPlayerEditing &&
+               !string.IsNullOrWhiteSpace(currentUserId) &&
+               string.Equals(player.UserId, currentUserId, StringComparison.Ordinal);
+    }
+
+    private void BeginPlayerRename(string sessionId, SessionPlayerDto player)
+    {
+        _editingPlayerSessionId = sessionId;
+        _editingPlayerUserId = player.UserId;
+        _editingPlayerName = player.Name;
+    }
+
+    private void CancelPlayerRename()
+    {
+        _editingPlayerSessionId = null;
+        _editingPlayerUserId = null;
+        _editingPlayerName = string.Empty;
+    }
+
     private async Task SaveRenameAsync(string sessionId)
     {
         if (string.IsNullOrWhiteSpace(_editingName))
@@ -80,6 +115,25 @@ public partial class SessionTree
         {
             await SessionState.RenameSessionAsync(sessionId, _editingName.Trim());
             CancelRename();
+        }
+        catch (InvalidOperationException exception)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", exception.Message);
+        }
+    }
+
+    private async Task SavePlayerRenameAsync(string sessionId)
+    {
+        if (string.IsNullOrWhiteSpace(_editingPlayerName))
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Bitte einen Spielernamen eingeben.");
+            return;
+        }
+
+        try
+        {
+            await SessionState.RenamePlayerAsync(sessionId, _editingPlayerName.Trim());
+            CancelPlayerRename();
         }
         catch (InvalidOperationException exception)
         {

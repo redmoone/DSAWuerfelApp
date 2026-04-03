@@ -48,18 +48,22 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
                 ? "keine Eigenschaften hinterlegt"
                 : string.Join(", ", probeAttributes.Select(attribute =>
                     $"{attribute} {GetAttributeValueText(hero, attribute)}"));
-            var effectiveModifier = modifier + (badTrait?.TalentModifier ?? 0);
+            var effectiveModifier = modifier + (badTrait?.TalentModifier ?? 0) + resolvedTalent.SpecializationModifier;
             var effectiveTalentValue = resolvedTalent.Talent.Wert - effectiveModifier;
             var availableCompensation = Math.Min(Math.Max(effectiveTalentValue, 0), resolvedTalent.Talent.Wert);
             var modifierInfo = effectiveTalentValue >= 0
                 ? $"Nach dem Gesamtmodifikator {FormatModifier(effectiveModifier)} bleiben {availableCompensation} Ausgleichspunkte für Überschreitungen."
                 : $"Nach dem Gesamtmodifikator {FormatModifier(effectiveModifier)} liegt der effektive Talentwert bei {effectiveTalentValue}. Dadurch müssen alle drei Eigenschaftswürfe jeweils um {Math.Abs(effectiveTalentValue)} Punkte niedriger geschafft werden.";
+            var specializationInfo = resolvedTalent.SpecializationModifier == 0 ||
+                                     string.IsNullOrWhiteSpace(resolvedTalent.SpecializationName)
+                ? string.Empty
+                : $" Gewählte Talentspezialisierung: {resolvedTalent.SpecializationName}. Dadurch ist die Probe um 2 Punkte erleichtert.";
             ProbeInfoSectionDto[] infoSections = TryGetEntry(resolvedTalent.Name, out var catalogEntry)
                 ? [.. catalogEntry.InfoSections]
                 : [];
 
             return new ProbeInfoResultDto(
-                $"{resolvedTalent.Name} hat aktuell TaW {resolvedTalent.Talent.Wert}. Probe: {resolvedTalent.Talent.Probe}. Verwendete Eigenschaften: {attributeInfo}. {modifierInfo}{badTraitText}",
+                $"{resolvedTalent.Name} hat aktuell TaW {resolvedTalent.Talent.Wert}. Probe: {resolvedTalent.Talent.Probe}. Verwendete Eigenschaften: {attributeInfo}. {modifierInfo}{specializationInfo}{badTraitText}",
                 infoSections);
         }
 
@@ -101,23 +105,36 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
     private bool TryResolveTalent(Hero hero, string talentKey, out ResolvedTalentData resolvedTalent)
     {
         var knownTalents = BuildKnownTalentMap(hero);
+        var selection = TalentSelectionValue.Parse(talentKey);
+        var lookupTalentKey = string.IsNullOrWhiteSpace(selection.TalentName) ? talentKey : selection.TalentName;
 
-        if (knownTalents.TryGetValue(talentKey, out var talent) && IsTalentRollable(talentKey, talent))
+        if (knownTalents.TryGetValue(lookupTalentKey, out var talent) &&
+            IsTalentRollable(lookupTalentKey, talent) &&
+            TryResolveSpecializationName(talent.Talent, selection, out var specializationName))
         {
-            resolvedTalent = new ResolvedTalentData(talentKey, talent.Talent);
+            resolvedTalent = new ResolvedTalentData(
+                selection.HasSpecialization ? selection.DisplayName : lookupTalentKey,
+                talent.Talent,
+                specializationName,
+                selection.SpecializationModifier);
             return true;
         }
 
-        var canonicalTalentKey = TalentCatalogText.CanonicalizeName(talentKey);
+        var canonicalTalentKey = TalentCatalogText.CanonicalizeName(lookupTalentKey);
         foreach (var entry in knownTalents)
         {
             if (string.Equals(
                     TalentCatalogText.CanonicalizeName(entry.Key),
                     canonicalTalentKey,
                     StringComparison.Ordinal) &&
-                IsTalentRollable(entry.Key, entry.Value))
+                IsTalentRollable(entry.Key, entry.Value) &&
+                TryResolveSpecializationName(entry.Value.Talent, selection, out var matchedSpecializationName))
             {
-                resolvedTalent = new ResolvedTalentData(entry.Key, entry.Value.Talent);
+                resolvedTalent = new ResolvedTalentData(
+                    selection.HasSpecialization ? selection.DisplayName : entry.Key,
+                    entry.Value.Talent,
+                    matchedSpecializationName,
+                    selection.SpecializationModifier);
                 return true;
             }
         }
@@ -165,7 +182,10 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         return knownTalents
             .OrderBy(entry => entry.Key, StringComparer.Ordinal)
             .Select(entry => IsTalentRollable(entry.Key, entry.Value)
-                ? BuildSelectableProbeSearchEntry(BuildTalentProbeLabel(entry.Key, entry.Value.Talent), entry.Key)
+                ? BuildSelectableProbeSearchEntry(
+                    BuildTalentProbeLabel(entry.Key, entry.Value.Talent),
+                    entry.Key,
+                    BuildSpecializationAlternatives(entry.Key, entry.Value.Talent))
                 : BuildInactiveProbeSearchEntry(entry.Key, entry.Value, activeAlternatives))
             .ToArray();
     }
@@ -175,7 +195,12 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         var knownTalents = hero.Talente.ToDictionary(
             entry => entry.Key,
             entry => new KnownTalentEntry(
-                new TalentData { Wert = entry.Value.Wert, Probe = entry.Value.Probe },
+                new TalentData
+                {
+                    Wert = entry.Value.Wert,
+                    Probe = entry.Value.Probe,
+                    Specializations = entry.Value.Specializations.ToArray()
+                },
                 true),
             StringComparer.Ordinal);
 
@@ -200,7 +225,7 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
             }
 
             knownTalents[catalogEntry.Name] = new KnownTalentEntry(
-                new TalentData { Wert = 0, Probe = catalogEntry.Probe },
+                new TalentData { Wert = 0, Probe = catalogEntry.Probe, Specializations = [] },
                 false);
         }
 
@@ -241,7 +266,8 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         talent = new TalentData
         {
             Wert = cappedValue,
-            Probe = ResolveWatchKeepingProbe(selfControlTalent.Talent, senseSharpnessTalent.Talent)
+            Probe = ResolveWatchKeepingProbe(selfControlTalent.Talent, senseSharpnessTalent.Talent),
+            Specializations = []
         };
 
         return true;
@@ -354,6 +380,14 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         return new ProbeSearchEntryDto(label, value ?? label, true, []);
     }
 
+    private static ProbeSearchEntryDto BuildSelectableProbeSearchEntry(
+        string label,
+        string? value,
+        ProbeSearchAlternativeDto[] alternatives)
+    {
+        return new ProbeSearchEntryDto(label, value ?? label, true, alternatives);
+    }
+
     private ProbeSearchEntryDto BuildInactiveProbeSearchEntry(
         string talentName,
         KnownTalentEntry talent,
@@ -389,6 +423,43 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         return string.IsNullOrWhiteSpace(talent.Probe)
             ? $"{talentName} nicht aktiviert"
             : $"{talentName} nicht aktiviert ({talent.Probe})";
+    }
+
+    private static ProbeSearchAlternativeDto[] BuildSpecializationAlternatives(string talentName, TalentData talent)
+    {
+        if (talent.Specializations.Length == 0)
+        {
+            return [];
+        }
+
+        return talent.Specializations
+            .Where(specialization => !string.IsNullOrWhiteSpace(specialization))
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(specialization => specialization, StringComparer.Ordinal)
+            .Select(specialization => new ProbeSearchAlternativeDto(
+                TalentSelectionValue.FormatLabel(talentName, specialization),
+                TalentSelectionValue.Encode(talentName, specialization)))
+            .ToArray();
+    }
+
+    private static bool TryResolveSpecializationName(
+        TalentData talent,
+        ParsedTalentSelection selection,
+        out string? specializationName)
+    {
+        if (!selection.HasSpecialization)
+        {
+            specializationName = null;
+            return true;
+        }
+
+        specializationName = talent.Specializations.FirstOrDefault(existingSpecialization =>
+            string.Equals(
+                TalentCatalogText.CanonicalizeText(existingSpecialization),
+                TalentCatalogText.CanonicalizeText(selection.SpecializationName),
+                StringComparison.Ordinal));
+
+        return !string.IsNullOrWhiteSpace(specializationName);
     }
 
     private bool TryGetEntry(string talentName, out TalentCatalogEntry entry)
@@ -504,7 +575,11 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         public bool IsOwnedByHero { get; } = isOwnedByHero;
     }
 
-    public sealed record ResolvedTalentData(string Name, TalentData Talent);
+    public sealed record ResolvedTalentData(
+        string Name,
+        TalentData Talent,
+        string? SpecializationName,
+        int SpecializationModifier);
 
     private sealed class TalentCatalogItem
     {

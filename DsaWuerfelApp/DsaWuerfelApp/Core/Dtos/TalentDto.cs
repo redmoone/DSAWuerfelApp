@@ -9,4 +9,6 @@ public class TalentDto
     [XmlElement("wert")] public int Wert { get; set; }
 
     [XmlElement("probe")] public string Probe { get; set; } = string.Empty;
+
+    [XmlElement("spezialisierungen")] public string Specializations { get; set; } = string.Empty;
 }

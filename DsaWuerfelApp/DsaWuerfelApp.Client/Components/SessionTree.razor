@@ -117,6 +117,10 @@ else
                         <div class="session-members">
                             @foreach (var player in session.Players)
                             {
+                                var canEditPlayer = CanEditPlayer(player);
+                                var isEditingPlayer = string.Equals(_editingPlayerSessionId, session.SessionId, StringComparison.Ordinal) &&
+                                                      string.Equals(_editingPlayerUserId, player.UserId, StringComparison.Ordinal);
+
                                 <div class="session-member @(player.IsMaster ? "master" : string.Empty)">
                                     <span class="session-member-presence @(player.IsOnline ? "online" : "offline")"
                                           title="@(player.IsOnline ? "Online" : "Offline")"
@@ -125,7 +129,45 @@ else
                                     {
                                         <span class="session-member-role">Meister</span>
                                     }
-                                    <span class="session-member-name">@player.Name</span>
+
+                                    @if (isEditingPlayer)
+                                    {
+                                        <div class="session-member-edit">
+                                            <input class="session-member-input"
+                                                   @bind="_editingPlayerName"
+                                                   @bind:event="oninput"
+                                                   maxlength="40"
+                                                   placeholder="Spielername"/>
+
+                                            <div class="session-member-edit-actions">
+                                                <button type="button"
+                                                        class="session-action-btn"
+                                                        @onclick="() => SavePlayerRenameAsync(session.SessionId)">
+                                                    Speichern
+                                                </button>
+                                                <button type="button"
+                                                        class="session-action-btn secondary"
+                                                        @onclick="CancelPlayerRename">
+                                                    Abbrechen
+                                                </button>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="session-member-name">@player.Name</span>
+
+                                        @if (canEditPlayer)
+                                        {
+                                            <button type="button"
+                                                    class="session-icon-btn secondary session-player-edit-btn"
+                                                    title="Deinen Namen in dieser Session aendern"
+                                                    aria-label="Deinen Namen in dieser Session aendern"
+                                                    @onclick="() => BeginPlayerRename(session.SessionId, player)">
+                                                <img src="icons/edit.svg" class="session-icon" alt=""/>
+                                            </button>
+                                        }
+                                    }
                                 </div>
                             }
                         </div>

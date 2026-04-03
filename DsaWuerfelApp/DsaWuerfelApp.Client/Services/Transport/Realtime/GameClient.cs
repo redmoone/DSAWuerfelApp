@@ -141,6 +141,11 @@ public class GameClient : IAsyncDisposable
         return _hub.InvokeAsync("RenameSession", sessionId, sessionName);
     }
 
+    public Task RenamePlayer(string sessionId, string playerName)
+    {
+        return _hub.InvokeAsync("RenamePlayer", sessionId, playerName);
+    }
+
     public Task DeleteSession(string sessionId)
     {
         return _hub.InvokeAsync("DeleteSession", sessionId);

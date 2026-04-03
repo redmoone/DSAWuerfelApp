@@ -25,6 +25,21 @@ public partial class Lobby : IDisposable
 
     private bool IsAuthenticated => AuthState.Current.IsAuthenticated;
     private AuthUserDto? CurrentUser => AuthState.Current.User;
+    private SessionDetailsDto? ActiveSession => SessionState.ActiveSession;
+    private int SessionCount => SessionState.Sessions.Count;
+    private int ActivePlayerCount => ActiveSession?.Players.Length ?? 0;
+    private int ActiveOnlineCount => ActiveSession?.Players.Count(player => player.IsOnline) ?? 0;
+
+    private string? ActiveSessionPlayerName => CurrentUser is null
+        ? null
+        : ActiveSession?.Players
+            .FirstOrDefault(player => string.Equals(player.UserId, CurrentUser.Id, StringComparison.Ordinal))?.Name;
+
+    private string ActiveSessionTitle => ActiveSession?.Name ?? "Keine Runde offen";
+
+    private string ActiveSessionMeta => ActiveSession is null
+        ? "Waehle oder oeffne eine Session im Board"
+        : $"{ActiveOnlineCount} von {ActivePlayerCount} Spielern online";
 
     public void Dispose()
     {
@@ -205,7 +220,11 @@ public partial class Lobby : IDisposable
 
     private void ApplyAuthenticatedDefaults()
     {
-        if (string.IsNullOrWhiteSpace(_userName) && !string.IsNullOrWhiteSpace(CurrentUser?.DisplayName))
+        if (!string.IsNullOrWhiteSpace(ActiveSessionPlayerName))
+        {
+            _userName = ActiveSessionPlayerName;
+        }
+        else if (string.IsNullOrWhiteSpace(_userName) && !string.IsNullOrWhiteSpace(CurrentUser?.DisplayName))
         {
             _userName = CurrentUser.DisplayName;
         }
@@ -243,7 +262,16 @@ public partial class Lobby : IDisposable
 
     private void HandleSessionStateChanged()
     {
-        _ = InvokeAsync(StateHasChanged);
+        _ = InvokeAsync(() =>
+        {
+            ApplyAuthenticatedDefaults();
+            StateHasChanged();
+        });
+    }
+
+    private void GoToWuerfel()
+    {
+        Nav.NavigateTo("/wuerfel");
     }
 
     private string BuildDefaultSessionName()

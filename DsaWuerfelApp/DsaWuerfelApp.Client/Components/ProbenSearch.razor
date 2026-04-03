@@ -19,26 +19,23 @@
                     <div class="dropdown-item-content">
                         <span class="dropdown-item-label">@probe.DisplayLabel</span>
 
-                        @if (!probe.IsSelectable)
+                        @if (probe.Alternatives.Length > 0)
                         {
-                            @if (probe.Alternatives.Length > 0)
-                            {
-                                <div class="dropdown-item-alternatives">
-                                    @foreach (var alternative in probe.Alternatives)
-                                    {
-                                        <button type="button"
-                                                class="dropdown-alternative"
-                                                @onclick:stopPropagation="true"
-                                                @onclick="() => SelectProbe(alternative.Value)">
-                                            @alternative.Label
-                                        </button>
-                                    }
-                                </div>
-                            }
-                            else
-                            {
-                                <span class="dropdown-item-note">Keine aktivierten Alternativen vorhanden.</span>
-                            }
+                            <div class="dropdown-item-alternatives">
+                                @foreach (var alternative in probe.Alternatives)
+                                {
+                                    <button type="button"
+                                            class="dropdown-alternative"
+                                            @onclick:stopPropagation="true"
+                                            @onclick="() => SelectProbe(alternative.Value)">
+                                        @alternative.Label
+                                    </button>
+                                }
+                            </div>
+                        }
+                        else if (!probe.IsSelectable)
+                        {
+                            <span class="dropdown-item-note">Keine aktivierten Alternativen vorhanden.</span>
                         }
                     </div>
                 </div>

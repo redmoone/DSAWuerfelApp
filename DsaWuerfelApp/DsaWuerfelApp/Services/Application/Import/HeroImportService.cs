@@ -25,7 +25,7 @@ public sealed class HeroImportService(
 
         foreach (var file in files)
         {
-            var hero = ImportFile(file);
+            var hero = await ImportFileAsync(file, cancellationToken);
             if (hero is not null)
             {
                 createdHeroes.Add(hero);
@@ -43,7 +43,32 @@ public sealed class HeroImportService(
         return createdHeroes;
     }
 
-    private Hero? ImportFile(IFormFile file)
+    public Hero Reimport(Hero existingHero)
+    {
+        ArgumentNullException.ThrowIfNull(existingHero);
+
+        if (existingHero.SourceXml is not { Length: > 0 })
+        {
+            throw new HeroImportException($"Held '{existingHero.Name}' besitzt kein gespeichertes Import-XML.");
+        }
+
+        using var stream = new MemoryStream(existingHero.SourceXml, writable: false);
+        var dto = Deserialize(existingHero.SourceFileName ?? existingHero.Name, stream);
+        var importedHero = heroMapper.Map(dto);
+
+        existingHero.Name = importedHero.Name;
+        existingHero.Geschlecht = importedHero.Geschlecht;
+        existingHero.Alter = importedHero.Alter;
+        existingHero.Eigenschaften = importedHero.Eigenschaften;
+        existingHero.SchlechteEigenschaften = importedHero.SchlechteEigenschaften;
+        existingHero.Talente = importedHero.Talente;
+        existingHero.ImportVersion = HeroImportVersioning.CurrentVersion;
+        existingHero.ImportedAtUtc = DateTime.UtcNow;
+
+        return existingHero;
+    }
+
+    private async Task<Hero?> ImportFileAsync(IFormFile file, CancellationToken cancellationToken)
     {
         if (file.Length == 0)
         {
@@ -52,14 +77,24 @@ public sealed class HeroImportService(
 
         ValidateExtension(file.FileName);
 
-        using var stream = file.OpenReadStream();
-        var dto = Deserialize(file.FileName, stream);
+        await using var sourceStream = file.OpenReadStream();
+        using var buffer = new MemoryStream();
+        await sourceStream.CopyToAsync(buffer, cancellationToken);
+
+        var xmlBytes = buffer.ToArray();
+        using var deserializeStream = new MemoryStream(xmlBytes, writable: false);
+        var dto = Deserialize(file.FileName, deserializeStream);
         var hero = heroMapper.Map(dto);
 
         if (hero.Id == Guid.Empty)
         {
             hero.Id = Guid.NewGuid();
         }
+
+        hero.SourceXml = xmlBytes;
+        hero.SourceFileName = file.FileName;
+        hero.ImportVersion = HeroImportVersioning.CurrentVersion;
+        hero.ImportedAtUtc = DateTime.UtcNow;
 
         return hero;
     }

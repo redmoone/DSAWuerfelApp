@@ -278,7 +278,44 @@
 }
 
 .session-member-name {
+    flex: 0 1 auto;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.session-player-edit-btn {
+    width: 1.7rem;
+    height: 1.7rem;
+    margin-left: auto;
+}
+
+.session-member-edit {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.session-member-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 2.2rem;
+    padding: 0 0.8rem;
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--dsa-white);
+    outline: none;
+}
+
+.session-member-input::placeholder {
+    color: rgba(255, 248, 220, 0.45);
+}
+
+.session-member-edit-actions {
+    display: flex;
+    gap: 0.35rem;
+    flex: 0 0 auto;
 }

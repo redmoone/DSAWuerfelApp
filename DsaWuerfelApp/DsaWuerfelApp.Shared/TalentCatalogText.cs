@@ -8,12 +8,17 @@ public static partial class TalentCatalogText
 {
     public static string CanonicalizeName(string? value)
     {
+        return CanonicalizeText(RemoveSpecializationSuffix(value));
+    }
+
+    public static string CanonicalizeText(string? value)
+    {
         if (string.IsNullOrWhiteSpace(value))
         {
             return string.Empty;
         }
 
-        var normalized = NormalizeCatalogText(RemoveSpecializationSuffix(value));
+        var normalized = NormalizeCatalogText(value);
         normalized = WordBoundaryUndPattern().Replace(normalized, "/");
 
         var decomposed = normalized.Normalize(NormalizationForm.FormD);
@@ -43,38 +48,38 @@ public static partial class TalentCatalogText
         }
 
         var normalized = value.Trim()
-            .Replace("ÃƒÆ’Ã‚Â¤", "ÃƒÂ¤", StringComparison.Ordinal)
-            .Replace("ÃƒÆ’Ã¢â‚¬Å¾", "Ãƒâ€ž", StringComparison.Ordinal)
-            .Replace("ÃƒÆ’Ã‚Â¶", "ÃƒÂ¶", StringComparison.Ordinal)
-            .Replace("ÃƒÆ’Ã¢â‚¬â€œ", "Ãƒâ€“", StringComparison.Ordinal)
-            .Replace("ÃƒÆ’Ã‚Â¼", "ÃƒÂ¼", StringComparison.Ordinal)
-            .Replace("ÃƒÆ’Ã…â€œ", "ÃƒÅ“", StringComparison.Ordinal)
-            .Replace("ÃƒÆ’Ã…Â¸", "ÃƒÅ¸", StringComparison.Ordinal)
-            .Replace("ÃƒÆ’Ã‚Â©", "ÃƒÂ©", StringComparison.Ordinal)
-            .Replace("ÃƒÆ’Ã‚Â¨", "ÃƒÂ¨", StringComparison.Ordinal)
-            .Replace("ÃƒÆ’Ã‚Â¡", "ÃƒÂ¡", StringComparison.Ordinal)
-            .Replace("ÃƒÆ’Ã‚Â³", "ÃƒÂ³", StringComparison.Ordinal)
-            .Replace("ÃƒÂ¤", "ä", StringComparison.Ordinal)
-            .Replace("Ãƒâ€ž", "Ä", StringComparison.Ordinal)
-            .Replace("ÃƒÂ¶", "ö", StringComparison.Ordinal)
-            .Replace("Ãƒâ€“", "Ö", StringComparison.Ordinal)
-            .Replace("ÃƒÂ¼", "ü", StringComparison.Ordinal)
-            .Replace("ÃƒÅ“", "Ü", StringComparison.Ordinal)
-            .Replace("ÃƒÅ¸", "ß", StringComparison.Ordinal)
-            .Replace("ÃƒÂ©", "é", StringComparison.Ordinal)
-            .Replace("ÃƒÂ¨", "è", StringComparison.Ordinal)
-            .Replace("ÃƒÂ¡", "á", StringComparison.Ordinal)
-            .Replace("ÃƒÂ³", "ó", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¤", "ÃƒÆ’Ã‚Â¤", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾", "ÃƒÆ’Ã¢â‚¬Å¾", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¶", "ÃƒÆ’Ã‚Â¶", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“", "ÃƒÆ’Ã¢â‚¬â€œ", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¼", "ÃƒÆ’Ã‚Â¼", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã†â€™Ãƒâ€¦Ã¢â‚¬Å“", "ÃƒÆ’Ã…â€œ", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã†â€™Ãƒâ€¦Ã‚Â¸", "ÃƒÆ’Ã…Â¸", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©", "ÃƒÆ’Ã‚Â©", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¨", "ÃƒÆ’Ã‚Â¨", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡", "ÃƒÆ’Ã‚Â¡", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³", "ÃƒÆ’Ã‚Â³", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã‚Â¤", "Ã¤", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã¢â‚¬Å¾", "Ã„", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã‚Â¶", "Ã¶", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã¢â‚¬â€œ", "Ã–", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã‚Â¼", "Ã¼", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã…â€œ", "Ãœ", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã…Â¸", "ÃŸ", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã‚Â©", "Ã©", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã‚Â¨", "Ã¨", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã‚Â¡", "Ã¡", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã‚Â³", "Ã³", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ", "-", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â", "-", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾", "\"", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“", "\"", StringComparison.Ordinal)
+            .Replace("ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢", "'", StringComparison.Ordinal)
             .Replace("ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“", "-", StringComparison.Ordinal)
             .Replace("ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â", "-", StringComparison.Ordinal)
             .Replace("ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾", "\"", StringComparison.Ordinal)
             .Replace("ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ", "\"", StringComparison.Ordinal)
-            .Replace("ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢", "'", StringComparison.Ordinal)
-            .Replace("Ã¢â‚¬â€œ", "-", StringComparison.Ordinal)
-            .Replace("Ã¢â‚¬â€", "-", StringComparison.Ordinal)
-            .Replace("Ã¢â‚¬Å¾", "\"", StringComparison.Ordinal)
-            .Replace("Ã¢â‚¬Å“", "\"", StringComparison.Ordinal)
-            .Replace("Ã¢â‚¬â„¢", "'", StringComparison.Ordinal);
+            .Replace("ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢", "'", StringComparison.Ordinal);
 
         if (ContainsReplacementCharacter(normalized))
         {
@@ -119,15 +124,19 @@ public static partial class TalentCatalogText
 
     public static string[] ParseAlternatives(string? value)
     {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return [];
-        }
-
-        return value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+        return SplitCommaSeparatedValues(value)
             .Select(RemoveSpecializationSuffix)
             .Select(NormalizeCatalogText)
             .Where(alternative => !string.IsNullOrWhiteSpace(alternative))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    public static string[] ParseSpecializations(string? value)
+    {
+        return SplitCommaSeparatedValues(value)
+            .Select(NormalizeCatalogText)
+            .Where(specialization => !string.IsNullOrWhiteSpace(specialization))
             .Distinct(StringComparer.Ordinal)
             .ToArray();
     }
@@ -146,7 +155,48 @@ public static partial class TalentCatalogText
 
     private static bool ContainsReplacementCharacter(string value)
     {
-        return value.Contains("\uFFFD", StringComparison.Ordinal) || value.Contains("ï¿½", StringComparison.Ordinal);
+        return value.Contains("\uFFFD", StringComparison.Ordinal) || value.Contains("Ã¯Â¿Â½", StringComparison.Ordinal);
+    }
+
+    private static IEnumerable<string> SplitCommaSeparatedValues(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            yield break;
+        }
+
+        var builder = new StringBuilder(value.Length);
+        var parenthesisDepth = 0;
+
+        foreach (var character in value)
+        {
+            switch (character)
+            {
+                case '(':
+                    parenthesisDepth++;
+                    break;
+                case ')' when parenthesisDepth > 0:
+                    parenthesisDepth--;
+                    break;
+                case ',' when parenthesisDepth == 0:
+                    var entry = builder.ToString().Trim();
+                    if (!string.IsNullOrWhiteSpace(entry))
+                    {
+                        yield return entry;
+                    }
+
+                    builder.Clear();
+                    continue;
+            }
+
+            builder.Append(character);
+        }
+
+        var trailingEntry = builder.ToString().Trim();
+        if (!string.IsNullOrWhiteSpace(trailingEntry))
+        {
+            yield return trailingEntry;
+        }
     }
 
     [GeneratedRegex(@"\bund\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]

@@ -14,7 +14,9 @@ public sealed class HeroTalentsMapper
             talent => talent.Name,
             talent => new TalentData
             {
-                Wert = talent.Wert, Probe = TalentCatalogText.NormalizeAttributeProbe(talent.Probe)
+                Wert = talent.Wert,
+                Probe = TalentCatalogText.NormalizeAttributeProbe(talent.Probe),
+                Specializations = TalentCatalogText.ParseSpecializations(talent.Specializations)
             });
     }
 }

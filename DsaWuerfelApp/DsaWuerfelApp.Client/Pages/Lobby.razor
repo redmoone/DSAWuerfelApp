@@ -3,157 +3,233 @@
 
 <div class="lobby-page">
     <div class="lobby-shell">
-        <section class="lobby-hero panel-surface">
-            <div class="hero-copy">
-                <p class="hero-eyebrow">Gamesessions</p>
-                <h1 class="hero-title">DSA Wuerfelrunde</h1>
-                <p class="hero-description">
-                    Starte eine neue Runde als Meister oder tritt mit einem Session-Code direkt deiner Gruppe bei.
-                </p>
+        <section class="lobby-overview panel-surface">
+            <div class="overview-header">
+                <div class="overview-copy">
+                    <p class="hero-eyebrow">Gamesessions</p>
+                    <h1 class="hero-title">DSA Wuerfelrunde</h1>
+                    <p class="hero-description">
+                        Verwalte deine Runden zentral, oeffne bestehende Sessions direkt wieder und halte Gruppe,
+                        Join-Code und aktive Runde an einem Ort zusammen.
+                    </p>
+                </div>
+
+                <div class="overview-pills">
+                    <div class="info-pill">Magic Link</div>
+                    <div class="info-pill">Persistente Runden</div>
+                    <div class="info-pill">Live Spielerstatus</div>
+                </div>
             </div>
 
-            <div class="hero-pills">
-                <div class="info-pill">Magic Link Login</div>
-                <div class="info-pill">Live Sitzungen</div>
-                <div class="info-pill">Direkt im Browser</div>
+            <div class="overview-stats">
+                <article class="overview-stat">
+                    <span class="stat-label">Konto</span>
+                    <strong class="stat-value">@(IsAuthenticated ? "Bereit" : "Nicht angemeldet")</strong>
+                    <span class="stat-meta">@(IsAuthenticated ? CurrentUser!.Email : "Login per Magic Link")</span>
+                </article>
+
+                <article class="overview-stat">
+                    <span class="stat-label">Verknuepfte Sessions</span>
+                    <strong class="stat-value">@SessionCount</strong>
+                    <span class="stat-meta">@(SessionCount == 1 ? "Eine Runde sichtbar" : "Runden in deinem Board")</span>
+                </article>
+
+                <article class="overview-stat">
+                    <span class="stat-label">Aktive Runde</span>
+                    <strong class="stat-value">@ActiveSessionTitle</strong>
+                    <span class="stat-meta">@ActiveSessionMeta</span>
+                </article>
             </div>
+
+            @if (IsAuthenticated && ActiveSession is not null)
+            {
+                <div class="active-session-strip">
+                    <div class="active-session-copy">
+                        <span class="active-session-label">Aktiv geoeffnet</span>
+                        <strong class="active-session-name">@ActiveSession.Name</strong>
+                        <span class="active-session-meta">@ActiveOnlineCount von @ActivePlayerCount Spielern online</span>
+                    </div>
+
+                    <button type="button"
+                            class="session-btn"
+                            @onclick="GoToWuerfel">
+                        Zur Wuerfelseite
+                    </button>
+                </div>
+            }
         </section>
 
-        <section class="lobby-panel panel-surface">
-            <h2 class="panel-title">Session Eingang</h2>
+        <section class="session-workbench panel-surface">
+            <div class="section-header">
+                <div>
+                    <h2 class="panel-title">Sessionsteuerung</h2>
+                    <p class="panel-subtitle">
+                        Konto, Name und Sessionmodus sind jetzt getrennt von deinem eigentlichen Rundenboard.
+                    </p>
+                </div>
+            </div>
 
             @if (!AuthState.IsLoaded)
             {
-                <div class="mode-panel">
-                    <p class="mode-text">Authentifizierung wird geladen...</p>
+                <div class="subpanel-card state-card">
+                    <span class="section-kicker">Wird geladen</span>
+                    <p class="mode-text">Authentifizierung und Sessionstatus werden geladen...</p>
                 </div>
             }
             else if (!IsAuthenticated)
             {
-                <div class="mode-panel auth-panel">
-                    <p class="mode-text">
-                        Melde dich per Magic Link an. Danach kannst du wie gewohnt Sessions erstellen oder ihnen
-                        beitreten.
-                    </p>
+                <div class="control-stack">
+                    <div class="subpanel-card intro-card">
+                        <span class="section-kicker">Schritt 1</span>
+                        <h3 class="subpanel-title">Per Magic Link anmelden</h3>
+                        <p class="mode-text">
+                            Nach dem Login werden deine bestehenden Runden geladen und du kannst sofort wieder
+                            beitreten oder neue Sessions erstellen.
+                        </p>
+                    </div>
 
-                    <label class="input-group">
-                        <span class="input-label">Email</span>
-                        <input class="session-input"
-                               @bind="_email"
-                               @bind:event="oninput"
-                               maxlength="320"
-                               autocomplete="email"
-                               placeholder="name@beispiel.de"/>
-                    </label>
+                    <div class="subpanel-card">
+                        <label class="input-group">
+                            <span class="input-label">Email</span>
+                            <input class="session-input"
+                                   @bind="_email"
+                                   @bind:event="oninput"
+                                   maxlength="320"
+                                   autocomplete="email"
+                                   placeholder="name@beispiel.de"/>
+                        </label>
 
-                    <button type="button"
-                            class="session-btn"
-                            @onclick="RequestMagicLink"
-                            disabled="@(_isSendingMagicLink || string.IsNullOrWhiteSpace(_email))">
-                        @(_isSendingMagicLink ? "Link wird gesendet..." : "Magic Link senden")
-                    </button>
+                        <button type="button"
+                                class="session-btn"
+                                @onclick="RequestMagicLink"
+                                disabled="@(_isSendingMagicLink || string.IsNullOrWhiteSpace(_email))">
+                            @(_isSendingMagicLink ? "Link wird gesendet..." : "Magic Link senden")
+                        </button>
 
-                    @if (!string.IsNullOrWhiteSpace(_authMessage))
-                    {
-                        <div class="session-success">@_authMessage</div>
-                    }
+                        @if (!string.IsNullOrWhiteSpace(_authMessage))
+                        {
+                            <div class="session-success">@_authMessage</div>
+                        }
+                    </div>
                 </div>
             }
             else
             {
-                <div class="account-strip">
-                    <div>
-                        <span class="account-label">Angemeldet als</span>
-                        <strong class="account-value">@CurrentUser!.Email</strong>
-                    </div>
-
-                    <button type="button"
-                            class="session-btn secondary-btn"
-                            @onclick="Logout"
-                            disabled="@_isSigningOut">
-                        @(_isSigningOut ? "Logout..." : "Logout")
-                    </button>
-                </div>
-
-                <label class="input-group">
-                    <span class="input-label">Dein Name in der Session</span>
-                    <input class="session-input"
-                           @bind="_userName"
-                           @bind:event="oninput"
-                           maxlength="40"
-                           autocomplete="nickname"
-                           placeholder="Spielername eingeben"/>
-                </label>
-
-                <div class="mode-toggle" role="tablist" aria-label="Session Modus">
-                    <button type="button"
-                            class="mode-pill @GetModeClass(SessionMode.Join)"
-                            @onclick="() => SetMode(SessionMode.Join)">
-                        Mit Code
-                    </button>
-                    <button type="button"
-                            class="mode-pill @GetModeClass(SessionMode.Create)"
-                            @onclick="() => SetMode(SessionMode.Create)">
-                        Erstellen
-                    </button>
-                </div>
-
-                @if (CurrentMode == SessionMode.Join)
-                {
-                    <div class="mode-panel">
-                        <span class="mode-caption">Session beitreten</span>
-                        <p class="mode-text">Gib den Session-Code deiner Gruppe ein und verbinde dich direkt mit der
-                            Runde.</p>
-
-                        <label class="input-group">
-                            <span class="input-label">Session Code</span>
-                            <input class="session-input session-code-input"
-                                   @bind="_joinCode"
-                                   @bind:event="oninput"
-                                   maxlength="8"
-                                   autocomplete="off"
-                                   spellcheck="false"
-                                   placeholder="z.B. X7K9"/>
-                        </label>
-
-                        <button type="button"
-                                class="session-btn"
-                                @onclick="Join"
-                                disabled="@string.IsNullOrWhiteSpace(_userName) || string.IsNullOrWhiteSpace(_joinCode)">
-                            Sitzung Beitreten
-                        </button>
-                    </div>
-                }
-                else
-                {
-                    <div class="mode-panel">
-                        <span class="mode-caption">Neue Runde erstellen</span>
-                        <p class="mode-text">Erstelle eine neue Spielrunde. Du wirst sofort als erster Spieler
-                            verbunden.</p>
-
-                        <label class="input-group">
-                            <span class="input-label">Session Name</span>
-                            <input class="session-input"
-                                   @bind="_sessionName"
-                                   @bind:event="oninput"
-                                   maxlength="80"
-                                   autocomplete="off"
-                                   placeholder="z.B. Borbarads Erben"/>
-                        </label>
-
-                        <div class="create-callout">
-                            <span class="callout-label">Hinweis</span>
-                            <span class="callout-text">Der Session-Code wird nach dem Erstellen automatisch fuer deine Gruppe bereitgestellt.</span>
+                <div class="control-stack">
+                    <div class="subpanel-card">
+                        <div class="card-topline">
+                            <span class="section-kicker">Identitaet</span>
+                            <button type="button"
+                                    class="session-btn secondary-btn"
+                                    @onclick="Logout"
+                                    disabled="@_isSigningOut">
+                                @(_isSigningOut ? "Logout..." : "Logout")
+                            </button>
                         </div>
 
-                        <button type="button"
-                                class="session-btn"
-                                @onclick="Create"
-                                disabled="@string.IsNullOrWhiteSpace(_userName)">
-                            Session Erstellen
-                        </button>
+                        <div class="account-summary">
+                            <div class="account-block">
+                                <span class="account-label">Angemeldet als</span>
+                                <strong class="account-value">@CurrentUser!.Email</strong>
+                            </div>
+                            <div class="account-block">
+                                <span class="account-label">Sessionname</span>
+                                <strong class="account-value">@_userName</strong>
+                            </div>
+                        </div>
+
+                        <label class="input-group">
+                            <span class="input-label">Dein Name in der Session</span>
+                            <input class="session-input"
+                                   @bind="_userName"
+                                   @bind:event="oninput"
+                                   maxlength="40"
+                                   autocomplete="nickname"
+                                   placeholder="Spielername eingeben"/>
+                        </label>
                     </div>
-                }
+
+                    <div class="subpanel-card">
+                        <div class="card-topline">
+                            <span class="section-kicker">Sessionmodus</span>
+                            <span class="mode-live">@(CurrentMode == SessionMode.Join ? "Beitritt" : "Neue Runde")</span>
+                        </div>
+
+                        <div class="mode-toggle" role="tablist" aria-label="Session Modus">
+                            <button type="button"
+                                    class="mode-pill @GetModeClass(SessionMode.Join)"
+                                    @onclick="() => SetMode(SessionMode.Join)">
+                                Mit Code
+                            </button>
+                            <button type="button"
+                                    class="mode-pill @GetModeClass(SessionMode.Create)"
+                                    @onclick="() => SetMode(SessionMode.Create)">
+                                Erstellen
+                            </button>
+                        </div>
+
+                        @if (CurrentMode == SessionMode.Join)
+                        {
+                            <div class="mode-panel">
+                                <span class="mode-caption">Session beitreten</span>
+                                <p class="mode-text">
+                                    Gib den Join-Code deiner Gruppe ein. Die Session wird danach direkt als aktive Runde geoeffnet.
+                                </p>
+
+                                <label class="input-group">
+                                    <span class="input-label">Session Code</span>
+                                    <input class="session-input session-code-input"
+                                           @bind="_joinCode"
+                                           @bind:event="oninput"
+                                           maxlength="8"
+                                           autocomplete="off"
+                                           spellcheck="false"
+                                           placeholder="z.B. X7K9"/>
+                                </label>
+
+                                <button type="button"
+                                        class="session-btn"
+                                        @onclick="Join"
+                                        disabled="@string.IsNullOrWhiteSpace(_userName) || string.IsNullOrWhiteSpace(_joinCode)">
+                                    Sitzung Beitreten
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="mode-panel">
+                                <span class="mode-caption">Neue Runde erstellen</span>
+                                <p class="mode-text">
+                                    Erstelle eine neue Runde und setze sie sofort als aktive Session fuer deinen Tisch.
+                                </p>
+
+                                <label class="input-group">
+                                    <span class="input-label">Session Name</span>
+                                    <input class="session-input"
+                                           @bind="_sessionName"
+                                           @bind:event="oninput"
+                                           maxlength="80"
+                                           autocomplete="off"
+                                           placeholder="z.B. Borbarads Erben"/>
+                                </label>
+
+                                <div class="create-callout">
+                                    <span class="callout-label">Join-Code</span>
+                                    <span class="callout-text">
+                                        Der Session-Code wird nach dem Erstellen direkt im Rundenboard mit Copy-Button angezeigt.
+                                    </span>
+                                </div>
+
+                                <button type="button"
+                                        class="session-btn"
+                                        @onclick="Create"
+                                        disabled="@string.IsNullOrWhiteSpace(_userName)">
+                                    Session Erstellen
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
             }
 
             @if (!string.IsNullOrWhiteSpace(_error))
@@ -162,46 +238,43 @@
             }
         </section>
 
-        <aside class="lobby-side panel-surface">
+        <section class="session-board panel-surface">
+            <div class="section-header board-header">
+                <div>
+                    <h2 class="panel-title">Rundenboard</h2>
+                    <p class="panel-subtitle">
+                        Hier liegen alle Runden, in denen du Mitglied bist, inklusive Spielern, Status und Session-Code.
+                    </p>
+                </div>
+
+                <div class="board-badge">@SessionCount @(SessionCount == 1 ? "Session" : "Sessions")</div>
+            </div>
+
             @if (IsAuthenticated)
             {
-                <section class="lobby-side-section">
-                    <h2 class="panel-title">Deine Sessions</h2>
-
+                <div class="board-body">
                     <SessionTree Sessions="SessionState.Sessions"
                                  ActiveSessionId="@SessionState.ActiveSessionId"
                                  EmptyText="Noch keine Session verknuepft. Erstelle eine Runde oder tritt einer bei."
                                  ShowCopyButton="true"/>
-                </section>
+                </div>
             }
-
-            <section class="lobby-side-section">
-                <h2 class="panel-title">Ablauf</h2>
-
-                <ol class="steps-list">
-                    <li class="step-item">
-                        <span class="step-index">1</span>
-                        <div>
-                            <strong>Magic Link anfordern</strong>
-                            <p>Melde dich zuerst ueber deine Email-Adresse an und oeffne den Link aus der Mail.</p>
-                        </div>
-                    </li>
-                    <li class="step-item">
-                        <span class="step-index">2</span>
-                        <div>
-                            <strong>Name und Modus waehlen</strong>
-                            <p>Setze deinen Session-Namen und entscheide dann zwischen Beitreten oder neuer Runde.</p>
-                        </div>
-                    </li>
-                    <li class="step-item">
-                        <span class="step-index">3</span>
-                        <div>
-                            <strong>Loswuerfeln</strong>
-                            <p>Nach dem Verbinden landest du direkt auf der Wuerfelseite deiner Gruppe.</p>
-                        </div>
-                    </li>
-                </ol>
-            </section>
-        </aside>
+            else if (AuthState.IsLoaded)
+            {
+                <div class="board-placeholder">
+                    <span class="section-kicker">Noch gesperrt</span>
+                    <p class="mode-text">
+                        Nach dem Login erscheinen hier deine Sessions, aktive Runde und die Live-Spielerlisten.
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="board-placeholder">
+                    <span class="section-kicker">Wird geladen</span>
+                    <p class="mode-text">Das Rundenboard wird vorbereitet...</p>
+                </div>
+            }
+        </section>
     </div>
 </div>

@@ -271,7 +271,12 @@ public sealed record WuerfelViewState
         _ => 0
     };
 
-    public int EffectiveModifier => Modifier + ActiveBadTraitModifier;
+    public int ActiveTalentSpecializationModifier =>
+        ActiveArea == WuerfelArea.ProbeSearch
+            ? TalentSelectionValue.Parse(SelectedProbeValue).SpecializationModifier
+            : 0;
+
+    public int EffectiveModifier => Modifier + ActiveBadTraitModifier + ActiveTalentSpecializationModifier;
 
     public bool CanRoll =>
         SelectedDiceSides.Count > 0 ||

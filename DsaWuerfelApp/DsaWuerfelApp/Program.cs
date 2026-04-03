@@ -55,6 +55,7 @@ builder.Services.AddTransient<HeroTalentsMapper>();
 builder.Services.AddTransient<HeroMapper>();
 builder.Services.AddTransient<XmlHeroDeserializer>();
 builder.Services.AddTransient<HeroImportService>();
+builder.Services.AddTransient<HeroReimportService>();
 builder.Services.AddDbContext<HeroDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("HeroesDb")));
 
@@ -78,6 +79,9 @@ using (var scope = app.Services.CreateScope())
     EnsureHeroSchema(dbContext);
     EnsureAuthSchema(dbContext);
     EnsureSessionSchema(dbContext);
+
+    var heroReimportService = scope.ServiceProvider.GetRequiredService<HeroReimportService>();
+    await heroReimportService.UpgradeStoredHeroesAsync();
 }
 
 if (app.Environment.IsDevelopment())
@@ -136,6 +140,26 @@ static void EnsureHeroSchema(HeroDbContext dbContext)
     {
         dbContext.Database.ExecuteSqlRaw(
             "ALTER TABLE Heroes ADD COLUMN SchlechteEigenschaften TEXT NOT NULL DEFAULT '{{}}';");
+    }
+
+    if (!existingColumns.Contains("SourceXml"))
+    {
+        dbContext.Database.ExecuteSqlRaw("ALTER TABLE Heroes ADD COLUMN SourceXml BLOB NULL;");
+    }
+
+    if (!existingColumns.Contains("SourceFileName"))
+    {
+        dbContext.Database.ExecuteSqlRaw("ALTER TABLE Heroes ADD COLUMN SourceFileName TEXT NULL;");
+    }
+
+    if (!existingColumns.Contains("ImportVersion"))
+    {
+        dbContext.Database.ExecuteSqlRaw("ALTER TABLE Heroes ADD COLUMN ImportVersion INTEGER NOT NULL DEFAULT 0;");
+    }
+
+    if (!existingColumns.Contains("ImportedAtUtc"))
+    {
+        dbContext.Database.ExecuteSqlRaw("ALTER TABLE Heroes ADD COLUMN ImportedAtUtc TEXT NULL;");
     }
 }
 
