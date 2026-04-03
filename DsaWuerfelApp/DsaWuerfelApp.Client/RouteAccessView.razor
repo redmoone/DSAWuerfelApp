@@ -1,0 +1,66 @@
+@using DsaWuerfelApp.Client.Pages
+@using DsaWuerfelApp.Client.Services
+@implements IDisposable
+@inject AuthState AuthState
+@inject NavigationManager NavigationManager
+
+@if (!_isReady)
+{
+    <LayoutView Layout="@typeof(MainLayout)">
+        <div class="pa-6 d-flex justify-center align-center">
+            <MudProgressCircular Indeterminate="true" Color="Color.Warning" Size="Size.Large"/>
+        </div>
+    </LayoutView>
+}
+else if (_canRender)
+{
+    <RouteView RouteData="@RouteData" DefaultLayout="@typeof(MainLayout)"/>
+}
+
+@code {
+    [Parameter] [EditorRequired] public RouteData RouteData { get; set; } = default!;
+
+    private bool _canRender;
+    private bool _isReady;
+
+    protected override void OnInitialized()
+    {
+        AuthState.Changed += HandleAuthChanged;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _isReady = false;
+        await AuthState.EnsureLoadedAsync();
+
+        _canRender = !RequiresAuthentication(RouteData.PageType) || AuthState.Current.IsAuthenticated;
+        _isReady = true;
+
+        if (!_canRender)
+        {
+            NavigationManager.NavigateTo("/", replace: true);
+        }
+    }
+
+    public void Dispose()
+    {
+        AuthState.Changed -= HandleAuthChanged;
+    }
+
+    private void HandleAuthChanged()
+    {
+        if (_isReady && RequiresAuthentication(RouteData.PageType) && !AuthState.Current.IsAuthenticated)
+        {
+            NavigationManager.NavigateTo("/", replace: true);
+            return;
+        }
+
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private static bool RequiresAuthentication(Type pageType)
+    {
+        return pageType != typeof(Lobby);
+    }
+
+}

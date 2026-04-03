@@ -1,13 +1,15 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 
 using DsaWuerfelApp.Services;
 using DsaWuerfelApp.Shared;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DsaWuerfelApp.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/dice")]
 public class DiceController(DiceWorkflowService workflow) : ControllerBase
 {

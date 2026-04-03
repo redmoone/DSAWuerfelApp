@@ -1,7 +1,7 @@
-﻿@using DsaWuerfelApp.Client.Pages
+@using DsaWuerfelApp.Client.Pages
 <Router AppAssembly="@typeof(Program).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        <RouteAccessView RouteData="@routeData"/>
     </Found>
     <NotFound>
         <LayoutView Layout="@typeof(MainLayout)">

@@ -3,12 +3,14 @@ using DsaWuerfelApp.Services;
 using DsaWuerfelApp.Services.Application.Import;
 using DsaWuerfelApp.Shared.Models;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace DsaWuerfelApp.Controller;
 
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class HeroesController : ControllerBase
 {

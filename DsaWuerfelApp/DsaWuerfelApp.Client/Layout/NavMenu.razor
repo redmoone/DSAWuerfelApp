@@ -27,7 +27,7 @@
                 </div>
             }
 
-            @if (!string.IsNullOrWhiteSpace(ActiveHeroName))
+            @if (AuthState.Current.IsAuthenticated && !string.IsNullOrWhiteSpace(ActiveHeroName))
             {
                 <NavLink class="nav-link active-hero-pill" href="helden-verwaltung"
                          ActiveClass="active-hero-pill-active"
@@ -37,25 +37,28 @@
                 </NavLink>
             }
 
-            <NavLink class="nav-link" href="wuerfel">
-                <img src="icons/dice.svg" class="nav-icon" alt=""/>
-                <span class="nav-text">Würfeln</span>
-            </NavLink>
-
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                 <img src="icons/third-party.svg" class="nav-icon" alt=""/>
                 <span class="nav-text">Gamesessions</span>
             </NavLink>
 
-            <NavLink class="nav-link" href="kampf">
-                <img src="icons/sword.svg" class="nav-icon" alt=""/>
-                <span class="nav-text">Kampf</span>
-            </NavLink>
+            @if (AuthState.Current.IsAuthenticated)
+            {
+                <NavLink class="nav-link" href="wuerfel">
+                    <img src="icons/dice.svg" class="nav-icon" alt=""/>
+                    <span class="nav-text">Wuerfeln</span>
+                </NavLink>
 
-            <NavLink class="nav-link" href="helden-verwaltung">
-                <img src="icons/file.svg" class="nav-icon" alt=""/>
-                <span class="nav-text">Heldenverwaltung</span>
-            </NavLink>
+                <NavLink class="nav-link" href="kampf">
+                    <img src="icons/sword.svg" class="nav-icon" alt=""/>
+                    <span class="nav-text">Kampf</span>
+                </NavLink>
+
+                <NavLink class="nav-link" href="helden-verwaltung">
+                    <img src="icons/file.svg" class="nav-icon" alt=""/>
+                    <span class="nav-text">Heldenverwaltung</span>
+                </NavLink>
+            }
         </nav>
 
         @if (AuthState.Current.IsAuthenticated)
@@ -82,8 +85,8 @@
         AuthState.Changed += HandleStateChanged;
         SessionState.Changed += HandleStateChanged;
 
-        await ActiveHeroState.EnsureLoadedAsync();
         await AuthState.EnsureLoadedAsync();
+        await ActiveHeroState.EnsureLoadedAsync();
         await SessionState.EnsureLoadedAsync();
     }
 
