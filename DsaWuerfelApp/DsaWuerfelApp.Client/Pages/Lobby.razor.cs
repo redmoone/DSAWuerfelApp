@@ -13,6 +13,8 @@ public partial class Lobby : IDisposable
     private bool _isSendingMagicLink;
     private bool _isSigningOut;
     private string _joinCode = "";
+    private CancellationTokenSource? _magicLinkCooldownCancellation;
+    private DateTimeOffset? _magicLinkCooldownEndsAtUtc;
     private string _sessionName = "";
     private string _userName = "";
     private SessionMode CurrentMode { get; set; } = SessionMode.Join;
@@ -30,6 +32,24 @@ public partial class Lobby : IDisposable
     private int ActivePlayerCount => ActiveSession?.Players.Length ?? 0;
     private int ActiveOnlineCount => ActiveSession?.Players.Count(player => player.IsOnline) ?? 0;
 
+    private int MagicLinkCooldownSecondsRemaining => _magicLinkCooldownEndsAtUtc is null
+        ? 0
+        : Math.Max(0, (int)Math.Ceiling((_magicLinkCooldownEndsAtUtc.Value - DateTimeOffset.UtcNow).TotalSeconds));
+
+    private bool IsMagicLinkCooldownActive => MagicLinkCooldownSecondsRemaining > 0;
+
+    private bool IsMagicLinkRequestDisabled =>
+        _isSendingMagicLink || IsMagicLinkCooldownActive || string.IsNullOrWhiteSpace(_email);
+
+    private string MagicLinkRequestButtonText => _isSendingMagicLink
+        ? "Link wird gesendet..."
+        : IsMagicLinkCooldownActive
+            ? $"Erneut in {MagicLinkCooldownSecondsRemaining}s"
+            : "Magic Link senden";
+
+    private string MagicLinkCooldownText =>
+        $"Naechster Magic Link in {MagicLinkCooldownSecondsRemaining} {(MagicLinkCooldownSecondsRemaining == 1 ? "Sekunde" : "Sekunden")} verfuegbar.";
+
     private string? ActiveSessionPlayerName => CurrentUser is null
         ? null
         : ActiveSession?.Players
@@ -43,6 +63,7 @@ public partial class Lobby : IDisposable
 
     public void Dispose()
     {
+        StopMagicLinkCooldown();
         AuthState.Changed -= HandleAuthChanged;
         SessionState.Changed -= HandleSessionStateChanged;
     }
@@ -131,6 +152,11 @@ public partial class Lobby : IDisposable
             return;
         }
 
+        if (IsMagicLinkCooldownActive)
+        {
+            return;
+        }
+
         _isSendingMagicLink = true;
         _error = string.Empty;
         _authMessage = string.Empty;
@@ -139,6 +165,7 @@ public partial class Lobby : IDisposable
         {
             var result = await AuthApi.RequestMagicLinkAsync(new MagicLinkRequestDto(_email, "/"));
             _authMessage = result.Message;
+            SetMagicLinkCooldown(result.CooldownSecondsRemaining);
         }
         catch (InvalidOperationException exception)
         {
@@ -155,6 +182,7 @@ public partial class Lobby : IDisposable
         _isSigningOut = true;
         _error = string.Empty;
         _authMessage = string.Empty;
+        StopMagicLinkCooldown();
 
         try
         {
@@ -317,6 +345,58 @@ public partial class Lobby : IDisposable
         }
 
         return null;
+    }
+
+    private void SetMagicLinkCooldown(int cooldownSeconds)
+    {
+        StopMagicLinkCooldown(clearEndTime: false);
+
+        if (cooldownSeconds <= 0)
+        {
+            _magicLinkCooldownEndsAtUtc = null;
+            return;
+        }
+
+        _magicLinkCooldownEndsAtUtc = DateTimeOffset.UtcNow.AddSeconds(cooldownSeconds);
+        _magicLinkCooldownCancellation = new CancellationTokenSource();
+        _ = RunMagicLinkCooldownAsync(_magicLinkCooldownCancellation.Token);
+    }
+
+    private async Task RunMagicLinkCooldownAsync(CancellationToken cancellationToken)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+
+        try
+        {
+            while (_magicLinkCooldownEndsAtUtc is not null &&
+                   MagicLinkCooldownSecondsRemaining > 0 &&
+                   await timer.WaitForNextTickAsync(cancellationToken))
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (!cancellationToken.IsCancellationRequested)
+        {
+            _magicLinkCooldownEndsAtUtc = null;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void StopMagicLinkCooldown(bool clearEndTime = true)
+    {
+        _magicLinkCooldownCancellation?.Cancel();
+        _magicLinkCooldownCancellation?.Dispose();
+        _magicLinkCooldownCancellation = null;
+
+        if (clearEndTime)
+        {
+            _magicLinkCooldownEndsAtUtc = null;
+        }
     }
 
     private enum SessionMode

@@ -17,7 +17,7 @@ public sealed class MagicLinkService(
 {
     private readonly MagicLinkAuthOptions _options = options.Value;
 
-    public async Task RequestMagicLinkAsync(
+    public async Task<MagicLinkRequestOutcome> RequestMagicLinkAsync(
         string email,
         string? redirectPath,
         string baseUrl,
@@ -28,15 +28,18 @@ public sealed class MagicLinkService(
         var now = timeProvider.GetUtcNow().UtcDateTime;
 
         var cooldownThreshold = now.AddSeconds(-_options.RequestCooldownSeconds);
-        var hasRecentRequest = await dbContext.MagicLinkTokens
-            .AnyAsync(
-                token => token.Email == normalizedEmail &&
-                         token.RequestedAtUtc >= cooldownThreshold,
-                cancellationToken);
+        var latestRequestedAtUtc = await dbContext.MagicLinkTokens
+            .Where(token => token.Email == normalizedEmail &&
+                            token.RequestedAtUtc >= cooldownThreshold)
+            .OrderByDescending(token => token.RequestedAtUtc)
+            .Select(token => (DateTime?)token.RequestedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (hasRecentRequest)
+        if (latestRequestedAtUtc is not null)
         {
-            return;
+            return new MagicLinkRequestOutcome(
+                false,
+                CalculateCooldownSecondsRemaining(latestRequestedAtUtc.Value, now));
         }
 
         var rawToken = GenerateToken();
@@ -58,7 +61,27 @@ public sealed class MagicLinkService(
         await dbContext.SaveChangesAsync(cancellationToken);
 
         var magicLink = BuildMagicLink(baseUrl, rawToken);
-        await emailSender.SendAsync(normalizedEmail, magicLink, cancellationToken);
+        try
+        {
+            await emailSender.SendAsync(normalizedEmail, magicLink, cancellationToken);
+        }
+        catch
+        {
+            dbContext.MagicLinkTokens.Remove(token);
+
+            try
+            {
+                await dbContext.SaveChangesAsync(CancellationToken.None);
+            }
+            catch
+            {
+                // Preserve the original send failure while best-effort cleanup removes the cooldown token.
+            }
+
+            throw;
+        }
+
+        return new MagicLinkRequestOutcome(true, _options.RequestCooldownSeconds);
     }
 
     public async Task<MagicLinkVerificationResult?> VerifyAsync(
@@ -164,6 +187,14 @@ public sealed class MagicLinkService(
         var trimmedBaseUrl = baseUrl.TrimEnd('/');
         return $"{trimmedBaseUrl}/auth/magic-link/verify?token={Uri.EscapeDataString(token)}";
     }
+
+    private int CalculateCooldownSecondsRemaining(DateTime requestedAtUtc, DateTime nowUtc)
+    {
+        var remaining = requestedAtUtc.AddSeconds(_options.RequestCooldownSeconds) - nowUtc;
+        return Math.Max(1, (int)Math.Ceiling(remaining.TotalSeconds));
+    }
 }
+
+public sealed record MagicLinkRequestOutcome(bool EmailSent, int CooldownSecondsRemaining);
 
 public sealed record MagicLinkVerificationResult(AuthUser User, string RedirectPath);

@@ -30,15 +30,22 @@ public sealed class AuthController(MagicLinkService magicLinkService) : Controll
     {
         try
         {
-            await magicLinkService.RequestMagicLinkAsync(
+            var requestResult = await magicLinkService.RequestMagicLinkAsync(
                 request.Email,
                 request.RedirectPath,
                 BuildBaseUrl(),
                 HttpContext.Connection.RemoteIpAddress?.ToString(),
                 cancellationToken);
 
-            return Ok(new MagicLinkRequestResultDto(
-                "Wenn die Adresse gueltig ist, wurde ein Magic Link verschickt."));
+            return Ok(requestResult.EmailSent
+                ? new MagicLinkRequestResultDto(
+                    "Wenn die Adresse gueltig ist, wurde ein Magic Link verschickt.",
+                    true,
+                    requestResult.CooldownSecondsRemaining)
+                : new MagicLinkRequestResultDto(
+                    "Vor kurzem wurde bereits ein Magic Link angefordert. Bitte pruefe dein Postfach oder warte kurz.",
+                    false,
+                    requestResult.CooldownSecondsRemaining));
         }
         catch (InvalidOperationException exception)
         {

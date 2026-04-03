@@ -494,6 +494,18 @@
     color: #e8ffef;
 }
 
+.magic-link-cooldown {
+    align-self: flex-start;
+    padding: 0.65rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid rgba(212, 175, 55, 0.48);
+    background: rgba(18, 30, 50, 0.14);
+    color: rgba(28, 46, 74, 0.9);
+    font-size: 0.8rem;
+    font-weight: 800;
+    line-height: 1.4;
+}
+
 .board-header {
     align-items: center;
 }
