@@ -1,4 +1,3 @@
-@using DsaWuerfelApp.Client.Pages
 @using DsaWuerfelApp.Client.Services
 @implements IDisposable
 @inject AuthState AuthState
@@ -60,7 +59,15 @@ else if (_canRender)
 
     private static bool RequiresAuthentication(Type pageType)
     {
-        return pageType != typeof(Lobby);
+        foreach (var attribute in pageType.GetCustomAttributes(inherit: true))
+        {
+            if (attribute is IAllowAnonymous)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
 }
