@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Globalization;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using DsaWuerfelApp.Shared;
@@ -44,26 +45,13 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         if (hero is not null && TryResolveTalent(hero, probeValue, out var resolvedTalent))
         {
             var probeAttributes = ProbeAttributes.TryCreate(resolvedTalent.Talent.Probe)?.ToArray() ?? [];
-            var attributeInfo = probeAttributes.Length == 0
-                ? "keine Eigenschaften hinterlegt"
-                : string.Join(", ", probeAttributes.Select(attribute =>
-                    $"{attribute} {GetAttributeValueText(hero, attribute)}"));
             var effectiveModifier = modifier + (badTrait?.TalentModifier ?? 0) + resolvedTalent.SpecializationModifier;
-            var effectiveTalentValue = resolvedTalent.Talent.Wert - effectiveModifier;
-            var availableCompensation = Math.Min(Math.Max(effectiveTalentValue, 0), resolvedTalent.Talent.Wert);
-            var modifierInfo = effectiveTalentValue >= 0
-                ? $"Nach dem Gesamtmodifikator {FormatModifier(effectiveModifier)} bleiben {availableCompensation} Ausgleichspunkte für Überschreitungen."
-                : $"Nach dem Gesamtmodifikator {FormatModifier(effectiveModifier)} liegt der effektive Talentwert bei {effectiveTalentValue}. Dadurch müssen alle drei Eigenschaftswürfe jeweils um {Math.Abs(effectiveTalentValue)} Punkte niedriger geschafft werden.";
-            var specializationInfo = resolvedTalent.SpecializationModifier == 0 ||
-                                     string.IsNullOrWhiteSpace(resolvedTalent.SpecializationName)
-                ? string.Empty
-                : $" Gewählte Talentspezialisierung: {resolvedTalent.SpecializationName}. Dadurch ist die Probe um 2 Punkte erleichtert.";
             ProbeInfoSectionDto[] infoSections = TryGetEntry(resolvedTalent.Name, out var catalogEntry)
                 ? [.. catalogEntry.InfoSections]
                 : [];
 
             return new ProbeInfoResultDto(
-                $"{resolvedTalent.Name} hat aktuell TaW {resolvedTalent.Talent.Wert}. Probe: {resolvedTalent.Talent.Probe}. Verwendete Eigenschaften: {attributeInfo}. {modifierInfo}{specializationInfo}{badTraitText}",
+                BuildTalentProbabilityText(hero, resolvedTalent, probeAttributes, effectiveModifier, badTraitText),
                 infoSections);
         }
 
@@ -363,9 +351,27 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         return TryGetEntry(talentName, out var catalogEntry) && catalogEntry.IsBasisTalent;
     }
 
-    private static string GetAttributeValueText(Hero hero, string attribute)
+    private static string BuildTalentProbabilityText(
+        Hero hero,
+        ResolvedTalentData resolvedTalent,
+        IReadOnlyList<string> probeAttributes,
+        int effectiveModifier,
+        string badTraitText)
     {
-        return hero.Eigenschaften.TryGetValue(attribute, out var value) ? value.ToString() : "?";
+        if (probeAttributes.Count != 3)
+        {
+            return $"Für {resolvedTalent.Name} konnte keine Erfolgschance berechnet werden.{badTraitText}";
+        }
+
+        var attributeValues = probeAttributes
+            .Select(attribute => hero.Eigenschaften.GetValueOrDefault(attribute))
+            .ToArray();
+        var successChance = CalculateTalentSuccessChance(
+            resolvedTalent.Talent.Wert,
+            effectiveModifier,
+            attributeValues);
+
+        return $"{resolvedTalent.Name}: {FormatPercentage(successChance)} Erfolgschance.{badTraitText}";
     }
 
     private static string BuildTalentProbeLabel(string talentName, TalentData talent)
@@ -373,11 +379,6 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         return string.IsNullOrWhiteSpace(talent.Probe)
             ? $"{talentName} [{talent.Wert}]"
             : $"{talentName} [{talent.Wert}] ({talent.Probe})";
-    }
-
-    private static ProbeSearchEntryDto BuildSelectableProbeSearchEntry(string label, string? value = null)
-    {
-        return new ProbeSearchEntryDto(label, value ?? label, true, []);
     }
 
     private static ProbeSearchEntryDto BuildSelectableProbeSearchEntry(
@@ -477,9 +478,83 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
             : label.Substring(startIndex + 1, endIndex - startIndex - 1);
     }
 
-    private static string FormatModifier(int modifier)
+    private static double CalculateTalentSuccessChance(
+        int talentValue,
+        int totalModifier,
+        IReadOnlyList<int> attributeValues)
     {
-        return modifier > 0 ? $"+{modifier}" : modifier.ToString();
+        const int sideCount = 20;
+        var successfulOutcomes = 0;
+
+        for (var first = 1; first <= sideCount; first++)
+        {
+            for (var second = 1; second <= sideCount; second++)
+            {
+                for (var third = 1; third <= sideCount; third++)
+                {
+                    if (IsSuccessfulTalentProbe(talentValue, totalModifier, attributeValues, [first, second, third]))
+                    {
+                        successfulOutcomes++;
+                    }
+                }
+            }
+        }
+
+        return successfulOutcomes / Math.Pow(sideCount, 3);
+    }
+
+    private static bool IsSuccessfulTalentProbe(
+        int talentValue,
+        int totalModifier,
+        IReadOnlyList<int> attributeValues,
+        ReadOnlySpan<int> rolls)
+    {
+        var ones = 0;
+        var twenties = 0;
+
+        foreach (var roll in rolls)
+        {
+            if (roll == 1)
+            {
+                ones++;
+            }
+
+            if (roll == 20)
+            {
+                twenties++;
+            }
+        }
+
+        var effectiveTalentValue = talentValue - totalModifier;
+        if (twenties >= 2)
+        {
+            return false;
+        }
+
+        if (ones >= 2)
+        {
+            return true;
+        }
+
+        var rest = Math.Min(Math.Max(effectiveTalentValue, 0), talentValue);
+        for (var index = 0; index < attributeValues.Count; index++)
+        {
+            var targetValue = effectiveTalentValue >= 0
+                ? attributeValues[index]
+                : attributeValues[index] + effectiveTalentValue;
+
+            if (rolls[index] > targetValue)
+            {
+                rest -= rolls[index] - targetValue;
+            }
+        }
+
+        return rest >= 0;
+    }
+
+    private static string FormatPercentage(double value)
+    {
+        return value.ToString("P1", CultureInfo.GetCultureInfo("de-DE"));
     }
 
     private static string ResolveCatalogPath(IHostEnvironment environment)
