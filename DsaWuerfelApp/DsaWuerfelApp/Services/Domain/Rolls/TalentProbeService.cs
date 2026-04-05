@@ -37,14 +37,15 @@ public sealed class TalentProbeService(DiceService diceService)
         var rollValues = rolledDice.Select(roll => roll.Value).ToArray();
         var totalModifier = request.BasisModifier + request.SpecializationModifier +
                             request.SchlechteEigenschaftModifier;
-        var evaluatedProbe = TalentProbe.Check(request.TalentValue, totalModifier, request.AttributeValues, rollValues);
+        var evaluatedProbe =
+            TalentProbeEvaluator.Evaluate(request.TalentValue, totalModifier, request.AttributeValues, rollValues);
         var details = BuildRollDetails(
             request.Probe.ToArray(),
             request.AttributeValues,
             rollValues,
             request.TalentValue,
             evaluatedProbe);
-        var probeSuccess = evaluatedProbe.Status is TalentProbeStatus.Bestanden or TalentProbeStatus.GluecklicherWurf;
+        var probeSuccess = TalentProbeEvaluator.IsSuccess(evaluatedProbe);
         var equation = DiceResultFactory.CreateEquation(rolledDice, 0);
         var historyEntry = DiceResultFactory.CreateHistoryEntry(playerName, timestamp, equation);
 
@@ -64,7 +65,7 @@ public sealed class TalentProbeService(DiceService diceService)
                 ? null
                 : request.SchlechteEigenschaftName.Trim(),
             request.SchlechteEigenschaftModifier,
-            evaluatedProbe.EffektiverWert,
+            evaluatedProbe.EffectiveTalentValue,
             rolledDice,
             details,
             evaluatedProbe.Status,
@@ -104,23 +105,23 @@ public sealed class TalentProbeService(DiceService diceService)
         IReadOnlyList<int> attributeValues,
         IReadOnlyList<int> rollValues,
         int talentValue,
-        TalentProbe.Result evaluatedProbe)
+        TalentProbeEvaluation evaluatedProbe)
     {
         var details = new List<TalentRollDetailDto>(capacity: 3);
-        var remainingRest = Math.Min(Math.Max(evaluatedProbe.EffektiverWert, 0), talentValue);
+        var remainingRest = Math.Min(Math.Max(evaluatedProbe.EffectiveTalentValue, 0), talentValue);
 
         for (var index = 0; index < probeAttributes.Count; index++)
         {
-            var targetValue = evaluatedProbe.EffektiverWert >= 0
+            var targetValue = evaluatedProbe.EffectiveTalentValue >= 0
                 ? attributeValues[index]
-                : attributeValues[index] + evaluatedProbe.EffektiverWert;
+                : attributeValues[index] + evaluatedProbe.EffectiveTalentValue;
             var difference = Math.Max(rollValues[index] - targetValue, 0);
             var success = true;
 
             if (difference > 0)
             {
                 remainingRest -= difference;
-                success = evaluatedProbe.EffektiverWert >= 0 && remainingRest >= 0;
+                success = evaluatedProbe.EffectiveTalentValue >= 0 && remainingRest >= 0;
             }
 
             details.Add(new TalentRollDetailDto(
@@ -134,76 +135,6 @@ public sealed class TalentProbeService(DiceService diceService)
         }
 
         return details.ToArray();
-    }
-
-    private static class TalentProbe
-    {
-        public static Result Check(int talentWert, int erschwernis, int[] eigenschaften, int[] wuerfe)
-        {
-            if (eigenschaften.Length != 3 || wuerfe.Length != 3)
-            {
-                throw new ArgumentException("Es werden genau 3 Eigenschaften und 3 Würfe benötigt.");
-            }
-
-            var anzahlEinser = 0;
-            var anzahlZwanziger = 0;
-
-            for (var index = 0; index < 3; index++)
-            {
-                if (wuerfe[index] == 1)
-                {
-                    anzahlEinser++;
-                }
-
-                if (wuerfe[index] == 20)
-                {
-                    anzahlZwanziger++;
-                }
-            }
-
-            var effektiverWert = talentWert - erschwernis;
-
-            if (anzahlZwanziger >= 2)
-            {
-                return new Result { Status = TalentProbeStatus.Patzer, Rest = 0, EffektiverWert = effektiverWert };
-            }
-
-            if (anzahlEinser >= 2)
-            {
-                return new Result
-                {
-                    Status = TalentProbeStatus.GluecklicherWurf, Rest = 0, EffektiverWert = effektiverWert
-                };
-            }
-
-            var rest = Math.Min(Math.Max(effektiverWert, 0), talentWert);
-
-            for (var index = 0; index < 3; index++)
-            {
-                var grenze = effektiverWert >= 0
-                    ? eigenschaften[index]
-                    : eigenschaften[index] + effektiverWert;
-
-                if (wuerfe[index] > grenze)
-                {
-                    rest -= wuerfe[index] - grenze;
-                }
-            }
-
-            return new Result
-            {
-                Status = rest >= 0 ? TalentProbeStatus.Bestanden : TalentProbeStatus.NichtBestanden,
-                Rest = rest,
-                EffektiverWert = effektiverWert
-            };
-        }
-
-        public sealed class Result
-        {
-            public TalentProbeStatus Status { get; init; }
-            public int Rest { get; init; }
-            public int EffektiverWert { get; init; }
-        }
     }
 }
 

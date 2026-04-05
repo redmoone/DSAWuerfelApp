@@ -1,22 +1,14 @@
-﻿using System.Globalization;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-
 using DsaWuerfelApp.Shared;
 using DsaWuerfelApp.Shared.Models;
 
 namespace DsaWuerfelApp.Services;
 
-public sealed class TalentCatalogService(IHostEnvironment environment)
+public sealed class TalentCatalogService(TalentCatalogStore catalogStore)
 {
     private const string SelfControlTalentName = "Selbstbeherrschung";
-    private const string SenseSharpnessTalentName = "Sinnensch\u00E4rfe";
+    private const string SenseSharpnessTalentName = "Sinnenschärfe";
     private const string WatchKeepingTalentName = "Wache halten";
     private const string WatchKeepingFallbackProbe = "KL/IN/IN";
-    private const string CatalogFileName = "talente_mit_spezialisierungen.json";
-
-    private readonly Lazy<IReadOnlyDictionary<string, TalentCatalogEntry>> _entriesByCanonical =
-        new(() => LoadEntries(ResolveCatalogPath(environment)));
 
     public DicePageContextDto BuildContext(Hero? hero, bool showDebugForcedRolls)
     {
@@ -34,45 +26,22 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
     {
         if (string.IsNullOrWhiteSpace(probeValue))
         {
-            return new ProbeInfoResultDto("Bitte zuerst eine Probe auswählen.", null, []);
+            return TalentProbeInfoBuilder.BuildEmptySelectionInfo();
         }
 
         var badTrait = ResolveBadTrait(hero, badTraitName);
-        var badTraitText = badTrait is null
-            ? string.Empty
-            : $" Relevante schlechte Eigenschaft: {badTrait.Name} {badTrait.Value}. Dadurch wird die Talentprobe um {badTrait.TalentModifier} und die Eigenschaftsprobe um {badTrait.AttributeModifier} erschwert.";
-
         if (hero is not null && TryResolveTalent(hero, probeValue, out var resolvedTalent))
         {
-            var probeAttributes = ProbeAttributes.TryCreate(resolvedTalent.Talent.Probe)?.ToArray() ?? [];
-            var effectiveModifier = modifier + (badTrait?.TalentModifier ?? 0) + resolvedTalent.SpecializationModifier;
-            var summaryText =
-                BuildTalentProbabilityText(hero, resolvedTalent, probeAttributes, effectiveModifier, badTraitText);
-            var detailsText =
-                BuildTalentDetailsText(hero, resolvedTalent, probeAttributes, effectiveModifier, badTraitText);
-            ProbeInfoSectionDto[] infoSections = TryGetEntry(resolvedTalent.Name, out var catalogEntry)
-                ? [.. catalogEntry.InfoSections]
-                : [];
-
-            return new ProbeInfoResultDto(
-                summaryText,
-                detailsText,
-                infoSections);
+            catalogStore.TryGetEntry(resolvedTalent.Name, out var catalogEntry);
+            return TalentProbeInfoBuilder.BuildResolvedTalentInfo(
+                hero,
+                resolvedTalent,
+                badTrait,
+                catalogEntry,
+                modifier);
         }
 
-        var probe = ExtractProbeFromLabel(probeValue);
-        if (!string.IsNullOrWhiteSpace(probe))
-        {
-            return new ProbeInfoResultDto(
-                "Erfolgschance nur mit aktivem Held verfügbar.",
-                $"Die ausgewählte Probe verwendet {probe}. Für heldenspezifische Zusatzinformationen bitte einen aktiven Helden wählen.{badTraitText}",
-                []);
-        }
-
-        return new ProbeInfoResultDto(
-            $"Für '{probeValue}' ist aktuell keine Erfolgschance verfügbar.",
-            $"Zur ausgewählten Probe '{probeValue}' sind aktuell keine weiteren Informationen verfügbar.{badTraitText}",
-            []);
+        return TalentProbeInfoBuilder.BuildFallbackInfo(probeValue, badTrait);
     }
 
     public ResolvedTalentData ResolveTalent(Hero hero, string talentKey)
@@ -177,9 +146,10 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         return knownTalents
             .OrderBy(entry => entry.Key, StringComparer.Ordinal)
             .Select(entry => IsTalentRollable(entry.Key, entry.Value)
-                ? BuildSelectableProbeSearchEntry(
+                ? new ProbeSearchEntryDto(
                     BuildTalentProbeLabel(entry.Key, entry.Value.Talent),
                     entry.Key,
+                    true,
                     BuildSpecializationAlternatives(entry.Key, entry.Value.Talent))
                 : BuildInactiveProbeSearchEntry(entry.Key, entry.Value, activeAlternatives))
             .ToArray();
@@ -205,7 +175,7 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
             .GroupBy(entry => entry.Canonical, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.First().Name, StringComparer.Ordinal);
 
-        foreach (var catalogEntry in _entriesByCanonical.Value.Values)
+        foreach (var catalogEntry in catalogStore.Entries)
         {
             var canonicalName = TalentCatalogText.CanonicalizeName(catalogEntry.Name);
             if (heroTalentNamesByCanonical.TryGetValue(canonicalName, out var existingTalentName))
@@ -225,18 +195,15 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         }
 
         AddDerivedTalents(knownTalents);
-
         return knownTalents;
     }
 
     private void AddDerivedTalents(Dictionary<string, KnownTalentEntry> knownTalents)
     {
-        if (!TryCreateWatchKeepingTalent(knownTalents, out var watchKeepingTalent))
+        if (TryCreateWatchKeepingTalent(knownTalents, out var watchKeepingTalent))
         {
-            return;
+            knownTalents[WatchKeepingTalentName] = new KnownTalentEntry(watchKeepingTalent, true);
         }
-
-        knownTalents[WatchKeepingTalentName] = new KnownTalentEntry(watchKeepingTalent, true);
     }
 
     private bool TryCreateWatchKeepingTalent(
@@ -312,13 +279,13 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
             return selfControlTalent.Probe;
         }
 
-        if (TryGetEntry(SenseSharpnessTalentName, out var senseSharpnessCatalogEntry) &&
+        if (catalogStore.TryGetEntry(SenseSharpnessTalentName, out var senseSharpnessCatalogEntry) &&
             !string.IsNullOrWhiteSpace(senseSharpnessCatalogEntry.Probe))
         {
             return senseSharpnessCatalogEntry.Probe;
         }
 
-        if (TryGetEntry(SelfControlTalentName, out var selfControlCatalogEntry) &&
+        if (catalogStore.TryGetEntry(SelfControlTalentName, out var selfControlCatalogEntry) &&
             !string.IsNullOrWhiteSpace(selfControlCatalogEntry.Probe))
         {
             return selfControlCatalogEntry.Probe;
@@ -350,60 +317,8 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
 
     private bool IsTalentRollable(string talentName, KnownTalentEntry talent)
     {
-        if (talent.IsOwnedByHero)
-        {
-            return true;
-        }
-
-        return TryGetEntry(talentName, out var catalogEntry) && catalogEntry.IsBasisTalent;
-    }
-
-    private static string BuildTalentProbabilityText(
-        Hero hero,
-        ResolvedTalentData resolvedTalent,
-        IReadOnlyList<string> probeAttributes,
-        int effectiveModifier,
-        string _)
-    {
-        if (probeAttributes.Count != 3)
-        {
-            return $"Für {resolvedTalent.Name} konnte keine Erfolgschance berechnet werden.";
-        }
-
-        var attributeValues = probeAttributes
-            .Select(attribute => hero.Eigenschaften.GetValueOrDefault(attribute))
-            .ToArray();
-        var successChance = CalculateTalentSuccessChance(
-            resolvedTalent.Talent.Wert,
-            effectiveModifier,
-            attributeValues);
-
-        return $"{resolvedTalent.Name}: {FormatPercentage(successChance)} Erfolgschance.";
-    }
-
-    private static string BuildTalentDetailsText(
-        Hero hero,
-        ResolvedTalentData resolvedTalent,
-        IReadOnlyList<string> probeAttributes,
-        int effectiveModifier,
-        string badTraitText)
-    {
-        var attributeInfo = probeAttributes.Count == 0
-            ? "keine Eigenschaften hinterlegt"
-            : string.Join(", ", probeAttributes.Select(attribute =>
-                $"{attribute} {hero.Eigenschaften.GetValueOrDefault(attribute)}"));
-        var effectiveTalentValue = resolvedTalent.Talent.Wert - effectiveModifier;
-        var availableCompensation = Math.Min(Math.Max(effectiveTalentValue, 0), resolvedTalent.Talent.Wert);
-        var modifierInfo = effectiveTalentValue >= 0
-            ? $"Nach dem Gesamtmodifikator {FormatModifier(effectiveModifier)} bleiben {availableCompensation} Ausgleichspunkte für Überschreitungen."
-            : $"Nach dem Gesamtmodifikator {FormatModifier(effectiveModifier)} liegt der effektive Talentwert bei {effectiveTalentValue}. Dadurch müssen alle drei Eigenschaftswürfe jeweils um {Math.Abs(effectiveTalentValue)} Punkte niedriger geschafft werden.";
-        var specializationInfo = resolvedTalent.SpecializationModifier == 0 ||
-                                 string.IsNullOrWhiteSpace(resolvedTalent.SpecializationName)
-            ? string.Empty
-            : $" Gewählte Talentspezialisierung: {resolvedTalent.SpecializationName}. Dadurch ist die Probe um 2 Punkte erleichtert.";
-
-        return
-            $"{resolvedTalent.Name} hat aktuell TaW {resolvedTalent.Talent.Wert}. Probe: {resolvedTalent.Talent.Probe}. Verwendete Eigenschaften: {attributeInfo}. {modifierInfo}{specializationInfo}{badTraitText}";
+        return talent.IsOwnedByHero ||
+               catalogStore.TryGetEntry(talentName, out var catalogEntry) && catalogEntry.IsBasisTalent;
     }
 
     private static string BuildTalentProbeLabel(string talentName, TalentData talent)
@@ -411,14 +326,6 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         return string.IsNullOrWhiteSpace(talent.Probe)
             ? $"{talentName} [{talent.Wert}]"
             : $"{talentName} [{talent.Wert}] ({talent.Probe})";
-    }
-
-    private static ProbeSearchEntryDto BuildSelectableProbeSearchEntry(
-        string label,
-        string? value,
-        ProbeSearchAlternativeDto[] alternatives)
-    {
-        return new ProbeSearchEntryDto(label, value ?? label, true, alternatives);
     }
 
     private ProbeSearchEntryDto BuildInactiveProbeSearchEntry(
@@ -437,7 +344,7 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         string talentName,
         IReadOnlyDictionary<string, ProbeSearchAlternativeDto> activeAlternatives)
     {
-        if (!TryGetEntry(talentName, out var catalogEntry) || catalogEntry.AlternativeNames.Count == 0)
+        if (!catalogStore.TryGetEntry(talentName, out var catalogEntry) || catalogEntry.AlternativeNames.Count == 0)
         {
             return [];
         }
@@ -495,222 +402,9 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         return !string.IsNullOrWhiteSpace(specializationName);
     }
 
-    private bool TryGetEntry(string talentName, out TalentCatalogEntry entry)
-    {
-        return _entriesByCanonical.Value.TryGetValue(TalentCatalogText.CanonicalizeName(talentName), out entry!);
-    }
-
-    private static string? ExtractProbeFromLabel(string label)
-    {
-        var startIndex = label.LastIndexOf('(');
-        var endIndex = label.LastIndexOf(')');
-
-        return startIndex < 0 || endIndex <= startIndex
-            ? null
-            : label.Substring(startIndex + 1, endIndex - startIndex - 1);
-    }
-
-    private static double CalculateTalentSuccessChance(
-        int talentValue,
-        int totalModifier,
-        IReadOnlyList<int> attributeValues)
-    {
-        const int sideCount = 20;
-        var successfulOutcomes = 0;
-
-        for (var first = 1; first <= sideCount; first++)
-        {
-            for (var second = 1; second <= sideCount; second++)
-            {
-                for (var third = 1; third <= sideCount; third++)
-                {
-                    if (IsSuccessfulTalentProbe(talentValue, totalModifier, attributeValues, [first, second, third]))
-                    {
-                        successfulOutcomes++;
-                    }
-                }
-            }
-        }
-
-        return successfulOutcomes / Math.Pow(sideCount, 3);
-    }
-
-    private static bool IsSuccessfulTalentProbe(
-        int talentValue,
-        int totalModifier,
-        IReadOnlyList<int> attributeValues,
-        ReadOnlySpan<int> rolls)
-    {
-        var ones = 0;
-        var twenties = 0;
-
-        foreach (var roll in rolls)
-        {
-            if (roll == 1)
-            {
-                ones++;
-            }
-
-            if (roll == 20)
-            {
-                twenties++;
-            }
-        }
-
-        var effectiveTalentValue = talentValue - totalModifier;
-        if (twenties >= 2)
-        {
-            return false;
-        }
-
-        if (ones >= 2)
-        {
-            return true;
-        }
-
-        var rest = Math.Min(Math.Max(effectiveTalentValue, 0), talentValue);
-        for (var index = 0; index < attributeValues.Count; index++)
-        {
-            var targetValue = effectiveTalentValue >= 0
-                ? attributeValues[index]
-                : attributeValues[index] + effectiveTalentValue;
-
-            if (rolls[index] > targetValue)
-            {
-                rest -= rolls[index] - targetValue;
-            }
-        }
-
-        return rest >= 0;
-    }
-
-    private static string FormatPercentage(double value)
-    {
-        return value.ToString("P1", CultureInfo.GetCultureInfo("de-DE"));
-    }
-
-    private static string FormatModifier(int modifier)
-    {
-        return modifier > 0 ? $"+{modifier}" : modifier.ToString();
-    }
-
-    private static string ResolveCatalogPath(IHostEnvironment environment)
-    {
-        var candidatePaths = new[]
-        {
-            Path.Combine(environment.ContentRootPath, "Data", CatalogFileName), Path.GetFullPath(Path.Combine(
-                environment.ContentRootPath,
-                "..",
-                "DsaWuerfelApp.Client",
-                "wwwroot",
-                "data",
-                CatalogFileName)),
-            Path.Combine(AppContext.BaseDirectory, "Data", CatalogFileName)
-        };
-
-        return candidatePaths.FirstOrDefault(File.Exists) ?? candidatePaths[0];
-    }
-
-    private static IReadOnlyDictionary<string, TalentCatalogEntry> LoadEntries(string path)
-    {
-        if (!File.Exists(path))
-        {
-            return new Dictionary<string, TalentCatalogEntry>(StringComparer.Ordinal);
-        }
-
-        try
-        {
-            using var stream = File.OpenRead(path);
-            var items = JsonSerializer.Deserialize<List<TalentCatalogItem>>(stream) ?? [];
-
-            return items
-                .Select(MapItem)
-                .Where(entry => !string.IsNullOrWhiteSpace(entry.Name))
-                .GroupBy(entry => TalentCatalogText.CanonicalizeName(entry.Name), StringComparer.Ordinal)
-                .Where(group => !string.IsNullOrWhiteSpace(group.Key))
-                .ToDictionary(
-                    group => group.Key,
-                    group => group.First(),
-                    StringComparer.Ordinal);
-        }
-        catch
-        {
-            return new Dictionary<string, TalentCatalogEntry>(StringComparer.Ordinal);
-        }
-    }
-
-    private static TalentCatalogEntry MapItem(TalentCatalogItem item)
-    {
-        return new TalentCatalogEntry(
-            TalentCatalogText.NormalizeCatalogText(item.Name),
-            TalentCatalogText.NormalizeProbe(item.Eigenschaften),
-            string.Equals(
-                TalentCatalogText.NormalizeCatalogText(item.Typ),
-                "Basis",
-                StringComparison.OrdinalIgnoreCase),
-            TalentCatalogText.ParseAlternatives(item.Ersatz),
-            BuildInfoSections(item));
-    }
-
-    private static ProbeInfoSectionDto[] BuildInfoSections(TalentCatalogItem item)
-    {
-        var sections = new List<ProbeInfoSectionDto>(capacity: 5);
-        AddInfoSection(sections, "Zweck", item.Purpose);
-        AddInfoSection(sections, "Kernregel", item.CoreRule);
-        AddInfoSection(sections, "Misslingen", item.Failure);
-        AddInfoSection(sections, "Modifikatoren", item.Modifiers);
-        AddInfoSection(sections, "Optional", item.OptionalNotes);
-        return sections.ToArray();
-    }
-
-    private static void AddInfoSection(ICollection<ProbeInfoSectionDto> sections, string label, string? value)
-    {
-        var normalizedValue = TalentCatalogText.NormalizeCatalogText(value);
-        if (string.IsNullOrWhiteSpace(normalizedValue))
-        {
-            return;
-        }
-
-        sections.Add(new ProbeInfoSectionDto(label, normalizedValue));
-    }
-
-    private sealed record TalentCatalogEntry(
-        string Name,
-        string Probe,
-        bool IsBasisTalent,
-        IReadOnlyList<string> AlternativeNames,
-        IReadOnlyList<ProbeInfoSectionDto> InfoSections);
-
     private sealed class KnownTalentEntry(TalentData talent, bool isOwnedByHero)
     {
         public TalentData Talent { get; } = talent;
         public bool IsOwnedByHero { get; } = isOwnedByHero;
-    }
-
-    public sealed record ResolvedTalentData(
-        string Name,
-        TalentData Talent,
-        string? SpecializationName,
-        int SpecializationModifier);
-
-    private sealed class TalentCatalogItem
-    {
-        public string Name { get; set; } = string.Empty;
-        public string Eigenschaften { get; set; } = string.Empty;
-        public string Typ { get; set; } = string.Empty;
-        public string Ersatz { get; set; } = string.Empty;
-
-        [JsonPropertyName("Spezialisierungen")]
-        public string Specializations { get; set; } = string.Empty;
-
-        [JsonPropertyName("Zweck")] public string Purpose { get; set; } = string.Empty;
-
-        [JsonPropertyName("Kernregel")] public string CoreRule { get; set; } = string.Empty;
-
-        [JsonPropertyName("Misslingen")] public string Failure { get; set; } = string.Empty;
-
-        [JsonPropertyName("Modifikatoren")] public string Modifiers { get; set; } = string.Empty;
-
-        [JsonPropertyName("Optional")] public string OptionalNotes { get; set; } = string.Empty;
     }
 }

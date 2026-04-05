@@ -54,6 +54,7 @@ builder.Services.AddSingleton<DiceService>();
 builder.Services.AddSingleton<TalentProbeService>();
 builder.Services.AddSingleton<AttributeProbeService>();
 builder.Services.AddSingleton<SchlechteEigenschaftProbeService>();
+builder.Services.AddSingleton<TalentCatalogStore>();
 builder.Services.AddSingleton<TalentCatalogService>();
 builder.Services.AddScoped<IHeroReadRepository, HeroReadRepository>();
 builder.Services.AddScoped<HeroContextReader>();
@@ -155,8 +156,7 @@ static void EnsureHeroSchema(HeroDbContext dbContext)
 
     var requiredColumns = new (string Name, string Sql)[]
     {
-        ("IsActive", "ALTER TABLE Heroes ADD COLUMN IsActive INTEGER NOT NULL DEFAULT 0;"),
-        ("SchlechteEigenschaften",
+        ("IsActive", "ALTER TABLE Heroes ADD COLUMN IsActive INTEGER NOT NULL DEFAULT 0;"), ("SchlechteEigenschaften",
             "ALTER TABLE Heroes ADD COLUMN SchlechteEigenschaften TEXT NOT NULL DEFAULT '{{}}';"),
         ("SourceXml", "ALTER TABLE Heroes ADD COLUMN SourceXml BLOB NULL;"),
         ("SourceFileName", "ALTER TABLE Heroes ADD COLUMN SourceFileName TEXT NULL;"),
