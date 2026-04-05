@@ -17,6 +17,10 @@ public partial class Lobby : IDisposable
     private DateTimeOffset? _magicLinkCooldownEndsAtUtc;
     private string _sessionName = "";
     private string _userName = "";
+
+    [SupplyParameterFromQuery(Name = "auth")]
+    private string? AuthStatus { get; set; }
+
     private SessionMode CurrentMode { get; set; } = SessionMode.Join;
 
     [Inject] public AuthState AuthState { get; set; } = null!;
@@ -265,13 +269,7 @@ public partial class Lobby : IDisposable
 
     private void ApplyAuthQueryFeedback()
     {
-        var authStatus = GetQueryParameterValue("auth");
-        if (string.IsNullOrWhiteSpace(authStatus))
-        {
-            return;
-        }
-
-        if (string.Equals(authStatus, "invalid", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(AuthStatus, "invalid", StringComparison.OrdinalIgnoreCase))
         {
             _error = "Magic Link ist ungueltig oder abgelaufen. Bitte einen neuen Link anfordern.";
         }
@@ -311,40 +309,6 @@ public partial class Lobby : IDisposable
         return string.IsNullOrWhiteSpace(baseName)
             ? "Neue Runde"
             : $"{baseName.Trim()}s Runde";
-    }
-
-    private string? GetQueryParameterValue(string key)
-    {
-        var query = new Uri(Nav.Uri).Query;
-        if (string.IsNullOrWhiteSpace(query))
-        {
-            return null;
-        }
-
-        var segments = query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries);
-        foreach (var segment in segments)
-        {
-            var separatorIndex = segment.IndexOf('=');
-            if (separatorIndex < 0)
-            {
-                if (string.Equals(segment, key, StringComparison.OrdinalIgnoreCase))
-                {
-                    return string.Empty;
-                }
-
-                continue;
-            }
-
-            var currentKey = Uri.UnescapeDataString(segment[..separatorIndex]);
-            if (!string.Equals(currentKey, key, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            return Uri.UnescapeDataString(segment[(separatorIndex + 1)..]);
-        }
-
-        return null;
     }
 
     private void SetMagicLinkCooldown(int cooldownSeconds)

@@ -153,35 +153,20 @@ static void EnsureHeroSchema(HeroDbContext dbContext)
 
     reader.Close();
 
-    if (!existingColumns.Contains("IsActive"))
+    var requiredColumns = new (string Name, string Sql)[]
     {
-        dbContext.Database.ExecuteSqlRaw("ALTER TABLE Heroes ADD COLUMN IsActive INTEGER NOT NULL DEFAULT 0;");
-    }
+        ("IsActive", "ALTER TABLE Heroes ADD COLUMN IsActive INTEGER NOT NULL DEFAULT 0;"),
+        ("SchlechteEigenschaften",
+            "ALTER TABLE Heroes ADD COLUMN SchlechteEigenschaften TEXT NOT NULL DEFAULT '{{}}';"),
+        ("SourceXml", "ALTER TABLE Heroes ADD COLUMN SourceXml BLOB NULL;"),
+        ("SourceFileName", "ALTER TABLE Heroes ADD COLUMN SourceFileName TEXT NULL;"),
+        ("ImportVersion", "ALTER TABLE Heroes ADD COLUMN ImportVersion INTEGER NOT NULL DEFAULT 0;"),
+        ("ImportedAtUtc", "ALTER TABLE Heroes ADD COLUMN ImportedAtUtc TEXT NULL;")
+    };
 
-    if (!existingColumns.Contains("SchlechteEigenschaften"))
+    foreach (var (_, sql) in requiredColumns.Where(column => !existingColumns.Contains(column.Name)))
     {
-        dbContext.Database.ExecuteSqlRaw(
-            "ALTER TABLE Heroes ADD COLUMN SchlechteEigenschaften TEXT NOT NULL DEFAULT '{{}}';");
-    }
-
-    if (!existingColumns.Contains("SourceXml"))
-    {
-        dbContext.Database.ExecuteSqlRaw("ALTER TABLE Heroes ADD COLUMN SourceXml BLOB NULL;");
-    }
-
-    if (!existingColumns.Contains("SourceFileName"))
-    {
-        dbContext.Database.ExecuteSqlRaw("ALTER TABLE Heroes ADD COLUMN SourceFileName TEXT NULL;");
-    }
-
-    if (!existingColumns.Contains("ImportVersion"))
-    {
-        dbContext.Database.ExecuteSqlRaw("ALTER TABLE Heroes ADD COLUMN ImportVersion INTEGER NOT NULL DEFAULT 0;");
-    }
-
-    if (!existingColumns.Contains("ImportedAtUtc"))
-    {
-        dbContext.Database.ExecuteSqlRaw("ALTER TABLE Heroes ADD COLUMN ImportedAtUtc TEXT NULL;");
+        dbContext.Database.ExecuteSqlRaw(sql);
     }
 }
 

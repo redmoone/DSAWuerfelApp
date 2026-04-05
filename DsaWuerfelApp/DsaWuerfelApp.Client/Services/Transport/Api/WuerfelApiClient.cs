@@ -1,5 +1,4 @@
 using System.Net.Http.Json;
-using System.Text.Json;
 
 using DsaWuerfelApp.Shared;
 
@@ -88,7 +87,7 @@ public sealed class WuerfelApiClient(HttpClient httpClient) : IWuerfelApiClient
     private async Task<T> GetJsonAsync<T>(string uri, string fallbackMessage, CancellationToken cancellationToken)
     {
         using var response = await httpClient.GetAsync(uri, cancellationToken);
-        await EnsureSuccessAsync(response, fallbackMessage, cancellationToken);
+        await response.EnsureApiSuccessAsync(fallbackMessage, cancellationToken);
 
         return await response.Content.ReadFromJsonAsync<T>(cancellationToken) ??
                throw new InvalidOperationException(fallbackMessage);
@@ -101,47 +100,9 @@ public sealed class WuerfelApiClient(HttpClient httpClient) : IWuerfelApiClient
         CancellationToken cancellationToken)
     {
         using var response = await httpClient.PostAsJsonAsync(uri, request, cancellationToken);
-        await EnsureSuccessAsync(response, fallbackMessage, cancellationToken);
+        await response.EnsureApiSuccessAsync(fallbackMessage, cancellationToken);
 
         return await response.Content.ReadFromJsonAsync<T>(cancellationToken) ??
                throw new InvalidOperationException(fallbackMessage);
     }
-
-    private static async Task EnsureSuccessAsync(
-        HttpResponseMessage response,
-        string fallbackMessage,
-        CancellationToken cancellationToken)
-    {
-        if (response.IsSuccessStatusCode)
-        {
-            return;
-        }
-
-        var apiError = await TryReadApiErrorAsync(response, cancellationToken);
-        throw new InvalidOperationException(string.IsNullOrWhiteSpace(apiError) ? fallbackMessage : apiError);
-    }
-
-    private static async Task<string?> TryReadApiErrorAsync(
-        HttpResponseMessage response,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            if (string.IsNullOrWhiteSpace(content))
-            {
-                return null;
-            }
-
-            var apiError =
-                JsonSerializer.Deserialize<ApiError>(content, new JsonSerializerOptions(JsonSerializerDefaults.Web));
-            return string.IsNullOrWhiteSpace(apiError?.Error) ? content : apiError.Error;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private sealed record ApiError(string? Error);
 }

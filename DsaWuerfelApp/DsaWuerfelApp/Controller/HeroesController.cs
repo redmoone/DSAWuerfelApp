@@ -12,38 +12,21 @@ namespace DsaWuerfelApp.Controller;
 [ApiController]
 [Authorize]
 [Route("api/[controller]")]
-public class HeroesController : ControllerBase
+public class HeroesController(HeroDbContext dbContext, HeroImportService heroImportService) : ControllerBase
 {
-    private readonly HeroDbContext _dbContext;
-    private readonly HeroImportService _heroImportService;
-
-    public HeroesController(HeroDbContext dbContext, HeroImportService heroImportService)
-    {
-        _dbContext = dbContext;
-        _heroImportService = heroImportService;
-    }
-
     [HttpGet]
-    public async Task<ActionResult<List<Hero>>> GetHeroes()
-    {
-        var heroes = await _dbContext.Heroes
+    public async Task<ActionResult<List<Hero>>> GetHeroes() =>
+        Ok(await dbContext.Heroes
             .AsNoTracking()
             .OrderByDescending(hero => hero.IsActive)
             .ThenBy(hero => hero.Name)
-            .ToListAsync();
-
-        return Ok(heroes);
-    }
+            .ToListAsync());
 
     [HttpGet("active")]
-    public async Task<ActionResult<Hero?>> GetActiveHero()
-    {
-        var activeHero = await _dbContext.Heroes
+    public async Task<ActionResult<Hero?>> GetActiveHero() =>
+        Ok(await dbContext.Heroes
             .AsNoTracking()
-            .FirstOrDefaultAsync(hero => hero.IsActive);
-
-        return Ok(activeHero);
-    }
+            .FirstOrDefaultAsync(hero => hero.IsActive));
 
     [HttpPost("upload")]
     [Consumes("multipart/form-data")]
@@ -51,7 +34,7 @@ public class HeroesController : ControllerBase
     {
         try
         {
-            var createdHeroes = await _heroImportService.ImportAsync(files, cancellationToken);
+            var createdHeroes = await heroImportService.ImportAsync(files, cancellationToken);
             return Ok(createdHeroes);
         }
         catch (HeroImportException exception)
@@ -63,14 +46,14 @@ public class HeroesController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteHero(Guid id)
     {
-        var hero = await _dbContext.Heroes.FindAsync(id);
+        var hero = await dbContext.Heroes.FindAsync(id);
         if (hero is null)
         {
             return NotFound();
         }
 
-        _dbContext.Heroes.Remove(hero);
-        await _dbContext.SaveChangesAsync();
+        dbContext.Heroes.Remove(hero);
+        await dbContext.SaveChangesAsync();
 
         return Ok();
     }
@@ -78,23 +61,18 @@ public class HeroesController : ControllerBase
     [HttpPut("{id:guid}/activate")]
     public async Task<ActionResult<Hero>> ActivateHero(Guid id)
     {
-        var hero = await _dbContext.Heroes.FirstOrDefaultAsync(existingHero => existingHero.Id == id);
+        var hero = await dbContext.Heroes.FirstOrDefaultAsync(existingHero => existingHero.Id == id);
         if (hero is null)
         {
             return NotFound();
         }
 
-        var activeHeroes = await _dbContext.Heroes
+        await dbContext.Heroes
             .Where(existingHero => existingHero.IsActive && existingHero.Id != id)
-            .ToListAsync();
-
-        foreach (var activeHero in activeHeroes)
-        {
-            activeHero.IsActive = false;
-        }
+            .ExecuteUpdateAsync(setters => setters.SetProperty(existingHero => existingHero.IsActive, false));
 
         hero.IsActive = true;
-        await _dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync();
 
         return Ok(hero);
     }

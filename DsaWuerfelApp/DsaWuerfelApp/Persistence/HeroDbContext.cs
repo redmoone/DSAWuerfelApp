@@ -135,23 +135,14 @@ public class HeroDbContext : DbContext
     private static Dictionary<string, TalentData> DeserializeTalentDictionary(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
-        {
             return new Dictionary<string, TalentData>();
-        }
 
         using var document = JsonDocument.Parse(value);
-        if (document.RootElement.ValueKind != JsonValueKind.Object)
-        {
-            return new Dictionary<string, TalentData>();
-        }
-
-        var talents = new Dictionary<string, TalentData>(StringComparer.Ordinal);
-        foreach (var property in document.RootElement.EnumerateObject())
-        {
-            talents[property.Name] = DeserializeTalent(property.Value);
-        }
-
-        return talents;
+        return document.RootElement.ValueKind is not JsonValueKind.Object
+            ? new Dictionary<string, TalentData>()
+            : document.RootElement.EnumerateObject()
+                .ToDictionary(property => property.Name, property => DeserializeTalent(property.Value),
+                    StringComparer.Ordinal);
     }
 
     private static TalentData DeserializeTalent(JsonElement element)

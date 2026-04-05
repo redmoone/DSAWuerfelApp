@@ -91,8 +91,7 @@ public sealed class SessionState : IDisposable
     }
 
     public async Task<string> CreateSessionAsync(string userName, string sessionName)
-    {
-        try
+        => await ExecuteHubCallAsync(async () =>
         {
             await _gameClient.StartAsync();
             var joinCode = await _gameClient.CreateSession(userName, sessionName);
@@ -104,16 +103,10 @@ public sealed class SessionState : IDisposable
 
             await RefreshAsync();
             return joinCode;
-        }
-        catch (HubException exception)
-        {
-            throw new InvalidOperationException(exception.Message, exception);
-        }
-    }
+        });
 
     public async Task<bool> JoinSessionAsync(string joinCode, string userName)
-    {
-        try
+        => await ExecuteHubCallAsync(async () =>
         {
             await _gameClient.StartAsync();
             var joined = await _gameClient.JoinSession(joinCode, userName);
@@ -125,27 +118,16 @@ public sealed class SessionState : IDisposable
             await LoadActiveSessionAsync(ActiveSessionId);
             await RefreshAsync();
             return true;
-        }
-        catch (HubException exception)
-        {
-            throw new InvalidOperationException(exception.Message, exception);
-        }
-    }
+        });
 
     public async Task OpenSessionAsync(string sessionId)
-    {
-        try
+        => await ExecuteHubCallAsync(async () =>
         {
             await _gameClient.StartAsync();
             await _gameClient.OpenSession(sessionId);
             await LoadActiveSessionAsync(sessionId);
             await RefreshAsync();
-        }
-        catch (HubException exception)
-        {
-            throw new InvalidOperationException(exception.Message, exception);
-        }
-    }
+        });
 
     public async Task RestoreActiveSessionAsync(CancellationToken cancellationToken = default)
     {
@@ -186,8 +168,7 @@ public sealed class SessionState : IDisposable
     }
 
     public async Task LeaveSessionAsync(string sessionId)
-    {
-        try
+        => await ExecuteHubCallAsync(async () =>
         {
             await _gameClient.StartAsync();
             var wasActive = string.Equals(ActiveSessionId, sessionId, StringComparison.Ordinal);
@@ -199,16 +180,10 @@ public sealed class SessionState : IDisposable
             }
 
             await RefreshAsync();
-        }
-        catch (HubException exception)
-        {
-            throw new InvalidOperationException(exception.Message, exception);
-        }
-    }
+        });
 
     public async Task RenameSessionAsync(string sessionId, string sessionName)
-    {
-        try
+        => await ExecuteHubCallAsync(async () =>
         {
             await _gameClient.StartAsync();
             await _gameClient.RenameSession(sessionId, sessionName);
@@ -218,16 +193,10 @@ public sealed class SessionState : IDisposable
             {
                 await LoadActiveSessionAsync(sessionId, persistSelection: false);
             }
-        }
-        catch (HubException exception)
-        {
-            throw new InvalidOperationException(exception.Message, exception);
-        }
-    }
+        });
 
     public async Task RenamePlayerAsync(string sessionId, string playerName)
-    {
-        try
+        => await ExecuteHubCallAsync(async () =>
         {
             await _gameClient.StartAsync();
             await _gameClient.RenamePlayer(sessionId, playerName);
@@ -237,16 +206,10 @@ public sealed class SessionState : IDisposable
             {
                 await LoadActiveSessionAsync(sessionId, persistSelection: false);
             }
-        }
-        catch (HubException exception)
-        {
-            throw new InvalidOperationException(exception.Message, exception);
-        }
-    }
+        });
 
     public async Task DeleteSessionAsync(string sessionId)
-    {
-        try
+        => await ExecuteHubCallAsync(async () =>
         {
             await _gameClient.StartAsync();
             var wasActive = string.Equals(ActiveSessionId, sessionId, StringComparison.Ordinal);
@@ -258,12 +221,7 @@ public sealed class SessionState : IDisposable
             }
 
             await RefreshAsync();
-        }
-        catch (HubException exception)
-        {
-            throw new InvalidOperationException(exception.Message, exception);
-        }
-    }
+        });
 
     private async Task LoadActiveSessionAsync(
         string sessionId,
@@ -353,6 +311,30 @@ public sealed class SessionState : IDisposable
         }
         catch (JSException)
         {
+        }
+    }
+
+    private static async Task ExecuteHubCallAsync(Func<Task> action)
+    {
+        try
+        {
+            await action();
+        }
+        catch (HubException exception)
+        {
+            throw new InvalidOperationException(exception.Message, exception);
+        }
+    }
+
+    private static async Task<T> ExecuteHubCallAsync<T>(Func<Task<T>> action)
+    {
+        try
+        {
+            return await action();
+        }
+        catch (HubException exception)
+        {
+            throw new InvalidOperationException(exception.Message, exception);
         }
     }
 
