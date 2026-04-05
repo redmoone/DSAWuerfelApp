@@ -9,9 +9,9 @@
                    Variant="Variant.Filled"
                    OnClick="InfoRequested"
                    Disabled="@(!CanShowInfo || IsBusy)"
-                   title="Zusatzinformationen zur ausgewählten Probe anzeigen"
+                   title="Weitere Probeninformationen ein- oder ausblenden"
                    Class="rounded-circle probe-info-button"
-                   Style="width: 48px; height: 48px; background-color: var(--pill-bg); color: var(--dsa-white); border: 2px solid var(--dsa-gold);"/>
+                   Style="@BuildInfoButtonStyle()"/>
 </div>
 
 @if (ShowDebugForcedRolls)

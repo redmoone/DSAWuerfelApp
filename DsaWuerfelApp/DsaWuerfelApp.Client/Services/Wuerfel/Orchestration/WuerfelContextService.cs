@@ -8,6 +8,9 @@ public sealed class WuerfelContextService(
     IWuerfelApiClient apiClient,
     WuerfelUiOperationRunner operationRunner)
 {
+    private CancellationTokenSource? _probeInfoRefreshCancellation;
+    private int _probeInfoRefreshVersion;
+
     public Task LoadContextAsync()
     {
         return operationRunner.RunAsync(async () =>
@@ -17,16 +20,12 @@ public sealed class WuerfelContextService(
         });
     }
 
-    public Task ToggleProbeInfoAsync()
+    public Task RefreshProbeInfoAsync()
     {
-        if (state.Current.ProbeInfo is not null)
-        {
-            state.SetProbeInfo(null);
-            return Task.CompletedTask;
-        }
-
         if (string.IsNullOrWhiteSpace(state.Current.SelectedProbeValue))
         {
+            CancelProbeInfoRefresh();
+            state.ClearProbeInfo();
             return Task.CompletedTask;
         }
 
@@ -35,11 +34,59 @@ public sealed class WuerfelContextService(
             state.Current.SelectedProbeValue,
             state.Current.Modifier,
             state.Current.SelectedBadTraitName);
+        var refreshVersion = Interlocked.Increment(ref _probeInfoRefreshVersion);
+        var cancellationToken = ResetProbeInfoRefreshCancellation().Token;
 
-        return operationRunner.RunAsync(async () =>
+        return RefreshProbeInfoAsync(request, refreshVersion, cancellationToken);
+    }
+
+    private async Task RefreshProbeInfoAsync(
+        ProbeInfoRequestDto request,
+        int refreshVersion,
+        CancellationToken cancellationToken)
+    {
+        try
         {
-            var result = await apiClient.GetProbeInfoAsync(request);
+            var result = await apiClient.GetProbeInfoAsync(request, cancellationToken);
+            if (ShouldIgnoreProbeInfoResult(refreshVersion, cancellationToken))
+            {
+                return;
+            }
+
             state.SetProbeInfo(result);
-        });
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception exception)
+        {
+            if (ShouldIgnoreProbeInfoResult(refreshVersion, cancellationToken))
+            {
+                return;
+            }
+
+            state.ClearProbeInfo();
+            state.SetError(exception.Message);
+        }
+    }
+
+    private CancellationTokenSource ResetProbeInfoRefreshCancellation()
+    {
+        CancelProbeInfoRefresh();
+        _probeInfoRefreshCancellation = new CancellationTokenSource();
+        return _probeInfoRefreshCancellation;
+    }
+
+    private void CancelProbeInfoRefresh()
+    {
+        _probeInfoRefreshCancellation?.Cancel();
+        _probeInfoRefreshCancellation?.Dispose();
+        _probeInfoRefreshCancellation = null;
+    }
+
+    private bool ShouldIgnoreProbeInfoResult(int refreshVersion, CancellationToken cancellationToken)
+    {
+        return cancellationToken.IsCancellationRequested ||
+               refreshVersion != _probeInfoRefreshVersion;
     }
 }

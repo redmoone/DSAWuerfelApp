@@ -52,13 +52,12 @@ public partial class Wuerfel : IDisposable
 
     private Task ToggleProbeInfoAsync()
     {
-        return Facade.ToggleProbeInfoAsync();
+        return Facade.ToggleProbeInfoDetailsAsync();
     }
 
     private Task HandleSelectedBadTraitChanged(string? selectedBadTraitName)
     {
-        Facade.SetSelectedBadTrait(selectedBadTraitName);
-        return Task.CompletedTask;
+        return Facade.SetSelectedBadTraitAsync(selectedBadTraitName);
     }
 
     private Task ExecuteBadTraitRollAsync()
@@ -68,8 +67,7 @@ public partial class Wuerfel : IDisposable
 
     private Task HandleModifierChanged(int modifier)
     {
-        Facade.SetModifier(modifier);
-        return Task.CompletedTask;
+        return Facade.SetModifierAsync(modifier);
     }
 
     private Task HandleRollTextChanged(string rollText)

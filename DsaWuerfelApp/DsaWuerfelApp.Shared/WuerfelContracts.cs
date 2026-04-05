@@ -48,7 +48,8 @@ public sealed record ProbeInfoRequestDto(
 public sealed record ProbeInfoSectionDto(string Label, string Text);
 
 public sealed record ProbeInfoResultDto(
-    string? Text,
+    string? SummaryText,
+    string? DetailsText,
     ProbeInfoSectionDto[] Sections);
 
 public sealed record FreeRollRequestDto(

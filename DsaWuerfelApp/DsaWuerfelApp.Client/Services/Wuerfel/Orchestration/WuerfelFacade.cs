@@ -67,20 +67,22 @@ public sealed class WuerfelFacade(
         return Task.CompletedTask;
     }
 
-    public Task SetSelectedProbeAsync(string selectedProbeValue)
+    public async Task SetSelectedProbeAsync(string selectedProbeValue)
     {
         selectionService.SetSelectedProbe(selectedProbeValue);
-        return Task.CompletedTask;
+        await contextService.RefreshProbeInfoAsync();
     }
 
-    public void SetSelectedBadTrait(string? selectedBadTraitName)
+    public async Task SetSelectedBadTraitAsync(string? selectedBadTraitName)
     {
         selectionService.SetSelectedBadTrait(selectedBadTraitName);
+        await contextService.RefreshProbeInfoAsync();
     }
 
-    public void SetModifier(int modifier)
+    public async Task SetModifierAsync(int modifier)
     {
         selectionService.SetModifier(modifier);
+        await contextService.RefreshProbeInfoAsync();
     }
 
     public void SetRollText(string rollText)
@@ -114,9 +116,15 @@ public sealed class WuerfelFacade(
         return Task.CompletedTask;
     }
 
-    public Task ToggleProbeInfoAsync()
+    public Task ToggleProbeInfoDetailsAsync()
     {
-        return contextService.ToggleProbeInfoAsync();
+        if (string.IsNullOrWhiteSpace(state.Current.SelectedProbeValue))
+        {
+            return Task.CompletedTask;
+        }
+
+        state.ToggleProbeInfoDetails();
+        return Task.CompletedTask;
     }
 
     public Task ExecuteCurrentRollAsync()

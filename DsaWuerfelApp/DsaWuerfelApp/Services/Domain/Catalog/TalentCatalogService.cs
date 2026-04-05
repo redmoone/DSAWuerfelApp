@@ -34,7 +34,7 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
     {
         if (string.IsNullOrWhiteSpace(probeValue))
         {
-            return new ProbeInfoResultDto("Bitte zuerst eine Probe auswählen.", []);
+            return new ProbeInfoResultDto("Bitte zuerst eine Probe auswählen.", null, []);
         }
 
         var badTrait = ResolveBadTrait(hero, badTraitName);
@@ -46,12 +46,17 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         {
             var probeAttributes = ProbeAttributes.TryCreate(resolvedTalent.Talent.Probe)?.ToArray() ?? [];
             var effectiveModifier = modifier + (badTrait?.TalentModifier ?? 0) + resolvedTalent.SpecializationModifier;
+            var summaryText =
+                BuildTalentProbabilityText(hero, resolvedTalent, probeAttributes, effectiveModifier, badTraitText);
+            var detailsText =
+                BuildTalentDetailsText(hero, resolvedTalent, probeAttributes, effectiveModifier, badTraitText);
             ProbeInfoSectionDto[] infoSections = TryGetEntry(resolvedTalent.Name, out var catalogEntry)
                 ? [.. catalogEntry.InfoSections]
                 : [];
 
             return new ProbeInfoResultDto(
-                BuildTalentProbabilityText(hero, resolvedTalent, probeAttributes, effectiveModifier, badTraitText),
+                summaryText,
+                detailsText,
                 infoSections);
         }
 
@@ -59,11 +64,13 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         if (!string.IsNullOrWhiteSpace(probe))
         {
             return new ProbeInfoResultDto(
+                "Erfolgschance nur mit aktivem Held verfügbar.",
                 $"Die ausgewählte Probe verwendet {probe}. Für heldenspezifische Zusatzinformationen bitte einen aktiven Helden wählen.{badTraitText}",
                 []);
         }
 
         return new ProbeInfoResultDto(
+            $"Für '{probeValue}' ist aktuell keine Erfolgschance verfügbar.",
             $"Zur ausgewählten Probe '{probeValue}' sind aktuell keine weiteren Informationen verfügbar.{badTraitText}",
             []);
     }
@@ -356,11 +363,11 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
         ResolvedTalentData resolvedTalent,
         IReadOnlyList<string> probeAttributes,
         int effectiveModifier,
-        string badTraitText)
+        string _)
     {
         if (probeAttributes.Count != 3)
         {
-            return $"Für {resolvedTalent.Name} konnte keine Erfolgschance berechnet werden.{badTraitText}";
+            return $"Für {resolvedTalent.Name} konnte keine Erfolgschance berechnet werden.";
         }
 
         var attributeValues = probeAttributes
@@ -371,7 +378,32 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
             effectiveModifier,
             attributeValues);
 
-        return $"{resolvedTalent.Name}: {FormatPercentage(successChance)} Erfolgschance.{badTraitText}";
+        return $"{resolvedTalent.Name}: {FormatPercentage(successChance)} Erfolgschance.";
+    }
+
+    private static string BuildTalentDetailsText(
+        Hero hero,
+        ResolvedTalentData resolvedTalent,
+        IReadOnlyList<string> probeAttributes,
+        int effectiveModifier,
+        string badTraitText)
+    {
+        var attributeInfo = probeAttributes.Count == 0
+            ? "keine Eigenschaften hinterlegt"
+            : string.Join(", ", probeAttributes.Select(attribute =>
+                $"{attribute} {hero.Eigenschaften.GetValueOrDefault(attribute)}"));
+        var effectiveTalentValue = resolvedTalent.Talent.Wert - effectiveModifier;
+        var availableCompensation = Math.Min(Math.Max(effectiveTalentValue, 0), resolvedTalent.Talent.Wert);
+        var modifierInfo = effectiveTalentValue >= 0
+            ? $"Nach dem Gesamtmodifikator {FormatModifier(effectiveModifier)} bleiben {availableCompensation} Ausgleichspunkte für Überschreitungen."
+            : $"Nach dem Gesamtmodifikator {FormatModifier(effectiveModifier)} liegt der effektive Talentwert bei {effectiveTalentValue}. Dadurch müssen alle drei Eigenschaftswürfe jeweils um {Math.Abs(effectiveTalentValue)} Punkte niedriger geschafft werden.";
+        var specializationInfo = resolvedTalent.SpecializationModifier == 0 ||
+                                 string.IsNullOrWhiteSpace(resolvedTalent.SpecializationName)
+            ? string.Empty
+            : $" Gewählte Talentspezialisierung: {resolvedTalent.SpecializationName}. Dadurch ist die Probe um 2 Punkte erleichtert.";
+
+        return
+            $"{resolvedTalent.Name} hat aktuell TaW {resolvedTalent.Talent.Wert}. Probe: {resolvedTalent.Talent.Probe}. Verwendete Eigenschaften: {attributeInfo}. {modifierInfo}{specializationInfo}{badTraitText}";
     }
 
     private static string BuildTalentProbeLabel(string talentName, TalentData talent)
@@ -555,6 +587,11 @@ public sealed class TalentCatalogService(IHostEnvironment environment)
     private static string FormatPercentage(double value)
     {
         return value.ToString("P1", CultureInfo.GetCultureInfo("de-DE"));
+    }
+
+    private static string FormatModifier(int modifier)
+    {
+        return modifier > 0 ? $"+{modifier}" : modifier.ToString();
     }
 
     private static string ResolveCatalogPath(IHostEnvironment environment)

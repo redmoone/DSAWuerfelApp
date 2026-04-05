@@ -12,6 +12,7 @@
             <h3 class="block-title">Zusätzliche Informationen</h3>
             <div class="action-block-body">
                 <WuerfelInformationPanel ProbeInfo="@View.ProbeInfo"
+                                         ShowProbeInfoDetails="@View.IsProbeInfoExpanded"
                                          TalentResult="View.LastTalentRoll"
                                          AttributeResult="View.LastAttributeRoll"
                                          BadTraitResult="View.LastBadTraitRoll"/>
@@ -62,6 +63,7 @@
                                    SelectedProbeChanged="HandleSelectedProbeChangedAsync"
                                    InfoRequested="ToggleProbeInfoAsync"
                                    CanShowInfo="@(!string.IsNullOrWhiteSpace(View.SelectedProbeValue))"
+                                   IsInfoExpanded="@View.IsProbeInfoExpanded"
                                    ShowDebugForcedRolls="View.ShowDebugForcedRolls"
                                    ForcedRollsText="@View.ForcedRollsText"
                                    ForcedRollsTextChanged="HandleForcedRollsChanged"

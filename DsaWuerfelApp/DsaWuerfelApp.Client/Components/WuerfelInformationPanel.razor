@@ -1,25 +1,33 @@
 @using DsaWuerfelApp.Shared
 <div class="additional-info-content">
-    @if (HasProbeInfoContent(ProbeInfo))
+    @if (HasProbeInfoSummary(ProbeInfo))
     {
         <section class="additional-info-panel">
             <h4 class="additional-info-title">Probeninfo</h4>
-            @if (!string.IsNullOrWhiteSpace(ProbeInfo?.Text))
+            @if (!string.IsNullOrWhiteSpace(ProbeInfo?.SummaryText))
             {
-                <p class="additional-info-text">@ProbeInfo!.Text</p>
+                <p class="additional-info-text">@ProbeInfo!.SummaryText</p>
             }
 
-            @if (ProbeInfo is not null && ProbeInfo.Sections.Length > 0)
+            @if (ShowProbeInfoDetails && HasProbeInfoDetails(ProbeInfo))
             {
-                <div class="probe-info-sections">
-                    @foreach (var section in ProbeInfo.Sections)
-                    {
-                        <div class="probe-info-section">
-                            <span class="probe-info-section-label">@(section.Label)</span>
-                            <p class="probe-info-section-text">@(section.Text)</p>
-                        </div>
-                    }
-                </div>
+                @if (!string.IsNullOrWhiteSpace(ProbeInfo?.DetailsText))
+                {
+                    <p class="additional-info-text">@ProbeInfo!.DetailsText</p>
+                }
+
+                @if (ProbeInfo is not null && ProbeInfo.Sections.Length > 0)
+                {
+                    <div class="probe-info-sections">
+                        @foreach (var section in ProbeInfo.Sections)
+                        {
+                            <div class="probe-info-section">
+                                <span class="probe-info-section-label">@(section.Label)</span>
+                                <p class="probe-info-section-text">@(section.Text)</p>
+                            </div>
+                        }
+                    </div>
+                }
             }
         </section>
     }
@@ -121,7 +129,7 @@
         </section>
     }
 
-    @if (!HasProbeInfoContent(ProbeInfo) &&
+    @if (!HasProbeInfoSummary(ProbeInfo) &&
          TalentResult is null &&
          AttributeResult?.Requirement is null &&
          BadTraitResult is null)
@@ -135,14 +143,21 @@
 
 @code {
     [Parameter] public ProbeInfoResultDto? ProbeInfo { get; set; }
+    [Parameter] public bool ShowProbeInfoDetails { get; set; }
     [Parameter] public TalentRollResultDto? TalentResult { get; set; }
     [Parameter] public AttributeRollResultDto? AttributeResult { get; set; }
     [Parameter] public BadTraitRollResultDto? BadTraitResult { get; set; }
 
-    private static bool HasProbeInfoContent(ProbeInfoResultDto? probeInfo)
+    private static bool HasProbeInfoSummary(ProbeInfoResultDto? probeInfo)
     {
         return probeInfo is not null &&
-               (!string.IsNullOrWhiteSpace(probeInfo.Text) || probeInfo.Sections.Length > 0);
+               !string.IsNullOrWhiteSpace(probeInfo.SummaryText);
+    }
+
+    private static bool HasProbeInfoDetails(ProbeInfoResultDto? probeInfo)
+    {
+        return probeInfo is not null &&
+               (!string.IsNullOrWhiteSpace(probeInfo.DetailsText) || probeInfo.Sections.Length > 0);
     }
 
     private static string FormatModifier(int modifier)

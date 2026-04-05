@@ -33,6 +33,7 @@ public sealed class WuerfelState
             RollText = string.Empty,
             ForcedRollsText = string.Empty,
             ProbeInfo = null,
+            IsProbeInfoExpanded = false,
             ErrorMessage = null,
             ActiveArea = WuerfelArea.None,
             LastTalentRoll = null,
@@ -137,6 +138,7 @@ public sealed class WuerfelState
         {
             SelectedProbeValue = string.IsNullOrWhiteSpace(selectedProbeValue) ? null : selectedProbeValue,
             ProbeInfo = null,
+            IsProbeInfoExpanded = false,
             ErrorMessage = null,
             ActiveArea = string.IsNullOrWhiteSpace(selectedProbeValue) && Current.ActiveArea == WuerfelArea.ProbeSearch
                 ? WuerfelArea.None
@@ -147,6 +149,16 @@ public sealed class WuerfelState
     public void SetProbeInfo(ProbeInfoResultDto? probeInfo)
     {
         Update(Current with { ProbeInfo = probeInfo, ErrorMessage = null });
+    }
+
+    public void ClearProbeInfo()
+    {
+        Update(Current with { ProbeInfo = null, IsProbeInfoExpanded = false });
+    }
+
+    public void ToggleProbeInfoDetails()
+    {
+        Update(Current with { IsProbeInfoExpanded = !Current.IsProbeInfoExpanded });
     }
 
     public void SetHistory(IReadOnlyList<RollHistoryEntryDto> history)
@@ -207,6 +219,7 @@ public sealed class WuerfelState
             RollText = string.Empty,
             ForcedRollsText = string.Empty,
             ProbeInfo = clearSelectedProbe ? null : state.ProbeInfo,
+            IsProbeInfoExpanded = clearSelectedProbe ? false : state.IsProbeInfoExpanded,
             ErrorMessage = null,
             LastTalentRoll = null,
             LastAttributeRoll = null,
@@ -252,6 +265,7 @@ public sealed record WuerfelViewState
     public bool ShowDebugForcedRolls { get; init; }
     public bool IsBusy { get; init; }
     public string? ErrorMessage { get; init; }
+    public bool IsProbeInfoExpanded { get; init; }
     public WuerfelArea ActiveArea { get; init; }
     public TalentRollResultDto? LastTalentRoll { get; init; }
     public AttributeRollResultDto? LastAttributeRoll { get; init; }
