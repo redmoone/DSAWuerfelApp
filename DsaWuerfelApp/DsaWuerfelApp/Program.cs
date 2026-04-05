@@ -49,6 +49,8 @@ builder.Services.AddHttpClient<IMagicLinkEmailSender, ResendMagicLinkEmailSender
     client.BaseAddress = new Uri("https://api.resend.com/");
 });
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<SessionRuntimeState>();
+builder.Services.AddSingleton<SessionRecordStore>();
 builder.Services.AddSingleton<SessionService>();
 builder.Services.AddSingleton<DiceService>();
 builder.Services.AddSingleton<TalentProbeService>();

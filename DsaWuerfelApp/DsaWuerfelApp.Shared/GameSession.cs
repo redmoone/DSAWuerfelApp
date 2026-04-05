@@ -1,5 +1,3 @@
-﻿using System.Collections.Concurrent;
-
 namespace DsaWuerfelApp.Shared;
 
 public class GameSession
@@ -9,7 +7,5 @@ public class GameSession
     public string JoinCode { get; set; } = string.Empty;
     public string MasterUserId { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    public ConcurrentBag<PlayerInfo> Players { get; set; } = [];
-    public ConcurrentBag<RollHistoryEntryDto> History { get; set; } = [];
+    public PlayerInfo[] Players { get; set; } = [];
 }

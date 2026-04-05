@@ -41,13 +41,6 @@ public class GameHub(
         var resolvedUserName = ResolveUserName(userName);
         var session = sessionService.CreateSession(userId, resolvedUserName, sessionName);
 
-        sessionService.AddPlayer(
-            session.SessionId,
-            new PlayerInfo
-            {
-                ConnectionId = Context.ConnectionId, UserId = userId, Name = resolvedUserName, IsMaster = true
-            });
-
         await ActivateSessionAsync(session.SessionId, userId);
         await NotifySessionsChangedAsync(session.Players.Select(player => player.UserId));
 
@@ -66,10 +59,7 @@ public class GameHub(
 
         sessionService.AddPlayer(
             session.SessionId,
-            new PlayerInfo
-            {
-                ConnectionId = Context.ConnectionId, UserId = userId, Name = resolvedUserName, IsMaster = false
-            });
+            new PlayerInfo { UserId = userId, Name = resolvedUserName, IsMaster = false });
 
         await ActivateSessionAsync(session.SessionId, userId);
         await Clients.Group(session.SessionId).SendAsync("PlayerJoined", resolvedUserName);
@@ -167,13 +157,10 @@ public class GameHub(
     public async Task DeleteSession(string sessionId)
     {
         var userId = GetRequiredUserId();
-        GameSession session;
         IReadOnlyList<string> affectedUserIds;
 
         try
         {
-            session = sessionService.GetById(sessionId) ??
-                      throw new InvalidOperationException("Session wurde nicht gefunden.");
             affectedUserIds = sessionService.DeleteSession(sessionId, userId);
         }
         catch (InvalidOperationException exception)
