@@ -24,15 +24,8 @@
     </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\DsaWuerfelApp.Client\wwwroot\data\talente_mit_spezialisierungen.json" Link="Data\talente_mit_spezialisierungen.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="..\..\..\..\Downloads\Zauber.json">
-      <Link>Data\Zauber.json</Link>
-    </Content>
+    <_ContentIncludedByDefault Remove="Data\talente_mit_spezialisierungen.json"/>
+    <_ContentIncludedByDefault Remove="Data\Zauber.json"/>
   </ItemGroup>
 
 </Project>
