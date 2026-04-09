@@ -139,6 +139,12 @@ public partial class ProbenSearch
             .SelectMany(entry => entry.Alternatives)
             .FirstOrDefault(entry => string.Equals(entry.Value, selectedProbe, StringComparison.Ordinal));
 
-        return alternative?.Label ?? selectedProbe;
+        if (alternative is not null)
+        {
+            var parsedSelection = ProbeSelectionValue.Parse(selectedProbe);
+            return parsedSelection.HasOption ? parsedSelection.DisplayName : alternative.Label;
+        }
+
+        return selectedProbe;
     }
 }

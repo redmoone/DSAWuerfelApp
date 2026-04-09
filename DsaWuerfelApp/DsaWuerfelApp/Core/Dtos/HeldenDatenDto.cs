@@ -13,5 +13,9 @@ public class HeldenDatenDto
     [XmlArrayItem("talent")]
     public List<TalentDto> Talentliste { get; set; } = new();
 
+    [XmlArray("zauberliste")]
+    [XmlArrayItem("zauber")]
+    public List<ZauberDto> Zauberliste { get; set; } = new();
+
     [XmlIgnore] public List<SchlechteEigenschaftDto> SchlechteEigenschaften { get; set; } = new();
 }

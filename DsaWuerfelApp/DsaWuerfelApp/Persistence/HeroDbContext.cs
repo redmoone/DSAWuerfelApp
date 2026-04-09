@@ -66,6 +66,10 @@ public class HeroDbContext : DbContext
             entity.Property(hero => hero.Talente)
                 .HasConversion(talentDictionaryConverter)
                 .Metadata.SetValueComparer(talentDictionaryComparer);
+
+            entity.Property(hero => hero.Zauber)
+                .HasConversion(talentDictionaryConverter)
+                .Metadata.SetValueComparer(talentDictionaryComparer);
         });
 
         modelBuilder.Entity<AuthUser>(entity =>

@@ -120,6 +120,7 @@ public sealed class HeroImportService(
         existingHero.Eigenschaften = importedHero.Eigenschaften;
         existingHero.SchlechteEigenschaften = importedHero.SchlechteEigenschaften;
         existingHero.Talente = importedHero.Talente;
+        existingHero.Zauber = importedHero.Zauber;
         existingHero.ImportVersion = HeroImportVersioning.CurrentVersion;
         existingHero.ImportedAtUtc = DateTime.UtcNow;
 

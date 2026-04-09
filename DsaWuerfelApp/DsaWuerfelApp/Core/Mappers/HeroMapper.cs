@@ -6,7 +6,8 @@ namespace DsaWuerfelApp.Core.Mappers;
 public sealed class HeroMapper(
     HeroAttributesMapper heroAttributesMapper,
     HeroBadTraitsMapper heroBadTraitsMapper,
-    HeroTalentsMapper heroTalentsMapper)
+    HeroTalentsMapper heroTalentsMapper,
+    HeroSpellsMapper heroSpellsMapper)
 {
     public Hero Map(HeldenDatenDto dto)
     {
@@ -19,7 +20,8 @@ public sealed class HeroMapper(
             Alter = dto.Angaben.Alter,
             Eigenschaften = heroAttributesMapper.Map(dto.Eigenschaften),
             SchlechteEigenschaften = heroBadTraitsMapper.Map(dto.SchlechteEigenschaften),
-            Talente = heroTalentsMapper.Map(dto.Talentliste)
+            Talente = heroTalentsMapper.Map(dto.Talentliste),
+            Zauber = heroSpellsMapper.Map(dto.Zauberliste)
         };
     }
 }

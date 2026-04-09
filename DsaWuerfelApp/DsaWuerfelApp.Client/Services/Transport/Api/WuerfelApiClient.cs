@@ -58,7 +58,7 @@ public sealed class WuerfelApiClient(HttpClient httpClient) : IWuerfelApiClient
         return PostJsonAsync<TalentRollResultDto>(
             "api/dice/talent-roll",
             request,
-            "Talentprobe konnte nicht ausgeführt werden.",
+            "Probe konnte nicht ausgeführt werden.",
             cancellationToken);
     }
 

@@ -59,6 +59,7 @@
     margin: 0;
     line-height: 1.55;
     color: rgba(255, 248, 220, 0.9);
+    white-space: pre-line;
 }
 
 .additional-info-empty {

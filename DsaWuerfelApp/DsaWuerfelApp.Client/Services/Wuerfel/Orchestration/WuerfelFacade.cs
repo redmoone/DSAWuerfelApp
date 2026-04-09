@@ -194,13 +194,13 @@ public sealed class WuerfelFacade(
         var heroId = state.Current.ActiveHeroId;
         if (!heroId.HasValue)
         {
-            state.SetError("Für eine Talentprobe muss ein aktiver Held gewählt sein.");
+            state.SetError("Für diese Probe muss ein aktiver Held gewählt sein.");
             return Task.CompletedTask;
         }
 
         if (string.IsNullOrWhiteSpace(state.Current.SelectedProbeValue))
         {
-            state.SetError("Bitte zuerst ein Talent aus der Probensuche wählen.");
+            state.SetError("Bitte zuerst ein Talent oder einen Zauber aus der Probensuche wählen.");
             return Task.CompletedTask;
         }
 

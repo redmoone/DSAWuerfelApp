@@ -35,7 +35,7 @@
     @if (TalentResult is not null)
     {
         <section class="additional-info-panel">
-            <h4 class="additional-info-title">Letzte Talentprobe</h4>
+            <h4 class="additional-info-title">Letzte Probe</h4>
             <div class="probe-evaluation @GetProbeEvaluationClass(TalentResult)">
                 <div class="probe-evaluation-header">
                     <span class="probe-evaluation-name">@TalentResult.TalentName</span>
@@ -44,7 +44,7 @@
 
                 <div class="probe-evaluation-meta">
                     <span>Probe: @TalentResult.Probe</span>
-                    <span>TaW: @TalentResult.TalentValue</span>
+                    <span>Wert: @TalentResult.TalentValue</span>
                     <span>Mod.: @FormatModifier(TalentResult.BasisModifier)</span>
                     @if (TalentResult.SpecializationModifier != 0 &&
                          !string.IsNullOrWhiteSpace(TalentResult.SpecializationName))
@@ -135,7 +135,7 @@
          BadTraitResult is null)
     {
         <p class="additional-info-empty">
-            Wähle eine Probe und nutze den Info-Button, führe eine Talentprobe aus, würfle mit Eigenschaften oder
+            Wähle eine Probe und nutze den Info-Button, führe eine Probe aus, würfle mit Eigenschaften oder
             prüfe direkt auf eine schlechte Eigenschaft.
         </p>
     }

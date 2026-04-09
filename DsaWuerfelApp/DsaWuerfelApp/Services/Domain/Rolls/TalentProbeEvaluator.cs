@@ -42,7 +42,7 @@ public static class TalentProbeEvaluator
             return new TalentProbeEvaluation(TalentProbeStatus.GluecklicherWurf, 0, effectiveTalentValue);
         }
 
-        var rest = Math.Min(Math.Max(effectiveTalentValue, 0), talentValue);
+        var rest = Math.Max(effectiveTalentValue, 0);
         for (var index = 0; index < attributeValues.Count; index++)
         {
             var targetValue = effectiveTalentValue >= 0

@@ -108,7 +108,7 @@ public sealed class TalentProbeService(DiceService diceService)
         TalentProbeEvaluation evaluatedProbe)
     {
         var details = new List<TalentRollDetailDto>(capacity: 3);
-        var remainingRest = Math.Min(Math.Max(evaluatedProbe.EffectiveTalentValue, 0), talentValue);
+        var remainingRest = Math.Max(evaluatedProbe.EffectiveTalentValue, 0);
 
         for (var index = 0; index < probeAttributes.Count; index++)
         {

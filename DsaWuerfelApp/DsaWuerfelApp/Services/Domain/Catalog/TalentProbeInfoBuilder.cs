@@ -12,20 +12,20 @@ internal static class TalentProbeInfoBuilder
         return new ProbeInfoResultDto("Bitte zuerst eine Probe auswählen.", null, []);
     }
 
-    public static ProbeInfoResultDto BuildResolvedTalentInfo(
+    public static ProbeInfoResultDto BuildResolvedProbeInfo(
         Hero hero,
-        ResolvedTalentData resolvedTalent,
+        ResolvedProbeData resolvedProbe,
         BadTraitDto? badTrait,
-        TalentCatalogEntry? catalogEntry,
+        IReadOnlyList<ProbeInfoSectionDto> infoSections,
         int basisModifier)
     {
-        var probeAttributes = ProbeAttributes.TryCreate(resolvedTalent.Talent.Probe)?.ToArray() ?? [];
-        var effectiveModifier = basisModifier + (badTrait?.TalentModifier ?? 0) + resolvedTalent.SpecializationModifier;
+        var probeAttributes = ProbeAttributes.TryCreate(resolvedProbe.ProbeData.Probe)?.ToArray() ?? [];
+        var effectiveModifier = basisModifier + (badTrait?.TalentModifier ?? 0) + resolvedProbe.SpecializationModifier;
 
         return new ProbeInfoResultDto(
-            BuildSummaryText(hero, resolvedTalent, probeAttributes, effectiveModifier),
-            BuildDetailsText(hero, resolvedTalent, probeAttributes, effectiveModifier, badTrait),
-            catalogEntry is null ? [] : [.. catalogEntry.InfoSections]);
+            BuildSummaryText(hero, resolvedProbe, probeAttributes, effectiveModifier),
+            BuildDetailsText(hero, resolvedProbe, probeAttributes, effectiveModifier, badTrait),
+            [.. infoSections]);
     }
 
     public static ProbeInfoResultDto BuildFallbackInfo(string probeValue, BadTraitDto? badTrait)
@@ -46,57 +46,100 @@ internal static class TalentProbeInfoBuilder
 
     private static string BuildSummaryText(
         Hero hero,
-        ResolvedTalentData resolvedTalent,
+        ResolvedProbeData resolvedProbe,
         IReadOnlyList<string> probeAttributes,
         int effectiveModifier)
     {
-        if (probeAttributes.Count != 3)
+        if (!CanCalculateSuccessChance(hero, probeAttributes))
         {
-            return $"Für {resolvedTalent.Name} konnte keine Erfolgschance berechnet werden.";
+            return $"Für {resolvedProbe.Name} konnte keine Erfolgschance berechnet werden.";
         }
 
         var attributeValues = probeAttributes
             .Select(attribute => hero.Eigenschaften.GetValueOrDefault(attribute))
             .ToArray();
         var successChance = TalentProbeEvaluator.CalculateSuccessChance(
-            resolvedTalent.Talent.Wert,
+            resolvedProbe.ProbeData.Wert,
             effectiveModifier,
             attributeValues);
 
         return
-            $"{resolvedTalent.Name}: {successChance.ToString("P1", CultureInfo.GetCultureInfo("de-DE"))} Erfolgschance.";
+            $"{resolvedProbe.Name}: {successChance.ToString("P1", CultureInfo.GetCultureInfo("de-DE"))} Erfolgschance.";
     }
 
     private static string BuildDetailsText(
         Hero hero,
-        ResolvedTalentData resolvedTalent,
+        ResolvedProbeData resolvedProbe,
         IReadOnlyList<string> probeAttributes,
         int effectiveModifier,
         BadTraitDto? badTrait)
     {
+        if (!CanCalculateSuccessChance(hero, probeAttributes))
+        {
+            return
+                $"{resolvedProbe.Name} hat aktuell {GetValueLabel(resolvedProbe.Kind)} {resolvedProbe.ProbeData.Wert}. Probe: {resolvedProbe.ProbeData.Probe}. Für variable oder unbekannte Eigenschaften kann diese Probe aktuell nicht automatisch berechnet werden.{BuildSelectedOptionText(resolvedProbe)}{BuildBadTraitText(badTrait)}";
+        }
+
         var attributeInfo = probeAttributes.Count == 0
             ? "keine Eigenschaften hinterlegt"
             : string.Join(", ", probeAttributes.Select(attribute =>
                 $"{attribute} {hero.Eigenschaften.GetValueOrDefault(attribute)}"));
-        var effectiveTalentValue = resolvedTalent.Talent.Wert - effectiveModifier;
-        var availableCompensation = Math.Min(Math.Max(effectiveTalentValue, 0), resolvedTalent.Talent.Wert);
-        var modifierInfo = effectiveTalentValue >= 0
+        var effectiveValue = resolvedProbe.ProbeData.Wert - effectiveModifier;
+        var availableCompensation = Math.Max(effectiveValue, 0);
+        var modifierInfo = effectiveValue >= 0
             ? $"Nach dem Gesamtmodifikator {FormatModifier(effectiveModifier)} bleiben {availableCompensation} Ausgleichspunkte für Überschreitungen."
-            : $"Nach dem Gesamtmodifikator {FormatModifier(effectiveModifier)} liegt der effektive Talentwert bei {effectiveTalentValue}. Dadurch müssen alle drei Eigenschaftswürfe jeweils um {Math.Abs(effectiveTalentValue)} Punkte niedriger geschafft werden.";
-        var specializationInfo = resolvedTalent.SpecializationModifier == 0 ||
-                                 string.IsNullOrWhiteSpace(resolvedTalent.SpecializationName)
-            ? string.Empty
-            : $" Gewählte Talentspezialisierung: {resolvedTalent.SpecializationName}. Dadurch ist die Probe um 2 Punkte erleichtert.";
+            : $"Nach dem Gesamtmodifikator {FormatModifier(effectiveModifier)} liegt der effektive Wert bei {effectiveValue}. Dadurch müssen alle drei Eigenschaftswürfe jeweils um {Math.Abs(effectiveValue)} Punkte niedriger geschafft werden.";
 
         return
-            $"{resolvedTalent.Name} hat aktuell TaW {resolvedTalent.Talent.Wert}. Probe: {resolvedTalent.Talent.Probe}. Verwendete Eigenschaften: {attributeInfo}. {modifierInfo}{specializationInfo}{BuildBadTraitText(badTrait)}";
+            $"{resolvedProbe.Name} hat aktuell {GetValueLabel(resolvedProbe.Kind)} {resolvedProbe.ProbeData.Wert}. Probe: {resolvedProbe.ProbeData.Probe}. Verwendete Eigenschaften: {attributeInfo}. {modifierInfo}{BuildSelectedOptionText(resolvedProbe)}{BuildBadTraitText(badTrait)}";
+    }
+
+    private static string BuildSelectedOptionText(ResolvedProbeData resolvedProbe)
+    {
+        return resolvedProbe.SelectedOptionKind switch
+        {
+            ProbeSelectionOptionKind.Specialization when !string.IsNullOrWhiteSpace(resolvedProbe.SpecializationName) =>
+                $" Gewählte {GetSpecializationLabel(resolvedProbe.Kind)}: {resolvedProbe.SpecializationName}. Dadurch ist die Probe um 2 Punkte erleichtert.",
+            ProbeSelectionOptionKind.SpellModification when !string.IsNullOrWhiteSpace(resolvedProbe.SelectedOptionName)
+                =>
+                BuildSpellOptionText("Modifikation", resolvedProbe),
+            ProbeSelectionOptionKind.SpellVariant when !string.IsNullOrWhiteSpace(resolvedProbe.SelectedOptionName) =>
+                BuildSpellOptionText("Variante", resolvedProbe),
+            _ => string.Empty
+        };
+    }
+
+    private static string BuildSpellOptionText(string optionLabel, ResolvedProbeData resolvedProbe)
+    {
+        var specializationText = resolvedProbe.SpecializationModifier == -2 &&
+                                 !string.IsNullOrWhiteSpace(resolvedProbe.SpecializationName)
+            ? $" Passende Zauberspezialisierung: {resolvedProbe.SpecializationName}. Dadurch ist die Probe um 2 Punkte erleichtert."
+            : string.Empty;
+
+        return $" Gewählte {optionLabel}: {resolvedProbe.SelectedOptionName}.{specializationText}";
+    }
+
+    private static string GetValueLabel(ProbeSelectionKind kind)
+    {
+        return kind == ProbeSelectionKind.Spell ? "ZfW" : "TaW";
+    }
+
+    private static string GetSpecializationLabel(ProbeSelectionKind kind)
+    {
+        return kind == ProbeSelectionKind.Spell ? "Zauberspezialisierung" : "Talentspezialisierung";
     }
 
     private static string BuildBadTraitText(BadTraitDto? badTrait)
     {
         return badTrait is null
             ? string.Empty
-            : $" Relevante schlechte Eigenschaft: {badTrait.Name} {badTrait.Value}. Dadurch wird die Talentprobe um {badTrait.TalentModifier} und die Eigenschaftsprobe um {badTrait.AttributeModifier} erschwert.";
+            : $" Relevante schlechte Eigenschaft: {badTrait.Name} {badTrait.Value}. Dadurch wird die Probe um {badTrait.TalentModifier} und die Eigenschaftsprobe um {badTrait.AttributeModifier} erschwert.";
+    }
+
+    private static bool CanCalculateSuccessChance(Hero hero, IReadOnlyList<string> probeAttributes)
+    {
+        return probeAttributes.Count == 3 &&
+               probeAttributes.All(attribute => hero.Eigenschaften.ContainsKey(attribute));
     }
 
     private static string? ExtractProbeFromLabel(string label)

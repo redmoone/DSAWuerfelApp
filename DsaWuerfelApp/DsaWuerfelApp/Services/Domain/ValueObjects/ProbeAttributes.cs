@@ -19,7 +19,7 @@ public sealed class ProbeAttributes
         if (attributes.Length != 3)
         {
             throw new InvalidOperationException(
-                "Für die ausgewählte Probe ist keine vollständige Talentprobe hinterlegt.");
+                "Für die ausgewählte Probe ist keine vollständige 3er-Probe hinterlegt.");
         }
 
         return new ProbeAttributes(attributes);

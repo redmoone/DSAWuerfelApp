@@ -57,6 +57,7 @@ builder.Services.AddSingleton<TalentProbeService>();
 builder.Services.AddSingleton<AttributeProbeService>();
 builder.Services.AddSingleton<SchlechteEigenschaftProbeService>();
 builder.Services.AddSingleton<TalentCatalogStore>();
+builder.Services.AddSingleton<SpellCatalogStore>();
 builder.Services.AddSingleton<TalentCatalogService>();
 builder.Services.AddScoped<IHeroReadRepository, HeroReadRepository>();
 builder.Services.AddScoped<HeroContextReader>();
@@ -73,6 +74,7 @@ builder.Services.AddSingleton<GameSessionRollPipeline>();
 builder.Services.AddTransient<HeroAttributesMapper>();
 builder.Services.AddTransient<HeroBadTraitsMapper>();
 builder.Services.AddTransient<HeroTalentsMapper>();
+builder.Services.AddTransient<HeroSpellsMapper>();
 builder.Services.AddTransient<HeroMapper>();
 builder.Services.AddTransient<XmlHeroDeserializer>();
 builder.Services.AddTransient<HeroImportService>();
@@ -160,6 +162,7 @@ static void EnsureHeroSchema(HeroDbContext dbContext)
     {
         ("IsActive", "ALTER TABLE Heroes ADD COLUMN IsActive INTEGER NOT NULL DEFAULT 0;"), ("SchlechteEigenschaften",
             "ALTER TABLE Heroes ADD COLUMN SchlechteEigenschaften TEXT NOT NULL DEFAULT '{{}}';"),
+        ("Zauber", "ALTER TABLE Heroes ADD COLUMN Zauber TEXT NOT NULL DEFAULT '{{}}';"),
         ("SourceXml", "ALTER TABLE Heroes ADD COLUMN SourceXml BLOB NULL;"),
         ("SourceFileName", "ALTER TABLE Heroes ADD COLUMN SourceFileName TEXT NULL;"),
         ("ImportVersion", "ALTER TABLE Heroes ADD COLUMN ImportVersion INTEGER NOT NULL DEFAULT 0;"),

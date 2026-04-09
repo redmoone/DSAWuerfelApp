@@ -29,4 +29,10 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\..\..\..\Downloads\Zauber.json">
+      <Link>Data\Zauber.json</Link>
+    </Content>
+  </ItemGroup>
+
 </Project>
