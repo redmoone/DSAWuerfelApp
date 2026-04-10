@@ -52,7 +52,7 @@ public partial class Lobby : IDisposable
             : "Magic Link senden";
 
     private string MagicLinkCooldownText =>
-        $"Naechster Magic Link in {MagicLinkCooldownSecondsRemaining} {(MagicLinkCooldownSecondsRemaining == 1 ? "Sekunde" : "Sekunden")} verfuegbar.";
+        $"Nächster Magic Link in {MagicLinkCooldownSecondsRemaining} {(MagicLinkCooldownSecondsRemaining == 1 ? "Sekunde" : "Sekunden")} verfügbar.";
 
     private string? ActiveSessionPlayerName => CurrentUser is null
         ? null
@@ -62,7 +62,7 @@ public partial class Lobby : IDisposable
     private string ActiveSessionTitle => ActiveSession?.Name ?? "Keine Runde offen";
 
     private string ActiveSessionMeta => ActiveSession is null
-        ? "Waehle oder oeffne eine Session im Board"
+        ? "Wähle oder öffne eine Session im Board"
         : $"{ActiveOnlineCount} von {ActivePlayerCount} Spielern online";
 
     public void Dispose()
@@ -271,7 +271,7 @@ public partial class Lobby : IDisposable
     {
         if (string.Equals(AuthStatus, "invalid", StringComparison.OrdinalIgnoreCase))
         {
-            _error = "Magic Link ist ungueltig oder abgelaufen. Bitte einen neuen Link anfordern.";
+            _error = "Magic Link ist ungültig oder abgelaufen. Bitte einen neuen Link anfordern.";
         }
     }
 

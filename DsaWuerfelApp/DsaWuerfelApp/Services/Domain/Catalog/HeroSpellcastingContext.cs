@@ -46,18 +46,18 @@ internal sealed class HeroSpellcastingContext
     private static readonly IReadOnlyDictionary<string, LeadAttributeResolution> RepresentationLeadAttributes =
         new Dictionary<string, LeadAttributeResolution>(StringComparer.Ordinal)
         {
-            ["magier"] = new(HeroAttributeCatalog.Klugheit, "Repraesentation Magier"),
-            ["borbaradian"] = new(HeroAttributeCatalog.Klugheit, "Repraesentation Borbaradianer"),
-            ["druide"] = new(HeroAttributeCatalog.Klugheit, "Repraesentation Druide"),
-            ["scharlatan"] = new(HeroAttributeCatalog.Klugheit, "Repraesentation Scharlatan"),
-            ["zibilja"] = new(HeroAttributeCatalog.Klugheit, "Repraesentation Zibilja"),
-            ["derwisch"] = new(HeroAttributeCatalog.Intuition, "Repraesentation Derwisch"),
-            ["elf"] = new(HeroAttributeCatalog.Intuition, "Repraesentation Elf"),
-            ["hexe"] = new(HeroAttributeCatalog.Intuition, "Repraesentation Hexe"),
-            ["kristallomant"] = new(HeroAttributeCatalog.Intuition, "Repraesentation Kristallomant"),
-            ["schamane"] = new(HeroAttributeCatalog.Intuition, "Repraesentation Schamane"),
-            ["schelm"] = new(HeroAttributeCatalog.Intuition, "Repraesentation Schelm"),
-            ["zaubertanzer"] = new(HeroAttributeCatalog.Intuition, "Repraesentation Zaubertanzer")
+            ["magier"] = new(HeroAttributeCatalog.Klugheit, "Repräsentation Magier"),
+            ["borbaradian"] = new(HeroAttributeCatalog.Klugheit, "Repräsentation Borbaradianer"),
+            ["druide"] = new(HeroAttributeCatalog.Klugheit, "Repräsentation Druide"),
+            ["scharlatan"] = new(HeroAttributeCatalog.Klugheit, "Repräsentation Scharlatan"),
+            ["zibilja"] = new(HeroAttributeCatalog.Klugheit, "Repräsentation Zibilja"),
+            ["derwisch"] = new(HeroAttributeCatalog.Intuition, "Repräsentation Derwisch"),
+            ["elf"] = new(HeroAttributeCatalog.Intuition, "Repräsentation Elf"),
+            ["hexe"] = new(HeroAttributeCatalog.Intuition, "Repräsentation Hexe"),
+            ["kristallomant"] = new(HeroAttributeCatalog.Intuition, "Repräsentation Kristallomant"),
+            ["schamane"] = new(HeroAttributeCatalog.Intuition, "Repräsentation Schamane"),
+            ["schelm"] = new(HeroAttributeCatalog.Intuition, "Repräsentation Schelm"),
+            ["zaubertanzer"] = new(HeroAttributeCatalog.Intuition, "Repräsentation Zaubertänzer")
         };
 
     private HeroSpellcastingContext(
@@ -186,8 +186,8 @@ internal sealed class HeroSpellcastingContext
             return new SimultaneousModificationInfo(
                 null,
                 string.Equals(spellRepresentation, "geode", StringComparison.Ordinal)
-                    ? "Leiteigenschaft fuer gleichzeitige Modifikationen ist bei Geoden nur mit Zuordnung zu Herren der Erde oder Diener Sumus eindeutig."
-                    : "Leiteigenschaft fuer gleichzeitige Modifikationen konnte nicht automatisch bestimmt werden.");
+                    ? "Leiteigenschaft für gleichzeitige Modifikationen ist bei Geoden nur mit Zuordnung zu Herren der Erde oder Diener Sumus eindeutig."
+                    : "Leiteigenschaft für gleichzeitige Modifikationen konnte nicht automatisch bestimmt werden.");
         }
 
         var leadAttributeValue = attributeValues.TryGetValue(resolution.LeadAttribute, out var value)
@@ -205,7 +205,7 @@ internal sealed class HeroSpellcastingContext
 
         return new SimultaneousModificationInfo(
             maximumSimultaneousModifications,
-            $"Gleichzeitig zulaessige Modifikationen: {maximumSimultaneousModifications} (Leiteigenschaft {resolution.LeadAttribute} {leadAttributeValue}; {resolution.SourceLabel}). Varianten zaehlen mit.");
+            $"Gleichzeitig zulässige Modifikationen: {maximumSimultaneousModifications} (Leiteigenschaft {resolution.LeadAttribute} {leadAttributeValue}; {resolution.SourceLabel}). Varianten zählen mit.");
     }
 
     private string? GetSpellRepresentation(string spellName)

@@ -6,7 +6,7 @@ public sealed class MagicLinkAuthOptions
 
     public string ResendApiKey { get; set; } = string.Empty;
     public string FromEmail { get; set; } = string.Empty;
-    public string FromName { get; set; } = "DSA Wuerfelrunde";
+    public string FromName { get; set; } = "DSA Würfelrunde";
     public int TokenLifetimeMinutes { get; set; } = 15;
     public int RequestCooldownSeconds { get; set; } = 60;
 }

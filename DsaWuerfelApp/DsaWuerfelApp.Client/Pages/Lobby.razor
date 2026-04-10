@@ -8,9 +8,9 @@
             <div class="overview-header">
                 <div class="overview-copy">
                     <p class="hero-eyebrow">Gamesessions</p>
-                    <h1 class="hero-title">DSA Wuerfelrunde</h1>
+                    <h1 class="hero-title">DSA Würfelrunde</h1>
                     <p class="hero-description">
-                        Verwalte deine Runden zentral, oeffne bestehende Sessions direkt wieder und halte Gruppe,
+                        Verwalte deine Runden zentral, öffne bestehende Sessions direkt wieder und halte Gruppe,
                         Join-Code und aktive Runde an einem Ort zusammen.
                     </p>
                 </div>
@@ -30,7 +30,7 @@
                 </article>
 
                 <article class="overview-stat">
-                    <span class="stat-label">Verknuepfte Sessions</span>
+                    <span class="stat-label">Verknüpfte Sessions</span>
                     <strong class="stat-value">@SessionCount</strong>
                     <span class="stat-meta">@(SessionCount == 1 ? "Eine Runde sichtbar" : "Runden in deinem Board")</span>
                 </article>
@@ -46,7 +46,7 @@
             {
                 <div class="active-session-strip">
                     <div class="active-session-copy">
-                        <span class="active-session-label">Aktiv geoeffnet</span>
+                        <span class="active-session-label">Aktiv geöffnet</span>
                         <strong class="active-session-name">@ActiveSession.Name</strong>
                         <span class="active-session-meta">@ActiveOnlineCount von @ActivePlayerCount Spielern online</span>
                     </div>
@@ -54,7 +54,7 @@
                     <button type="button"
                             class="session-btn"
                             @onclick="GoToWuerfel">
-                        Zur Wuerfelseite
+                        Zur Würfelseite
                     </button>
                 </div>
             }
@@ -124,7 +124,7 @@
                 <div class="control-stack">
                     <div class="subpanel-card">
                         <div class="card-topline">
-                            <span class="section-kicker">Identitaet</span>
+                            <span class="section-kicker">Identität</span>
                             <button type="button"
                                     class="session-btn secondary-btn"
                                     @onclick="Logout"
@@ -179,7 +179,8 @@
                             <div class="mode-panel">
                                 <span class="mode-caption">Session beitreten</span>
                                 <p class="mode-text">
-                                    Gib den Join-Code deiner Gruppe ein. Die Session wird danach direkt als aktive Runde geoeffnet.
+                                    Gib den Join-Code deiner Gruppe ein. Die Session wird danach direkt als aktive Runde
+                                    geöffnet.
                                 </p>
 
                                 <label class="input-group">
@@ -206,7 +207,7 @@
                             <div class="mode-panel">
                                 <span class="mode-caption">Neue Runde erstellen</span>
                                 <p class="mode-text">
-                                    Erstelle eine neue Runde und setze sie sofort als aktive Session fuer deinen Tisch.
+                                    Erstelle eine neue Runde und setze sie sofort als aktive Session für deinen Tisch.
                                 </p>
 
                                 <label class="input-group">
@@ -261,7 +262,7 @@
                 <div class="board-body">
                     <SessionTree Sessions="SessionState.Sessions"
                                  ActiveSessionId="@SessionState.ActiveSessionId"
-                                 EmptyText="Noch keine Session verknuepft. Erstelle eine Runde oder tritt einer bei."
+                                 EmptyText="Noch keine Session verknüpft. Erstelle eine Runde oder tritt einer bei."
                                  ShowCopyButton="true"/>
                 </div>
             }

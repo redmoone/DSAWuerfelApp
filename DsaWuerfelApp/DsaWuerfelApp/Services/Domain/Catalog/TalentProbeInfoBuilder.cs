@@ -25,7 +25,7 @@ internal static class TalentProbeInfoBuilder
 
         return new ProbeInfoResultDto(
             BuildSummaryText(hero, resolvedProbe, probeAttributes, effectiveModifier),
-            BuildDetailsText(hero, resolvedProbe, probeAttributes, effectiveModifier, badTrait),
+            BuildDetailsText(hero, resolvedProbe, probeAttributes, badTrait),
             [.. infoSections],
             spellSelection);
     }
@@ -75,27 +75,20 @@ internal static class TalentProbeInfoBuilder
         Hero hero,
         ResolvedProbeData resolvedProbe,
         IReadOnlyList<string> probeAttributes,
-        int effectiveModifier,
         BadTraitDto? badTrait)
     {
+        var supplementalText = $"{BuildSelectedOptionText(resolvedProbe)}{BuildBadTraitText(badTrait)}".TrimStart();
+
         if (!CanCalculateSuccessChance(hero, probeAttributes))
         {
-            return
-                $"{resolvedProbe.Name} hat aktuell {GetValueLabel(resolvedProbe.Kind)} {resolvedProbe.ProbeData.Wert}. Probe: {resolvedProbe.ProbeData.Probe}. Für variable oder unbekannte Eigenschaften kann diese Probe aktuell nicht automatisch berechnet werden.{BuildSelectedOptionText(resolvedProbe)}{BuildBadTraitText(badTrait)}";
+            var baseText =
+                $"{resolvedProbe.Name} hat aktuell {GetValueLabel(resolvedProbe.Kind)} {resolvedProbe.ProbeData.Wert}. Probe: {resolvedProbe.ProbeData.Probe}. Für variable oder unbekannte Eigenschaften kann diese Probe aktuell nicht automatisch berechnet werden.";
+            return string.IsNullOrWhiteSpace(supplementalText)
+                ? baseText
+                : $"{baseText} {supplementalText}";
         }
 
-        var attributeInfo = probeAttributes.Count == 0
-            ? "keine Eigenschaften hinterlegt"
-            : string.Join(", ", probeAttributes.Select(attribute =>
-                $"{attribute} {hero.Eigenschaften.GetValueOrDefault(attribute)}"));
-        var effectiveValue = resolvedProbe.ProbeData.Wert - effectiveModifier;
-        var availableCompensation = Math.Max(effectiveValue, 0);
-        var modifierInfo = effectiveValue >= 0
-            ? $"Nach dem Gesamtmodifikator {FormatModifier(effectiveModifier)} bleiben {availableCompensation} Ausgleichspunkte für Überschreitungen."
-            : $"Nach dem Gesamtmodifikator {FormatModifier(effectiveModifier)} liegt der effektive Wert bei {effectiveValue}. Dadurch müssen alle drei Eigenschaftswürfe jeweils um {Math.Abs(effectiveValue)} Punkte niedriger geschafft werden.";
-
-        return
-            $"{resolvedProbe.Name} hat aktuell {GetValueLabel(resolvedProbe.Kind)} {resolvedProbe.ProbeData.Wert}. Probe: {resolvedProbe.ProbeData.Probe}. Verwendete Eigenschaften: {attributeInfo}. {modifierInfo}{BuildSelectedOptionText(resolvedProbe)}{BuildBadTraitText(badTrait)}";
+        return supplementalText;
     }
 
     private static string BuildSelectedOptionText(ResolvedProbeData resolvedProbe)
@@ -175,10 +168,5 @@ internal static class TalentProbeInfoBuilder
         return startIndex < 0 || endIndex <= startIndex
             ? null
             : label.Substring(startIndex + 1, endIndex - startIndex - 1);
-    }
-
-    private static string FormatModifier(int modifier)
-    {
-        return modifier > 0 ? $"+{modifier}" : modifier.ToString();
     }
 }

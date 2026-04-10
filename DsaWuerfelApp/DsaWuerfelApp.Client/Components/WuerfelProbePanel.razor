@@ -1,4 +1,4 @@
-<div class="probe-search-row" title="Suche nach Talenten oder Zaubern fuer automatisierte Proben">
+<div class="probe-search-row" title="Suche nach Talenten oder Zaubern für automatisierte Proben">
     <div class="probe-search-field">
         <ProbenSearch AvailableProben="AvailableProben"
                       Placeholder="@Placeholder"
@@ -43,8 +43,8 @@
 
 @if (ShowDebugForcedRolls)
 {
-    <div class="forced-rolls-panel" title="Optionale Testwuerfe fuer Proben oder direkte W20-Proben">
-        <span class="forced-rolls-label">Testwuerfe</span>
+    <div class="forced-rolls-panel" title="Optionale Testwürfe für Proben oder direkte W20-Proben">
+        <span class="forced-rolls-label">Testwürfe</span>
         <input class="forced-rolls-input"
                value="@ForcedRollsText"
                @oninput="HandleForcedRollsChanged"
@@ -57,7 +57,7 @@
             </button>
             <button type="button" class="forced-rolls-button" @onclick='() => PresetRequested.InvokeAsync("1,1,13")'
                     disabled="@IsBusy">
-                Glueck
+                Glück
             </button>
             <button type="button" class="forced-rolls-button muted" @onclick="ClearForcedRollsRequested"
                     disabled="@IsBusy">

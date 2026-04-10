@@ -44,7 +44,7 @@ public sealed class ResendMagicLinkEmailSender(
         {
             from = BuildFromAddress(),
             to = new[] { email },
-            subject = "Dein Magic Link fuer DSA Wuerfelrunde",
+            subject = "Dein Magic Link für DSA Würfelrunde",
             html = BuildHtmlBody(magicLink),
             text = $"Mit diesem Link anmelden: {magicLink}"
         });
@@ -74,7 +74,7 @@ public sealed class ResendMagicLinkEmailSender(
     {
         return $"""
                 <div style="font-family: Arial, sans-serif; color: #0f1a29; line-height: 1.6;">
-                  <h2 style="margin-bottom: 12px;">DSA Wuerfelrunde</h2>
+                  <h2 style="margin-bottom: 12px;">DSA Würfelrunde</h2>
                   <p>Mit diesem Link meldest du dich in deiner Runde an.</p>
                   <p style="margin: 24px 0;">
                     <a href="{magicLink}" style="background:#1c2e4a;color:#d4af37;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:700;">
@@ -83,7 +83,7 @@ public sealed class ResendMagicLinkEmailSender(
                   </p>
                   <p>Falls der Button nicht funktioniert, nutze diesen Link:</p>
                   <p><a href="{magicLink}">{magicLink}</a></p>
-                  <p>Der Link ist nur kurz gueltig und kann genau einmal verwendet werden.</p>
+                  <p>Der Link ist nur kurz gültig und kann genau einmal verwendet werden.</p>
                 </div>
                 """;
     }

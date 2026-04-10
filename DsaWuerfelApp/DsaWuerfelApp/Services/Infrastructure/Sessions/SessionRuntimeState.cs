@@ -187,14 +187,14 @@ public sealed class SessionRuntimeState
     {
         if (string.IsNullOrWhiteSpace(sessionId))
         {
-            throw new InvalidOperationException("Fuer diesen Wurf ist keine aktive Session ausgewaehlt.");
+            throw new InvalidOperationException("Für diesen Wurf ist keine aktive Session ausgewählt.");
         }
 
         var session = GetMemberSession(sessionId, userId);
         if (!_activeSessionByConnection.TryGetValue(connectionId, out var activeSessionId) ||
             !string.Equals(activeSessionId, sessionId, StringComparison.Ordinal))
         {
-            throw new InvalidOperationException("Diese Session ist aktuell nicht geoeffnet.");
+            throw new InvalidOperationException("Diese Session ist aktuell nicht geöffnet.");
         }
 
         return session;
