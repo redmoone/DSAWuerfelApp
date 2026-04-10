@@ -110,11 +110,11 @@ internal static class TalentProbeInfoBuilder
     {
         var selectedVariants = resolvedProbe.SelectedSpellOptions
             .Where(option => option.Kind == ProbeSelectionOptionKind.SpellVariant)
-            .Select(option => option.Name)
+            .Select(option => option.DisplayName)
             .ToArray();
         var selectedModifications = resolvedProbe.SelectedSpellOptions
             .Where(option => option.Kind == ProbeSelectionOptionKind.SpellModification)
-            .Select(option => option.Name)
+            .Select(option => option.DisplayName)
             .ToArray();
         var specializationText = resolvedProbe.SpecializationModifier == -2 &&
                                  !string.IsNullOrWhiteSpace(resolvedProbe.SpecializationName)

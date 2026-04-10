@@ -145,7 +145,7 @@ public partial class SessionTree
     {
         var confirmed = await JSRuntime.InvokeAsync<bool>(
             "confirm",
-            $"Session '{session.Name}' wirklich loeschen?");
+            $"Session '{session.Name}' wirklich löschen?");
 
         if (!confirmed)
         {
@@ -179,7 +179,7 @@ public partial class SessionTree
     {
         var isCurrentUserMaster = CanManage(session);
         var confirmationText = isCurrentUserMaster && session.Players.Length <= 1
-            ? $"Session '{session.Name}' wirklich verlassen? Die Session wird dabei geloescht."
+            ? $"Session '{session.Name}' wirklich verlassen? Die Session wird dabei gelöscht."
             : isCurrentUserMaster
                 ? $"Session '{session.Name}' wirklich verlassen? Die Meisterrolle geht dabei an einen anderen Spieler."
                 : $"Session '{session.Name}' wirklich verlassen?";

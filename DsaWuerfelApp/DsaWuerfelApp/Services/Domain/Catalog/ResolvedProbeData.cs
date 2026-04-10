@@ -14,4 +14,4 @@ public sealed record ResolvedProbeData(
     string? SpecializationName,
     int SpecializationModifier);
 
-public sealed record ResolvedSpellOption(string Name, ProbeSelectionOptionKind Kind, int Modifier);
+public sealed record ResolvedSpellOption(string Name, string DisplayName, ProbeSelectionOptionKind Kind, int Modifier);

@@ -48,7 +48,12 @@ public sealed record ProbeInfoRequestDto(
 
 public sealed record ProbeInfoSectionDto(string Label, string Text);
 
-public sealed record SpellOptionButtonDto(string Label, string Value, bool IsSelected, bool IsDisabled);
+public sealed record SpellOptionButtonDto(
+    string Label,
+    string Value,
+    bool IsSelected,
+    bool IsDisabled,
+    string? Description);
 
 public sealed record SpellOptionGroupDto(string Label, SpellOptionButtonDto[] Options);
 

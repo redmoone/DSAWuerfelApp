@@ -604,16 +604,17 @@ public sealed class TalentCatalogService(
                     heroSpellcastingContext,
                     selection.OptionKind,
                     selection.OptionName!,
-                    out var matchedLegacyOptionName))
+                    out var matchedLegacyOption))
             {
                 selectedSpellOptions = [];
                 return false;
             }
 
             resolvedOptions.Add(new ResolvedSpellOption(
-                matchedLegacyOptionName,
+                matchedLegacyOption.Name,
+                matchedLegacyOption.DisplayLabel,
                 selection.OptionKind,
-                ResolveSpellOptionModifier(spell, matchedLegacyOptionName, out _)));
+                ResolveSpellOptionModifier(spell, matchedLegacyOption.Name, out _)));
         }
 
         foreach (var spellOptionValue in spellOptionValues)
@@ -640,13 +641,13 @@ public sealed class TalentCatalogService(
                     heroSpellcastingContext,
                     parsedOption.OptionKind,
                     parsedOption.OptionName,
-                    out var matchedOptionName))
+                    out var matchedOption))
             {
                 selectedSpellOptions = [];
                 return false;
             }
 
-            var canonicalMatchedOptionName = TalentCatalogText.CanonicalizeName(matchedOptionName);
+            var canonicalMatchedOptionName = TalentCatalogText.CanonicalizeName(matchedOption.Name);
             if (resolvedOptions.Any(existingOption =>
                     existingOption.Kind == parsedOption.OptionKind &&
                     string.Equals(
@@ -658,9 +659,10 @@ public sealed class TalentCatalogService(
             }
 
             resolvedOptions.Add(new ResolvedSpellOption(
-                matchedOptionName,
+                matchedOption.Name,
+                matchedOption.DisplayLabel,
                 parsedOption.OptionKind,
-                ResolveSpellOptionModifier(spell, matchedOptionName, out _)));
+                ResolveSpellOptionModifier(spell, matchedOption.Name, out _)));
         }
 
         selectedSpellOptions = resolvedOptions.ToArray();
@@ -683,7 +685,7 @@ public sealed class TalentCatalogService(
             return baseLabel;
         }
 
-        return $"{baseLabel} ({string.Join(", ", selectedSpellOptions.Select(option => option.Name))})";
+        return $"{baseLabel} ({string.Join(", ", selectedSpellOptions.Select(option => option.DisplayName))})";
     }
 
     private IReadOnlyList<ProbeInfoSectionDto> BuildSpellInfoSections(
@@ -802,7 +804,7 @@ public sealed class TalentCatalogService(
             label,
             options
                 .Where(option => !string.IsNullOrWhiteSpace(option.Name))
-                .OrderBy(option => option.Name, StringComparer.Ordinal)
+                .OrderBy(option => option.DisplayLabel, StringComparer.Ordinal)
                 .Select(option =>
                 {
                     var optionModifier = ResolveSpellOptionModifier(spell, option.Name, out _);
@@ -813,7 +815,7 @@ public sealed class TalentCatalogService(
                             TalentCatalogText.CanonicalizeName(option.Name),
                             StringComparison.Ordinal));
                     return new SpellOptionButtonDto(
-                        option.Name,
+                        option.DisplayLabel,
                         ProbeSelectionValue.EncodeOption(
                             ProbeSelectionKind.Spell,
                             spellName,
@@ -822,7 +824,8 @@ public sealed class TalentCatalogService(
                             optionModifier),
                         isSelected,
                         !isSelected && maximumSelectableOptions.HasValue &&
-                        selectedOptionCount >= maximumSelectableOptions.Value);
+                        selectedOptionCount >= maximumSelectableOptions.Value,
+                        option.DisplayText);
                 })
                 .ToArray());
     }
@@ -847,12 +850,6 @@ public sealed class TalentCatalogService(
         SpellOptionEntry option)
     {
         var requirement = option.Requirement;
-        if (string.Equals(requirement.Type, "Spontane Modifikation", StringComparison.Ordinal) &&
-            requirement.Modes.Count == 0)
-        {
-            return false;
-        }
-
         if (spell.Wert < requirement.MinimumSpellValue)
         {
             return false;
@@ -915,9 +912,9 @@ public sealed class TalentCatalogService(
         HeroSpellcastingContext heroSpellcastingContext,
         ProbeSelectionOptionKind optionKind,
         string optionName,
-        out string matchedOptionName)
+        out SpellOptionEntry matchedOption)
     {
-        matchedOptionName = string.Empty;
+        matchedOption = null!;
 
         if (!spellCatalogStore.TryGetEntry(spellName, out var catalogEntry))
         {
@@ -943,7 +940,7 @@ public sealed class TalentCatalogService(
                 return false;
             }
 
-            matchedOptionName = option.Name;
+            matchedOption = option;
             return true;
         }
 
@@ -974,7 +971,8 @@ public sealed class TalentCatalogService(
 
         if (!requirement.StartsWith("ZfW ", StringComparison.OrdinalIgnoreCase) ||
             requirement.StartsWith("ZfW von ", StringComparison.OrdinalIgnoreCase) ||
-            requirement.Contains(" mal ", StringComparison.OrdinalIgnoreCase))
+            requirement.Contains(" mal ", StringComparison.OrdinalIgnoreCase) ||
+            requirement.Contains(" x ", StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
@@ -1007,24 +1005,27 @@ public sealed class TalentCatalogService(
 
     private static bool IsInformationalAdditionalRequirement(string requirement)
     {
-        return requirement.Contains(" mal ", StringComparison.OrdinalIgnoreCase);
+        return requirement.Contains(" mal ", StringComparison.OrdinalIgnoreCase) ||
+               requirement.Contains(" x ", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string BuildOptionSectionText(IEnumerable<SpellOptionEntry> options)
     {
         return string.Join(
-            Environment.NewLine,
+            $"{Environment.NewLine}{Environment.NewLine}",
             options.Select(BuildOptionText).Where(text => !string.IsNullOrWhiteSpace(text)));
     }
 
     private static string BuildOptionText(SpellOptionEntry option)
     {
-        var details = new[] { option.Rule, option.Effect }.Where(value => !string.IsNullOrWhiteSpace(value));
+        var label = string.IsNullOrWhiteSpace(option.DisplayLabel) ? option.Name : option.DisplayLabel;
+        if (string.IsNullOrWhiteSpace(option.DisplayText) ||
+            string.Equals(option.DisplayText, label, StringComparison.Ordinal))
+        {
+            return label;
+        }
 
-        var suffix = string.Join(" ", details);
-        return string.IsNullOrWhiteSpace(suffix)
-            ? option.Name
-            : $"{option.Name}: {suffix}";
+        return $"{label}{Environment.NewLine}{option.DisplayText}";
     }
 
     private static void AddInfoSectionIfPresent(ICollection<ProbeInfoSectionDto> sections, string label, string? value)

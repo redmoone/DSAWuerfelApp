@@ -23,12 +23,19 @@
 .spell-selection-header {
     display: flex;
     flex-direction: column;
+    gap: 4px;
 }
 
 .spell-selection-title {
     font-size: 0.92rem;
     font-weight: 700;
     color: var(--dsa-gold);
+}
+
+.spell-selection-note {
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: rgba(255, 248, 220, 0.72);
 }
 
 .spell-selection-group {

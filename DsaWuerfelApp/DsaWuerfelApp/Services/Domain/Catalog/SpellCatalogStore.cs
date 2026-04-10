@@ -63,7 +63,7 @@ public sealed class SpellCatalogStore(IHostEnvironment environment)
             .Where(option => !string.IsNullOrWhiteSpace(option.Name))
             .ToArray();
         var variants = item.Variants
-            .Select(MapVariant)
+            .Select(MapOption)
             .Where(option => !string.IsNullOrWhiteSpace(option.Name))
             .ToArray();
 
@@ -77,20 +77,17 @@ public sealed class SpellCatalogStore(IHostEnvironment environment)
 
     private static SpellOptionEntry MapOption(SpellOptionItem item)
     {
-        return new SpellOptionEntry(
-            TalentCatalogText.NormalizeCatalogText(item.Label),
-            TalentCatalogText.NormalizeCatalogText(item.Rule),
-            null,
-            MapRequirement(item.Requirement));
-    }
+        var name = TalentCatalogText.NormalizeCatalogText(item.Label);
+        var displayLabel = NormalizeOptionalText(item.Heading) ?? name;
+        var displayText = NormalizeOptionalText(item.ShortText) ??
+                          BuildFallbackDisplayText(item.Rule, item.Effect) ??
+                          displayLabel;
 
-    private static SpellOptionEntry MapVariant(SpellVariantItem item)
-    {
         return new SpellOptionEntry(
-            TalentCatalogText.NormalizeCatalogText(item.Label),
-            TalentCatalogText.NormalizeCatalogText(item.Rule),
-            TalentCatalogText.NormalizeCatalogText(item.Effect),
-            MapRequirement(item.Requirement));
+            name,
+            displayLabel,
+            displayText,
+            MapRequirement(item.Visibility));
     }
 
     private static SpellOptionRequirement MapRequirement(SpellOptionRequirementItem? item)
@@ -100,19 +97,26 @@ public sealed class SpellCatalogStore(IHostEnvironment environment)
             return SpellOptionRequirement.Empty;
         }
 
-        var modes = item.Options
+        var modes = item.Modes
             .Select(MapRequirementMode)
             .ToArray();
 
         return new SpellOptionRequirement(
-            TalentCatalogText.NormalizeCatalogText(item.Type),
             item.RequiresOwnRepresentation,
             item.AllowsForeignRepresentationWithMatrixUnderstanding,
-            ResolveRequiredSpellValue(item.MinimumSpellValue, item.ExplicitMinimumSpellValue, item.FixedPrecastZfp),
-            item.FixedPrecastZfp ?? 0,
-            NormalizeOptionalText(item.VariablePrecastZfp),
+            item.MinimumSpellValue ?? 0,
             modes,
-            MapRepresentationRestriction(item.RepresentationRestriction),
+            new SpellRepresentationRestriction(
+                item.AllowedRepresentations
+                    .Select(SpellRepresentationText.Canonicalize)
+                    .Where(value => !string.IsNullOrWhiteSpace(value))
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray(),
+                item.DisallowedRepresentations
+                    .Select(SpellRepresentationText.Canonicalize)
+                    .Where(value => !string.IsNullOrWhiteSpace(value))
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray()),
             item.AdditionalRequirements
                 .Select(TalentCatalogText.NormalizeCatalogText)
                 .Where(value => !string.IsNullOrWhiteSpace(value))
@@ -122,43 +126,23 @@ public sealed class SpellCatalogStore(IHostEnvironment environment)
     private static SpellOptionRequirementMode MapRequirementMode(SpellOptionRequirementModeItem item)
     {
         return new SpellOptionRequirementMode(
-            TalentCatalogText.NormalizeCatalogText(item.Mode),
-            ResolveRequiredSpellValue(item.MinimumSpellValue, item.ExplicitMinimumSpellValue, item.FixedPrecastZfp),
-            item.FixedPrecastZfp ?? 0,
-            NormalizeOptionalText(item.VariablePrecastZfp),
-            NormalizeOptionalText(item.Note));
-    }
-
-    private static SpellRepresentationRestriction MapRepresentationRestriction(SpellRepresentationRestrictionItem? item)
-    {
-        if (item is null)
-        {
-            return SpellRepresentationRestriction.Empty;
-        }
-
-        return new SpellRepresentationRestriction(
-            item.Only
-                .Select(SpellRepresentationText.Canonicalize)
-                .Where(value => !string.IsNullOrWhiteSpace(value))
-                .Distinct(StringComparer.Ordinal)
-                .ToArray(),
-            item.Except
-                .Select(SpellRepresentationText.Canonicalize)
-                .Where(value => !string.IsNullOrWhiteSpace(value))
-                .Distinct(StringComparer.Ordinal)
-                .ToArray());
-    }
-
-    private static int ResolveRequiredSpellValue(int? minimumSpellValue, int? explicitMinimumSpellValue,
-        int? fixedPrecastZfp)
-    {
-        return Math.Max(minimumSpellValue ?? 0, Math.Max(explicitMinimumSpellValue ?? 0, fixedPrecastZfp ?? 0));
+            TalentCatalogText.NormalizeCatalogText(item.Name),
+            item.MinimumSpellValue ?? 0);
     }
 
     private static string? NormalizeOptionalText(string? value)
     {
         var normalized = TalentCatalogText.NormalizeCatalogText(value);
         return string.IsNullOrWhiteSpace(normalized) ? null : normalized;
+    }
+
+    private static string? BuildFallbackDisplayText(string? rule, string? effect)
+    {
+        var parts = new[] { NormalizeOptionalText(rule), NormalizeOptionalText(effect) }
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .ToArray();
+
+        return parts.Length == 0 ? null : string.Join(" ", parts);
     }
 
     private static ProbeInfoSectionDto[] BuildInfoSections(SpellCatalogItem item)
@@ -173,23 +157,6 @@ public sealed class SpellCatalogStore(IHostEnvironment environment)
         AddInfoSection(sections, "Reversalis", item.Reversalis);
         AddInfoSection(sections, "Antimagie", item.AntiMagic);
         return sections.ToArray();
-    }
-
-    private static string BuildOptionSectionText(IEnumerable<SpellOptionEntry> options)
-    {
-        return string.Join(
-            Environment.NewLine,
-            options.Select(BuildOptionText).Where(text => !string.IsNullOrWhiteSpace(text)));
-    }
-
-    private static string BuildOptionText(SpellOptionEntry option)
-    {
-        var details = new[] { option.Rule, option.Effect }.Where(value => !string.IsNullOrWhiteSpace(value));
-
-        var suffix = string.Join(" ", details);
-        return string.IsNullOrWhiteSpace(suffix)
-            ? option.Name
-            : $"{option.Name}: {suffix}";
     }
 
     private static void AddInfoSection(ICollection<ProbeInfoSectionDto> sections, string label, string? value)
@@ -221,46 +188,36 @@ public sealed class SpellCatalogStore(IHostEnvironment environment)
         [JsonPropertyName("Reversalis")] public string Reversalis { get; set; } = string.Empty;
         [JsonPropertyName("Antimagie")] public string AntiMagic { get; set; } = string.Empty;
         [JsonPropertyName("Modifikationen")] public List<SpellOptionItem> Modifications { get; set; } = [];
-        [JsonPropertyName("Varianten")] public List<SpellVariantItem> Variants { get; set; } = [];
+        [JsonPropertyName("Varianten")] public List<SpellOptionItem> Variants { get; set; } = [];
     }
 
-    private class SpellOptionItem
+    private sealed class SpellOptionItem
     {
         [JsonPropertyName("Bezeichnung")] public string Label { get; set; } = string.Empty;
         [JsonPropertyName("Regel")] public string Rule { get; set; } = string.Empty;
-        [JsonPropertyName("Voraussetzung")] public SpellOptionRequirementItem? Requirement { get; set; }
-    }
-
-    private sealed class SpellVariantItem : SpellOptionItem
-    {
         [JsonPropertyName("Wirkung")] public string Effect { get; set; } = string.Empty;
+        [JsonPropertyName("Überschrift")] public string Heading { get; set; } = string.Empty;
+        [JsonPropertyName("Kurztext")] public string ShortText { get; set; } = string.Empty;
+        [JsonPropertyName("AnzeigenWenn")] public SpellOptionRequirementItem? Visibility { get; set; }
     }
 
     private sealed class SpellOptionRequirementItem
     {
-        [JsonPropertyName("Typ")] public string Type { get; set; } = string.Empty;
-
-        [JsonPropertyName("ZauberInEigenerRepräsentation")]
+        [JsonPropertyName("EigeneRepräsentation")]
         public bool RequiresOwnRepresentation { get; set; }
 
-        [JsonPropertyName("MitMatrixverständnisAuchFremdrepräsentation")]
+        [JsonPropertyName("MatrixverständnisErlaubt")]
         public bool AllowsForeignRepresentationWithMatrixUnderstanding { get; set; }
-
-        [JsonPropertyName("BenötigteVorabZfP_Fix")]
-        public int? FixedPrecastZfp { get; set; }
-
-        [JsonPropertyName("BenötigteVorabZfP_Variabel")]
-        public string? VariablePrecastZfp { get; set; }
-
-        [JsonPropertyName("ExpliziterMindestZfW")]
-        public int? ExplicitMinimumSpellValue { get; set; }
 
         [JsonPropertyName("MindestZfW")] public int? MinimumSpellValue { get; set; }
 
-        [JsonPropertyName("Optionen")] public List<SpellOptionRequirementModeItem> Options { get; set; } = [];
+        [JsonPropertyName("Modi")] public List<SpellOptionRequirementModeItem> Modes { get; set; } = [];
 
-        [JsonPropertyName("RepräsentationsEinschränkung")]
-        public SpellRepresentationRestrictionItem? RepresentationRestriction { get; set; }
+        [JsonPropertyName("ErlaubteRepräsentationen")]
+        public List<string> AllowedRepresentations { get; set; } = [];
+
+        [JsonPropertyName("AusgeschlosseneRepräsentationen")]
+        public List<string> DisallowedRepresentations { get; set; } = [];
 
         [JsonPropertyName("WeitereVoraussetzungen")]
         public List<string> AdditionalRequirements { get; set; } = [];
@@ -268,26 +225,8 @@ public sealed class SpellCatalogStore(IHostEnvironment environment)
 
     private sealed class SpellOptionRequirementModeItem
     {
-        [JsonPropertyName("Modus")] public string Mode { get; set; } = string.Empty;
-
-        [JsonPropertyName("BenötigteVorabZfP_Fix")]
-        public int? FixedPrecastZfp { get; set; }
-
-        [JsonPropertyName("BenötigteVorabZfP_ProStufe")]
-        public string? VariablePrecastZfp { get; set; }
-
-        [JsonPropertyName("ExpliziterMindestZfW")]
-        public int? ExplicitMinimumSpellValue { get; set; }
-
+        [JsonPropertyName("Name")] public string Name { get; set; } = string.Empty;
         [JsonPropertyName("MindestZfW")] public int? MinimumSpellValue { get; set; }
-
-        [JsonPropertyName("Hinweis")] public string? Note { get; set; }
-    }
-
-    private sealed class SpellRepresentationRestrictionItem
-    {
-        [JsonPropertyName("Nur")] public List<string> Only { get; set; } = [];
-        [JsonPropertyName("Nicht")] public List<string> Except { get; set; } = [];
     }
 }
 
@@ -298,37 +237,32 @@ public sealed record SpellCatalogEntry(
     IReadOnlyList<SpellOptionEntry> Variants,
     IReadOnlyList<ProbeInfoSectionDto> InfoSections);
 
-public sealed record SpellOptionEntry(string Name, string? Rule, string? Effect, SpellOptionRequirement Requirement);
+public sealed record SpellOptionEntry(
+    string Name,
+    string DisplayLabel,
+    string DisplayText,
+    SpellOptionRequirement Requirement);
 
 public sealed record SpellOptionRequirement(
-    string Type,
     bool RequiresOwnRepresentation,
     bool AllowsForeignRepresentationWithMatrixUnderstanding,
     int MinimumSpellValue,
-    int FixedPrecastZfp,
-    string? VariablePrecastZfp,
     IReadOnlyList<SpellOptionRequirementMode> Modes,
     SpellRepresentationRestriction RepresentationRestriction,
     IReadOnlyList<string> AdditionalRequirements)
 {
     public static SpellOptionRequirement Empty { get; } = new(
-        string.Empty,
         false,
         false,
         0,
-        0,
-        null,
         Array.Empty<SpellOptionRequirementMode>(),
         SpellRepresentationRestriction.Empty,
         Array.Empty<string>());
 }
 
 public sealed record SpellOptionRequirementMode(
-    string Mode,
-    int MinimumSpellValue,
-    int FixedPrecastZfp,
-    string? VariablePrecastZfp,
-    string? Note);
+    string Name,
+    int MinimumSpellValue);
 
 public sealed record SpellRepresentationRestriction(
     IReadOnlyList<string> AllowedRepresentations,
