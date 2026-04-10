@@ -11,7 +11,9 @@ public partial class WuerfelProbePanel
 
     [Parameter] public string Placeholder { get; set; } = "Nach Proben suchen...";
     [Parameter] public string SelectedProbe { get; set; } = string.Empty;
+    [Parameter] public ProbeInfoResultDto? ProbeInfo { get; set; }
     [Parameter] public EventCallback<string> SelectedProbeChanged { get; set; }
+    [Parameter] public EventCallback<string> SpellOptionToggleRequested { get; set; }
     [Parameter] public EventCallback InfoRequested { get; set; }
     [Parameter] public bool CanShowInfo { get; set; }
     [Parameter] public bool IsInfoExpanded { get; set; }

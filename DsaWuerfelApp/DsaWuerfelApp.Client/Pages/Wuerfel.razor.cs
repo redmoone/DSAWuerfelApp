@@ -50,6 +50,11 @@ public partial class Wuerfel : IDisposable
         return Facade.SetSelectedProbeAsync(selectedProbeValue);
     }
 
+    private Task HandleSpellOptionToggleAsync(string spellOptionValue)
+    {
+        return Facade.ToggleSpellOptionAsync(spellOptionValue);
+    }
+
     private Task ToggleProbeInfoAsync()
     {
         return Facade.ToggleProbeInfoDetailsAsync();

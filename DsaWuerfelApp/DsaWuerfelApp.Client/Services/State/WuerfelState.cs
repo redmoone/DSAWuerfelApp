@@ -28,6 +28,7 @@ public sealed class WuerfelState
             SelectedAttributes = Array.Empty<string>(),
             SelectedDiceSides = Array.Empty<int>(),
             SelectedProbeValue = null,
+            SelectedSpellOptionValues = Array.Empty<string>(),
             SelectedBadTraitName = selectedBadTraitName,
             Modifier = 0,
             RollText = string.Empty,
@@ -134,16 +135,61 @@ public sealed class WuerfelState
 
     public void SetSelectedProbe(string? selectedProbeValue)
     {
+        var normalizedSelectedProbeValue = string.IsNullOrWhiteSpace(selectedProbeValue) ? null : selectedProbeValue;
+        var preserveSpellOptions = ShouldPreserveSpellOptions(Current.SelectedProbeValue, normalizedSelectedProbeValue);
         Update(Current with
         {
-            SelectedProbeValue = string.IsNullOrWhiteSpace(selectedProbeValue) ? null : selectedProbeValue,
+            SelectedProbeValue = normalizedSelectedProbeValue,
+            SelectedSpellOptionValues =
+            preserveSpellOptions ? Current.SelectedSpellOptionValues : Array.Empty<string>(),
             ProbeInfo = null,
             IsProbeInfoExpanded = false,
             ErrorMessage = null,
-            ActiveArea = string.IsNullOrWhiteSpace(selectedProbeValue) && Current.ActiveArea == WuerfelArea.ProbeSearch
+            ActiveArea = normalizedSelectedProbeValue is null && Current.ActiveArea == WuerfelArea.ProbeSearch
                 ? WuerfelArea.None
                 : Current.ActiveArea
         });
+    }
+
+    public void ToggleSelectedSpellOption(string spellOptionValue, int? maximumSelectableOptions)
+    {
+        if (string.IsNullOrWhiteSpace(Current.SelectedProbeValue) ||
+            !ProbeSelectionValue.TryParseSpellOption(spellOptionValue, out var parsedOption) ||
+            ProbeSelectionValue.Parse(Current.SelectedProbeValue).Kind != ProbeSelectionKind.Spell)
+        {
+            return;
+        }
+
+        var currentBaseSelection = ProbeSelectionValue.Parse(Current.SelectedProbeValue);
+        if (!string.Equals(
+                TalentCatalogText.CanonicalizeName(currentBaseSelection.ProbeName),
+                TalentCatalogText.CanonicalizeName(parsedOption.ProbeName),
+                StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var selectedOptions = Current.SelectedSpellOptionValues.ToList();
+        var existingIndex =
+            selectedOptions.FindIndex(existingValue => AreSameSpellOption(existingValue, spellOptionValue));
+        if (existingIndex >= 0)
+        {
+            selectedOptions.RemoveAt(existingIndex);
+            Update(Current with { SelectedSpellOptionValues = selectedOptions.ToArray(), ErrorMessage = null });
+            return;
+        }
+
+        if (maximumSelectableOptions.HasValue && selectedOptions.Count >= maximumSelectableOptions.Value)
+        {
+            var errorText = maximumSelectableOptions.Value == 1
+                ? "Es ist höchstens 1 gleichzeitige Zaubermodifikation zulässig."
+                : $"Es sind höchstens {maximumSelectableOptions.Value} gleichzeitige Zaubermodifikationen zulässig.";
+            Update(Current with { ErrorMessage = errorText });
+            return;
+        }
+
+        selectedOptions.Add(spellOptionValue);
+        Update(Current with { SelectedSpellOptionValues = selectedOptions.ToArray(), ErrorMessage = null });
     }
 
     public void SetProbeInfo(ProbeInfoResultDto? probeInfo)
@@ -215,6 +261,8 @@ public sealed class WuerfelState
             SelectedAttributes = Array.Empty<string>(),
             SelectedDiceSides = Array.Empty<int>(),
             SelectedProbeValue = clearSelectedProbe ? null : state.SelectedProbeValue,
+            SelectedSpellOptionValues =
+            clearSelectedProbe ? Array.Empty<string>() : state.SelectedSpellOptionValues,
             Modifier = 0,
             RollText = string.Empty,
             ForcedRollsText = string.Empty,
@@ -226,6 +274,38 @@ public sealed class WuerfelState
             LastBadTraitRoll = null,
             PreviewVersion = state.PreviewVersion + 1
         };
+    }
+
+    private static bool ShouldPreserveSpellOptions(string? currentProbeValue, string? nextProbeValue)
+    {
+        var currentSelection = ProbeSelectionValue.Parse(currentProbeValue);
+        var nextSelection = ProbeSelectionValue.Parse(nextProbeValue);
+
+        return currentSelection.Kind == ProbeSelectionKind.Spell &&
+               nextSelection.Kind == ProbeSelectionKind.Spell &&
+               string.Equals(
+                   TalentCatalogText.CanonicalizeName(currentSelection.ProbeName),
+                   TalentCatalogText.CanonicalizeName(nextSelection.ProbeName),
+                   StringComparison.Ordinal);
+    }
+
+    private static bool AreSameSpellOption(string leftValue, string rightValue)
+    {
+        if (!ProbeSelectionValue.TryParseSpellOption(leftValue, out var leftOption) ||
+            !ProbeSelectionValue.TryParseSpellOption(rightValue, out var rightOption))
+        {
+            return string.Equals(leftValue, rightValue, StringComparison.Ordinal);
+        }
+
+        return leftOption.OptionKind == rightOption.OptionKind &&
+               string.Equals(
+                   TalentCatalogText.CanonicalizeName(leftOption.ProbeName),
+                   TalentCatalogText.CanonicalizeName(rightOption.ProbeName),
+                   StringComparison.Ordinal) &&
+               string.Equals(
+                   TalentCatalogText.CanonicalizeName(leftOption.OptionName),
+                   TalentCatalogText.CanonicalizeName(rightOption.OptionName),
+                   StringComparison.Ordinal);
     }
 
     private void Update(WuerfelViewState nextState)
@@ -256,6 +336,7 @@ public sealed record WuerfelViewState
     public IReadOnlyList<string> SelectedAttributes { get; init; } = Array.Empty<string>();
     public IReadOnlyList<int> SelectedDiceSides { get; init; } = Array.Empty<int>();
     public string? SelectedProbeValue { get; init; }
+    public IReadOnlyList<string> SelectedSpellOptionValues { get; init; } = Array.Empty<string>();
     public string? SelectedBadTraitName { get; init; }
     public int Modifier { get; init; }
     public string RollText { get; init; } = string.Empty;
@@ -287,7 +368,7 @@ public sealed record WuerfelViewState
 
     public int ActiveProbeSelectionModifier =>
         ActiveArea == WuerfelArea.ProbeSearch
-            ? ProbeSelectionValue.Parse(SelectedProbeValue).OptionModifier
+            ? ResolveProbeSelectionModifier(SelectedProbeValue, SelectedSpellOptionValues)
             : 0;
 
     public int EffectiveModifier => Modifier + ActiveBadTraitModifier + ActiveProbeSelectionModifier;
@@ -302,4 +383,19 @@ public sealed record WuerfelViewState
             ? null
             : BadTraits.FirstOrDefault(trait =>
                 string.Equals(trait.Name, SelectedBadTraitName, StringComparison.Ordinal));
+
+    private static int ResolveProbeSelectionModifier(
+        string? selectedProbeValue,
+        IReadOnlyList<string> selectedSpellOptionValues)
+    {
+        var baseModifier = ProbeSelectionValue.Parse(selectedProbeValue).OptionModifier;
+        var spellOptionModifier = selectedSpellOptionValues
+            .Select(value => ProbeSelectionValue.TryParseSpellOption(value, out var parsedOption)
+                ? parsedOption.OptionModifier
+                : 0)
+            .DefaultIfEmpty(0)
+            .Min();
+
+        return Math.Min(baseModifier, spellOptionModifier);
+    }
 }

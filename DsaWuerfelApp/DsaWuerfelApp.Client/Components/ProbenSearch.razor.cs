@@ -128,6 +128,8 @@ public partial class ProbenSearch
             return string.Empty;
         }
 
+        var parsedSelection = ProbeSelectionValue.Parse(selectedProbe);
+
         var probe = ProbenSource.FirstOrDefault(entry =>
             string.Equals(entry.Value, selectedProbe, StringComparison.Ordinal));
         if (probe is not null)
@@ -141,10 +143,11 @@ public partial class ProbenSearch
 
         if (alternative is not null)
         {
-            var parsedSelection = ProbeSelectionValue.Parse(selectedProbe);
             return parsedSelection.HasOption ? parsedSelection.DisplayName : alternative.Label;
         }
 
-        return selectedProbe;
+        return parsedSelection.Kind is ProbeSelectionKind.Spell or ProbeSelectionKind.Talent
+            ? parsedSelection.DisplayName
+            : selectedProbe;
     }
 }

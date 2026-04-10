@@ -18,6 +18,11 @@ public sealed class GetProbeInfoHandler(
         }
 
         var hero = await heroContextReader.LoadOptionalAsync(request.HeroId, cancellationToken);
-        return talentCatalogService.BuildProbeInfo(hero, request.ProbeValue, request.Modifier, request.BadTraitName);
+        return talentCatalogService.BuildProbeInfo(
+            hero,
+            request.ProbeValue,
+            request.Modifier,
+            request.BadTraitName,
+            request.SpellOptionValues);
     }
 }

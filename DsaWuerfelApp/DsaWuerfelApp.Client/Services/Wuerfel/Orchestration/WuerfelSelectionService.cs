@@ -113,6 +113,14 @@ public sealed class WuerfelSelectionService(WuerfelState state)
         state.SetSelectedProbe(null);
     }
 
+    public void ToggleSpellOption(string spellOptionValue)
+    {
+        state.SwitchArea(WuerfelArea.ProbeSearch);
+        state.ToggleSelectedSpellOption(
+            spellOptionValue,
+            state.Current.ProbeInfo?.SpellSelection?.MaximumSelectableOptions);
+    }
+
     public void SetSelectedBadTrait(string? selectedBadTraitName)
     {
         state.SetSelectedBadTrait(selectedBadTraitName);

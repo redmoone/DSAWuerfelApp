@@ -10,5 +10,8 @@ public sealed record ResolvedProbeData(
     TalentData ProbeData,
     string? SelectedOptionName,
     ProbeSelectionOptionKind SelectedOptionKind,
+    ResolvedSpellOption[] SelectedSpellOptions,
     string? SpecializationName,
     int SpecializationModifier);
+
+public sealed record ResolvedSpellOption(string Name, ProbeSelectionOptionKind Kind, int Modifier);

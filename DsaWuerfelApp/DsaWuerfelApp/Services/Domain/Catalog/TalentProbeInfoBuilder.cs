@@ -9,7 +9,7 @@ internal static class TalentProbeInfoBuilder
 {
     public static ProbeInfoResultDto BuildEmptySelectionInfo()
     {
-        return new ProbeInfoResultDto("Bitte zuerst eine Probe auswählen.", null, []);
+        return new ProbeInfoResultDto("Bitte zuerst eine Probe auswählen.", null, [], null);
     }
 
     public static ProbeInfoResultDto BuildResolvedProbeInfo(
@@ -17,6 +17,7 @@ internal static class TalentProbeInfoBuilder
         ResolvedProbeData resolvedProbe,
         BadTraitDto? badTrait,
         IReadOnlyList<ProbeInfoSectionDto> infoSections,
+        SpellSelectionPanelDto? spellSelection,
         int basisModifier)
     {
         var probeAttributes = ProbeAttributes.TryCreate(resolvedProbe.ProbeData.Probe)?.ToArray() ?? [];
@@ -25,7 +26,8 @@ internal static class TalentProbeInfoBuilder
         return new ProbeInfoResultDto(
             BuildSummaryText(hero, resolvedProbe, probeAttributes, effectiveModifier),
             BuildDetailsText(hero, resolvedProbe, probeAttributes, effectiveModifier, badTrait),
-            [.. infoSections]);
+            [.. infoSections],
+            spellSelection);
     }
 
     public static ProbeInfoResultDto BuildFallbackInfo(string probeValue, BadTraitDto? badTrait)
@@ -37,11 +39,13 @@ internal static class TalentProbeInfoBuilder
             ? new ProbeInfoResultDto(
                 "Erfolgschance nur mit aktivem Held verfügbar.",
                 $"Die ausgewählte Probe verwendet {probe}. Für heldenspezifische Zusatzinformationen bitte einen aktiven Helden wählen.{badTraitText}",
-                [])
+                [],
+                null)
             : new ProbeInfoResultDto(
                 $"Für '{probeValue}' ist aktuell keine Erfolgschance verfügbar.",
                 $"Zur ausgewählten Probe '{probeValue}' sind aktuell keine weiteren Informationen verfügbar.{badTraitText}",
-                []);
+                [],
+                null);
     }
 
     private static string BuildSummaryText(
@@ -96,27 +100,48 @@ internal static class TalentProbeInfoBuilder
 
     private static string BuildSelectedOptionText(ResolvedProbeData resolvedProbe)
     {
+        if (resolvedProbe.Kind == ProbeSelectionKind.Spell && resolvedProbe.SelectedSpellOptions.Length > 0)
+        {
+            return BuildSpellOptionText(resolvedProbe);
+        }
+
         return resolvedProbe.SelectedOptionKind switch
         {
             ProbeSelectionOptionKind.Specialization when !string.IsNullOrWhiteSpace(resolvedProbe.SpecializationName) =>
                 $" Gewählte {GetSpecializationLabel(resolvedProbe.Kind)}: {resolvedProbe.SpecializationName}. Dadurch ist die Probe um 2 Punkte erleichtert.",
-            ProbeSelectionOptionKind.SpellModification when !string.IsNullOrWhiteSpace(resolvedProbe.SelectedOptionName)
-                =>
-                BuildSpellOptionText("Modifikation", resolvedProbe),
-            ProbeSelectionOptionKind.SpellVariant when !string.IsNullOrWhiteSpace(resolvedProbe.SelectedOptionName) =>
-                BuildSpellOptionText("Variante", resolvedProbe),
             _ => string.Empty
         };
     }
 
-    private static string BuildSpellOptionText(string optionLabel, ResolvedProbeData resolvedProbe)
+    private static string BuildSpellOptionText(ResolvedProbeData resolvedProbe)
     {
+        var selectedVariants = resolvedProbe.SelectedSpellOptions
+            .Where(option => option.Kind == ProbeSelectionOptionKind.SpellVariant)
+            .Select(option => option.Name)
+            .ToArray();
+        var selectedModifications = resolvedProbe.SelectedSpellOptions
+            .Where(option => option.Kind == ProbeSelectionOptionKind.SpellModification)
+            .Select(option => option.Name)
+            .ToArray();
         var specializationText = resolvedProbe.SpecializationModifier == -2 &&
                                  !string.IsNullOrWhiteSpace(resolvedProbe.SpecializationName)
             ? $" Passende Zauberspezialisierung: {resolvedProbe.SpecializationName}. Dadurch ist die Probe um 2 Punkte erleichtert."
             : string.Empty;
 
-        return $" Gewählte {optionLabel}: {resolvedProbe.SelectedOptionName}.{specializationText}";
+        var parts = new List<string>();
+        if (selectedVariants.Length > 0)
+        {
+            parts.Add($"Gewählte Varianten: {string.Join(", ", selectedVariants)}.");
+        }
+
+        if (selectedModifications.Length > 0)
+        {
+            parts.Add($"Gewählte Modifikationen: {string.Join(", ", selectedModifications)}.");
+        }
+
+        return parts.Count == 0
+            ? string.Empty
+            : $" {string.Join(" ", parts)}{specializationText}";
     }
 
     private static string GetValueLabel(ProbeSelectionKind kind)

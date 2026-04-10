@@ -1,4 +1,4 @@
-<div class="probe-search-row" title="Suche nach Talenten oder Zaubern für automatisierte Proben">
+<div class="probe-search-row" title="Suche nach Talenten oder Zaubern fuer automatisierte Proben">
     <div class="probe-search-field">
         <ProbenSearch AvailableProben="AvailableProben"
                       Placeholder="@Placeholder"
@@ -14,10 +14,37 @@
                    Style="@BuildInfoButtonStyle()"/>
 </div>
 
+@if (ProbeInfo?.SpellSelection is { Groups.Length: > 0 } spellSelection)
+{
+    <div class="spell-selection-panel" title="Zauberoptionen">
+        <div class="spell-selection-header">
+            <span class="spell-selection-title">Zauberoptionen</span>
+        </div>
+
+        @foreach (var group in spellSelection.Groups)
+        {
+            <div class="spell-selection-group">
+                <span class="spell-selection-group-label">@group.Label</span>
+                <div class="spell-selection-buttons">
+                    @foreach (var option in group.Options)
+                    {
+                        <button type="button"
+                                class="spell-selection-button @(option.IsSelected ? "active" : string.Empty)"
+                                disabled="@option.IsDisabled"
+                                @onclick='() => SpellOptionToggleRequested.InvokeAsync(option.Value)'>
+                            @option.Label
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
 @if (ShowDebugForcedRolls)
 {
-    <div class="forced-rolls-panel" title="Optionale Testwürfe für Proben oder direkte W20-Proben">
-        <span class="forced-rolls-label">Testwürfe</span>
+    <div class="forced-rolls-panel" title="Optionale Testwuerfe fuer Proben oder direkte W20-Proben">
+        <span class="forced-rolls-label">Testwuerfe</span>
         <input class="forced-rolls-input"
                value="@ForcedRollsText"
                @oninput="HandleForcedRollsChanged"
@@ -30,7 +57,7 @@
             </button>
             <button type="button" class="forced-rolls-button" @onclick='() => PresetRequested.InvokeAsync("1,1,13")'
                     disabled="@IsBusy">
-                Glück
+                Glueck
             </button>
             <button type="button" class="forced-rolls-button muted" @onclick="ClearForcedRollsRequested"
                     disabled="@IsBusy">

@@ -73,6 +73,12 @@ public sealed class WuerfelFacade(
         await contextService.RefreshProbeInfoAsync();
     }
 
+    public async Task ToggleSpellOptionAsync(string spellOptionValue)
+    {
+        selectionService.ToggleSpellOption(spellOptionValue);
+        await contextService.RefreshProbeInfoAsync();
+    }
+
     public async Task SetSelectedBadTraitAsync(string? selectedBadTraitName)
     {
         selectionService.SetSelectedBadTrait(selectedBadTraitName);
@@ -210,6 +216,7 @@ public sealed class WuerfelFacade(
             state.Current.SelectedProbeValue,
             state.Current.Modifier,
             state.Current.SelectedBadTraitName,
+            state.Current.SelectedSpellOptionValues.ToArray(),
             state.Current.ForcedRollsText,
             state.Current.IsHiddenRoll);
 

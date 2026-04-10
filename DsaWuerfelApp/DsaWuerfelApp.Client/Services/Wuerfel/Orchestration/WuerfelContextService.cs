@@ -33,7 +33,8 @@ public sealed class WuerfelContextService(
             activeHeroState.CurrentHero?.Id ?? state.Current.ActiveHeroId,
             state.Current.SelectedProbeValue,
             state.Current.Modifier,
-            state.Current.SelectedBadTraitName);
+            state.Current.SelectedBadTraitName,
+            state.Current.SelectedSpellOptionValues.ToArray());
         var refreshVersion = Interlocked.Increment(ref _probeInfoRefreshVersion);
         var cancellationToken = ResetProbeInfoRefreshCancellation().Token;
 

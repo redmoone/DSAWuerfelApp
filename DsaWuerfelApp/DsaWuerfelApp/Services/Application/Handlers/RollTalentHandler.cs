@@ -16,7 +16,7 @@ public sealed class RollTalentHandler(
         ArgumentNullException.ThrowIfNull(request);
 
         var hero = await heroContextReader.LoadRequiredAsync(request.HeroId, cancellationToken);
-        var probeData = talentCatalogService.ResolveProbe(hero, request.TalentKey);
+        var probeData = talentCatalogService.ResolveProbe(hero, request.TalentKey, request.SpellOptionValues);
         var probe = ProbeAttributes.Create(probeData.ProbeData.Probe);
         if (probe.ToArray().Any(attribute => !hero.Eigenschaften.ContainsKey(attribute)))
         {

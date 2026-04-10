@@ -54,6 +54,26 @@ public static class ProbeSelectionValue
         };
     }
 
+    public static bool TryParseSpellOption(string? value, out ParsedSpellOptionSelection option)
+    {
+        var parsedSelection = Parse(value);
+        if (parsedSelection.Kind == ProbeSelectionKind.Spell &&
+            parsedSelection.HasOption &&
+            parsedSelection.OptionKind is ProbeSelectionOptionKind.SpellModification
+                or ProbeSelectionOptionKind.SpellVariant)
+        {
+            option = new ParsedSpellOptionSelection(
+                parsedSelection.ProbeName,
+                parsedSelection.OptionName!,
+                parsedSelection.OptionKind,
+                parsedSelection.OptionModifier);
+            return true;
+        }
+
+        option = ParsedSpellOptionSelection.Empty;
+        return false;
+    }
+
     public static string FormatSpecializationLabel(string probeName, string specializationName)
     {
         var normalizedProbeName = TalentCatalogText.NormalizeCatalogText(probeName);
@@ -250,4 +270,17 @@ public readonly record struct ParsedProbeSelection(
         HasOption
             ? ProbeSelectionValue.FormatSelectionLabel(ProbeName, OptionKind, OptionName!)
             : ProbeName;
+}
+
+public readonly record struct ParsedSpellOptionSelection(
+    string ProbeName,
+    string OptionName,
+    ProbeSelectionOptionKind OptionKind,
+    int OptionModifier)
+{
+    public static ParsedSpellOptionSelection Empty { get; } =
+        new(string.Empty, string.Empty, ProbeSelectionOptionKind.None, 0);
+
+    public bool IsEmpty => string.IsNullOrWhiteSpace(ProbeName) || string.IsNullOrWhiteSpace(OptionName) ||
+                           OptionKind == ProbeSelectionOptionKind.None;
 }

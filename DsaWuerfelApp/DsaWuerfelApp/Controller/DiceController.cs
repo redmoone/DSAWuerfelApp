@@ -35,13 +35,14 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
         [FromQuery] string probeValue,
         [FromQuery] int modifier = 0,
         [FromQuery] string? badTraitName = null,
+        [FromQuery] string[]? spellOptionValue = null,
         CancellationToken cancellationToken = default)
     {
         try
         {
             var result =
                 await workflow.GetProbeInfoAsync(
-                    new ProbeInfoRequestDto(heroId, probeValue, modifier, badTraitName),
+                    new ProbeInfoRequestDto(heroId, probeValue, modifier, badTraitName, spellOptionValue ?? []),
                     cancellationToken);
             return Ok(result);
         }

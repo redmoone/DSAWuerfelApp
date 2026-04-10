@@ -27,7 +27,12 @@ public sealed class TalentCatalogService(
             showDebugForcedRolls);
     }
 
-    public ProbeInfoResultDto BuildProbeInfo(Hero? hero, string probeValue, int modifier, string? badTraitName)
+    public ProbeInfoResultDto BuildProbeInfo(
+        Hero? hero,
+        string probeValue,
+        int modifier,
+        string? badTraitName,
+        IReadOnlyList<string>? spellOptionValues = null)
     {
         if (string.IsNullOrWhiteSpace(probeValue))
         {
@@ -35,22 +40,24 @@ public sealed class TalentCatalogService(
         }
 
         var badTrait = ResolveBadTrait(hero, badTraitName);
-        if (hero is not null && TryResolveProbe(hero, probeValue, out var resolvedProbe))
+        if (hero is not null && TryResolveProbe(hero, probeValue, spellOptionValues ?? [], out var resolvedProbe))
         {
+            var spellSelection = BuildSpellSelectionPanel(hero, resolvedProbe);
             return TalentProbeInfoBuilder.BuildResolvedProbeInfo(
                 hero,
                 resolvedProbe,
                 badTrait,
-                ResolveInfoSections(resolvedProbe),
+                ResolveInfoSections(hero, resolvedProbe),
+                spellSelection,
                 modifier);
         }
 
         return TalentProbeInfoBuilder.BuildFallbackInfo(probeValue, badTrait);
     }
 
-    public ResolvedProbeData ResolveProbe(Hero hero, string probeValue)
+    public ResolvedProbeData ResolveProbe(Hero hero, string probeValue, IReadOnlyList<string>? spellOptionValues = null)
     {
-        if (TryResolveProbe(hero, probeValue, out var resolvedProbe))
+        if (TryResolveProbe(hero, probeValue, spellOptionValues ?? [], out var resolvedProbe))
         {
             return resolvedProbe;
         }
@@ -70,7 +77,11 @@ public sealed class TalentCatalogService(
             : null;
     }
 
-    private bool TryResolveProbe(Hero hero, string probeValue, out ResolvedProbeData resolvedProbe)
+    private bool TryResolveProbe(
+        Hero hero,
+        string probeValue,
+        IReadOnlyList<string> spellOptionValues,
+        out ResolvedProbeData resolvedProbe)
     {
         var selection = ProbeSelectionValue.Parse(probeValue);
 
@@ -81,7 +92,7 @@ public sealed class TalentCatalogService(
         }
 
         if ((selection.Kind is ProbeSelectionKind.Unknown or ProbeSelectionKind.Spell) &&
-            TryResolveSpell(hero, selection, out resolvedProbe))
+            TryResolveSpell(hero, selection, spellOptionValues, out resolvedProbe))
         {
             return true;
         }
@@ -114,12 +125,17 @@ public sealed class TalentCatalogService(
             talentEntry.Talent,
             specializationName,
             selection.OptionKind,
+            [],
             specializationName,
             selection.OptionModifier);
         return true;
     }
 
-    private bool TryResolveSpell(Hero hero, ParsedProbeSelection selection, out ResolvedProbeData resolvedProbe)
+    private bool TryResolveSpell(
+        Hero hero,
+        ParsedProbeSelection selection,
+        IReadOnlyList<string> spellOptionValues,
+        out ResolvedProbeData resolvedProbe)
     {
         var knownSpells = BuildKnownSpellMap(hero);
         if (!TryFindEntry(knownSpells, selection.ProbeName, out var spellName, out var spell))
@@ -128,31 +144,59 @@ public sealed class TalentCatalogService(
             return false;
         }
 
+        var heroSpellcastingContext = HeroSpellcastingContext.Create(hero);
         var selectedOptionName = ResolveSelectedSpellOptionName(spellName, spell, selection);
-        if (selection.HasOption && string.IsNullOrWhiteSpace(selectedOptionName))
+        if (selection.HasOption &&
+            selection.OptionKind == ProbeSelectionOptionKind.Specialization &&
+            string.IsNullOrWhiteSpace(selectedOptionName))
         {
             resolvedProbe = null!;
             return false;
         }
 
-        var specializationName = ResolveMatchingSpellSpecialization(spell, selectedOptionName);
+        if (!TryResolveSelectedSpellOptions(
+                spellName,
+                spell,
+                knownSpells,
+                heroSpellcastingContext,
+                selection,
+                spellOptionValues,
+                out var selectedSpellOptions))
+        {
+            resolvedProbe = null!;
+            return false;
+        }
+
+        var simultaneousModificationInfo =
+            heroSpellcastingContext.GetSimultaneousModificationInfo(spellName, hero.Eigenschaften);
+        if (simultaneousModificationInfo.MaximumSelectableOptions.HasValue &&
+            selectedSpellOptions.Length > simultaneousModificationInfo.MaximumSelectableOptions.Value)
+        {
+            resolvedProbe = null!;
+            return false;
+        }
+
+        var specializationName = !string.IsNullOrWhiteSpace(selectedOptionName)
+            ? ResolveMatchingSpellSpecialization(spell, selectedOptionName)
+            : selectedSpellOptions
+                .Select(option => ResolveMatchingSpellSpecialization(spell, option.Name))
+                .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name));
         var specializationModifier = string.IsNullOrWhiteSpace(specializationName) ? 0 : -2;
 
         resolvedProbe = new ResolvedProbeData(
             ProbeSelectionKind.Spell,
             spellName,
-            selection.HasOption
-                ? ProbeSelectionValue.FormatSelectionLabel(spellName, selection.OptionKind, selectedOptionName!)
-                : spellName,
+            BuildResolvedSpellName(spellName, selection, selectedOptionName, selectedSpellOptions),
             spell,
             selectedOptionName,
             selection.OptionKind,
+            selectedSpellOptions,
             specializationName,
             specializationModifier);
         return true;
     }
 
-    private IReadOnlyList<ProbeInfoSectionDto> ResolveInfoSections(ResolvedProbeData resolvedProbe)
+    private IReadOnlyList<ProbeInfoSectionDto> ResolveInfoSections(Hero hero, ResolvedProbeData resolvedProbe)
     {
         return resolvedProbe.Kind switch
         {
@@ -160,7 +204,7 @@ public sealed class TalentCatalogService(
                 =>
                 talentEntry.InfoSections,
             ProbeSelectionKind.Spell when spellCatalogStore.TryGetEntry(resolvedProbe.BaseName, out var spellEntry) =>
-                spellEntry.InfoSections,
+                BuildSpellInfoSections(hero, resolvedProbe.BaseName, spellEntry),
             _ => []
         };
     }
@@ -199,6 +243,7 @@ public sealed class TalentCatalogService(
     private ProbeSearchEntryDto[] BuildKnownProbes(Hero hero)
     {
         var knownTalents = BuildKnownTalentMap(hero);
+        var knownSpells = BuildKnownSpellMap(hero);
         var activeAlternatives = BuildActiveAlternativeLookup(knownTalents);
 
         var talentEntries = knownTalents
@@ -212,13 +257,13 @@ public sealed class TalentCatalogService(
                     BuildTalentSpecializationAlternatives(entry.Key, entry.Value.Talent))
                 : BuildInactiveProbeSearchEntry(entry.Key, entry.Value, activeAlternatives));
 
-        var spellEntries = BuildKnownSpellMap(hero)
+        var spellEntries = knownSpells
             .OrderBy(entry => entry.Key, StringComparer.Ordinal)
             .Select(entry => new ProbeSearchEntryDto(
                 BuildProbeLabel(entry.Key, entry.Value),
                 ProbeSelectionValue.EncodeBase(ProbeSelectionKind.Spell, entry.Key),
                 true,
-                BuildSpellAlternatives(entry.Key, entry.Value)));
+                BuildSpellSpecializationAlternatives(entry.Key, entry.Value)));
 
         return talentEntries
             .Concat(spellEntries)
@@ -474,74 +519,14 @@ public sealed class TalentCatalogService(
             .ToArray();
     }
 
-    private ProbeSearchAlternativeDto[] BuildSpellAlternatives(string spellName, TalentData spell)
-    {
-        var alternatives = new List<ProbeSearchAlternativeDto>();
-        var coveredSpecializations = new HashSet<string>(StringComparer.Ordinal);
-
-        if (spellCatalogStore.TryGetEntry(spellName, out var catalogEntry))
-        {
-            alternatives.AddRange(BuildSpellOptionAlternatives(
-                spellName,
-                spell,
-                catalogEntry.Modifications,
-                ProbeSelectionOptionKind.SpellModification,
-                coveredSpecializations));
-            alternatives.AddRange(BuildSpellOptionAlternatives(
-                spellName,
-                spell,
-                catalogEntry.Variants,
-                ProbeSelectionOptionKind.SpellVariant,
-                coveredSpecializations));
-        }
-
-        alternatives.AddRange(BuildRemainingSpellSpecializationAlternatives(spellName, spell, coveredSpecializations));
-
-        return alternatives
-            .GroupBy(alternative => alternative.Value, StringComparer.Ordinal)
-            .Select(group => group.First())
-            .ToArray();
-    }
-
-    private IEnumerable<ProbeSearchAlternativeDto> BuildSpellOptionAlternatives(
+    private static ProbeSearchAlternativeDto[] BuildSpellSpecializationAlternatives(
         string spellName,
-        TalentData spell,
-        IEnumerable<SpellOptionEntry> options,
-        ProbeSelectionOptionKind optionKind,
-        ISet<string> coveredSpecializations)
-    {
-        foreach (var option in options
-                     .Where(option => !string.IsNullOrWhiteSpace(option.Name))
-                     .OrderBy(option => option.Name, StringComparer.Ordinal))
-        {
-            var optionModifier = ResolveSpellOptionModifier(spell, option.Name, out var specializationName);
-            if (!string.IsNullOrWhiteSpace(specializationName))
-            {
-                coveredSpecializations.Add(TalentCatalogText.CanonicalizeName(specializationName));
-            }
-
-            yield return new ProbeSearchAlternativeDto(
-                ProbeSelectionValue.FormatOptionLabel(spellName, optionKind, option.Name),
-                ProbeSelectionValue.EncodeOption(
-                    ProbeSelectionKind.Spell,
-                    spellName,
-                    optionKind,
-                    option.Name,
-                    optionModifier));
-        }
-    }
-
-    private static IEnumerable<ProbeSearchAlternativeDto> BuildRemainingSpellSpecializationAlternatives(
-        string spellName,
-        TalentData spell,
-        ISet<string> coveredSpecializations)
+        TalentData spell)
     {
         return spell.Specializations
             .Where(specialization => !string.IsNullOrWhiteSpace(specialization))
             .Distinct(StringComparer.Ordinal)
             .OrderBy(specialization => specialization, StringComparer.Ordinal)
-            .Where(specialization =>
-                !coveredSpecializations.Contains(TalentCatalogText.CanonicalizeName(specialization)))
             .Select(specialization => new ProbeSearchAlternativeDto(
                 ProbeSelectionValue.FormatSpecializationLabel(spellName, specialization),
                 ProbeSelectionValue.EncodeOption(
@@ -549,7 +534,8 @@ public sealed class TalentCatalogService(
                     spellName,
                     ProbeSelectionOptionKind.Specialization,
                     specialization,
-                    -2)));
+                    -2)))
+            .ToArray();
     }
 
     private static int ResolveSpellOptionModifier(
@@ -595,6 +581,460 @@ public sealed class TalentCatalogService(
                 TalentCatalogText.CanonicalizeName(existingSpecialization),
                 TalentCatalogText.CanonicalizeName(optionName),
                 StringComparison.Ordinal));
+    }
+
+    private bool TryResolveSelectedSpellOptions(
+        string spellName,
+        TalentData spell,
+        IReadOnlyDictionary<string, TalentData> knownSpells,
+        HeroSpellcastingContext heroSpellcastingContext,
+        ParsedProbeSelection selection,
+        IReadOnlyList<string> spellOptionValues,
+        out ResolvedSpellOption[] selectedSpellOptions)
+    {
+        var resolvedOptions = new List<ResolvedSpellOption>();
+
+        if (selection.HasOption &&
+            selection.OptionKind is ProbeSelectionOptionKind.SpellModification or ProbeSelectionOptionKind.SpellVariant)
+        {
+            if (!TryResolveAvailableSpellOption(
+                    spellName,
+                    spell,
+                    knownSpells,
+                    heroSpellcastingContext,
+                    selection.OptionKind,
+                    selection.OptionName!,
+                    out var matchedLegacyOptionName))
+            {
+                selectedSpellOptions = [];
+                return false;
+            }
+
+            resolvedOptions.Add(new ResolvedSpellOption(
+                matchedLegacyOptionName,
+                selection.OptionKind,
+                ResolveSpellOptionModifier(spell, matchedLegacyOptionName, out _)));
+        }
+
+        foreach (var spellOptionValue in spellOptionValues)
+        {
+            if (!ProbeSelectionValue.TryParseSpellOption(spellOptionValue, out var parsedOption))
+            {
+                selectedSpellOptions = [];
+                return false;
+            }
+
+            if (!string.Equals(
+                    TalentCatalogText.CanonicalizeName(parsedOption.ProbeName),
+                    TalentCatalogText.CanonicalizeName(spellName),
+                    StringComparison.Ordinal))
+            {
+                selectedSpellOptions = [];
+                return false;
+            }
+
+            if (!TryResolveAvailableSpellOption(
+                    spellName,
+                    spell,
+                    knownSpells,
+                    heroSpellcastingContext,
+                    parsedOption.OptionKind,
+                    parsedOption.OptionName,
+                    out var matchedOptionName))
+            {
+                selectedSpellOptions = [];
+                return false;
+            }
+
+            var canonicalMatchedOptionName = TalentCatalogText.CanonicalizeName(matchedOptionName);
+            if (resolvedOptions.Any(existingOption =>
+                    existingOption.Kind == parsedOption.OptionKind &&
+                    string.Equals(
+                        TalentCatalogText.CanonicalizeName(existingOption.Name),
+                        canonicalMatchedOptionName,
+                        StringComparison.Ordinal)))
+            {
+                continue;
+            }
+
+            resolvedOptions.Add(new ResolvedSpellOption(
+                matchedOptionName,
+                parsedOption.OptionKind,
+                ResolveSpellOptionModifier(spell, matchedOptionName, out _)));
+        }
+
+        selectedSpellOptions = resolvedOptions.ToArray();
+        return true;
+    }
+
+    private static string BuildResolvedSpellName(
+        string spellName,
+        ParsedProbeSelection selection,
+        string? selectedOptionName,
+        IReadOnlyList<ResolvedSpellOption> selectedSpellOptions)
+    {
+        var baseLabel = selection.HasOption && selection.OptionKind == ProbeSelectionOptionKind.Specialization
+            ? ProbeSelectionValue.FormatSelectionLabel(spellName, selection.OptionKind,
+                selectedOptionName ?? selection.OptionName ?? string.Empty)
+            : spellName;
+
+        if (selectedSpellOptions.Count == 0)
+        {
+            return baseLabel;
+        }
+
+        return $"{baseLabel} ({string.Join(", ", selectedSpellOptions.Select(option => option.Name))})";
+    }
+
+    private IReadOnlyList<ProbeInfoSectionDto> BuildSpellInfoSections(
+        Hero hero,
+        string spellName,
+        SpellCatalogEntry spellEntry)
+    {
+        var sections = new List<ProbeInfoSectionDto>(spellEntry.InfoSections);
+        var knownSpells = BuildKnownSpellMap(hero);
+        if (!TryFindEntry(knownSpells, spellName, out var matchedSpellName, out var spell))
+        {
+            return sections;
+        }
+
+        var heroSpellcastingContext = HeroSpellcastingContext.Create(hero);
+        var availableModifications = FilterAvailableSpellOptions(
+            matchedSpellName,
+            spell,
+            knownSpells,
+            heroSpellcastingContext,
+            spellEntry.Modifications);
+        var availableVariants = FilterAvailableSpellOptions(
+            matchedSpellName,
+            spell,
+            knownSpells,
+            heroSpellcastingContext,
+            spellEntry.Variants);
+
+        AddInfoSectionIfPresent(sections, "Modifikationen", BuildOptionSectionText(availableModifications));
+        AddInfoSectionIfPresent(sections, "Varianten", BuildOptionSectionText(availableVariants));
+
+        return sections;
+    }
+
+    private SpellSelectionPanelDto? BuildSpellSelectionPanel(Hero hero, ResolvedProbeData resolvedProbe)
+    {
+        if (resolvedProbe.Kind != ProbeSelectionKind.Spell ||
+            !spellCatalogStore.TryGetEntry(resolvedProbe.BaseName, out var spellEntry))
+        {
+            return null;
+        }
+
+        var knownSpells = BuildKnownSpellMap(hero);
+        if (!TryFindEntry(knownSpells, resolvedProbe.BaseName, out var matchedSpellName, out var spell))
+        {
+            return null;
+        }
+
+        var heroSpellcastingContext = HeroSpellcastingContext.Create(hero);
+        var availableModifications = FilterAvailableSpellOptions(
+            matchedSpellName,
+            spell,
+            knownSpells,
+            heroSpellcastingContext,
+            spellEntry.Modifications);
+        var availableVariants = FilterAvailableSpellOptions(
+            matchedSpellName,
+            spell,
+            knownSpells,
+            heroSpellcastingContext,
+            spellEntry.Variants);
+        var simultaneousModificationInfo =
+            heroSpellcastingContext.GetSimultaneousModificationInfo(matchedSpellName, hero.Eigenschaften);
+        var selectedOptionCount = resolvedProbe.SelectedSpellOptions.Length;
+
+        var groups = new List<SpellOptionGroupDto>();
+        if (availableModifications.Length > 0)
+        {
+            groups.Add(BuildSpellOptionGroup(
+                "Spontane Modifikationen",
+                matchedSpellName,
+                spell,
+                resolvedProbe,
+                availableModifications,
+                ProbeSelectionOptionKind.SpellModification,
+                simultaneousModificationInfo.MaximumSelectableOptions,
+                selectedOptionCount));
+        }
+
+        if (availableVariants.Length > 0)
+        {
+            groups.Add(BuildSpellOptionGroup(
+                "Varianten",
+                matchedSpellName,
+                spell,
+                resolvedProbe,
+                availableVariants,
+                ProbeSelectionOptionKind.SpellVariant,
+                simultaneousModificationInfo.MaximumSelectableOptions,
+                selectedOptionCount));
+        }
+
+        if (groups.Count == 0)
+        {
+            return null;
+        }
+
+        return new SpellSelectionPanelDto(
+            [.. groups],
+            simultaneousModificationInfo.Note,
+            simultaneousModificationInfo.MaximumSelectableOptions,
+            selectedOptionCount);
+    }
+
+    private static SpellOptionGroupDto BuildSpellOptionGroup(
+        string label,
+        string spellName,
+        TalentData spell,
+        ResolvedProbeData resolvedProbe,
+        IEnumerable<SpellOptionEntry> options,
+        ProbeSelectionOptionKind optionKind,
+        int? maximumSelectableOptions,
+        int selectedOptionCount)
+    {
+        return new SpellOptionGroupDto(
+            label,
+            options
+                .Where(option => !string.IsNullOrWhiteSpace(option.Name))
+                .OrderBy(option => option.Name, StringComparer.Ordinal)
+                .Select(option =>
+                {
+                    var optionModifier = ResolveSpellOptionModifier(spell, option.Name, out _);
+                    var isSelected = resolvedProbe.SelectedSpellOptions.Any(selectedOption =>
+                        selectedOption.Kind == optionKind &&
+                        string.Equals(
+                            TalentCatalogText.CanonicalizeName(selectedOption.Name),
+                            TalentCatalogText.CanonicalizeName(option.Name),
+                            StringComparison.Ordinal));
+                    return new SpellOptionButtonDto(
+                        option.Name,
+                        ProbeSelectionValue.EncodeOption(
+                            ProbeSelectionKind.Spell,
+                            spellName,
+                            optionKind,
+                            option.Name,
+                            optionModifier),
+                        isSelected,
+                        !isSelected && maximumSelectableOptions.HasValue &&
+                        selectedOptionCount >= maximumSelectableOptions.Value);
+                })
+                .ToArray());
+    }
+
+    private static SpellOptionEntry[] FilterAvailableSpellOptions(
+        string spellName,
+        TalentData spell,
+        IReadOnlyDictionary<string, TalentData> knownSpells,
+        HeroSpellcastingContext heroSpellcastingContext,
+        IEnumerable<SpellOptionEntry> options)
+    {
+        return options
+            .Where(option => IsSpellOptionAvailable(spellName, spell, knownSpells, heroSpellcastingContext, option))
+            .ToArray();
+    }
+
+    private static bool IsSpellOptionAvailable(
+        string spellName,
+        TalentData spell,
+        IReadOnlyDictionary<string, TalentData> knownSpells,
+        HeroSpellcastingContext heroSpellcastingContext,
+        SpellOptionEntry option)
+    {
+        var requirement = option.Requirement;
+        if (string.Equals(requirement.Type, "Spontane Modifikation", StringComparison.Ordinal) &&
+            requirement.Modes.Count == 0)
+        {
+            return false;
+        }
+
+        if (spell.Wert < requirement.MinimumSpellValue)
+        {
+            return false;
+        }
+
+        if (requirement.RequiresOwnRepresentation &&
+            !heroSpellcastingContext.CanUseOwnRepresentationOnlyOption(
+                spellName,
+                requirement.AllowsForeignRepresentationWithMatrixUnderstanding))
+        {
+            return false;
+        }
+
+        if (!heroSpellcastingContext.MatchesRepresentationRestriction(
+                spellName,
+                requirement.RepresentationRestriction))
+        {
+            return false;
+        }
+
+        if (!requirement.AdditionalRequirements.All(additionalRequirement =>
+                IsAdditionalRequirementSatisfied(additionalRequirement, spell, knownSpells)))
+        {
+            return false;
+        }
+
+        return requirement.Modes.Count == 0 || requirement.Modes.Any(mode => spell.Wert >= mode.MinimumSpellValue);
+    }
+
+    private static bool IsAdditionalRequirementSatisfied(
+        string requirement,
+        TalentData spell,
+        IReadOnlyDictionary<string, TalentData> knownSpells)
+    {
+        var normalizedRequirement = TalentCatalogText.NormalizeCatalogText(requirement);
+        if (string.IsNullOrWhiteSpace(normalizedRequirement))
+        {
+            return true;
+        }
+
+        if (TryParseOwnSpellMinimumRequirement(normalizedRequirement, out var ownSpellMinimum))
+        {
+            return spell.Wert >= ownSpellMinimum;
+        }
+
+        if (TryParseOtherSpellMinimumRequirement(normalizedRequirement, knownSpells, out var requiredSpellName,
+                out var requiredMinimum))
+        {
+            return TryFindEntry(knownSpells, requiredSpellName, out _, out var requiredSpell) &&
+                   requiredSpell.Wert >= requiredMinimum;
+        }
+
+        return IsInformationalAdditionalRequirement(normalizedRequirement);
+    }
+
+    private bool TryResolveAvailableSpellOption(
+        string spellName,
+        TalentData spell,
+        IReadOnlyDictionary<string, TalentData> knownSpells,
+        HeroSpellcastingContext heroSpellcastingContext,
+        ProbeSelectionOptionKind optionKind,
+        string optionName,
+        out string matchedOptionName)
+    {
+        matchedOptionName = string.Empty;
+
+        if (!spellCatalogStore.TryGetEntry(spellName, out var catalogEntry))
+        {
+            return false;
+        }
+
+        var options = optionKind == ProbeSelectionOptionKind.SpellModification
+            ? catalogEntry.Modifications
+            : catalogEntry.Variants;
+
+        foreach (var option in options)
+        {
+            if (!string.Equals(
+                    TalentCatalogText.CanonicalizeName(option.Name),
+                    TalentCatalogText.CanonicalizeName(optionName),
+                    StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (!IsSpellOptionAvailable(spellName, spell, knownSpells, heroSpellcastingContext, option))
+            {
+                return false;
+            }
+
+            matchedOptionName = option.Name;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool TryParseOwnSpellMinimumRequirement(string requirement, out int minimumSpellValue)
+    {
+        minimumSpellValue = 0;
+        if (!requirement.StartsWith("ZfW von ", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return int.TryParse(
+            new string(requirement.Where(char.IsDigit).ToArray()),
+            out minimumSpellValue);
+    }
+
+    private static bool TryParseOtherSpellMinimumRequirement(
+        string requirement,
+        IReadOnlyDictionary<string, TalentData> knownSpells,
+        out string spellName,
+        out int minimumSpellValue)
+    {
+        spellName = string.Empty;
+        minimumSpellValue = 0;
+
+        if (!requirement.StartsWith("ZfW ", StringComparison.OrdinalIgnoreCase) ||
+            requirement.StartsWith("ZfW von ", StringComparison.OrdinalIgnoreCase) ||
+            requirement.Contains(" mal ", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var lastSpaceIndex = requirement.LastIndexOf(' ');
+        if (lastSpaceIndex <= 4 || lastSpaceIndex >= requirement.Length - 1)
+        {
+            return false;
+        }
+
+        var numericPart = new string(requirement[(lastSpaceIndex + 1)..].Where(char.IsDigit).ToArray());
+        if (!int.TryParse(numericPart, out minimumSpellValue))
+        {
+            return false;
+        }
+
+        var candidateSpellName = requirement[4..lastSpaceIndex].Trim();
+        if (string.IsNullOrWhiteSpace(candidateSpellName))
+        {
+            return false;
+        }
+
+        if (!TryFindEntry(knownSpells, candidateSpellName, out spellName, out _))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool IsInformationalAdditionalRequirement(string requirement)
+    {
+        return requirement.Contains(" mal ", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string BuildOptionSectionText(IEnumerable<SpellOptionEntry> options)
+    {
+        return string.Join(
+            Environment.NewLine,
+            options.Select(BuildOptionText).Where(text => !string.IsNullOrWhiteSpace(text)));
+    }
+
+    private static string BuildOptionText(SpellOptionEntry option)
+    {
+        var details = new[] { option.Rule, option.Effect }.Where(value => !string.IsNullOrWhiteSpace(value));
+
+        var suffix = string.Join(" ", details);
+        return string.IsNullOrWhiteSpace(suffix)
+            ? option.Name
+            : $"{option.Name}: {suffix}";
+    }
+
+    private static void AddInfoSectionIfPresent(ICollection<ProbeInfoSectionDto> sections, string label, string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
+        sections.Add(new ProbeInfoSectionDto(label, value));
     }
 
     private static bool TryResolveSpecializationName(

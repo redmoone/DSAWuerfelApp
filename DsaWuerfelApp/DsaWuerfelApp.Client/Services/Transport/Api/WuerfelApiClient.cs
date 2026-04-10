@@ -34,6 +34,14 @@ public sealed class WuerfelApiClient(HttpClient httpClient) : IWuerfelApiClient
             parameters.Add($"badTraitName={Uri.EscapeDataString(request.BadTraitName)}");
         }
 
+        foreach (var spellOptionValue in request.SpellOptionValues)
+        {
+            if (!string.IsNullOrWhiteSpace(spellOptionValue))
+            {
+                parameters.Add($"spellOptionValue={Uri.EscapeDataString(spellOptionValue)}");
+            }
+        }
+
         return GetJsonAsync<ProbeInfoResultDto>(
             $"api/dice/probe-info?{string.Join("&", parameters)}",
             "Probeninfo konnte nicht geladen werden.",
