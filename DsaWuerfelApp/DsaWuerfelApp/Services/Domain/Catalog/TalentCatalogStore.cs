@@ -16,7 +16,11 @@ public sealed class TalentCatalogStore(IHostEnvironment environment)
 
     public bool TryGetEntry(string talentName, out TalentCatalogEntry entry)
     {
-        return _entriesByCanonical.Value.TryGetValue(TalentCatalogText.CanonicalizeName(talentName), out entry!);
+        return TalentCatalogText.TryFindBestNameMatch(
+            _entriesByCanonical.Value.Values,
+            static existingEntry => existingEntry.Name,
+            talentName,
+            out entry!);
     }
 
     private static string ResolveCatalogPath(IHostEnvironment environment)

@@ -74,14 +74,24 @@ public static class ProbeSelectionValue
         return false;
     }
 
-    public static string FormatSpecializationLabel(string probeName, string specializationName)
+    public static string FormatSpecializationLabel(
+        ProbeSelectionKind kind,
+        string probeName,
+        string specializationName)
     {
         var normalizedProbeName = TalentCatalogText.NormalizeCatalogText(probeName);
         var normalizedSpecializationName = TalentCatalogText.NormalizeCatalogText(specializationName);
 
         return string.IsNullOrWhiteSpace(normalizedSpecializationName)
             ? normalizedProbeName
-            : $"{normalizedProbeName} ({normalizedSpecializationName})";
+            : kind == ProbeSelectionKind.Spell
+                ? $"Spezialisierung {normalizedSpecializationName}"
+                : $"{normalizedProbeName} ({normalizedSpecializationName})";
+    }
+
+    public static string FormatSpecializationLabel(string probeName, string specializationName)
+    {
+        return FormatSpecializationLabel(ProbeSelectionKind.Talent, probeName, specializationName);
     }
 
     public static string FormatOptionLabel(
@@ -108,6 +118,7 @@ public static class ProbeSelectionValue
     }
 
     public static string FormatSelectionLabel(
+        ProbeSelectionKind kind,
         string probeName,
         ProbeSelectionOptionKind optionKind,
         string optionName)
@@ -122,12 +133,20 @@ public static class ProbeSelectionValue
 
         return optionKind switch
         {
-            ProbeSelectionOptionKind.Specialization => FormatSpecializationLabel(normalizedProbeName,
+            ProbeSelectionOptionKind.Specialization => FormatSpecializationLabel(kind, normalizedProbeName,
                 normalizedOptionName),
             ProbeSelectionOptionKind.SpellModification => $"{normalizedProbeName} ({normalizedOptionName})",
             ProbeSelectionOptionKind.SpellVariant => $"{normalizedProbeName} ({normalizedOptionName})",
             _ => normalizedProbeName
         };
+    }
+
+    public static string FormatSelectionLabel(
+        string probeName,
+        ProbeSelectionOptionKind optionKind,
+        string optionName)
+    {
+        return FormatSelectionLabel(ProbeSelectionKind.Talent, probeName, optionKind, optionName);
     }
 
     private static ParsedProbeSelection ParseLegacyTalentSelection(string[] segments)
@@ -268,7 +287,7 @@ public readonly record struct ParsedProbeSelection(
 
     public string DisplayName =>
         HasOption
-            ? ProbeSelectionValue.FormatSelectionLabel(ProbeName, OptionKind, OptionName!)
+            ? ProbeSelectionValue.FormatSelectionLabel(Kind, ProbeName, OptionKind, OptionName!)
             : ProbeName;
 }
 

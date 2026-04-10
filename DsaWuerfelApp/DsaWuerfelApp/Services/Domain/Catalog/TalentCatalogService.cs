@@ -278,16 +278,10 @@ public sealed class TalentCatalogService(
             entry => new KnownTalentEntry(CloneProbeData(entry.Value), true),
             StringComparer.Ordinal);
 
-        var heroTalentNamesByCanonical = knownTalents.Keys
-            .Select(name => (Name: name, Canonical: TalentCatalogText.CanonicalizeName(name)))
-            .Where(entry => !string.IsNullOrWhiteSpace(entry.Canonical))
-            .GroupBy(entry => entry.Canonical, StringComparer.Ordinal)
-            .ToDictionary(group => group.Key, group => group.First().Name, StringComparer.Ordinal);
-
         foreach (var catalogEntry in talentCatalogStore.Entries)
         {
-            var canonicalName = TalentCatalogText.CanonicalizeName(catalogEntry.Name);
-            if (heroTalentNamesByCanonical.TryGetValue(canonicalName, out var existingTalentName))
+            if (TalentCatalogText.TryFindBestNameMatch(hero.Talente, catalogEntry.Name, out var existingTalentName,
+                    out _))
             {
                 var existingTalent = knownTalents[existingTalentName];
                 if (string.IsNullOrWhiteSpace(existingTalent.Talent.Probe))
@@ -365,27 +359,14 @@ public sealed class TalentCatalogService(
         string talentName,
         out KnownTalentEntry talent)
     {
-        if (knownTalents.TryGetValue(talentName, out talent!) && talent.IsOwnedByHero)
+        if (TalentCatalogText.TryFindBestNameMatch(
+                knownTalents.Where(entry => entry.Value.IsOwnedByHero),
+                static existingEntry => existingEntry.Key,
+                talentName,
+                out var matchedEntry))
         {
+            talent = matchedEntry.Value;
             return true;
-        }
-
-        var canonicalTalentName = TalentCatalogText.CanonicalizeName(talentName);
-        foreach (var entry in knownTalents)
-        {
-            if (!entry.Value.IsOwnedByHero)
-            {
-                continue;
-            }
-
-            if (string.Equals(
-                    TalentCatalogText.CanonicalizeName(entry.Key),
-                    canonicalTalentName,
-                    StringComparison.Ordinal))
-            {
-                talent = entry.Value;
-                return true;
-            }
         }
 
         talent = null!;
@@ -528,7 +509,10 @@ public sealed class TalentCatalogService(
             .Distinct(StringComparer.Ordinal)
             .OrderBy(specialization => specialization, StringComparer.Ordinal)
             .Select(specialization => new ProbeSearchAlternativeDto(
-                ProbeSelectionValue.FormatSpecializationLabel(spellName, specialization),
+                ProbeSelectionValue.FormatSpecializationLabel(
+                    ProbeSelectionKind.Spell,
+                    spellName,
+                    specialization),
                 ProbeSelectionValue.EncodeOption(
                     ProbeSelectionKind.Spell,
                     spellName,
@@ -676,7 +660,7 @@ public sealed class TalentCatalogService(
         IReadOnlyList<ResolvedSpellOption> selectedSpellOptions)
     {
         var baseLabel = selection.HasOption && selection.OptionKind == ProbeSelectionOptionKind.Specialization
-            ? ProbeSelectionValue.FormatSelectionLabel(spellName, selection.OptionKind,
+            ? ProbeSelectionValue.FormatSelectionLabel(ProbeSelectionKind.Spell, spellName, selection.OptionKind,
                 selectedOptionName ?? selection.OptionName ?? string.Empty)
             : spellName;
 
@@ -1066,37 +1050,7 @@ public sealed class TalentCatalogService(
         out string matchedName,
         out TEntry entry)
     {
-        var normalizedLookupName = TalentCatalogText.NormalizeCatalogText(lookupName);
-        if (string.IsNullOrWhiteSpace(normalizedLookupName))
-        {
-            matchedName = string.Empty;
-            entry = default!;
-            return false;
-        }
-
-        if (entries.TryGetValue(normalizedLookupName, out entry!))
-        {
-            matchedName = normalizedLookupName;
-            return true;
-        }
-
-        var canonicalLookupName = TalentCatalogText.CanonicalizeName(normalizedLookupName);
-        foreach (var existingEntry in entries)
-        {
-            if (string.Equals(
-                    TalentCatalogText.CanonicalizeName(existingEntry.Key),
-                    canonicalLookupName,
-                    StringComparison.Ordinal))
-            {
-                matchedName = existingEntry.Key;
-                entry = existingEntry.Value;
-                return true;
-            }
-        }
-
-        matchedName = string.Empty;
-        entry = default!;
-        return false;
+        return TalentCatalogText.TryFindBestNameMatch(entries, lookupName, out matchedName, out entry!);
     }
 
     private sealed class KnownTalentEntry(TalentData talent, bool isOwnedByHero)

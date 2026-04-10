@@ -14,7 +14,11 @@ public sealed class SpellCatalogStore(IHostEnvironment environment)
 
     public bool TryGetEntry(string spellName, out SpellCatalogEntry entry)
     {
-        return _entriesByCanonical.Value.TryGetValue(TalentCatalogText.CanonicalizeName(spellName), out entry!);
+        return TalentCatalogText.TryFindBestNameMatch(
+            _entriesByCanonical.Value.Values,
+            static existingEntry => existingEntry.Name,
+            spellName,
+            out entry!);
     }
 
     private static string ResolveCatalogPath(IHostEnvironment environment)
