@@ -127,7 +127,9 @@
             <h3 class="block-title">Schlechte Eigenschaften</h3>
             <div class="action-block-body action-block-scroll">
                 <SchlechteEigenschaftPanel HasActiveHero="View.HasActiveHero"
+                                           IsAggregatedSelection="View.IsMultiMasterMode"
                                            SchlechteEigenschaften="View.BadTraits"
+                                           BadTraitOwners="View.BadTraitOwners"
                                            SelectedName="@View.SelectedBadTraitName"
                                            SelectedNameChanged="HandleSelectedBadTraitChanged"
                                            OnDirectRollRequested="ExecuteBadTraitRollAsync"

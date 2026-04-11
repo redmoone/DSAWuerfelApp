@@ -12,9 +12,7 @@ public sealed class BadTraitResolver(TalentCatalogService talentCatalogService)
             return null;
         }
 
-        return talentCatalogService.ResolveBadTrait(hero, badTraitName)
-               ?? throw new InvalidOperationException(
-                   "Die ausgewählte schlechte Eigenschaft ist für den Helden nicht vorhanden.");
+        return talentCatalogService.ResolveBadTrait(hero, badTraitName);
     }
 
     public BadTraitDto ResolveRequired(Hero hero, string? badTraitName)

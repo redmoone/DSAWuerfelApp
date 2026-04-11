@@ -55,6 +55,32 @@
     transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
+.bad-trait-chip.aggregated {
+    width: 100%;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+}
+
+.bad-trait-chip-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.bad-trait-chip-meta {
+    flex: 0 0 auto;
+    padding: 2px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    background-color: rgba(12, 24, 43, 0.52);
+    color: rgba(255, 248, 220, 0.9);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
 .bad-trait-chip:hover {
     background-color: rgba(212, 175, 55, 0.16);
     border-color: rgba(255, 219, 103, 0.65);
@@ -79,4 +105,39 @@
     border: 1px solid rgba(212, 175, 55, 0.35);
     background-color: rgba(12, 24, 43, 0.48);
     color: var(--dsa-white);
+}
+
+.bad-trait-owner-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.bad-trait-owner-badges.detail {
+    margin-top: -4px;
+}
+
+.bad-trait-owner-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    background-color: rgba(12, 24, 43, 0.52);
+    color: rgba(255, 248, 220, 0.9);
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.bad-trait-owner-badge-value {
+    padding: 1px 7px;
+    border-radius: 999px;
+    background-color: rgba(212, 175, 55, 0.18);
+    color: var(--dsa-gold);
+}
+
+.bad-trait-hint {
+    padding: 12px 14px;
 }

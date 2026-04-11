@@ -8,7 +8,9 @@ public sealed class WuerfelState
 
     public event Action? Changed;
 
-    public void ApplyContext(DicePageContextDto context)
+    public void ApplyContext(
+        DicePageContextDto context,
+        IReadOnlyDictionary<string, IReadOnlyList<BadTraitOwnerInfo>>? badTraitOwners = null)
     {
         var selectedBadTraitName = context.BadTraits.Any(trait =>
             string.Equals(trait.Name, Current.SelectedBadTraitName, StringComparison.Ordinal))
@@ -24,6 +26,9 @@ public sealed class WuerfelState
             context.Attributes.ToDictionary(attribute => attribute.Name, attribute => attribute.Value),
             AvailableProbes = context.AvailableProbes,
             BadTraits = context.BadTraits,
+            BadTraitOwners = badTraitOwners is null
+                ? new Dictionary<string, IReadOnlyList<BadTraitOwnerInfo>>(StringComparer.Ordinal)
+                : new Dictionary<string, IReadOnlyList<BadTraitOwnerInfo>>(badTraitOwners, StringComparer.Ordinal),
             ProbePlaceholder = context.ProbePlaceholder,
             ShowDebugForcedRolls = context.ShowDebugForcedRolls,
             SelectedAttributes = Array.Empty<string>(),
@@ -98,6 +103,7 @@ public sealed class WuerfelState
         Update(Current with
         {
             MasterTargets = targets.ToArray(),
+            BadTraitOwners = new Dictionary<string, IReadOnlyList<BadTraitOwnerInfo>>(StringComparer.Ordinal),
             ErrorMessage = null,
             LastMasterTalentRolls = Array.Empty<MasterTalentRollTargetResultDto>(),
             LastMasterAttributeRolls = Array.Empty<MasterAttributeRollTargetResultDto>()
@@ -392,6 +398,10 @@ public sealed record WuerfelViewState
     public IReadOnlyDictionary<string, int> AttributeValues { get; init; } = new Dictionary<string, int>();
     public IReadOnlyList<ProbeSearchEntryDto> AvailableProbes { get; init; } = Array.Empty<ProbeSearchEntryDto>();
     public IReadOnlyList<BadTraitDto> BadTraits { get; init; } = Array.Empty<BadTraitDto>();
+
+    public IReadOnlyDictionary<string, IReadOnlyList<BadTraitOwnerInfo>> BadTraitOwners { get; init; } =
+        new Dictionary<string, IReadOnlyList<BadTraitOwnerInfo>>(StringComparer.Ordinal);
+
     public string ProbePlaceholder { get; init; } = "Nach Proben suchen...";
     public IReadOnlyList<string> SelectedAttributes { get; init; } = Array.Empty<string>();
     public IReadOnlyList<int> SelectedDiceSides { get; init; } = Array.Empty<int>();
@@ -426,9 +436,11 @@ public sealed record WuerfelViewState
 
     public bool HasActiveHero => ActiveHeroId.HasValue;
     public bool IsMasterMode => MasterTargets.Count > 0;
+    public bool IsMultiMasterMode => MasterTargets.Count > 1;
 
     public int ActiveBadTraitModifier => ActiveArea switch
     {
+        _ when IsMultiMasterMode => 0,
         WuerfelArea.ProbeSearch => SelectedBadTrait?.TalentModifier ?? 0,
         WuerfelArea.Attributes => SelectedBadTrait?.AttributeModifier ?? 0,
         _ => 0
@@ -467,3 +479,10 @@ public sealed record WuerfelViewState
         return Math.Min(baseModifier, spellOptionModifier);
     }
 }
+
+public sealed record BadTraitOwnerInfo(
+    string PlayerName,
+    string? HeroName,
+    int Value,
+    int TalentModifier,
+    int AttributeModifier);

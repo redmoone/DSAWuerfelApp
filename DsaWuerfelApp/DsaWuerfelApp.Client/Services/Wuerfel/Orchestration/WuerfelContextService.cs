@@ -19,11 +19,13 @@ public sealed class WuerfelContextService(
                 .Where(target => target.ActiveHeroId.HasValue)
                 .ToArray();
 
-            var result = resolvedMasterTargets.Length > 0
+            var loadedContext = resolvedMasterTargets.Length > 0
                 ? await LoadMasterContextAsync(resolvedMasterTargets)
-                : await apiClient.GetContextAsync(activeHeroState.CurrentHero?.Id);
+                : new LoadedDicePageContext(
+                    await apiClient.GetContextAsync(activeHeroState.CurrentHero?.Id),
+                    new Dictionary<string, IReadOnlyList<BadTraitOwnerInfo>>(StringComparer.Ordinal));
 
-            state.ApplyContext(result);
+            state.ApplyContext(loadedContext.Context, loadedContext.BadTraitOwners);
         });
     }
 
@@ -119,35 +121,44 @@ public sealed class WuerfelContextService(
         return activeHeroState.CurrentHero?.Id ?? state.Current.ActiveHeroId;
     }
 
-    private async Task<DicePageContextDto> LoadMasterContextAsync(IReadOnlyList<SessionPlayerDto> masterTargets)
+    private async Task<LoadedDicePageContext> LoadMasterContextAsync(IReadOnlyList<SessionPlayerDto> masterTargets)
     {
-        var contexts = await Task.WhenAll(masterTargets.Select(target => apiClient.GetContextAsync(target.ActiveHeroId)));
-        if (contexts.Length == 1)
+        var targetContexts = await Task.WhenAll(masterTargets.Select(async target => new TargetDicePageContext(
+            target,
+            await apiClient.GetContextAsync(target.ActiveHeroId))));
+
+        if (targetContexts.Length == 1)
         {
-            var context = contexts[0];
-            var target = masterTargets[0];
+            var targetContext = targetContexts[0];
+            var context = targetContext.Context;
+            var target = targetContext.Target;
             var heroName = string.IsNullOrWhiteSpace(target.ActiveHeroName)
                 ? context.ActiveHeroName
                 : target.ActiveHeroName;
 
-            return new DicePageContextDto(
-                context.ActiveHeroId,
-                heroName,
-                context.Attributes,
-                context.AvailableProbes,
-                context.BadTraits,
-                $"Proben von {target.Name} durchsuchen...",
-                context.ShowDebugForcedRolls);
+            return new LoadedDicePageContext(
+                new DicePageContextDto(
+                    context.ActiveHeroId,
+                    heroName,
+                    context.Attributes,
+                    context.AvailableProbes,
+                    context.BadTraits,
+                    $"Proben von {target.Name} durchsuchen...",
+                    context.ShowDebugForcedRolls),
+                BuildBadTraitOwners([targetContext]));
         }
 
-        return new DicePageContextDto(
-            null,
-            $"{masterTargets.Count} Spieler",
-            BuildAverageAttributes(contexts),
-            BuildCommonProbes(contexts),
-            [],
-            $"Gemeinsame Proben für {masterTargets.Count} Spieler durchsuchen...",
-            contexts.Any(context => context.ShowDebugForcedRolls));
+        var badTraitOwners = BuildBadTraitOwners(targetContexts);
+        return new LoadedDicePageContext(
+            new DicePageContextDto(
+                null,
+                $"{masterTargets.Count} Spieler",
+                BuildAverageAttributes(targetContexts.Select(entry => entry.Context).ToArray()),
+                BuildCommonProbes(targetContexts.Select(entry => entry.Context).ToArray()),
+                BuildAggregatedBadTraits(badTraitOwners),
+                $"Gemeinsame Proben für {masterTargets.Count} Spieler durchsuchen...",
+                targetContexts.Any(entry => entry.Context.ShowDebugForcedRolls)),
+            badTraitOwners);
     }
 
     private static AttributeValueDto[] BuildAverageAttributes(IReadOnlyList<DicePageContextDto> contexts)
@@ -194,4 +205,70 @@ public sealed class WuerfelContextService(
 
         return new ProbeSearchEntryDto(displayLabel, source.Value, true, []);
     }
+
+    private static Dictionary<string, IReadOnlyList<BadTraitOwnerInfo>> BuildBadTraitOwners(
+        IReadOnlyList<TargetDicePageContext> targetContexts)
+    {
+        var badTraitOwners = new Dictionary<string, List<BadTraitOwnerInfo>>(StringComparer.Ordinal);
+
+        foreach (var targetContext in targetContexts)
+        {
+            var heroName = string.IsNullOrWhiteSpace(targetContext.Target.ActiveHeroName)
+                ? targetContext.Context.ActiveHeroName
+                : targetContext.Target.ActiveHeroName;
+
+            foreach (var badTrait in targetContext.Context.BadTraits)
+            {
+                if (!badTraitOwners.TryGetValue(badTrait.Name, out var owners))
+                {
+                    owners = [];
+                    badTraitOwners[badTrait.Name] = owners;
+                }
+
+                owners.Add(new BadTraitOwnerInfo(
+                    targetContext.Target.Name,
+                    heroName,
+                    badTrait.Value,
+                    badTrait.TalentModifier,
+                    badTrait.AttributeModifier));
+            }
+        }
+
+        return badTraitOwners.ToDictionary(
+            entry => entry.Key,
+            entry => (IReadOnlyList<BadTraitOwnerInfo>)entry.Value
+                .OrderBy(owner => owner.PlayerName, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(owner => owner.HeroName, StringComparer.OrdinalIgnoreCase)
+                .ToArray(),
+            StringComparer.Ordinal);
+    }
+
+    private static BadTraitDto[] BuildAggregatedBadTraits(
+        IReadOnlyDictionary<string, IReadOnlyList<BadTraitOwnerInfo>> badTraitOwners)
+    {
+        return badTraitOwners
+            .OrderBy(entry => entry.Key, StringComparer.Ordinal)
+            .Select(entry =>
+            {
+                var strongestOwner = entry.Value
+                    .OrderByDescending(owner => owner.Value)
+                    .ThenBy(owner => owner.PlayerName, StringComparer.OrdinalIgnoreCase)
+                    .First();
+
+                return new BadTraitDto(
+                    entry.Key,
+                    strongestOwner.Value,
+                    strongestOwner.TalentModifier,
+                    strongestOwner.AttributeModifier);
+            })
+            .ToArray();
+    }
 }
+
+internal sealed record LoadedDicePageContext(
+    DicePageContextDto Context,
+    IReadOnlyDictionary<string, IReadOnlyList<BadTraitOwnerInfo>> BadTraitOwners);
+
+internal sealed record TargetDicePageContext(
+    SessionPlayerDto Target,
+    DicePageContextDto Context);
