@@ -1,4 +1,4 @@
-﻿﻿.wuerfel-page-container {
+.wuerfel-page-container {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -6,8 +6,10 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    background-color: #07111d;
     min-height: 100vh;
     margin: 0;
+    width: 100%;
     max-width: 100%;
     gap: 24px;
     color: var(--dsa-white);
@@ -17,43 +19,27 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
-    padding: 18px 20px;
-    border-radius: 10px;
-    border: 2px solid rgba(212, 175, 55, 0.72);
-    background: linear-gradient(135deg, rgba(9, 25, 48, 0.88), rgba(25, 53, 84, 0.82));
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
+    padding: 18px 18px 20px;
 }
 
-.master-selection-header {
-    display: flex;
-    justify-content: space-between;
-    gap: 16px;
-    align-items: flex-start;
-    flex-wrap: wrap;
+.master-selection-body {
+    gap: 12px;
 }
 
-.master-selection-title {
-    margin: 0;
-    font-size: 1.15rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--dsa-gold);
-}
-
-.master-selection-text,
 .master-selection-empty {
-    margin: 4px 0 0;
+    margin: 0;
     color: rgba(255, 248, 220, 0.82);
     line-height: 1.45;
 }
 
 .master-selection-actions {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
-    flex-wrap: wrap;
 }
 
 .master-selection-button {
+    width: 100%;
     padding: 8px 14px;
     border-radius: 999px;
     border: 1px solid rgba(212, 175, 55, 0.45);
@@ -80,15 +66,15 @@
 
 .master-target-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 10px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
 }
 
 .master-target-chip {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding: 12px 14px;
+    padding: 10px 12px;
     border-radius: 10px;
     border: 1px solid rgba(212, 175, 55, 0.28);
     background: rgba(255, 255, 255, 0.05);
@@ -159,8 +145,50 @@
 }
 
 @media (min-width: 901px) {
+    .top-section {
+        grid-template-columns: minmax(0, 1.55fr) minmax(360px, 0.9fr);
+        grid-template-rows: minmax(320px, 1fr) auto;
+    }
+
+    .history-area {
+        grid-column: 1;
+        grid-row: 1;
+        height: auto;
+        min-height: 0;
+    }
+
+    .additional-info-block {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        min-height: 0;
+        align-self: stretch;
+    }
+
     .middle-section {
+        grid-column: 1;
+        grid-row: 2;
         grid-template-columns: minmax(420px, 1.45fr) minmax(180px, 0.75fr);
+    }
+
+    .top-section.master-top-section {
+        grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.42fr) minmax(340px, 0.78fr);
+    }
+
+    .top-section.master-top-section .master-selection-panel {
+        grid-column: 2;
+        grid-row: 1;
+        min-height: 0;
+        align-self: stretch;
+    }
+
+    .top-section.master-top-section .additional-info-block {
+        grid-column: 3;
+        grid-row: 1;
+    }
+
+    .top-section.master-top-section .middle-section {
+        grid-column: 1 / span 3;
+        grid-row: 2;
     }
 }
 
@@ -611,32 +639,14 @@
         overflow: hidden;
     }
 
-    .top-section {
-        flex: 1 1 0;
-        grid-template-columns: minmax(0, 1.55fr) minmax(378px, 0.9fr);
-        grid-template-rows: minmax(0, 1fr) auto;
-    }
-
-    .history-area {
-        grid-column: 1;
-        grid-row: 1;
-        height: auto;
-        min-height: 0;
-    }
-
-    .additional-info-block {
-        grid-column: 2;
-        grid-row: 1 / span 2;
-        min-height: 0;
-        align-self: stretch;
-    }
-
     .middle-section {
-        grid-column: 1;
-        grid-row: 2;
         width: 100%;
         min-height: 175px;
         grid-template-columns: minmax(480px, 1.5fr) minmax(260px, 0.85fr);
+    }
+
+    .top-section.master-top-section {
+        grid-template-columns: minmax(0, 1.45fr) minmax(236px, 0.42fr) minmax(360px, 0.82fr);
     }
 
     .dice-3d-box {

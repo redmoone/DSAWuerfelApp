@@ -139,8 +139,8 @@
                                 <strong class="account-value">@CurrentUser!.Email</strong>
                             </div>
                             <div class="account-block">
-                                <span class="account-label">Sessionname</span>
-                                <strong class="account-value">@_userName</strong>
+                                <span class="account-label">Spielername</span>
+                                <strong class="account-value">@ResolvedPlayerName</strong>
                             </div>
                         </div>
 
@@ -197,7 +197,7 @@
                                 <button type="button"
                                         class="session-btn"
                                         @onclick="Join"
-                                        disabled="@string.IsNullOrWhiteSpace(_userName) || string.IsNullOrWhiteSpace(_joinCode)">
+                                        disabled="@(!CanJoinSession)">
                                     Sitzung Beitreten
                                 </button>
                             </div>
@@ -230,7 +230,7 @@
                                 <button type="button"
                                         class="session-btn"
                                         @onclick="Create"
-                                        disabled="@string.IsNullOrWhiteSpace(_userName)">
+                                        disabled="@(!CanCreateSession)">
                                     Session Erstellen
                                 </button>
                             </div>

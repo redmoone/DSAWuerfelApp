@@ -35,6 +35,10 @@ public partial class Lobby : IDisposable
     private int SessionCount => SessionState.Sessions.Count;
     private int ActivePlayerCount => ActiveSession?.Players.Length ?? 0;
     private int ActiveOnlineCount => ActiveSession?.Players.Count(player => player.IsOnline) ?? 0;
+    private string? ResolvedPlayerName => ResolvePlayerName();
+    private string NormalizedJoinCode => _joinCode.Trim().ToUpperInvariant();
+    private bool CanJoinSession => !string.IsNullOrWhiteSpace(ResolvedPlayerName) && !string.IsNullOrWhiteSpace(NormalizedJoinCode);
+    private bool CanCreateSession => !string.IsNullOrWhiteSpace(ResolvedPlayerName);
 
     private int MagicLinkCooldownSecondsRemaining => _magicLinkCooldownEndsAtUtc is null
         ? 0
@@ -90,13 +94,14 @@ public partial class Lobby : IDisposable
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(_userName))
+        var playerName = ResolvePlayerName();
+        if (string.IsNullOrWhiteSpace(playerName))
         {
             _error = "Bitte Namen eingeben";
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(_joinCode))
+        if (string.IsNullOrWhiteSpace(NormalizedJoinCode))
         {
             _error = "Bitte Session-Code eingeben";
             return;
@@ -105,7 +110,7 @@ public partial class Lobby : IDisposable
         _error = string.Empty;
         try
         {
-            var success = await SessionState.JoinSessionAsync(_joinCode.ToUpper(), _userName.Trim());
+            var success = await SessionState.JoinSessionAsync(NormalizedJoinCode, playerName);
             if (success)
             {
                 Nav.NavigateTo("/wuerfel");
@@ -128,7 +133,8 @@ public partial class Lobby : IDisposable
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(_userName))
+        var playerName = ResolvePlayerName();
+        if (string.IsNullOrWhiteSpace(playerName))
         {
             _error = "Bitte Namen eingeben";
             return;
@@ -139,7 +145,7 @@ public partial class Lobby : IDisposable
 
         try
         {
-            await SessionState.CreateSessionAsync(_userName.Trim(), sessionName);
+            await SessionState.CreateSessionAsync(playerName, sessionName);
             Nav.NavigateTo("/wuerfel");
         }
         catch (InvalidOperationException exception)
@@ -302,13 +308,31 @@ public partial class Lobby : IDisposable
 
     private string BuildDefaultSessionName()
     {
-        var baseName = string.IsNullOrWhiteSpace(_userName)
-            ? CurrentUser?.DisplayName
-            : _userName;
+        var baseName = ResolvePlayerName();
 
         return string.IsNullOrWhiteSpace(baseName)
             ? "Neue Runde"
             : $"{baseName.Trim()}s Runde";
+    }
+
+    private string? ResolvePlayerName()
+    {
+        if (!string.IsNullOrWhiteSpace(_userName))
+        {
+            return _userName.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(CurrentUser?.DisplayName))
+        {
+            return CurrentUser.DisplayName.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(CurrentUser?.Email))
+        {
+            return CurrentUser.Email.Trim();
+        }
+
+        return null;
     }
 
     private void SetMagicLinkCooldown(int cooldownSeconds)

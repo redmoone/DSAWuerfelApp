@@ -3,59 +3,55 @@
 @attribute [Authorize]
 
 <div class="wuerfel-page-container pa-4">
-    @if (IsSessionMaster)
-    {
-        <div class="master-selection-panel">
-            <div class="master-selection-header">
-                <div>
-                    <h3 class="master-selection-title">Meisteransicht</h3>
-                    <p class="master-selection-text">Wähle einen, mehrere oder alle Spieler für einen Sammelwurf.</p>
-                </div>
-
-                <div class="master-selection-actions">
-                    <button class="master-selection-button"
-                            type="button"
-                            @onclick="SelectAllMasterTargetsAsync"
-                            disabled="@(AvailableMasterTargets.Count == 0 || IsAllMasterTargetsSelected)">
-                        Alle
-                    </button>
-                    <button class="master-selection-button muted"
-                            type="button"
-                            @onclick="ClearMasterTargetsAsync"
-                            disabled="@(_selectedMasterTargetUserIds.Count == 0)">
-                        Einzelwurf
-                    </button>
-                </div>
-            </div>
-
-            @if (AvailableMasterTargets.Count == 0)
-            {
-                <p class="master-selection-empty">Noch kein Spieler mit aktivem Helden in der Session.</p>
-            }
-            else
-            {
-                <div class="master-target-grid">
-                    @foreach (var target in AvailableMasterTargets)
-                    {
-                        <button class="master-target-chip @(IsMasterTargetSelected(target.UserId) ? "active" : string.Empty)"
-                                type="button"
-                                @onclick="() => ToggleMasterTargetAsync(target.UserId)">
-                            <span class="master-target-name">@target.Name</span>
-                            @if (!string.IsNullOrWhiteSpace(target.ActiveHeroName))
-                            {
-                                <span class="master-target-hero">@target.ActiveHeroName</span>
-                            }
-                        </button>
-                    }
-                </div>
-            }
-        </div>
-    }
-
-    <div class="top-section">
+    <div class="top-section @(IsSessionMaster ? "master-top-section" : string.Empty)">
         <div class="history-area" title="Historie der bisherigen Würfe">
             <RollHistory Entries="View.History"/>
         </div>
+
+        @if (IsSessionMaster)
+        {
+            <div class="action-block master-selection-panel">
+                <h3 class="block-title">Auswahl</h3>
+                <div class="action-block-body master-selection-body">
+                    <div class="master-selection-actions">
+                        <button class="master-selection-button"
+                                type="button"
+                                @onclick="SelectAllMasterTargetsAsync"
+                                disabled="@(AvailableMasterTargets.Count == 0 || IsAllMasterTargetsSelected)">
+                            Alle
+                        </button>
+                        <button class="master-selection-button muted"
+                                type="button"
+                                @onclick="ClearMasterTargetsAsync"
+                                disabled="@(_selectedMasterTargetUserIds.Count == 0)">
+                            Einzelwurf
+                        </button>
+                    </div>
+
+                    @if (AvailableMasterTargets.Count == 0)
+                    {
+                        <p class="master-selection-empty">Noch kein Spieler mit aktivem Helden in der Session.</p>
+                    }
+                    else
+                    {
+                        <div class="master-target-grid">
+                            @foreach (var target in AvailableMasterTargets)
+                            {
+                                <button class="master-target-chip @(IsMasterTargetSelected(target.UserId) ? "active" : string.Empty)"
+                                        type="button"
+                                        @onclick="() => ToggleMasterTargetAsync(target.UserId)">
+                                    <span class="master-target-name">@target.Name</span>
+                                    @if (!string.IsNullOrWhiteSpace(target.ActiveHeroName))
+                                    {
+                                        <span class="master-target-hero">@target.ActiveHeroName</span>
+                                    }
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
 
         <div class="action-block additional-info-block">
             <h3 class="block-title">Zusätzliche Informationen</h3>

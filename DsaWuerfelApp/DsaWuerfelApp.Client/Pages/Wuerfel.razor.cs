@@ -17,9 +17,42 @@ public partial class Wuerfel : IDisposable
 
     private WuerfelViewState View => State.Current;
 
-    private bool IsSessionMaster =>
-        !string.IsNullOrWhiteSpace(AuthState.Current.User?.Id) &&
-        string.Equals(SessionState.ActiveSession?.MasterUserId, AuthState.Current.User?.Id, StringComparison.Ordinal);
+    private SessionPlayerDto? CurrentSessionPlayer
+    {
+        get
+        {
+            var currentUserId = NormalizeUserId(AuthState.Current.User?.Id);
+            if (string.IsNullOrWhiteSpace(currentUserId))
+            {
+                return null;
+            }
+
+            return SessionState.ActiveSession?.Players.FirstOrDefault(player =>
+                string.Equals(NormalizeUserId(player.UserId), currentUserId, StringComparison.Ordinal));
+        }
+    }
+
+    private bool IsSessionMaster
+    {
+        get
+        {
+            var currentUserId = NormalizeUserId(AuthState.Current.User?.Id);
+            if (string.IsNullOrWhiteSpace(currentUserId))
+            {
+                return false;
+            }
+
+            if (CurrentSessionPlayer is { IsMaster: true })
+            {
+                return true;
+            }
+
+            return string.Equals(
+                NormalizeUserId(SessionState.ActiveSession?.MasterUserId),
+                currentUserId,
+                StringComparison.Ordinal);
+        }
+    }
 
     private IReadOnlyList<SessionPlayerDto> AvailableMasterTargets =>
         SessionState.ActiveSession?.Players
@@ -34,6 +67,7 @@ public partial class Wuerfel : IDisposable
     public void Dispose()
     {
         State.Changed -= HandleStateChanged;
+        AuthState.Changed -= HandleAuthChanged;
         SessionState.ActiveSessionChanged -= HandleActiveSessionChanged;
         Facade.Detach();
     }
@@ -41,6 +75,7 @@ public partial class Wuerfel : IDisposable
     protected override async Task OnInitializedAsync()
     {
         State.Changed += HandleStateChanged;
+        AuthState.Changed += HandleAuthChanged;
         SessionState.ActiveSessionChanged += HandleActiveSessionChanged;
         await Facade.AttachAsync();
         await ApplyMasterTargetSelectionAsync();
@@ -173,6 +208,15 @@ public partial class Wuerfel : IDisposable
         _ = InvokeAsync(StateHasChanged);
     }
 
+    private void HandleAuthChanged()
+    {
+        _ = InvokeAsync(async () =>
+        {
+            await ApplyMasterTargetSelectionAsync();
+            StateHasChanged();
+        });
+    }
+
     private void HandleActiveSessionChanged()
     {
         _ = InvokeAsync(async () =>
@@ -197,5 +241,18 @@ public partial class Wuerfel : IDisposable
             .ToArray();
 
         return Facade.SetMasterTargetsAsync(selectedTargets);
+    }
+
+    private static string? NormalizeUserId(string? userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return null;
+        }
+
+        var trimmedUserId = userId.Trim();
+        return Guid.TryParse(trimmedUserId, out var parsedGuid)
+            ? parsedGuid.ToString("N")
+            : trimmedUserId;
     }
 }
