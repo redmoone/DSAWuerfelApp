@@ -151,6 +151,11 @@ public class GameClient : IAsyncDisposable
         return _hub.InvokeAsync("DeleteSession", sessionId);
     }
 
+    public Task UpdateActiveHero(string sessionId, Guid? heroId, string? heroName)
+    {
+        return _hub.InvokeAsync("UpdateActiveHero", sessionId, heroId, heroName);
+    }
+
     public async Task RollFree(FreeRollRequestDto request)
     {
         await _hub.InvokeAsync("RollFree", request);

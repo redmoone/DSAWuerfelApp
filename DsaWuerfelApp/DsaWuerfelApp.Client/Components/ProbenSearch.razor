@@ -42,4 +42,14 @@
             }
         </div>
     }
+    else if (_isDropdownOpen && !UseFallbackCatalog && !FilteredProben.Any())
+    {
+        <div class="search-dropdown">
+            <div class="dropdown-item inactive">
+                <div class="dropdown-item-content">
+                    <span class="dropdown-item-note">Keine gemeinsamen Proben für diese Auswahl gefunden.</span>
+                </div>
+            </div>
+        </div>
+    }
 </div>

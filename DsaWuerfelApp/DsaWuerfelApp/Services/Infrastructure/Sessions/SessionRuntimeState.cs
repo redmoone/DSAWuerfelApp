@@ -116,6 +116,18 @@ public sealed class SessionRuntimeState
         }
     }
 
+    public void UpdatePlayerHero(GameSession session, string userId, Guid? heroId, string? heroName)
+    {
+        var player = FindPlayer(session, userId);
+        if (player is null)
+        {
+            return;
+        }
+
+        player.ActiveHeroId = heroId;
+        player.ActiveHeroName = string.IsNullOrWhiteSpace(heroName) ? null : heroName.Trim();
+    }
+
     public IReadOnlyList<SessionSummaryDto> GetSessionsForUser(string userId)
     {
         return _sessions.Values
@@ -260,7 +272,9 @@ public sealed class SessionRuntimeState
                 player.UserId,
                 player.Name,
                 player.IsMaster,
-                IsUserOnline(player.UserId)))
+                IsUserOnline(player.UserId),
+                player.ActiveHeroId,
+                player.ActiveHeroName))
             .ToArray();
     }
 

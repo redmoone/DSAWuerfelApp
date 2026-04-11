@@ -27,6 +27,7 @@ builder.Services.AddScoped<WuerfelContextService>();
 builder.Services.AddScoped<WuerfelContextSubscription>();
 builder.Services.AddScoped<WuerfelSignalREventBridge>();
 builder.Services.AddScoped<WuerfelSessionBridge>();
+builder.Services.AddScoped<SessionHeroSyncService>();
 builder.Services.AddScoped<WuerfelRollCommandDispatcher>();
 builder.Services.AddScoped<IWuerfelRollDispatchStrategy, SessionWuerfelRollDispatchStrategy>();
 builder.Services.AddScoped<IWuerfelRollDispatchStrategy, ApiWuerfelRollDispatchStrategy>();

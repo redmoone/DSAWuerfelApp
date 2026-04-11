@@ -200,6 +200,18 @@ public class SessionService(SessionRecordStore recordStore, SessionRuntimeState 
         }
     }
 
+    public IReadOnlyList<string> UpdatePlayerHero(string sessionId, string userId, Guid? heroId, string? heroName)
+    {
+        lock (_syncRoot)
+        {
+            EnsureLoaded();
+
+            var session = runtimeState.GetMemberSession(sessionId, userId);
+            runtimeState.UpdatePlayerHero(session, userId, heroId, heroName);
+            return runtimeState.GetAffectedUserIds(session);
+        }
+    }
+
     public GameSession RequireRollSession(string? sessionId, string connectionId, string userId)
     {
         lock (_syncRoot)

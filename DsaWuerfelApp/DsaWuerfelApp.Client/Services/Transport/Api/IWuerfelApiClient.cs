@@ -22,6 +22,14 @@ public interface IWuerfelApiClient
         AttributeRollRequestDto request,
         CancellationToken cancellationToken = default);
 
+    Task<MasterTalentRollTargetResultDto[]> RollMasterTalentAsync(
+        MasterTalentRollRequestDto request,
+        CancellationToken cancellationToken = default);
+
+    Task<MasterAttributeRollTargetResultDto[]> RollMasterAttributeAsync(
+        MasterAttributeRollRequestDto request,
+        CancellationToken cancellationToken = default);
+
     Task<BadTraitRollResultDto> RollBadTraitAsync(
         BadTraitRollRequestDto request,
         CancellationToken cancellationToken = default);

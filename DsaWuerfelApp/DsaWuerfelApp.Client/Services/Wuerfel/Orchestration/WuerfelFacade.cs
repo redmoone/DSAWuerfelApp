@@ -5,6 +5,7 @@ namespace DsaWuerfelApp.Client.Services;
 public sealed class WuerfelFacade(
     WuerfelState state,
     GameClient gameClient,
+    IWuerfelApiClient apiClient,
     SessionState sessionState,
     WuerfelSelectionService selectionService,
     WuerfelContextService contextService,
@@ -41,6 +42,12 @@ public sealed class WuerfelFacade(
         sessionBridge.Detach();
         contextSubscription.Detach();
         _isAttached = false;
+    }
+
+    public async Task SetMasterTargetsAsync(IReadOnlyList<SessionPlayerDto> targets)
+    {
+        state.SetMasterTargets(targets);
+        await contextService.LoadContextAsync(targets);
     }
 
     public Task AddDieAsync(int sides)
@@ -135,6 +142,22 @@ public sealed class WuerfelFacade(
 
     public Task ExecuteCurrentRollAsync()
     {
+        if (state.Current.IsMasterMode)
+        {
+            if (!string.IsNullOrWhiteSpace(state.Current.SelectedProbeValue))
+            {
+                return ExecuteMasterTalentRollAsync();
+            }
+
+            if (state.Current.SelectedAttributes.Count > 0)
+            {
+                return ExecuteMasterAttributeRollAsync();
+            }
+
+            state.SetError("Im Meistermodus sind Sammelwürfe aktuell für Proben und Eigenschaften verfügbar.");
+            return Task.CompletedTask;
+        }
+
         if (!string.IsNullOrWhiteSpace(state.Current.SelectedProbeValue))
         {
             return ExecuteTalentRollAsync();
@@ -240,6 +263,70 @@ public sealed class WuerfelFacade(
             client => client.RollAttribute(request),
             (apiClient, cancellationToken) => apiClient.RollAttributeAsync(request, cancellationToken),
             state.ApplyAttributeRollResult));
+    }
+
+    private Task ExecuteMasterTalentRollAsync()
+    {
+        var targets = BuildMasterTargets();
+        if (targets.Length == 0)
+        {
+            state.SetError("Bitte mindestens einen Spieler mit aktivem Helden auswählen.");
+            return Task.CompletedTask;
+        }
+
+        if (string.IsNullOrWhiteSpace(state.Current.SelectedProbeValue))
+        {
+            state.SetError("Bitte zuerst ein Talent oder einen Zauber aus der Probensuche wählen.");
+            return Task.CompletedTask;
+        }
+
+        var request = new MasterTalentRollRequestDto(
+            targets,
+            state.Current.SelectedProbeValue,
+            state.Current.Modifier,
+            state.Current.SelectedBadTraitName,
+            state.Current.SelectedSpellOptionValues.ToArray(),
+            state.Current.ForcedRollsText);
+
+        return operationRunner.RunAsync(async () =>
+        {
+            var results = await apiClient.RollMasterTalentAsync(request);
+            state.ApplyMasterTalentRollResults(results);
+        });
+    }
+
+    private Task ExecuteMasterAttributeRollAsync()
+    {
+        var targets = BuildMasterTargets();
+        if (targets.Length == 0)
+        {
+            state.SetError("Bitte mindestens einen Spieler mit aktivem Helden auswählen.");
+            return Task.CompletedTask;
+        }
+
+        var request = new MasterAttributeRollRequestDto(
+            targets,
+            state.Current.SelectedAttributes.ToArray(),
+            state.Current.Modifier,
+            state.Current.SelectedBadTraitName);
+
+        return operationRunner.RunAsync(async () =>
+        {
+            var results = await apiClient.RollMasterAttributeAsync(request);
+            state.ApplyMasterAttributeRollResults(results);
+        });
+    }
+
+    private MasterRollTargetDto[] BuildMasterTargets()
+    {
+        return state.Current.MasterTargets
+            .Where(target => target.ActiveHeroId.HasValue)
+            .Select(target => new MasterRollTargetDto(
+                target.UserId,
+                target.Name,
+                target.ActiveHeroId!.Value,
+                target.ActiveHeroName))
+            .ToArray();
     }
 
     private Task ExecuteAsync<TResult>(WuerfelRollCommand<TResult> command)

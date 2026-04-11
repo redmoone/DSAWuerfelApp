@@ -9,6 +9,7 @@ public partial class WuerfelProbePanel
     [Parameter]
     public IReadOnlyList<ProbeSearchEntryDto> AvailableProben { get; set; } = Array.Empty<ProbeSearchEntryDto>();
 
+    [Parameter] public bool UseFallbackCatalog { get; set; } = true;
     [Parameter] public string Placeholder { get; set; } = "Nach Proben suchen...";
     [Parameter] public string SelectedProbe { get; set; } = string.Empty;
     [Parameter] public ProbeInfoResultDto? ProbeInfo { get; set; }

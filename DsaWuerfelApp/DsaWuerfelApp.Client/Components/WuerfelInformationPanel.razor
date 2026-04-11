@@ -129,10 +129,70 @@
         </section>
     }
 
+    @if (MasterTalentResults.Count > 0)
+    {
+        <section class="additional-info-panel">
+            <h4 class="additional-info-title">Meister-Sammelwurf</h4>
+            <div class="master-roll-list">
+                @foreach (var item in MasterTalentResults)
+                {
+                    <div class="master-roll-item @GetMasterTalentItemClass(item)">
+                        <div class="master-roll-header">
+                            <span class="master-roll-target">@FormatMasterTarget(item.PlayerName, item.HeroName)</span>
+                            <span class="master-roll-status">@GetMasterTalentStatusText(item)</span>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(item.ErrorMessage))
+                        {
+                            <p class="master-roll-text">@item.ErrorMessage</p>
+                        }
+                        else if (item.Result is not null)
+                        {
+                            <p class="master-roll-text">
+                                @item.Result.TalentName · Rest @item.Result.Rest · Würfe
+                                @string.Join(", ", item.Result.Rolls.Select(roll => roll.Value))
+                            </p>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+    }
+
+    @if (MasterAttributeResults.Count > 0)
+    {
+        <section class="additional-info-panel">
+            <h4 class="additional-info-title">Meister-Eigenschaftswurf</h4>
+            <div class="master-roll-list">
+                @foreach (var item in MasterAttributeResults)
+                {
+                    <div class="master-roll-item @GetMasterAttributeItemClass(item)">
+                        <div class="master-roll-header">
+                            <span class="master-roll-target">@FormatMasterTarget(item.PlayerName, item.HeroName)</span>
+                            <span class="master-roll-status">@GetMasterAttributeStatusText(item)</span>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(item.ErrorMessage))
+                        {
+                            <p class="master-roll-text">@item.ErrorMessage</p>
+                        }
+                        else if (item.Result is not null)
+                        {
+                            <p class="master-roll-text">
+                                @item.Result.Probe · @item.Result.SuccessCount/@item.Result.Details.Length bestanden · Würfe
+                                @string.Join(", ", item.Result.Rolls.Select(roll => roll.Value))
+                            </p>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+    }
+
     @if (!HasProbeInfoSummary(ProbeInfo) &&
          TalentResult is null &&
          AttributeResult?.Requirement is null &&
-         BadTraitResult is null)
+         BadTraitResult is null &&
+         MasterTalentResults.Count == 0 &&
+         MasterAttributeResults.Count == 0)
     {
         <p class="additional-info-empty">
             Wähle eine Probe und nutze den Info-Button, führe eine Probe aus, würfle mit Eigenschaften oder
@@ -147,6 +207,10 @@
     [Parameter] public TalentRollResultDto? TalentResult { get; set; }
     [Parameter] public AttributeRollResultDto? AttributeResult { get; set; }
     [Parameter] public BadTraitRollResultDto? BadTraitResult { get; set; }
+    [Parameter] public IReadOnlyList<MasterTalentRollTargetResultDto> MasterTalentResults { get; set; } =
+        Array.Empty<MasterTalentRollTargetResultDto>();
+    [Parameter] public IReadOnlyList<MasterAttributeRollTargetResultDto> MasterAttributeResults { get; set; } =
+        Array.Empty<MasterAttributeRollTargetResultDto>();
 
     private static bool HasProbeInfoSummary(ProbeInfoResultDto? probeInfo)
     {
@@ -212,6 +276,57 @@
     private static string GetBadTraitEvaluationClass(BadTraitRollResultDto result)
     {
         return result.Success ? "success" : "failure";
+    }
+
+    private static string FormatMasterTarget(string playerName, string? heroName)
+    {
+        return string.IsNullOrWhiteSpace(heroName)
+            ? playerName
+            : $"{playerName} · {heroName}";
+    }
+
+    private static string GetMasterTalentStatusText(MasterTalentRollTargetResultDto item)
+    {
+        return !string.IsNullOrWhiteSpace(item.ErrorMessage)
+            ? "Fehler"
+            : item.Result is null
+                ? "Offen"
+                : GetProbeStatusText(item.Result);
+    }
+
+    private static string GetMasterTalentItemClass(MasterTalentRollTargetResultDto item)
+    {
+        return !string.IsNullOrWhiteSpace(item.ErrorMessage)
+            ? "failure"
+            : item.Result is null
+                ? string.Empty
+                : GetProbeEvaluationClass(item.Result);
+    }
+
+    private static string GetMasterAttributeStatusText(MasterAttributeRollTargetResultDto item)
+    {
+        return !string.IsNullOrWhiteSpace(item.ErrorMessage)
+            ? "Fehler"
+            : item.Result is null
+                ? "Offen"
+                : item.Result.Success
+                    ? "Bestanden"
+                    : "Misslungen";
+    }
+
+    private static string GetMasterAttributeItemClass(MasterAttributeRollTargetResultDto item)
+    {
+        if (!string.IsNullOrWhiteSpace(item.ErrorMessage))
+        {
+            return "failure";
+        }
+
+        if (item.Result is null)
+        {
+            return string.Empty;
+        }
+
+        return item.Result.Success ? "success" : "failure";
     }
 
 }

@@ -68,6 +68,8 @@ builder.Services.AddScoped<RollFreeHandler>();
 builder.Services.AddScoped<RollTalentHandler>();
 builder.Services.AddScoped<RollAttributeHandler>();
 builder.Services.AddScoped<RollBadTraitHandler>();
+builder.Services.AddScoped<RollMasterTalentHandler>();
+builder.Services.AddScoped<RollMasterAttributeHandler>();
 builder.Services.AddScoped<DiceWorkflowService>();
 builder.Services.AddScoped<MagicLinkService>();
 builder.Services.AddSingleton<GameSessionRollPipeline>();

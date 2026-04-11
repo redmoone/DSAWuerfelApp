@@ -17,6 +17,7 @@ public sealed class WuerfelState
 
         Update(Current with
         {
+            MasterTargets = Current.MasterTargets,
             ActiveHeroId = context.ActiveHeroId,
             ActiveHeroName = context.ActiveHeroName,
             AttributeValues =
@@ -40,6 +41,8 @@ public sealed class WuerfelState
             LastTalentRoll = null,
             LastAttributeRoll = null,
             LastBadTraitRoll = null,
+            LastMasterTalentRolls = Array.Empty<MasterTalentRollTargetResultDto>(),
+            LastMasterAttributeRolls = Array.Empty<MasterAttributeRollTargetResultDto>(),
             PreviewVersion = Current.PreviewVersion + 1
         });
     }
@@ -88,6 +91,17 @@ public sealed class WuerfelState
             : selectedBadTraitName;
 
         Update(Current with { SelectedBadTraitName = nextSelection, ErrorMessage = null });
+    }
+
+    public void SetMasterTargets(IReadOnlyList<SessionPlayerDto> targets)
+    {
+        Update(Current with
+        {
+            MasterTargets = targets.ToArray(),
+            ErrorMessage = null,
+            LastMasterTalentRolls = Array.Empty<MasterTalentRollTargetResultDto>(),
+            LastMasterAttributeRolls = Array.Empty<MasterAttributeRollTargetResultDto>()
+        });
     }
 
     public void SwitchArea(WuerfelArea targetArea)
@@ -232,6 +246,22 @@ public sealed class WuerfelState
         ApplyResult(result.Equation, result.HistoryEntry, null, null, result);
     }
 
+    public void ApplyMasterTalentRollResults(IReadOnlyList<MasterTalentRollTargetResultDto> results)
+    {
+        ApplyMasterResults(
+            results.Select(result => result.Result?.Equation),
+            results.ToArray(),
+            Array.Empty<MasterAttributeRollTargetResultDto>());
+    }
+
+    public void ApplyMasterAttributeRollResults(IReadOnlyList<MasterAttributeRollTargetResultDto> results)
+    {
+        ApplyMasterResults(
+            results.Select(result => result.Result?.Equation),
+            Array.Empty<MasterTalentRollTargetResultDto>(),
+            results.ToArray());
+    }
+
     private void ApplyResult(
         RollEquationDto equation,
         RollHistoryEntryDto historyEntry,
@@ -246,9 +276,36 @@ public sealed class WuerfelState
             LastTalentRoll = talentRollResult,
             LastAttributeRoll = attributeRollResult,
             LastBadTraitRoll = badTraitRollResult,
+            LastMasterTalentRolls = Array.Empty<MasterTalentRollTargetResultDto>(),
+            LastMasterAttributeRolls = Array.Empty<MasterAttributeRollTargetResultDto>(),
             History = history,
             AnimatedDiceSides = equation.Rolls.Select(roll => roll.Sides).ToArray(),
             AnimatedDiceValues = equation.Rolls.Select(roll => roll.Value).ToArray(),
+            ResultVersion = Current.ResultVersion + 1,
+            ErrorMessage = null
+        });
+    }
+
+    private void ApplyMasterResults(
+        IEnumerable<RollEquationDto?> equations,
+        IReadOnlyList<MasterTalentRollTargetResultDto> talentResults,
+        IReadOnlyList<MasterAttributeRollTargetResultDto> attributeResults)
+    {
+        var successfulRolls = equations
+            .Where(equation => equation is not null)
+            .SelectMany(equation => equation!.Rolls)
+            .Take(24)
+            .ToArray();
+
+        Update(Current with
+        {
+            LastTalentRoll = null,
+            LastAttributeRoll = null,
+            LastBadTraitRoll = null,
+            LastMasterTalentRolls = talentResults,
+            LastMasterAttributeRolls = attributeResults,
+            AnimatedDiceSides = successfulRolls.Select(roll => roll.Sides).ToArray(),
+            AnimatedDiceValues = successfulRolls.Select(roll => roll.Value).ToArray(),
             ResultVersion = Current.ResultVersion + 1,
             ErrorMessage = null
         });
@@ -272,6 +329,8 @@ public sealed class WuerfelState
             LastTalentRoll = null,
             LastAttributeRoll = null,
             LastBadTraitRoll = null,
+            LastMasterTalentRolls = Array.Empty<MasterTalentRollTargetResultDto>(),
+            LastMasterAttributeRolls = Array.Empty<MasterAttributeRollTargetResultDto>(),
             PreviewVersion = state.PreviewVersion + 1
         };
     }
@@ -329,6 +388,7 @@ public sealed record WuerfelViewState
 
     public Guid? ActiveHeroId { get; init; }
     public string? ActiveHeroName { get; init; }
+    public IReadOnlyList<SessionPlayerDto> MasterTargets { get; init; } = Array.Empty<SessionPlayerDto>();
     public IReadOnlyDictionary<string, int> AttributeValues { get; init; } = new Dictionary<string, int>();
     public IReadOnlyList<ProbeSearchEntryDto> AvailableProbes { get; init; } = Array.Empty<ProbeSearchEntryDto>();
     public IReadOnlyList<BadTraitDto> BadTraits { get; init; } = Array.Empty<BadTraitDto>();
@@ -351,6 +411,13 @@ public sealed record WuerfelViewState
     public TalentRollResultDto? LastTalentRoll { get; init; }
     public AttributeRollResultDto? LastAttributeRoll { get; init; }
     public BadTraitRollResultDto? LastBadTraitRoll { get; init; }
+
+    public IReadOnlyList<MasterTalentRollTargetResultDto> LastMasterTalentRolls { get; init; } =
+        Array.Empty<MasterTalentRollTargetResultDto>();
+
+    public IReadOnlyList<MasterAttributeRollTargetResultDto> LastMasterAttributeRolls { get; init; } =
+        Array.Empty<MasterAttributeRollTargetResultDto>();
+
     public IReadOnlyList<RollHistoryEntryDto> History { get; init; } = Array.Empty<RollHistoryEntryDto>();
     public IReadOnlyList<int> AnimatedDiceSides { get; init; } = Array.Empty<int>();
     public IReadOnlyList<int> AnimatedDiceValues { get; init; } = Array.Empty<int>();
@@ -358,6 +425,7 @@ public sealed record WuerfelViewState
     public long ResultVersion { get; init; }
 
     public bool HasActiveHero => ActiveHeroId.HasValue;
+    public bool IsMasterMode => MasterTargets.Count > 0;
 
     public int ActiveBadTraitModifier => ActiveArea switch
     {

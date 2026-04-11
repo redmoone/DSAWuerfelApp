@@ -81,6 +81,28 @@ public sealed class WuerfelApiClient(HttpClient httpClient) : IWuerfelApiClient
             cancellationToken);
     }
 
+    public Task<MasterTalentRollTargetResultDto[]> RollMasterTalentAsync(
+        MasterTalentRollRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        return PostJsonAsync<MasterTalentRollTargetResultDto[]>(
+            "api/dice/master-talent-roll",
+            request,
+            "Meister-Sammelwurf konnte nicht ausgeführt werden.",
+            cancellationToken);
+    }
+
+    public Task<MasterAttributeRollTargetResultDto[]> RollMasterAttributeAsync(
+        MasterAttributeRollRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        return PostJsonAsync<MasterAttributeRollTargetResultDto[]>(
+            "api/dice/master-attribute-roll",
+            request,
+            "Meister-Eigenschaftswurf konnte nicht ausgeführt werden.",
+            cancellationToken);
+    }
+
     public Task<BadTraitRollResultDto> RollBadTraitAsync(
         BadTraitRollRequestDto request,
         CancellationToken cancellationToken = default)

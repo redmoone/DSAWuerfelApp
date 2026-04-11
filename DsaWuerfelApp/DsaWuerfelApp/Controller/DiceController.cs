@@ -98,6 +98,38 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
         }
     }
 
+    [HttpPost("master-talent-roll")]
+    public async Task<ActionResult<MasterTalentRollTargetResultDto[]>> RollMasterTalent(
+        [FromBody] MasterTalentRollRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await workflow.RollMasterTalentAsync(request, cancellationToken);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("master-attribute-roll")]
+    public async Task<ActionResult<MasterAttributeRollTargetResultDto[]>> RollMasterAttribute(
+        [FromBody] MasterAttributeRollRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await workflow.RollMasterAttributeAsync(request, cancellationToken);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
     [HttpPost("bad-trait-roll")]
     public async Task<ActionResult<BadTraitRollResultDto>> RollBadTrait(
         [FromBody] BadTraitRollRequestDto request,

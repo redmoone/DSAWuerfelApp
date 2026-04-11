@@ -193,3 +193,39 @@ public sealed record BadTraitRollResultDto(
     RollHistoryEntryDto HistoryEntry);
 
 public sealed record SessionConnectionDto(string SessionId, string JoinCode);
+
+public sealed record MasterRollTargetDto(
+    string UserId,
+    string PlayerName,
+    Guid HeroId,
+    string? HeroName);
+
+public sealed record MasterTalentRollRequestDto(
+    MasterRollTargetDto[] Targets,
+    string TalentKey,
+    int Modifier,
+    string? BadTraitName,
+    string[] SpellOptionValues,
+    string? ForcedRollsText);
+
+public sealed record MasterTalentRollTargetResultDto(
+    string UserId,
+    string PlayerName,
+    Guid HeroId,
+    string? HeroName,
+    TalentRollResultDto? Result,
+    string? ErrorMessage);
+
+public sealed record MasterAttributeRollRequestDto(
+    MasterRollTargetDto[] Targets,
+    string[] Attributes,
+    int Modifier,
+    string? BadTraitName);
+
+public sealed record MasterAttributeRollTargetResultDto(
+    string UserId,
+    string PlayerName,
+    Guid HeroId,
+    string? HeroName,
+    AttributeRollResultDto? Result,
+    string? ErrorMessage);

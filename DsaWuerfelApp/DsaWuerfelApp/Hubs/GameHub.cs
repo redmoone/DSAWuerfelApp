@@ -172,6 +172,23 @@ public class GameHub(
         await NotifySessionsChangedAsync(affectedUserIds);
     }
 
+    public async Task UpdateActiveHero(string sessionId, Guid? heroId, string? heroName)
+    {
+        var userId = GetRequiredUserId();
+        IReadOnlyList<string> affectedUserIds;
+
+        try
+        {
+            affectedUserIds = sessionService.UpdatePlayerHero(sessionId, userId, heroId, heroName);
+        }
+        catch (InvalidOperationException exception)
+        {
+            throw new HubException(exception.Message);
+        }
+
+        await NotifySessionsChangedAsync(affectedUserIds);
+    }
+
     public Task RollFree(FreeRollRequestDto request)
     {
         return ExecuteRollAsync(

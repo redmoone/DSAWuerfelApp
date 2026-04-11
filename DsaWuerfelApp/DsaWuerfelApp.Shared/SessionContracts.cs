@@ -4,7 +4,9 @@ public sealed record SessionPlayerDto(
     string UserId,
     string Name,
     bool IsMaster,
-    bool IsOnline);
+    bool IsOnline,
+    Guid? ActiveHeroId,
+    string? ActiveHeroName);
 
 public sealed record SessionSummaryDto(
     string SessionId,

@@ -1,6 +1,7 @@
 @inject ActiveHeroState ActiveHeroState
 @inject AuthState AuthState
 @inject SessionState SessionState
+@inject SessionHeroSyncService SessionHeroSyncService
 @using DsaWuerfelApp.Client.Components
 @using DsaWuerfelApp.Client.Services
 @implements IDisposable
@@ -88,6 +89,7 @@
         await AuthState.EnsureLoadedAsync();
         await ActiveHeroState.EnsureLoadedAsync();
         await SessionState.EnsureLoadedAsync();
+        await SessionHeroSyncService.AttachAsync();
     }
 
     public void Dispose()
@@ -95,6 +97,7 @@
         ActiveHeroState.Changed -= HandleStateChanged;
         AuthState.Changed -= HandleStateChanged;
         SessionState.Changed -= HandleStateChanged;
+        SessionHeroSyncService.Detach();
     }
 
     private void HandleStateChanged()

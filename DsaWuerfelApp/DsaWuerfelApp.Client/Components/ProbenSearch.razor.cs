@@ -12,6 +12,7 @@ public partial class ProbenSearch
     private string _lastSelectedProbe = string.Empty;
 
     [Parameter] public IReadOnlyList<ProbeSearchEntryDto>? AvailableProben { get; set; }
+    [Parameter] public bool UseFallbackCatalog { get; set; } = true;
     [Parameter] public string Placeholder { get; set; } = "Nach Proben suchen...";
     [Parameter] public string SelectedProbe { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> SelectedProbeChanged { get; set; }
@@ -19,7 +20,11 @@ public partial class ProbenSearch
     public string SearchTerm { get; set; } = string.Empty;
 
     private IReadOnlyList<ProbeSearchEntryDto> ProbenSource =>
-        AvailableProben is { Count: > 0 } ? AvailableProben : _fallbackProben;
+        AvailableProben is { Count: > 0 }
+            ? AvailableProben
+            : UseFallbackCatalog
+                ? _fallbackProben
+                : Array.Empty<ProbeSearchEntryDto>();
 
     private IEnumerable<ProbeSearchEntryDto> FilteredProben =>
         string.IsNullOrWhiteSpace(SearchTerm)

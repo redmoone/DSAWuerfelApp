@@ -211,3 +211,52 @@
     font-size: 0.8rem;
     color: rgba(255, 248, 220, 0.78);
 }
+
+.master-roll-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.master-roll-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(212, 175, 55, 0.24);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.master-roll-item.success {
+    box-shadow: inset 0 0 0 1px rgba(96, 196, 140, 0.35);
+}
+
+.master-roll-item.failure {
+    box-shadow: inset 0 0 0 1px rgba(255, 120, 120, 0.35);
+}
+
+.master-roll-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.master-roll-target {
+    font-weight: 700;
+    color: var(--dsa-gold);
+}
+
+.master-roll-status {
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.master-roll-text {
+    margin: 0;
+    line-height: 1.45;
+    color: rgba(255, 248, 220, 0.88);
+}
