@@ -233,10 +233,16 @@ public class GameHub(
     {
         try
         {
+            var userId = GetRequiredUserId();
+            if (!string.IsNullOrWhiteSpace(sessionId))
+            {
+                await ActivateSessionAsync(sessionId, userId);
+            }
+
             await gameSessionRollPipeline.ExecuteAsync(
                 sessionId,
                 Context.ConnectionId,
-                GetRequiredUserId(),
+                userId,
                 executeAsync,
                 historyEntrySelector,
                 broadcastAsync);
