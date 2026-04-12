@@ -26,8 +26,24 @@ public sealed class RollMasterTalentHandler(
             try
             {
                 var hero = await heroContextReader.LoadRequiredAsync(target.HeroId, cancellationToken);
-                var probeData =
-                    probeResolutionService.ResolveProbeOrCatalog(hero, request.TalentKey, request.SpellOptionValues);
+                if (!probeResolutionService.TryResolveMasterProbe(
+                        hero,
+                        request.TalentKey,
+                        request.SpellOptionValues,
+                        out var probeData,
+                        out var unavailableMessage))
+                {
+                    results.Add(new MasterTalentRollTargetResultDto(
+                        target.UserId,
+                        target.PlayerName,
+                        target.HeroId,
+                        target.HeroName,
+                        null,
+                        null,
+                        unavailableMessage));
+                    continue;
+                }
+
                 var probe = ProbeAttributes.Create(probeData.ProbeData.Probe);
                 var badTrait = badTraitResolver.ResolveOptional(hero, request.BadTraitName);
                 var result = attributeProbeService.RollAttributeProbe(

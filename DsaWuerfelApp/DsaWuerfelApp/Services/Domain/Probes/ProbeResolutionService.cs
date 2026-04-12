@@ -46,6 +46,32 @@ public sealed class ProbeResolutionService(
         throw new InvalidOperationException("Die ausgewaehlte Probe konnte nicht aufgeloest werden.");
     }
 
+    public bool TryResolveMasterProbe(
+        Hero hero,
+        string probeValue,
+        IReadOnlyList<string>? spellOptionValues,
+        out ResolvedProbeData resolvedProbe,
+        out string? unavailableMessage)
+    {
+        if (TryResolveHeroProbe(hero, probeValue, spellOptionValues ?? [], out resolvedProbe))
+        {
+            unavailableMessage = null;
+            return true;
+        }
+
+        var selection = ProbeSelectionValue.Parse(probeValue);
+        if (CanResolveCatalogProbeForMaster(selection) &&
+            TryResolveCatalogProbe(probeValue, out resolvedProbe))
+        {
+            unavailableMessage = null;
+            return true;
+        }
+
+        resolvedProbe = null!;
+        unavailableMessage = BuildMasterProbeUnavailableMessage(selection);
+        return false;
+    }
+
     private bool TryResolveHeroProbe(
         Hero hero,
         string probeValue,
@@ -88,6 +114,35 @@ public sealed class ProbeResolutionService(
 
         resolvedProbe = null!;
         return false;
+    }
+
+    private bool CanResolveCatalogProbeForMaster(ParsedProbeSelection selection)
+    {
+        if ((selection.Kind is ProbeSelectionKind.Unknown or ProbeSelectionKind.Talent) &&
+            talentCatalogStore.TryGetEntry(selection.ProbeName, out var talentEntry))
+        {
+            return talentEntry.IsBasisTalent;
+        }
+
+        return selection.Kind == ProbeSelectionKind.Spell ||
+               selection.Kind == ProbeSelectionKind.Unknown && spellCatalogStore.TryGetEntry(selection.ProbeName, out _);
+    }
+
+    private string BuildMasterProbeUnavailableMessage(ParsedProbeSelection selection)
+    {
+        if (selection.Kind == ProbeSelectionKind.Spell ||
+            selection.Kind == ProbeSelectionKind.Unknown && spellCatalogStore.TryGetEntry(selection.ProbeName, out _))
+        {
+            return "Zauber nicht vorhanden.";
+        }
+
+        if (selection.Kind == ProbeSelectionKind.Talent ||
+            selection.Kind == ProbeSelectionKind.Unknown && talentCatalogStore.TryGetEntry(selection.ProbeName, out _))
+        {
+            return "Talent nicht vorhanden.";
+        }
+
+        return "Die ausgewaehlte Probe konnte nicht aufgeloest werden.";
     }
 
     private bool TryResolveTalent(Hero hero, ParsedProbeSelection selection, out ResolvedProbeData resolvedProbe)
