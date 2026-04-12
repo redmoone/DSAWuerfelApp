@@ -1,0 +1,110 @@
+[
+  {
+    "name": "Aberglaube",
+    "kurztext": "Der Held glaubt an persönliche Glücks- und Unheilszeichen und richtet sein Verhalten danach aus. Solche Vorstellungen beeinflussen seine Entscheidungen spürbar."
+  },
+  {
+    "name": "Angst vor [...]",
+    "kurztext": "Der Held reagiert auf einen bestimmten Auslöser mit übersteigerter Furcht bis hin zu Panik. Die Phobie muss ihn im Spiel regelmäßig wirklich einschränken."
+  },
+  {
+    "name": "Arkanophobie",
+    "kurztext": "Der Held fürchtet Zauberei, magische Gegenstände und Verzauberung panisch. Er misstraut Zauberern und meidet bekannte Magie nach Möglichkeit."
+  },
+  {
+    "name": "Arroganz",
+    "kurztext": "Der Held tritt hochnäsig auf, unterschätzt andere und überschätzt die eigenen Fähigkeiten. Das führt oft zu Reibungen und Fehlentscheidungen."
+  },
+  {
+    "name": "Autoritätsgläubig",
+    "kurztext": "Der Held stellt Obrigkeit, anerkannte Gelehrte und überlieferte Lehren kaum in Frage. Gegen Anweisungen oder feststehende Autoritäten zu handeln fällt ihm schwer."
+  },
+  {
+    "name": "Blutdurst",
+    "kurztext": "Der Held empfindet Freude an grausamer Gewalt und unnötigem Leid. Er neigt dazu, Gegner nicht nur zu besiegen, sondern sie leiden zu lassen."
+  },
+  {
+    "name": "Brünstigkeit",
+    "kurztext": "Der Held wird stark von sexuellem Verlangen getrieben und vernachlässigt darüber leicht Vernunft und Umgebung. Verführerische Reize machen ihn besonders anfällig."
+  },
+  {
+    "name": "Dunkelangst",
+    "kurztext": "Dunkelheit löst starke Beklemmung bis Panik aus. Vor allem Nacht, unbeleuchtete Tunnel, Höhlen und das Erlöschen der letzten Lichtquelle sind problematisch."
+  },
+  {
+    "name": "Eitelkeit",
+    "kurztext": "Der Held will in jeder Lage gut aussehen und Eindruck machen. Er meidet Situationen, die sein Erscheinungsbild beschädigen könnten, und verwendet viel Zeit auf Pflege und Wirkung."
+  },
+  {
+    "name": "Geiz",
+    "kurztext": "Der Held kann sich nur schwer von Besitz, Geld oder Vorräten trennen. Selbst in wichtigen Situationen spart, knausert und verzichtet er lieber, als etwas herzugeben."
+  },
+  {
+    "name": "Gerechtigkeitswahn",
+    "kurztext": "Der Held verlangt strikte Regeltreue und harte Strafen auch für kleine Vergehen. Mit der Zeit setzt er dabei leicht die eigene Sicht von Recht absolut."
+  },
+  {
+    "name": "Goldgier",
+    "kurztext": "Der Held wird von Reichtum, Schätzen und wertvollen Dingen stark angezogen. Für lohnende Beute handelt er mitunter unvernünftig oder geht unnötige Risiken ein."
+  },
+  {
+    "name": "Größenwahn",
+    "kurztext": "Der Held hält sich für zu Großem bestimmt und setzt sich maßlose Ziele. Das zeigt sich in gefährlicher Selbstüberschätzung, Machtstreben oder überzogenen Plänen."
+  },
+  {
+    "name": "Höhenangst",
+    "kurztext": "Der Held reagiert panisch auf Absturzgefahr und große Tiefe. In Extremsituationen kann sogar das Gefühl entstehen, vom Abgrund förmlich angezogen zu werden."
+  },
+  {
+    "name": "Jähzorn",
+    "kurztext": "Der Held verliert schnell die Beherrschung, wenn er sich gekränkt, gedemütigt oder behindert fühlt. Solche Ausbrüche bringen ihn und andere leicht in Gefahr."
+  },
+  {
+    "name": "Krankhafte Reinlichkeit",
+    "kurztext": "Der Held fühlt sich extrem unwohl, wenn er selbst oder etwas in seiner Umgebung verschmutzt ist. Der Wunsch nach Reinigung verdrängt dann oft fast alle anderen Ziele."
+  },
+  {
+    "name": "Meeresangst",
+    "kurztext": "Der Held fürchtet sich davor, sich auf größere Wasserflächen zu begeben. Die Angst nimmt zu, je weiter er sich vom rettenden Ufer entfernt."
+  },
+  {
+    "name": "Neid",
+    "kurztext": "Der Held missgönnt anderen Besitz, Erfolg, Fähigkeiten oder Ansehen. Er will haben, was andere haben, und neigt dazu, deren Vorteile aktiv zu untergraben."
+  },
+  {
+    "name": "Neugier",
+    "kurztext": "Alles Auffällige, Verbotene oder Geheimnisvolle zieht den Helden an. Er will Dingen auf den Grund gehen, selbst wenn das offensichtlich riskant ist."
+  },
+  {
+    "name": "Platzangst",
+    "kurztext": "Große offene Flächen lösen Beklemmung aus. Besonders Meer, Eiswüsten oder weite, offene Steppen können diese Angst auslösen."
+  },
+  {
+    "name": "Rachsucht",
+    "kurztext": "Der Held will erlittene Kränkungen oder Unrecht unbedingt vergelten. Anders als beim Jähzorn kann diese Vergeltung geplant, kalt und langfristig verfolgt werden."
+  },
+  {
+    "name": "Raumangst",
+    "kurztext": "Enge Räume, niedrige Decken und schmale Tunnel lösen starke Beklemmung aus. Der Held will solche Orte möglichst schnell wieder verlassen."
+  },
+  {
+    "name": "Totenangst",
+    "kurztext": "Der Held fürchtet alles, was mit Tod, Gräbern und Untoten verbunden ist. Schon die Nähe entsprechender Orte oder Personen kann starke Beklemmung auslösen."
+  },
+  {
+    "name": "Verschwendungssucht",
+    "kurztext": "Der Held hat kein Gespür für Geld und Werte und gibt bereitwillig aus, was er hat. Rücklagen, Preise oder gemeinsame Kassen interessieren ihn wenig."
+  },
+  {
+    "name": "Verwöhnt",
+    "kurztext": "Der Held ist an Komfort, gutes Essen und ordentliche Schlafplätze gewöhnt. Entbehrungen des Abenteurerlebens setzen ihm schneller zu als anderen."
+  },
+  {
+    "name": "Vorurteile",
+    "kurztext": "Der Held hat feste negative Vorstellungen über eine bestimmte, relevante Gruppe. Vernünftige Argumente oder eigene Erfahrungen ändern diese Haltung nur schwer."
+  },
+  {
+    "name": "Weltfremd",
+    "kurztext": "Der Held begegnet bestimmten Bereichen des zivilisierten Alltags mit Naivität, Unkenntnis und Unverständnis. Das gilt immer für einen konkret gewählten Themenbereich wie Geld, Besitz, Adelsherrschaft oder städtisches Treiben."
+  }
+]

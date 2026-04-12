@@ -4,7 +4,7 @@ namespace DsaWuerfelApp.Services;
 
 public sealed class GetProbeInfoHandler(
     HeroContextReader heroContextReader,
-    TalentCatalogService talentCatalogService)
+    ProbeInfoService probeInfoService)
 {
     public async Task<ProbeInfoResultDto> HandleAsync(
         ProbeInfoRequestDto request,
@@ -18,7 +18,7 @@ public sealed class GetProbeInfoHandler(
         }
 
         var hero = await heroContextReader.LoadOptionalAsync(request.HeroId, cancellationToken);
-        return talentCatalogService.BuildProbeInfo(
+        return probeInfoService.BuildProbeInfo(
             hero,
             request.ProbeValue,
             request.Modifier,

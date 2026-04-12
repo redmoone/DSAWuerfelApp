@@ -4,7 +4,7 @@ namespace DsaWuerfelApp.Services;
 
 public sealed class RollTalentHandler(
     HeroContextReader heroContextReader,
-    TalentCatalogService talentCatalogService,
+    ProbeResolutionService probeResolutionService,
     TalentProbeService talentProbeService,
     BadTraitResolver badTraitResolver)
 {
@@ -16,7 +16,7 @@ public sealed class RollTalentHandler(
         ArgumentNullException.ThrowIfNull(request);
 
         var hero = await heroContextReader.LoadRequiredAsync(request.HeroId, cancellationToken);
-        var probeData = talentCatalogService.ResolveProbe(hero, request.TalentKey, request.SpellOptionValues);
+        var probeData = probeResolutionService.ResolveProbe(hero, request.TalentKey, request.SpellOptionValues);
         var probe = ProbeAttributes.Create(probeData.ProbeData.Probe);
         if (probe.ToArray().Any(attribute => !hero.Eigenschaften.ContainsKey(attribute)))
         {
