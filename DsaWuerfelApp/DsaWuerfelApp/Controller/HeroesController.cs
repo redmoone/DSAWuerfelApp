@@ -1,3 +1,5 @@
+using System.Security.Claims;
+
 using DsaWuerfelApp.Persistence;
 using DsaWuerfelApp.Services;
 using DsaWuerfelApp.Services.Application.Import;
@@ -15,18 +17,27 @@ namespace DsaWuerfelApp.Controller;
 public class HeroesController(HeroDbContext dbContext, HeroImportService heroImportService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<List<Hero>>> GetHeroes() =>
-        Ok(await dbContext.Heroes
+    public async Task<ActionResult<List<Hero>>> GetHeroes()
+    {
+        var userId = GetRequiredUserId();
+
+        return Ok(await dbContext.Heroes
             .AsNoTracking()
+            .Where(hero => hero.OwnerUserId == userId)
             .OrderByDescending(hero => hero.IsActive)
             .ThenBy(hero => hero.Name)
             .ToListAsync());
+    }
 
     [HttpGet("active")]
-    public async Task<ActionResult<Hero?>> GetActiveHero() =>
-        Ok(await dbContext.Heroes
+    public async Task<ActionResult<Hero?>> GetActiveHero()
+    {
+        var userId = GetRequiredUserId();
+
+        return Ok(await dbContext.Heroes
             .AsNoTracking()
-            .FirstOrDefaultAsync(hero => hero.IsActive));
+            .FirstOrDefaultAsync(hero => hero.OwnerUserId == userId && hero.IsActive));
+    }
 
     [HttpPost("upload")]
     [Consumes("multipart/form-data")]
@@ -34,7 +45,7 @@ public class HeroesController(HeroDbContext dbContext, HeroImportService heroImp
     {
         try
         {
-            var createdHeroes = await heroImportService.ImportAsync(files, cancellationToken);
+            var createdHeroes = await heroImportService.ImportAsync(GetRequiredUserId(), files, cancellationToken);
             return Ok(createdHeroes);
         }
         catch (HeroImportException exception)
@@ -46,7 +57,9 @@ public class HeroesController(HeroDbContext dbContext, HeroImportService heroImp
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteHero(Guid id)
     {
-        var hero = await dbContext.Heroes.FindAsync(id);
+        var userId = GetRequiredUserId();
+        var hero = await dbContext.Heroes.FirstOrDefaultAsync(existingHero =>
+            existingHero.Id == id && existingHero.OwnerUserId == userId);
         if (hero is null)
         {
             return NotFound();
@@ -61,19 +74,27 @@ public class HeroesController(HeroDbContext dbContext, HeroImportService heroImp
     [HttpPut("{id:guid}/activate")]
     public async Task<ActionResult<Hero>> ActivateHero(Guid id)
     {
-        var hero = await dbContext.Heroes.FirstOrDefaultAsync(existingHero => existingHero.Id == id);
+        var userId = GetRequiredUserId();
+        var hero = await dbContext.Heroes.FirstOrDefaultAsync(existingHero =>
+            existingHero.Id == id && existingHero.OwnerUserId == userId);
         if (hero is null)
         {
             return NotFound();
         }
 
         await dbContext.Heroes
-            .Where(existingHero => existingHero.IsActive && existingHero.Id != id)
+            .Where(existingHero => existingHero.OwnerUserId == userId && existingHero.IsActive && existingHero.Id != id)
             .ExecuteUpdateAsync(setters => setters.SetProperty(existingHero => existingHero.IsActive, false));
 
         hero.IsActive = true;
         await dbContext.SaveChangesAsync();
 
         return Ok(hero);
+    }
+
+    private string GetRequiredUserId()
+    {
+        return User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+               throw new InvalidOperationException("Benutzer ist nicht authentifiziert.");
     }
 }

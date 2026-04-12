@@ -13,10 +13,10 @@ public sealed class HeroReadRepository(HeroDbContext dbContext) : IHeroReadRepos
             .FirstOrDefaultAsync(hero => hero.Id == heroId, cancellationToken);
     }
 
-    public Task<Hero?> GetActiveAsync(CancellationToken cancellationToken = default)
+    public Task<Hero?> GetActiveAsync(string ownerUserId, CancellationToken cancellationToken = default)
     {
         return dbContext.Heroes
             .AsNoTracking()
-            .FirstOrDefaultAsync(hero => hero.IsActive, cancellationToken);
+            .FirstOrDefaultAsync(hero => hero.OwnerUserId == ownerUserId && hero.IsActive, cancellationToken);
     }
 }

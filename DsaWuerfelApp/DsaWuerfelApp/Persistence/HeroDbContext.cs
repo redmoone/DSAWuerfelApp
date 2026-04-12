@@ -48,12 +48,14 @@ public class HeroDbContext : DbContext
         modelBuilder.Entity<Hero>(entity =>
         {
             entity.HasKey(hero => hero.Id);
+            entity.Property(hero => hero.OwnerUserId).HasMaxLength(64);
             entity.Property(hero => hero.IsActive).HasDefaultValue(false);
             entity.Property(hero => hero.Name).HasMaxLength(200);
             entity.Property(hero => hero.Geschlecht).HasMaxLength(100);
             entity.Property(hero => hero.SourceXml).HasColumnType("BLOB");
             entity.Property(hero => hero.SourceFileName).HasMaxLength(260);
             entity.Property(hero => hero.ImportVersion).HasDefaultValue(0);
+            entity.HasIndex(hero => hero.OwnerUserId);
 
             entity.Property(hero => hero.Eigenschaften)
                 .HasConversion(attributeDictionaryConverter)

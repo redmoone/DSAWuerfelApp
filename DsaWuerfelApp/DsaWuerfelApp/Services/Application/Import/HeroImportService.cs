@@ -14,9 +14,15 @@ public sealed class HeroImportService(
     IHttpClientFactory httpClientFactory)
 {
     public async Task<IReadOnlyList<Hero>> ImportAsync(
+        string ownerUserId,
         IReadOnlyCollection<IFormFile>? files,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(ownerUserId))
+        {
+            throw new HeroImportException("Benutzer konnte für den Import nicht aufgelöst werden.");
+        }
+
         if (files is null || files.Count == 0)
         {
             throw new HeroImportException("Keine Dateien zum Import übergeben.");
@@ -82,6 +88,7 @@ public sealed class HeroImportService(
         {
             var hero = heroMapper.Map(dto);
             hero.Id = Guid.NewGuid();
+            hero.OwnerUserId = ownerUserId.Trim();
             hero.SourceXml = rawXml;
             hero.SourceFileName = $"{hero.Name}.xml";
             hero.ImportVersion = HeroImportVersioning.CurrentVersion;

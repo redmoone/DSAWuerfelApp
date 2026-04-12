@@ -28,6 +28,7 @@ Directory.CreateDirectory(dataProtectionKeysPath);
 
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath))
     .SetApplicationName(dataProtectionApplicationName);
@@ -105,8 +106,8 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<HeroDbContext>();
     dbContext.Database.EnsureCreated();
-    EnsureHeroSchema(dbContext);
     EnsureAuthSchema(dbContext);
+    EnsureHeroSchema(dbContext);
     EnsureSessionSchema(dbContext);
 
     var heroReimportService = scope.ServiceProvider.GetRequiredService<HeroReimportService>();
@@ -165,6 +166,7 @@ static void EnsureHeroSchema(HeroDbContext dbContext)
         ("IsActive", "ALTER TABLE Heroes ADD COLUMN IsActive INTEGER NOT NULL DEFAULT 0;"), ("SchlechteEigenschaften",
             "ALTER TABLE Heroes ADD COLUMN SchlechteEigenschaften TEXT NOT NULL DEFAULT '{{}}';"),
         ("Zauber", "ALTER TABLE Heroes ADD COLUMN Zauber TEXT NOT NULL DEFAULT '{{}}';"),
+        ("OwnerUserId", "ALTER TABLE Heroes ADD COLUMN OwnerUserId TEXT NOT NULL DEFAULT '';"),
         ("SourceXml", "ALTER TABLE Heroes ADD COLUMN SourceXml BLOB NULL;"),
         ("SourceFileName", "ALTER TABLE Heroes ADD COLUMN SourceFileName TEXT NULL;"),
         ("ImportVersion", "ALTER TABLE Heroes ADD COLUMN ImportVersion INTEGER NOT NULL DEFAULT 0;"),
@@ -175,6 +177,25 @@ static void EnsureHeroSchema(HeroDbContext dbContext)
     {
         dbContext.Database.ExecuteSqlRaw(sql);
     }
+
+    dbContext.Database.ExecuteSqlRaw(
+        """
+        CREATE INDEX IF NOT EXISTS IX_Heroes_OwnerUserId
+        ON Heroes (OwnerUserId);
+        """);
+
+    dbContext.Database.ExecuteSqlRaw(
+        """
+        UPDATE Heroes
+        SET OwnerUserId = (
+            SELECT lower(replace(Id, '-', ''))
+            FROM AuthUsers
+            ORDER BY CreatedAtUtc, Id
+            LIMIT 1
+        )
+        WHERE (OwnerUserId IS NULL OR OwnerUserId = '')
+          AND EXISTS (SELECT 1 FROM AuthUsers);
+        """);
 }
 
 static void EnsureAuthSchema(HeroDbContext dbContext)
