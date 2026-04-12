@@ -2,7 +2,11 @@ using DsaWuerfelApp.Shared;
 
 namespace DsaWuerfelApp.Services;
 
-public sealed class RollMasterTalentHandler(RollTalentHandler rollTalentHandler)
+public sealed class RollMasterTalentHandler(
+    HeroContextReader heroContextReader,
+    TalentCatalogService talentCatalogService,
+    AttributeProbeService attributeProbeService,
+    BadTraitResolver badTraitResolver)
 {
     public async Task<MasterTalentRollTargetResultDto[]> HandleAsync(
         MasterTalentRollRequestDto request,
@@ -21,24 +25,28 @@ public sealed class RollMasterTalentHandler(RollTalentHandler rollTalentHandler)
         {
             try
             {
-                var result = await rollTalentHandler.HandleAsync(
-                    new TalentRollRequestDto(
-                        null,
-                        target.HeroId,
-                        request.TalentKey,
-                        request.Modifier,
-                        request.BadTraitName,
-                        request.SpellOptionValues,
-                        request.ForcedRollsText,
-                        true),
-                    target.PlayerName,
-                    cancellationToken);
+                var hero = await heroContextReader.LoadRequiredAsync(target.HeroId, cancellationToken);
+                var probeData =
+                    talentCatalogService.ResolveProbeOrCatalog(hero, request.TalentKey, request.SpellOptionValues);
+                var probe = ProbeAttributes.Create(probeData.ProbeData.Probe);
+                var badTrait = badTraitResolver.ResolveOptional(hero, request.BadTraitName);
+                var result = attributeProbeService.RollAttributeProbe(
+                    new ResolvedAttributeRollRequest(
+                        AttributeSelection.Create(probe.ToArray()),
+                        probe.ResolveValues(hero.Eigenschaften),
+                        request.Modifier + probeData.SpecializationModifier,
+                        badTrait?.Name,
+                        badTrait?.TalentModifier ?? 0,
+                        probeData.Name,
+                        ForcedRollValues.CreateOptional(request.ForcedRollsText, 3)),
+                    target.PlayerName);
 
                 results.Add(new MasterTalentRollTargetResultDto(
                     target.UserId,
                     target.PlayerName,
                     target.HeroId,
                     target.HeroName,
+                    null,
                     result,
                     null));
             }
@@ -49,6 +57,7 @@ public sealed class RollMasterTalentHandler(RollTalentHandler rollTalentHandler)
                     target.PlayerName,
                     target.HeroId,
                     target.HeroName,
+                    null,
                     null,
                     exception.Message));
             }

@@ -15,6 +15,14 @@ public sealed class WuerfelApiClient(HttpClient httpClient) : IWuerfelApiClient
         return GetJsonAsync<DicePageContextDto>(uri, "Würfelkontext konnte nicht geladen werden.", cancellationToken);
     }
 
+    public Task<DicePageContextDto> GetCatalogContextAsync(CancellationToken cancellationToken = default)
+    {
+        return GetJsonAsync<DicePageContextDto>(
+            "api/dice/catalog-context",
+            "Probenkatalog konnte nicht geladen werden.",
+            cancellationToken);
+    }
+
     public Task<ProbeInfoResultDto> GetProbeInfoAsync(
         ProbeInfoRequestDto request,
         CancellationToken cancellationToken = default)

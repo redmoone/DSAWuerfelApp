@@ -17,6 +17,11 @@ public sealed class DiceWorkflowService(
         return getDicePageContextHandler.HandleAsync(heroId, cancellationToken);
     }
 
+    public Task<DicePageContextDto> GetCatalogContextAsync(CancellationToken cancellationToken = default)
+    {
+        return getDicePageContextHandler.HandleCatalogAsync(cancellationToken);
+    }
+
     public Task<ProbeInfoResultDto> GetProbeInfoAsync(
         ProbeInfoRequestDto request,
         CancellationToken cancellationToken = default)

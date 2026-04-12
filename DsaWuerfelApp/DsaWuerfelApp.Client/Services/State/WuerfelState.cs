@@ -255,7 +255,7 @@ public sealed class WuerfelState
     public void ApplyMasterTalentRollResults(IReadOnlyList<MasterTalentRollTargetResultDto> results)
     {
         ApplyMasterResults(
-            results.Select(result => result.Result?.Equation),
+            results.Select(result => result.Result?.Equation ?? result.RequirementResult?.Equation),
             results.ToArray(),
             Array.Empty<MasterAttributeRollTargetResultDto>());
     }

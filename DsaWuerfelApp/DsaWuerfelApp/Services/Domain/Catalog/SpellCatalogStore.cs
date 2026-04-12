@@ -12,6 +12,8 @@ public sealed class SpellCatalogStore(IHostEnvironment environment)
     private readonly Lazy<IReadOnlyDictionary<string, SpellCatalogEntry>> _entriesByCanonical =
         new(() => LoadEntries(ResolveCatalogPath(environment)));
 
+    public IEnumerable<SpellCatalogEntry> Entries => _entriesByCanonical.Value.Values;
+
     public bool TryGetEntry(string spellName, out SpellCatalogEntry entry)
     {
         return TalentCatalogText.TryFindBestNameMatch(

@@ -26,17 +26,18 @@ public sealed class AttributeProbeService(DiceService diceService)
 
         var timestamp = DateTime.UtcNow;
         var attributeNames = request.Attributes.ToArray();
-        var rolls = diceService.RollDice([new DiceRollGroupDto(20, request.Attributes.Count)]);
+        var rolls = CreateRolls(request.ForcedRolls, request.Attributes.Count);
         var effectiveModifier = request.BasisModifier + request.SchlechteEigenschaftModifier;
         var details = BuildDetails(attributeNames, request.AttributeValues, rolls, effectiveModifier);
         var successCount = details.Count(detail => detail.Success);
         var equation = DiceResultFactory.CreateEquation(rolls, 0);
         var historyEntry = DiceResultFactory.CreateHistoryEntry(playerName, timestamp, equation);
+        var probeLabel = string.IsNullOrWhiteSpace(request.ProbeLabel) ? request.Attributes.Label : request.ProbeLabel;
 
         return new AttributeRollResultDto(
             playerName,
             timestamp,
-            request.Attributes.Label,
+            probeLabel,
             request.BasisModifier,
             request.SchlechteEigenschaftName,
             request.SchlechteEigenschaftModifier,
@@ -45,10 +46,29 @@ public sealed class AttributeProbeService(DiceService diceService)
             successCount,
             details.Length - successCount,
             details,
-            BuildRequirement(attributeNames, request, rolls, effectiveModifier),
+            BuildRequirement(probeLabel, attributeNames, request, rolls, effectiveModifier),
             rolls,
             equation,
             historyEntry);
+    }
+
+    private DiceRollDto[] CreateRolls(ForcedRollValues? forcedRolls, int attributeCount)
+    {
+#if !DEBUG
+        return diceService.RollDice([new DiceRollGroupDto(20, attributeCount)]);
+#else
+        if (forcedRolls is null)
+        {
+            return diceService.RollDice([new DiceRollGroupDto(20, attributeCount)]);
+        }
+
+        if (forcedRolls.Count != attributeCount)
+        {
+            throw new ArgumentException($"Testwürfe müssen genau {attributeCount} Werte enthalten.");
+        }
+
+        return forcedRolls.ToDiceRolls(20);
+#endif
     }
 
     private static AttributeRollDetailDto[] BuildDetails(
@@ -79,6 +99,7 @@ public sealed class AttributeProbeService(DiceService diceService)
     }
 
     private static AttributeRollRequirementDto? BuildRequirement(
+        string probeLabel,
         IReadOnlyList<string> attributeNames,
         ResolvedAttributeRollRequest request,
         IReadOnlyList<DiceRollDto> rolls,
@@ -105,7 +126,7 @@ public sealed class AttributeProbeService(DiceService diceService)
         }
 
         return new AttributeRollRequirementDto(
-            string.Join('/', attributeNames),
+            probeLabel,
             request.BasisModifier,
             request.SchlechteEigenschaftName,
             request.SchlechteEigenschaftModifier,
@@ -121,4 +142,6 @@ public sealed record ResolvedAttributeRollRequest(
     int[] AttributeValues,
     int BasisModifier,
     string? SchlechteEigenschaftName,
-    int SchlechteEigenschaftModifier);
+    int SchlechteEigenschaftModifier,
+    string? ProbeLabel = null,
+    ForcedRollValues? ForcedRolls = null);

@@ -214,6 +214,7 @@ public sealed record MasterTalentRollTargetResultDto(
     Guid HeroId,
     string? HeroName,
     TalentRollResultDto? Result,
+    AttributeRollResultDto? RequirementResult,
     string? ErrorMessage);
 
 public sealed record MasterAttributeRollRequestDto(

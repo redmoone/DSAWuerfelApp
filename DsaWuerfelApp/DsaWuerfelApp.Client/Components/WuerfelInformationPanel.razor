@@ -82,7 +82,7 @@
                 <div class="probe-evaluation-header">
                     <span class="probe-evaluation-name">@AttributeResult.Requirement.Probe</span>
                     <span class="probe-evaluation-status">
-                        Benötigter Probenwert: @AttributeResult.Requirement.RequiredTalentValue
+                        Benoetigter Probenwert: @AttributeResult.Requirement.RequiredTalentValue
                     </span>
                 </div>
 
@@ -102,7 +102,7 @@
                         <div class="probe-roll-chip @GetAttributeRequirementChipClass(detail)">
                             <span class="probe-roll-attribute">@detail.Attribute</span>
                             <span class="probe-roll-values">@detail.Roll / @detail.BaseValue</span>
-                            <span class="probe-roll-rest">Benötigter Ausgleich: @detail.Difference</span>
+                            <span class="probe-roll-rest">Benoetigter Ausgleich: @detail.Difference</span>
                         </div>
                     }
                 </div>
@@ -145,10 +145,17 @@
                         {
                             <p class="master-roll-text">@item.ErrorMessage</p>
                         }
+                        else if (item.RequirementResult?.Requirement is not null)
+                        {
+                            <p class="master-roll-text">
+                                @item.RequirementResult.Requirement.Probe · Benoetigt @item.RequirementResult.Requirement.RequiredTalentValue · Wuerfe
+                                @string.Join(", ", item.RequirementResult.Rolls.Select(roll => roll.Value))
+                            </p>
+                        }
                         else if (item.Result is not null)
                         {
                             <p class="master-roll-text">
-                                @item.Result.TalentName · Rest @item.Result.Rest · Würfe
+                                @item.Result.TalentName · Rest @item.Result.Rest · Wuerfe
                                 @string.Join(", ", item.Result.Rolls.Select(roll => roll.Value))
                             </p>
                         }
@@ -177,7 +184,7 @@
                         else if (item.Result is not null)
                         {
                             <p class="master-roll-text">
-                                @item.Result.Probe · @item.Result.SuccessCount/@item.Result.Details.Length bestanden · Würfe
+                                @item.Result.Probe · @item.Result.SuccessCount/@item.Result.Details.Length bestanden · Wuerfe
                                 @string.Join(", ", item.Result.Rolls.Select(roll => roll.Value))
                             </p>
                         }
@@ -195,8 +202,8 @@
          MasterAttributeResults.Count == 0)
     {
         <p class="additional-info-empty">
-            Wähle eine Probe und nutze den Info-Button, führe eine Probe aus, würfle mit Eigenschaften oder
-            prüfe direkt auf eine schlechte Eigenschaft.
+            Waehle eine Probe und nutze den Info-Button, fuehre eine Probe aus, wuerfle mit Eigenschaften oder
+            pruefe direkt auf eine schlechte Eigenschaft.
         </p>
     }
 </div>
@@ -233,10 +240,10 @@
     {
         return result.Status switch
         {
-                TalentProbeStatus.Patzer => "Patzer",
-                TalentProbeStatus.GluecklicherWurf => "Glücklicher Wurf",
-                TalentProbeStatus.Bestanden => $"Bestanden um {result.Margin}",
-                _ => $"Misslungen um {result.Margin}"
+            TalentProbeStatus.Patzer => "Patzer",
+            TalentProbeStatus.GluecklicherWurf => "Gluecklicher Wurf",
+            TalentProbeStatus.Bestanden => $"Bestanden um {result.Margin}",
+            _ => $"Misslungen um {result.Margin}"
         };
     }
 
@@ -244,10 +251,10 @@
     {
         return result.Status switch
         {
-                TalentProbeStatus.Patzer => "patzer",
-                TalentProbeStatus.GluecklicherWurf => "glueck",
-                TalentProbeStatus.Bestanden => "success",
-                _ => "failure"
+            TalentProbeStatus.Patzer => "patzer",
+            TalentProbeStatus.GluecklicherWurf => "glueck",
+            TalentProbeStatus.Bestanden => "success",
+            _ => "failure"
         };
     }
 
@@ -255,9 +262,9 @@
     {
         return result.Status switch
         {
-                TalentProbeStatus.Patzer => "patzer",
-                TalentProbeStatus.GluecklicherWurf => "glueck",
-                _ => detail.Success ? "success" : "failure"
+            TalentProbeStatus.Patzer => "patzer",
+            TalentProbeStatus.GluecklicherWurf => "glueck",
+            _ => detail.Success ? "success" : "failure"
         };
     }
 
@@ -269,8 +276,8 @@
     private static string GetBadTraitStatusText(BadTraitRollResultDto result)
     {
         return result.Status == SchlechteEigenschaftProbeStatus.Misslungen
-                ? "Misslungen - Eigenschaft setzt sich durch"
-                : "Bestanden - Held widersteht";
+            ? "Misslungen - Eigenschaft setzt sich durch"
+            : "Bestanden - Held widersteht";
     }
 
     private static string GetBadTraitEvaluationClass(BadTraitRollResultDto result)
@@ -289,6 +296,8 @@
     {
         return !string.IsNullOrWhiteSpace(item.ErrorMessage)
             ? "Fehler"
+            : item.RequirementResult?.Requirement is not null
+                ? $"Benoetigt {item.RequirementResult.Requirement.RequiredTalentValue}"
             : item.Result is null
                 ? "Offen"
                 : GetProbeStatusText(item.Result);
@@ -298,6 +307,8 @@
     {
         return !string.IsNullOrWhiteSpace(item.ErrorMessage)
             ? "failure"
+            : item.RequirementResult?.Requirement is not null
+                ? string.Empty
             : item.Result is null
                 ? string.Empty
                 : GetProbeEvaluationClass(item.Result);
@@ -328,5 +339,4 @@
 
         return item.Result.Success ? "success" : "failure";
     }
-
 }

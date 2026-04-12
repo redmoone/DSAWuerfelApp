@@ -27,6 +27,18 @@ public sealed class TalentCatalogService(
             showDebugForcedRolls);
     }
 
+    public DicePageContextDto BuildCatalogContext(bool showDebugForcedRolls)
+    {
+        return new DicePageContextDto(
+            null,
+            null,
+            BuildAttributeValues(null),
+            BuildCatalogProbes(),
+            [],
+            "Alle Talente und Zauber durchsuchen...",
+            showDebugForcedRolls);
+    }
+
     public ProbeInfoResultDto BuildProbeInfo(
         Hero? hero,
         string probeValue,
@@ -60,6 +72,24 @@ public sealed class TalentCatalogService(
         if (TryResolveProbe(hero, probeValue, spellOptionValues ?? [], out var resolvedProbe))
         {
             return resolvedProbe;
+        }
+
+        throw new InvalidOperationException("Die ausgewählte Probe konnte nicht aufgelöst werden.");
+    }
+
+    public ResolvedProbeData ResolveProbeOrCatalog(
+        Hero? hero,
+        string probeValue,
+        IReadOnlyList<string>? spellOptionValues = null)
+    {
+        if (hero is not null && TryResolveProbe(hero, probeValue, spellOptionValues ?? [], out var resolvedHeroProbe))
+        {
+            return resolvedHeroProbe;
+        }
+
+        if (TryResolveCatalogProbe(probeValue, out var resolvedCatalogProbe))
+        {
+            return resolvedCatalogProbe;
         }
 
         throw new InvalidOperationException("Die ausgewählte Probe konnte nicht aufgelöst werden.");
@@ -101,6 +131,26 @@ public sealed class TalentCatalogService(
         return false;
     }
 
+    private bool TryResolveCatalogProbe(string probeValue, out ResolvedProbeData resolvedProbe)
+    {
+        var selection = ProbeSelectionValue.Parse(probeValue);
+
+        if ((selection.Kind is ProbeSelectionKind.Unknown or ProbeSelectionKind.Talent) &&
+            TryResolveCatalogTalent(selection, out resolvedProbe))
+        {
+            return true;
+        }
+
+        if ((selection.Kind is ProbeSelectionKind.Unknown or ProbeSelectionKind.Spell) &&
+            TryResolveCatalogSpell(selection, out resolvedProbe))
+        {
+            return true;
+        }
+
+        resolvedProbe = null!;
+        return false;
+    }
+
     private bool TryResolveTalent(Hero hero, ParsedProbeSelection selection, out ResolvedProbeData resolvedProbe)
     {
         if (selection.HasOption && selection.OptionKind != ProbeSelectionOptionKind.Specialization)
@@ -128,6 +178,44 @@ public sealed class TalentCatalogService(
             [],
             specializationName,
             selection.OptionModifier);
+        return true;
+    }
+
+    private bool TryResolveCatalogTalent(ParsedProbeSelection selection, out ResolvedProbeData resolvedProbe)
+    {
+        if (selection.HasOption && selection.OptionKind != ProbeSelectionOptionKind.Specialization)
+        {
+            resolvedProbe = null!;
+            return false;
+        }
+
+        if (!talentCatalogStore.TryGetEntry(selection.ProbeName, out var talentEntry) ||
+            IsRitualKnowledgeTalent(talentEntry.Name) ||
+            !ProbeHasCompleteAttributes(talentEntry.Probe))
+        {
+            resolvedProbe = null!;
+            return false;
+        }
+
+        var specializationName = selection.OptionKind == ProbeSelectionOptionKind.Specialization
+            ? selection.OptionName
+            : null;
+
+        resolvedProbe = new ResolvedProbeData(
+            ProbeSelectionKind.Talent,
+            talentEntry.Name,
+            selection.HasOption ? selection.DisplayName : talentEntry.Name,
+            new TalentData
+            {
+                Wert = 0,
+                Probe = talentEntry.Probe,
+                Specializations = []
+            },
+            specializationName,
+            selection.OptionKind,
+            [],
+            specializationName,
+            selection.OptionKind == ProbeSelectionOptionKind.Specialization ? selection.OptionModifier : 0);
         return true;
     }
 
@@ -196,6 +284,43 @@ public sealed class TalentCatalogService(
         return true;
     }
 
+    private bool TryResolveCatalogSpell(ParsedProbeSelection selection, out ResolvedProbeData resolvedProbe)
+    {
+        if (selection.HasOption && selection.OptionKind != ProbeSelectionOptionKind.Specialization)
+        {
+            resolvedProbe = null!;
+            return false;
+        }
+
+        if (!spellCatalogStore.TryGetEntry(selection.ProbeName, out var spellEntry) ||
+            !ProbeHasCompleteAttributes(spellEntry.Probe))
+        {
+            resolvedProbe = null!;
+            return false;
+        }
+
+        var specializationName = selection.OptionKind == ProbeSelectionOptionKind.Specialization
+            ? selection.OptionName
+            : null;
+
+        resolvedProbe = new ResolvedProbeData(
+            ProbeSelectionKind.Spell,
+            spellEntry.Name,
+            selection.HasOption ? selection.DisplayName : spellEntry.Name,
+            new TalentData
+            {
+                Wert = 0,
+                Probe = spellEntry.Probe,
+                Specializations = []
+            },
+            specializationName,
+            selection.OptionKind,
+            [],
+            specializationName,
+            selection.OptionKind == ProbeSelectionOptionKind.Specialization ? selection.OptionModifier : 0);
+        return true;
+    }
+
     private IReadOnlyList<ProbeInfoSectionDto> ResolveInfoSections(Hero hero, ResolvedProbeData resolvedProbe)
     {
         return resolvedProbe.Kind switch
@@ -238,6 +363,22 @@ public sealed class TalentCatalogService(
     private static BadTraitDto BuildBadTrait(string name, int value)
     {
         return new BadTraitDto(name, value, value, value <= 0 ? 0 : (value + 1) / 2);
+    }
+
+    private ProbeSearchEntryDto[] BuildCatalogProbes()
+    {
+        var talentEntries = talentCatalogStore.Entries
+            .Where(entry => !IsRitualKnowledgeTalent(entry.Name))
+            .Select(entry => BuildCatalogProbeEntry(ProbeSelectionKind.Talent, entry.Name, entry.Probe));
+
+        var spellEntries = spellCatalogStore.Entries
+            .Select(entry => BuildCatalogProbeEntry(ProbeSelectionKind.Spell, entry.Name, entry.Probe));
+
+        return talentEntries
+            .Concat(spellEntries)
+            .Where(entry => entry.IsSelectable && !string.IsNullOrWhiteSpace(entry.Value))
+            .OrderBy(entry => entry.DisplayLabel, StringComparer.Ordinal)
+            .ToArray();
     }
 
     private ProbeSearchEntryDto[] BuildKnownProbes(Hero hero)
@@ -442,6 +583,23 @@ public sealed class TalentCatalogService(
         return string.IsNullOrWhiteSpace(probeData.Probe)
             ? $"{probeName} [{probeData.Wert}]"
             : $"{probeName} [{probeData.Wert}] ({probeData.Probe})";
+    }
+
+    private static ProbeSearchEntryDto BuildCatalogProbeEntry(
+        ProbeSelectionKind kind,
+        string probeName,
+        string probe)
+    {
+        return new ProbeSearchEntryDto(
+            probeName,
+            ProbeSelectionValue.EncodeBase(kind, probeName),
+            ProbeHasCompleteAttributes(probe),
+            []);
+    }
+
+    private static bool ProbeHasCompleteAttributes(string? probe)
+    {
+        return ProbeAttributes.TryCreate(probe) is not null;
     }
 
     private ProbeSearchEntryDto BuildInactiveProbeSearchEntry(

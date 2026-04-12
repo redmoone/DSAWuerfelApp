@@ -29,6 +29,20 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
         }
     }
 
+    [HttpGet("catalog-context")]
+    public async Task<ActionResult<DicePageContextDto>> GetCatalogContext(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await workflow.GetCatalogContextAsync(cancellationToken);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
     [HttpGet("probe-info")]
     public async Task<ActionResult<ProbeInfoResultDto>> GetProbeInfo(
         [FromQuery] Guid? heroId,

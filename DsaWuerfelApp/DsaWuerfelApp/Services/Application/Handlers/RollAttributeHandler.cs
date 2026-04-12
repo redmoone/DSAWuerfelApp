@@ -24,7 +24,9 @@ public sealed class RollAttributeHandler(
                 attributes.ResolveValues(hero?.Eigenschaften),
                 request.Modifier,
                 badTrait?.Name,
-                badTrait?.AttributeModifier ?? 0),
+                badTrait?.AttributeModifier ?? 0,
+                null,
+                null),
             playerName);
     }
 }

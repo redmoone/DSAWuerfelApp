@@ -13,4 +13,9 @@ public sealed class GetDicePageContextHandler(
         var hero = await heroContextReader.LoadOptionalAsync(heroId, cancellationToken);
         return talentCatalogService.BuildContext(hero, Debugger.IsAttached);
     }
+
+    public Task<DicePageContextDto> HandleCatalogAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(talentCatalogService.BuildCatalogContext(Debugger.IsAttached));
+    }
 }

@@ -42,8 +42,8 @@ public sealed class WuerfelContextService(
         {
             CancelProbeInfoRefresh();
             state.SetProbeInfo(new ProbeInfoResultDto(
-                $"Sammelwurf für {state.Current.MasterTargets.Count} Spieler vorbereitet.",
-                "Detailinfos und Zauberoptionen sind in der Meisteransicht nur bei Einzelauswahl verfügbar.",
+                $"Sammelwurf fuer {state.Current.MasterTargets.Count} Spieler vorbereitet.",
+                "Detailinfos und Zauberoptionen sind in der Meisteransicht nur bei Einzelauswahl verfuegbar.",
                 [],
                 null));
             return Task.CompletedTask;
@@ -123,9 +123,14 @@ public sealed class WuerfelContextService(
 
     private async Task<LoadedDicePageContext> LoadMasterContextAsync(IReadOnlyList<SessionPlayerDto> masterTargets)
     {
-        var targetContexts = await Task.WhenAll(masterTargets.Select(async target => new TargetDicePageContext(
+        var catalogContextTask = apiClient.GetCatalogContextAsync();
+        var targetContextsTask = Task.WhenAll(masterTargets.Select(async target => new TargetDicePageContext(
             target,
             await apiClient.GetContextAsync(target.ActiveHeroId))));
+        await Task.WhenAll(catalogContextTask, targetContextsTask);
+
+        var catalogContext = catalogContextTask.Result;
+        var targetContexts = targetContextsTask.Result;
 
         if (targetContexts.Length == 1)
         {
@@ -141,10 +146,10 @@ public sealed class WuerfelContextService(
                     context.ActiveHeroId,
                     heroName,
                     context.Attributes,
-                    context.AvailableProbes,
+                    catalogContext.AvailableProbes,
                     context.BadTraits,
-                    $"Proben von {target.Name} durchsuchen...",
-                    context.ShowDebugForcedRolls),
+                    $"Talente und Zauber fuer {target.Name} durchsuchen...",
+                    context.ShowDebugForcedRolls || catalogContext.ShowDebugForcedRolls),
                 BuildBadTraitOwners([targetContext]));
         }
 
@@ -154,10 +159,10 @@ public sealed class WuerfelContextService(
                 null,
                 $"{masterTargets.Count} Spieler",
                 BuildAverageAttributes(targetContexts.Select(entry => entry.Context).ToArray()),
-                BuildCommonProbes(targetContexts.Select(entry => entry.Context).ToArray()),
+                catalogContext.AvailableProbes,
                 BuildAggregatedBadTraits(badTraitOwners),
-                $"Gemeinsame Proben für {masterTargets.Count} Spieler durchsuchen...",
-                targetContexts.Any(entry => entry.Context.ShowDebugForcedRolls)),
+                $"Talente und Zauber fuer {masterTargets.Count} Spieler durchsuchen...",
+                targetContexts.Any(entry => entry.Context.ShowDebugForcedRolls) || catalogContext.ShowDebugForcedRolls),
             badTraitOwners);
     }
 
@@ -170,40 +175,6 @@ public sealed class WuerfelContextService(
                     context.Attributes.FirstOrDefault(current => string.Equals(current.Name, attribute, StringComparison.Ordinal))
                         ?.Value ?? HeroAttributeCatalog.DefaultValues.GetValueOrDefault(attribute)))))
             .ToArray();
-    }
-
-    private static ProbeSearchEntryDto[] BuildCommonProbes(IReadOnlyList<DicePageContextDto> contexts)
-    {
-        if (contexts.Count == 0)
-        {
-            return [];
-        }
-
-        var probeMaps = contexts
-            .Select(context => context.AvailableProbes
-                .Where(entry => entry.IsSelectable && !string.IsNullOrWhiteSpace(entry.Value))
-                .GroupBy(entry => entry.Value!, StringComparer.Ordinal)
-                .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal))
-            .ToArray();
-
-        var commonProbeValues = probeMaps[0].Keys
-            .Where(value => probeMaps.Skip(1).All(map => map.ContainsKey(value)))
-            .OrderBy(value => ProbeSelectionValue.Parse(value).ProbeName, StringComparer.Ordinal)
-            .ToArray();
-
-        return commonProbeValues
-            .Select(value => BuildCommonProbeEntry(probeMaps[0][value]))
-            .ToArray();
-    }
-
-    private static ProbeSearchEntryDto BuildCommonProbeEntry(ProbeSearchEntryDto source)
-    {
-        var parsedSelection = ProbeSelectionValue.Parse(source.Value);
-        var displayLabel = parsedSelection.Kind is ProbeSelectionKind.Spell or ProbeSelectionKind.Talent
-            ? parsedSelection.ProbeName
-            : source.DisplayLabel;
-
-        return new ProbeSearchEntryDto(displayLabel, source.Value, true, []);
     }
 
     private static Dictionary<string, IReadOnlyList<BadTraitOwnerInfo>> BuildBadTraitOwners(
