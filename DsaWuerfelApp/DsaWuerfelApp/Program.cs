@@ -239,18 +239,6 @@ static void EnsureHeroSchema(HeroDbContext dbContext)
         ON Heroes (OwnerUserId);
         """);
 
-    dbContext.Database.ExecuteSqlRaw(
-        """
-        UPDATE Heroes
-        SET OwnerUserId = (
-            SELECT lower(replace(Id, '-', ''))
-            FROM AuthUsers
-            ORDER BY CreatedAtUtc, Id
-            LIMIT 1
-        )
-        WHERE (OwnerUserId IS NULL OR OwnerUserId = '')
-          AND EXISTS (SELECT 1 FROM AuthUsers);
-        """);
 }
 
 static void EnsureAuthSchema(HeroDbContext dbContext)
