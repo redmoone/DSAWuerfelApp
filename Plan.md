@@ -515,7 +515,7 @@ Alle Pakete sind bei Erstellung dieser Datei OFFEN. Das vorangegangene Review is
 | --- | --- | --- |
 | P00 | ERLEDIGT | Branch/Commit gesichert; Release-Build erfolgreich, NU1903-Warnung blieb bestehen |
 | P01 | ERLEDIGT | Testprojekt ergänzt; TalentProbeEvaluatorTests 9/9 erfolgreich, Release-Build erfolgreich |
-| P02 | OFFEN | |
+| P02 | ERLEDIGT | Isolierte Testdatenbank, Testauth, Fake-Mailversand und Smoke-Tests; Gesamt-Testlauf 11/11 erfolgreich |
 | P03 | OFFEN | |
 | P04 | OFFEN | |
 | P05 | OFFEN | |
@@ -570,3 +570,13 @@ Build: `dotnet build DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfol
 Manuell geprüft: Testprojekt referenziert das Serverprojekt; Testprojekt liegt ohne automatisch erzeugte Solution-Untergruppe in der Solution.
 Nicht geprüft / Blocker: Keine zusätzlichen Produktions- oder Integrationstests; für P01 nicht erforderlich. NU1903 bleibt als bekannte Warnung bestehen.
 Nächstes zulässiges Paket: P02, nur nach ausdrücklicher Beauftragung.
+
+Paket / Datum: P02 / 07.09.2026
+Bestätigte Ursache: Für Integrationsprüfungen fehlte eine isolierte Host-, Datenbank-, DataProtection-, Authentifizierungs- und Mailumgebung.
+Geänderte Dateien: `DsaWuerfelApp/DsaWuerfelApp/Program.cs`, `DsaWuerfelApp/DsaWuerfelApp.Tests/DsaWuerfelApp.Tests.csproj`, `DsaWuerfelApp/DsaWuerfelApp.Tests/Infrastructure/TestDatabase.cs`, `TestAuthenticationHandler.cs`, `FakeMagicLinkEmailSender.cs`, `TestApplicationFactory.cs`, `TestApplicationSmokeTests.cs`, `Plan.md`.
+Verhaltensänderung: Testfabrik setzt Konfiguration vor dem Host-Build auf eine temporäre SQLite-Datei und einen temporären DataProtection-Pfad. Authentifizierung erfolgt ausschließlich über Testheader; Magic-Link-Mails werden ausschließlich im Speicher aufgezeichnet. Anonyme Dice-Anfragen werden mit 401 abgewiesen, authentifizierte Kataloganfragen liefern 200.
+Tests (Kommando + Ergebnis + Anzahl): `dotnet test DsaWuerfelApp/DsaWuerfelApp.Tests/DsaWuerfelApp.Tests.csproj -c Release --no-restore --filter FullyQualifiedName~TestApplicationSmokeTests -v minimal` erfolgreich, 2/2. `dotnet test DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfolgreich, 11/11.
+Build: `dotnet build DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfolgreich, 0 Fehler, 2 NU1903-Warnungen.
+Manuell geprüft: Datenbankpfad liegt im temporären Testverzeichnis; Entwicklungsdatenbank und Schlüsselverzeichnis werden nicht verwendet; kein externer Mailversand.
+Nicht geprüft / Blocker: Keine weiteren Integrations- oder SignalR-Tests; für P02 nicht erforderlich. NU1903 bleibt als bekannte Warnung bestehen.
+Nächstes zulässiges Paket: P03, nur nach ausdrücklicher Beauftragung.

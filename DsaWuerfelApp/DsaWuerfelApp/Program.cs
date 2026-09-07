@@ -338,3 +338,5 @@ static void EnsureSessionSchema(HeroDbContext dbContext)
         ON SessionRollHistory (SessionId, TimestampUtc);
         """);
 }
+
+public partial class Program;
