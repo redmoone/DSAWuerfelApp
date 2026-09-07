@@ -24,7 +24,7 @@ public sealed class RollTalentHandler(
         var probe = ProbeAttributes.Create(probeData.ProbeData.Probe);
         if (hero is not null && probe.ToArray().Any(attribute => !hero.Eigenschaften.ContainsKey(attribute)))
         {
-            throw new InvalidOperationException(
+            throw new RequestRejectedException(RequestRejectionReason.Validation,
                 "Die ausgewaehlte Probe enthaelt variable oder unbekannte Eigenschaften und kann aktuell nicht automatisiert gewuerfelt werden.");
         }
 

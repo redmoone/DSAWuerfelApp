@@ -247,7 +247,7 @@ public class GameHub(
                 historyEntrySelector,
                 broadcastAsync);
         }
-        catch (InvalidOperationException exception)
+        catch (RequestRejectedException exception)
         {
             throw new HubException(exception.Message);
         }

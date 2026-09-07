@@ -516,7 +516,7 @@ Alle Pakete sind bei Erstellung dieser Datei OFFEN. Das vorangegangene Review is
 | P00 | ERLEDIGT | Branch/Commit gesichert; Release-Build erfolgreich, NU1903-Warnung blieb bestehen |
 | P01 | ERLEDIGT | Testprojekt ergänzt; TalentProbeEvaluatorTests 9/9 erfolgreich, Release-Build erfolgreich |
 | P02 | ERLEDIGT | Isolierte Testdatenbank, Testauth, Fake-Mailversand und Smoke-Tests; Gesamt-Testlauf 11/11 erfolgreich |
-| P03 | OFFEN | |
+| P03 | ERLEDIGT | RequestRejectedException und zentrale HTTP-/Hub-Abbildung; 400/500-Transporttests und Gesamt-Testlauf erfolgreich |
 | P04 | OFFEN | |
 | P05 | OFFEN | |
 | P06 | OFFEN | |
@@ -580,3 +580,13 @@ Build: `dotnet build DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfol
 Manuell geprüft: Datenbankpfad liegt im temporären Testverzeichnis; Entwicklungsdatenbank und Schlüsselverzeichnis werden nicht verwendet; kein externer Mailversand.
 Nicht geprüft / Blocker: Keine weiteren Integrations- oder SignalR-Tests; für P02 nicht erforderlich. NU1903 bleibt als bekannte Warnung bestehen.
 Nächstes zulässiges Paket: P03, nur nach ausdrücklicher Beauftragung.
+
+Paket / Datum: P03 / 07.09.2026
+Bestätigte Ursache: DiceController wandelte sämtliche Exceptions in 400 um; erwartete Ablehnungen waren nicht typisiert und Master-Sammelhandler fingen auch Abbruch- und unerwartete Fehler je Ziel ab.
+Geänderte Dateien: `DsaWuerfelApp/DsaWuerfelApp/Services/Application/Support/RequestRejectedException.cs`, `DiceController.cs`, `Program.cs`, `GameHub.cs`, `RollMasterTalentHandler.cs`, `RollMasterAttributeHandler.cs`, `RollTalentHandler.cs`, `DsaWuerfelApp.Tests/RequestRejectionTests.cs`, `Plan.md`.
+Verhaltensänderung: Erwartete Ablehnungen tragen Validation/Forbidden/NotFound als Reason und werden zentral auf 400/403/404 mit `{ error }` abgebildet. Unerwartete HTTP-Fehler liefern 500 ohne interne Details. Der Hub übersetzt erwartete Ablehnungen in `HubException`; Sammelhandler reichen `OperationCanceledException` und unerwartete Exceptions weiter.
+Tests (Kommando + Ergebnis + Anzahl): `dotnet test DsaWuerfelApp/DsaWuerfelApp.Tests/DsaWuerfelApp.Tests.csproj -c Release --no-restore --filter FullyQualifiedName~RequestRejectionTests -v minimal` erfolgreich, 2/2. `dotnet test DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfolgreich, 12/12.
+Build: `dotnet build DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfolgreich, 0 Fehler, 2 NU1903-Warnungen.
+Manuell geprüft: DiceController enthält keine pauschalen `catch (Exception)`-Abbildungen mehr; Client-Fehlerpayload `{ error }` bleibt erhalten.
+Nicht geprüft / Einschränkung: 403/404 können vor P06/P07 noch nicht über echte Besitz-/Meisterpfade ausgelöst werden; ihre zentrale Reason-Abbildung ist vorbereitet. Kein separater SignalR-Testclient und kein expliziter Abbruch-Sammeltest in P03.
+Nächstes zulässiges Paket: P04, nur nach ausdrücklicher Beauftragung.

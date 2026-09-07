@@ -16,7 +16,7 @@ public sealed class RollMasterTalentHandler(
 
         if (request.Targets.Length == 0)
         {
-            throw new InvalidOperationException("Bitte mindestens einen Spieler auswählen.");
+            throw new RequestRejectedException(RequestRejectionReason.Validation, "Bitte mindestens einen Spieler auswählen.");
         }
 
         var results = new List<MasterTalentRollTargetResultDto>(request.Targets.Length);
@@ -66,7 +66,22 @@ public sealed class RollMasterTalentHandler(
                     result,
                     null));
             }
-            catch (Exception exception)
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (RequestRejectedException exception)
+            {
+                results.Add(new MasterTalentRollTargetResultDto(
+                    target.UserId,
+                    target.PlayerName,
+                    target.HeroId,
+                    target.HeroName,
+                    null,
+                    null,
+                    exception.Message));
+            }
+            catch (InvalidOperationException exception)
             {
                 results.Add(new MasterTalentRollTargetResultDto(
                     target.UserId,

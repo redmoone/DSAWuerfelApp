@@ -12,7 +12,7 @@ public sealed class RollMasterAttributeHandler(RollAttributeHandler rollAttribut
 
         if (request.Targets.Length == 0)
         {
-            throw new InvalidOperationException("Bitte mindestens einen Spieler auswählen.");
+            throw new RequestRejectedException(RequestRejectionReason.Validation, "Bitte mindestens einen Spieler auswählen.");
         }
 
         var results = new List<MasterAttributeRollTargetResultDto>(request.Targets.Length);
@@ -40,7 +40,21 @@ public sealed class RollMasterAttributeHandler(RollAttributeHandler rollAttribut
                     result,
                     null));
             }
-            catch (Exception exception)
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (RequestRejectedException exception)
+            {
+                results.Add(new MasterAttributeRollTargetResultDto(
+                    target.UserId,
+                    target.PlayerName,
+                    target.HeroId,
+                    target.HeroName,
+                    null,
+                    exception.Message));
+            }
+            catch (InvalidOperationException exception)
             {
                 results.Add(new MasterAttributeRollTargetResultDto(
                     target.UserId,

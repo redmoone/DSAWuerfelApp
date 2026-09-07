@@ -18,29 +18,15 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
         [FromQuery] Guid? heroId,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await workflow.GetContextAsync(heroId, cancellationToken);
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var result = await workflow.GetContextAsync(heroId, cancellationToken);
+        return Ok(result);
     }
 
     [HttpGet("catalog-context")]
     public async Task<ActionResult<DicePageContextDto>> GetCatalogContext(CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await workflow.GetCatalogContextAsync(cancellationToken);
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var result = await workflow.GetCatalogContextAsync(cancellationToken);
+        return Ok(result);
     }
 
     [HttpGet("probe-info")]
@@ -52,32 +38,18 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
         [FromQuery] string[]? spellOptionValue = null,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            var result =
-                await workflow.GetProbeInfoAsync(
-                    new ProbeInfoRequestDto(heroId, probeValue, modifier, badTraitName, spellOptionValue ?? []),
-                    cancellationToken);
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var result =
+            await workflow.GetProbeInfoAsync(
+                new ProbeInfoRequestDto(heroId, probeValue, modifier, badTraitName, spellOptionValue ?? []),
+                cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost("free-roll")]
     public ActionResult<FreeRollResultDto> RollFree([FromBody] FreeRollRequestDto request)
     {
-        try
-        {
-            var result = workflow.RollFree(request);
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var result = workflow.RollFree(request);
+        return Ok(result);
     }
 
     [HttpPost("talent-roll")]
@@ -85,15 +57,8 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
         [FromBody] TalentRollRequestDto request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await workflow.RollTalentAsync(request, cancellationToken: cancellationToken);
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var result = await workflow.RollTalentAsync(request, cancellationToken: cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost("attribute-roll")]
@@ -101,15 +66,8 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
         [FromBody] AttributeRollRequestDto request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await workflow.RollAttributeAsync(request, cancellationToken: cancellationToken);
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var result = await workflow.RollAttributeAsync(request, cancellationToken: cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost("master-talent-roll")]
@@ -117,15 +75,8 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
         [FromBody] MasterTalentRollRequestDto request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await workflow.RollMasterTalentAsync(request, cancellationToken);
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var result = await workflow.RollMasterTalentAsync(request, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost("master-attribute-roll")]
@@ -133,15 +84,8 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
         [FromBody] MasterAttributeRollRequestDto request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await workflow.RollMasterAttributeAsync(request, cancellationToken);
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var result = await workflow.RollMasterAttributeAsync(request, cancellationToken);
+        return Ok(result);
     }
 
     [HttpPost("bad-trait-roll")]
@@ -149,15 +93,8 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
         [FromBody] BadTraitRollRequestDto request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var result = await workflow.RollBadTraitAsync(request, cancellationToken: cancellationToken);
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var result = await workflow.RollBadTraitAsync(request, cancellationToken: cancellationToken);
+        return Ok(result);
     }
 
     [HttpGet("debug-mode")]

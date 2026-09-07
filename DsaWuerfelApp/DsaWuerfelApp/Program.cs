@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Diagnostics;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = new FileExtensionContentTypeProvider { Mappings = { [".glb"] = "model/gltf-binary" } };
@@ -115,6 +117,27 @@ builder.Services.AddHttpClient("JavaMicroservice", client =>
     client.Timeout = TimeSpan.FromSeconds(javaMicroserviceTimeoutSeconds);
 });
 var app = builder.Build();
+
+app.UseExceptionHandler(errorApp => errorApp.Run(async context =>
+{
+    var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+    var (statusCode, message) = exception switch
+    {
+        RequestRejectedException rejected => (
+            rejected.Reason switch
+            {
+                RequestRejectionReason.Forbidden => StatusCodes.Status403Forbidden,
+                RequestRejectionReason.NotFound => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest
+            },
+            rejected.Message),
+        _ => (StatusCodes.Status500InternalServerError, "Ein interner Serverfehler ist aufgetreten.")
+    };
+
+    context.Response.StatusCode = statusCode;
+    context.Response.ContentType = "application/json";
+    await JsonSerializer.SerializeAsync(context.Response.Body, new { error = message });
+}));
 
 using (var scope = app.Services.CreateScope())
 {
