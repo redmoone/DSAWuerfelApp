@@ -525,7 +525,7 @@ Alle Pakete sind bei Erstellung dieser Datei OFFEN. Das vorangegangene Review is
 | P09 | ERLEDIGT | Tokenverbrauch per bedingtem UPDATE innerhalb einer DB-Transaktion atomar; Gesamt-Testlauf 28 erfolgreich |
 | P10 | ERLEDIGT | Startup weist verwaisten Helden keinen AuthUser mehr zu; Build und 28 Tests erfolgreich. Altbestand braucht explizite Zuordnung mit Backup und bekanntem Eigent�mer. |
 | P11 | ERLEDIGT | Gefilterter Unique-Index und transaktionale Eigent�mer-Aktivierung umgesetzt; bestehende Konflikte werden beim Schema-Upgrade diagnostiziert; 28 Tests erfolgreich |
-| P12 | OFFEN | |
+| P12 | ERLEDIGT | EF/ASP.NET-Paketkette auf 10.0.11 aktualisiert; SQLitePCLRaw 2.1.12 wird aufgel�st, Vulnerability-Scan ohne Treffer, 28 Tests erfolgreich |
 | P13 | OFFEN | |
 | P14 | OFFEN | |
 | P15 | OFFEN | |
@@ -610,6 +610,7 @@ Build: `dotnet build DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfol
 Manuell geprüft: Null/Leer, Nullgruppe, Count- und Seitenzahlgrenzen, 2×50, 51+50 sowie Wertebereich bei 100 Würfeln.
 Nicht geprüft / Einschränkung: Keine statistische Zufallsverteilung geprüft; keine weitergehende konfigurierbare Limit-Infrastruktur eingeführt.
 Nächstes zulässiges Paket: P06, nur nach ausdrücklicher Beauftragung.
+
 
 
 
