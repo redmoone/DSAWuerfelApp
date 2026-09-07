@@ -239,6 +239,26 @@ static void EnsureHeroSchema(HeroDbContext dbContext)
         ON Heroes (OwnerUserId);
         """);
 
+    var conflictingOwners = dbContext.Heroes
+        .AsNoTracking()
+        .Where(hero => hero.IsActive && hero.OwnerUserId != null && hero.OwnerUserId != "")
+        .GroupBy(hero => hero.OwnerUserId)
+        .Where(group => group.Count() > 1)
+        .Select(group => group.Key)
+        .ToArray();
+    if (conflictingOwners.Length > 0)
+    {
+        throw new InvalidOperationException(
+            $"Helden-Schema kann nicht aktualisiert werden: mehrere aktive Helden für {string.Join(", ", conflictingOwners)}.");
+    }
+
+    dbContext.Database.ExecuteSqlRaw(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS IX_Heroes_OneActivePerOwner
+        ON Heroes (OwnerUserId)
+        WHERE IsActive = 1 AND OwnerUserId IS NOT NULL AND OwnerUserId <> '';
+        """);
+
 }
 
 static void EnsureAuthSchema(HeroDbContext dbContext)

@@ -82,12 +82,17 @@ public class HeroesController(HeroDbContext dbContext, HeroImportService heroImp
             return NotFound();
         }
 
+        await using var transaction = await dbContext.Database.BeginTransactionAsync();
         await dbContext.Heroes
             .Where(existingHero => existingHero.OwnerUserId == userId && existingHero.IsActive && existingHero.Id != id)
             .ExecuteUpdateAsync(setters => setters.SetProperty(existingHero => existingHero.IsActive, false));
 
-        hero.IsActive = true;
-        await dbContext.SaveChangesAsync();
+        await dbContext.Heroes
+            .Where(existingHero => existingHero.Id == id && existingHero.OwnerUserId == userId)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(existingHero => existingHero.IsActive, true));
+        await transaction.CommitAsync();
+
+        hero = await dbContext.Heroes.AsNoTracking().SingleAsync(existingHero => existingHero.Id == id);
 
         return Ok(hero);
     }
