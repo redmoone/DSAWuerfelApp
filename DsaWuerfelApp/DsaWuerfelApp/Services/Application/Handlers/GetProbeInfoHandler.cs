@@ -8,6 +8,7 @@ public sealed class GetProbeInfoHandler(
 {
     public async Task<ProbeInfoResultDto> HandleAsync(
         ProbeInfoRequestDto request,
+        string userId,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -17,7 +18,7 @@ public sealed class GetProbeInfoHandler(
             throw new ArgumentException("Bitte zuerst eine Probe auswählen.", nameof(request));
         }
 
-        var hero = await heroContextReader.LoadOptionalAsync(request.HeroId, cancellationToken);
+        var hero = await heroContextReader.LoadOptionalAsync(request.HeroId, userId, cancellationToken);
         return probeInfoService.BuildProbeInfo(
             hero,
             request.ProbeValue,

@@ -9,6 +9,7 @@ public sealed class RollAttributeHandler(
 {
     public async Task<AttributeRollResultDto> HandleAsync(
         AttributeRollRequestDto request,
+        string userId,
         string playerName = "Unbekannt",
         CancellationToken cancellationToken = default)
     {
@@ -21,7 +22,7 @@ public sealed class RollAttributeHandler(
                 "Verdeckte Würfe sind derzeit nicht verfügbar.");
         }
 
-        var hero = await heroContextReader.LoadOptionalAsync(request.HeroId, cancellationToken);
+        var hero = await heroContextReader.LoadOptionalAsync(request.HeroId, userId, cancellationToken);
         var attributes = AttributeSelection.Create(request.Attributes);
         var badTrait = badTraitResolver.ResolveOptional(hero, request.BadTraitName);
 

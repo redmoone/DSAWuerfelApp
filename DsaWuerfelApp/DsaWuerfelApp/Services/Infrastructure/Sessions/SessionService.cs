@@ -32,6 +32,24 @@ public class SessionService(SessionRecordStore recordStore, SessionRuntimeState 
         }
     }
 
+    public IReadOnlyList<SessionHeroTarget> GetMasterHeroTargets(string sessionId, string masterUserId)
+    {
+        lock (_syncRoot)
+        {
+            EnsureLoaded();
+            var session = runtimeState.GetMemberSession(sessionId, masterUserId);
+            if (!string.Equals(session.MasterUserId, masterUserId, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("Nur der Meister darf Helden anderer Spieler lesen.");
+            }
+
+            return session.Players
+                .Where(player => player.ActiveHeroId.HasValue)
+                .Select(player => new SessionHeroTarget(player.UserId, player.ActiveHeroId!.Value))
+                .ToArray();
+        }
+    }
+
     public GameSession OpenSession(string sessionId, string userId)
     {
         lock (_syncRoot)
@@ -308,3 +326,5 @@ public sealed record LeaveSessionResult(
     bool SessionDeleted,
     IReadOnlyList<string> AffectedUserIds,
     IReadOnlyList<string> DetachedConnectionIds);
+
+public sealed record SessionHeroTarget(string UserId, Guid HeroId);

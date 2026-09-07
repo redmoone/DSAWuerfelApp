@@ -8,9 +8,9 @@ public sealed class GetDicePageContextHandler(
     HeroContextReader heroContextReader,
     DicePageContextFactory dicePageContextFactory)
 {
-    public async Task<DicePageContextDto> HandleAsync(Guid? heroId, CancellationToken cancellationToken = default)
+    public async Task<DicePageContextDto> HandleAsync(Guid? heroId, string userId, CancellationToken cancellationToken = default)
     {
-        var hero = await heroContextReader.LoadOptionalAsync(heroId, cancellationToken);
+        var hero = await heroContextReader.LoadOptionalAsync(heroId, userId, cancellationToken);
         return dicePageContextFactory.BuildContext(hero, Debugger.IsAttached);
     }
 

@@ -10,6 +10,7 @@ public sealed class RollMasterTalentHandler(
 {
     public async Task<MasterTalentRollTargetResultDto[]> HandleAsync(
         MasterTalentRollRequestDto request,
+        string userId,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -25,7 +26,7 @@ public sealed class RollMasterTalentHandler(
         {
             try
             {
-                var hero = await heroContextReader.LoadRequiredAsync(target.HeroId, cancellationToken);
+                var hero = await heroContextReader.LoadRequiredAsync(target.HeroId, userId, cancellationToken);
                 if (!probeResolutionService.TryResolveMasterProbe(
                         hero,
                         request.TalentKey,

@@ -202,7 +202,7 @@ public class GameHub(
     {
         return ExecuteRollAsync(
             request.SessionId,
-            playerName => diceWorkflowService.RollTalentAsync(request, playerName, Context.ConnectionAborted),
+            playerName => diceWorkflowService.RollTalentAsync(request, GetRequiredUserId(), playerName, Context.ConnectionAborted),
             result => result.HistoryEntry,
             (sessionId, result) => Clients.Group(sessionId).SendAsync("ShowTalentRollResult", result));
     }
@@ -211,7 +211,7 @@ public class GameHub(
     {
         return ExecuteRollAsync(
             request.SessionId,
-            playerName => diceWorkflowService.RollAttributeAsync(request, playerName, Context.ConnectionAborted),
+            playerName => diceWorkflowService.RollAttributeAsync(request, GetRequiredUserId(), playerName, Context.ConnectionAborted),
             result => result.HistoryEntry,
             (sessionId, result) => Clients.Group(sessionId).SendAsync("ShowAttributeRollResult", result));
     }
@@ -220,7 +220,7 @@ public class GameHub(
     {
         return ExecuteRollAsync(
             request.SessionId,
-            playerName => diceWorkflowService.RollBadTraitAsync(request, playerName, Context.ConnectionAborted),
+            playerName => diceWorkflowService.RollBadTraitAsync(request, GetRequiredUserId(), playerName, Context.ConnectionAborted),
             result => result.HistoryEntry,
             (sessionId, result) => Clients.Group(sessionId).SendAsync("ShowBadTraitRollResult", result));
     }

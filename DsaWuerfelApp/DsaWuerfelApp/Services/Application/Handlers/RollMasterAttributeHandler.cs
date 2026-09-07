@@ -6,6 +6,7 @@ public sealed class RollMasterAttributeHandler(RollAttributeHandler rollAttribut
 {
     public async Task<MasterAttributeRollTargetResultDto[]> HandleAsync(
         MasterAttributeRollRequestDto request,
+        string userId,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -28,7 +29,8 @@ public sealed class RollMasterAttributeHandler(RollAttributeHandler rollAttribut
                         request.Attributes,
                         request.Modifier,
                         request.BadTraitName,
-                        true),
+                        false),
+                    userId,
                     target.PlayerName,
                     cancellationToken);
 

@@ -12,9 +12,9 @@ public sealed class DiceWorkflowService(
     RollMasterTalentHandler rollMasterTalentHandler,
     RollMasterAttributeHandler rollMasterAttributeHandler)
 {
-    public Task<DicePageContextDto> GetContextAsync(Guid? heroId, CancellationToken cancellationToken = default)
+    public Task<DicePageContextDto> GetContextAsync(Guid? heroId, string userId, CancellationToken cancellationToken = default)
     {
-        return getDicePageContextHandler.HandleAsync(heroId, cancellationToken);
+        return getDicePageContextHandler.HandleAsync(heroId, userId, cancellationToken);
     }
 
     public Task<DicePageContextDto> GetCatalogContextAsync(CancellationToken cancellationToken = default)
@@ -24,9 +24,10 @@ public sealed class DiceWorkflowService(
 
     public Task<ProbeInfoResultDto> GetProbeInfoAsync(
         ProbeInfoRequestDto request,
+        string userId,
         CancellationToken cancellationToken = default)
     {
-        return getProbeInfoHandler.HandleAsync(request, cancellationToken);
+        return getProbeInfoHandler.HandleAsync(request, userId, cancellationToken);
     }
 
     public FreeRollResultDto RollFree(FreeRollRequestDto request, string playerName = "Unbekannt")
@@ -36,39 +37,44 @@ public sealed class DiceWorkflowService(
 
     public Task<TalentRollResultDto> RollTalentAsync(
         TalentRollRequestDto request,
+        string userId,
         string playerName = "Unbekannt",
         CancellationToken cancellationToken = default)
     {
-        return rollTalentHandler.HandleAsync(request, playerName, cancellationToken);
+        return rollTalentHandler.HandleAsync(request, userId, playerName, cancellationToken);
     }
 
     public Task<AttributeRollResultDto> RollAttributeAsync(
         AttributeRollRequestDto request,
+        string userId,
         string playerName = "Unbekannt",
         CancellationToken cancellationToken = default)
     {
-        return rollAttributeHandler.HandleAsync(request, playerName, cancellationToken);
+        return rollAttributeHandler.HandleAsync(request, userId, playerName, cancellationToken);
     }
 
     public Task<BadTraitRollResultDto> RollBadTraitAsync(
         BadTraitRollRequestDto request,
+        string userId,
         string playerName = "Unbekannt",
         CancellationToken cancellationToken = default)
     {
-        return rollBadTraitHandler.HandleAsync(request, playerName, cancellationToken);
+        return rollBadTraitHandler.HandleAsync(request, userId, playerName, cancellationToken);
     }
 
     public Task<MasterTalentRollTargetResultDto[]> RollMasterTalentAsync(
         MasterTalentRollRequestDto request,
+        string userId,
         CancellationToken cancellationToken = default)
     {
-        return rollMasterTalentHandler.HandleAsync(request, cancellationToken);
+        return rollMasterTalentHandler.HandleAsync(request, userId, cancellationToken);
     }
 
     public Task<MasterAttributeRollTargetResultDto[]> RollMasterAttributeAsync(
         MasterAttributeRollRequestDto request,
+        string userId,
         CancellationToken cancellationToken = default)
     {
-        return rollMasterAttributeHandler.HandleAsync(request, cancellationToken);
+        return rollMasterAttributeHandler.HandleAsync(request, userId, cancellationToken);
     }
 }

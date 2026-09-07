@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Security.Claims;
 
 using DsaWuerfelApp.Services;
 using DsaWuerfelApp.Shared;
@@ -18,7 +19,7 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
         [FromQuery] Guid? heroId,
         CancellationToken cancellationToken)
     {
-        var result = await workflow.GetContextAsync(heroId, cancellationToken);
+        var result = await workflow.GetContextAsync(heroId, UserId(), cancellationToken);
         return Ok(result);
     }
 
@@ -41,7 +42,7 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
         var result =
             await workflow.GetProbeInfoAsync(
                 new ProbeInfoRequestDto(heroId, probeValue, modifier, badTraitName, spellOptionValue ?? []),
-                cancellationToken);
+                UserId(), cancellationToken);
         return Ok(result);
     }
 
@@ -57,7 +58,7 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
         [FromBody] TalentRollRequestDto request,
         CancellationToken cancellationToken)
     {
-        var result = await workflow.RollTalentAsync(request, cancellationToken: cancellationToken);
+        var result = await workflow.RollTalentAsync(request, UserId(), cancellationToken: cancellationToken);
         return Ok(result);
     }
 
@@ -66,7 +67,7 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
         [FromBody] AttributeRollRequestDto request,
         CancellationToken cancellationToken)
     {
-        var result = await workflow.RollAttributeAsync(request, cancellationToken: cancellationToken);
+        var result = await workflow.RollAttributeAsync(request, UserId(), cancellationToken: cancellationToken);
         return Ok(result);
     }
 
@@ -75,7 +76,7 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
         [FromBody] MasterTalentRollRequestDto request,
         CancellationToken cancellationToken)
     {
-        var result = await workflow.RollMasterTalentAsync(request, cancellationToken);
+        var result = await workflow.RollMasterTalentAsync(request, UserId(), cancellationToken);
         return Ok(result);
     }
 
@@ -84,7 +85,7 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
         [FromBody] MasterAttributeRollRequestDto request,
         CancellationToken cancellationToken)
     {
-        var result = await workflow.RollMasterAttributeAsync(request, cancellationToken);
+        var result = await workflow.RollMasterAttributeAsync(request, UserId(), cancellationToken);
         return Ok(result);
     }
 
@@ -93,9 +94,11 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
         [FromBody] BadTraitRollRequestDto request,
         CancellationToken cancellationToken)
     {
-        var result = await workflow.RollBadTraitAsync(request, cancellationToken: cancellationToken);
+        var result = await workflow.RollBadTraitAsync(request, UserId(), cancellationToken: cancellationToken);
         return Ok(result);
     }
+
+    private string UserId() => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new RequestRejectedException(RequestRejectionReason.Forbidden, "Benutzer ist nicht authentifiziert.");
 
     [HttpGet("debug-mode")]
     public ActionResult<bool> GetDebugMode()

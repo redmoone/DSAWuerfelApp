@@ -9,6 +9,7 @@ public sealed class RollBadTraitHandler(
 {
     public async Task<BadTraitRollResultDto> HandleAsync(
         BadTraitRollRequestDto request,
+        string userId,
         string playerName = "Unbekannt",
         CancellationToken cancellationToken = default)
     {
@@ -23,7 +24,7 @@ public sealed class RollBadTraitHandler(
 
         var badTrait = request.HeroId.HasValue
             ? badTraitResolver.ResolveRequired(
-                await heroContextReader.LoadRequiredAsync(request.HeroId.Value, cancellationToken),
+                await heroContextReader.LoadRequiredAsync(request.HeroId.Value, userId, cancellationToken),
                 request.BadTraitName)
             : new BadTraitDto(request.BadTraitName, request.BadTraitValue, request.BadTraitValue, request.BadTraitValue);
 

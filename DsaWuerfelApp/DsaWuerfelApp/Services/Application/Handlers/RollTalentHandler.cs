@@ -10,6 +10,7 @@ public sealed class RollTalentHandler(
 {
     public async Task<TalentRollResultDto> HandleAsync(
         TalentRollRequestDto request,
+        string userId,
         string playerName = "Unbekannt",
         CancellationToken cancellationToken = default)
     {
@@ -23,7 +24,7 @@ public sealed class RollTalentHandler(
         }
 
         var hero = request.HeroId.HasValue
-            ? await heroContextReader.LoadRequiredAsync(request.HeroId.Value, cancellationToken)
+            ? await heroContextReader.LoadRequiredAsync(request.HeroId.Value, userId, cancellationToken)
             : null;
         var probeData = hero is null
             ? probeResolutionService.ResolveProbeOrCatalog(null, request.TalentKey, request.SpellOptionValues)
