@@ -8,11 +8,20 @@ public partial class Dice3D : IAsyncDisposable
     private ElementReference _canvas;
     private DotNetObjectReference<Dice3D>? _dotNetRef;
     private IJSObjectReference? _module;
+    private bool _disposed;
 
     [Parameter] public EventCallback<int> OnDiceRemoved { get; set; }
 
     public async ValueTask DisposeAsync()
     {
+        if (_disposed) return;
+        _disposed = true;
+
+        if (_module is not null)
+        {
+            await _module.InvokeVoidAsync("dispose");
+        }
+
         _dotNetRef?.Dispose();
 
         if (_module is not null)
@@ -23,7 +32,7 @@ public partial class Dice3D : IAsyncDisposable
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender && !_disposed)
         {
             _module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/dice3d.js");
 

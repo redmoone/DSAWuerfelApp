@@ -7,6 +7,11 @@ let renderer, scene, camera;
 let diceModels = new Map();
 let activeDice = [];
 let dotNetRef = null;
+let animationFrameId = 0;
+let rollAnimationFrameId = 0;
+let resizeHandler = null;
+let canvasElement = null;
+let disposed = false;
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -16,6 +21,8 @@ export function setDotNetRef(ref) {
 }
 
 export async function init(canvas) {
+    disposed = false;
+    canvasElement = canvas;
     const setup = initScene(canvas, SUPERSAMPLE);
     renderer = setup.renderer;
     scene = setup.scene;
@@ -23,6 +30,12 @@ export async function init(canvas) {
 
     const loader = new GLTFLoader();
     const gltf = await loader.loadAsync("./models/dice_set.glb");
+    if (disposed) {
+        gltf.scene.traverse((obj) => {
+            if (obj.isMesh) obj.geometry?.dispose();
+        });
+        return;
+    }
 
     const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
 
@@ -59,10 +72,11 @@ export async function init(canvas) {
 
     resizeScene(canvas, renderer, camera);
 
-    window.addEventListener("resize", () => {
+    resizeHandler = () => {
         resizeScene(canvas, renderer, camera);
         recalculatePositions(canvas.clientWidth);
-    });
+    };
+    window.addEventListener("resize", resizeHandler);
 
     animate(canvas);
 }
@@ -94,7 +108,8 @@ function handleCanvasClick(event) {
 }
 
 function animate(canvas) {
-    requestAnimationFrame(() => animate(canvas));
+    if (disposed) return;
+    animationFrameId = requestAnimationFrame(() => animate(canvas));
     resizeScene(canvas, renderer, camera);
     renderer.render(scene, camera);
 }
@@ -236,8 +251,35 @@ export function rollDice(resultsArray) {
             a.mesh.rotation.z = a.start.z + (a.target.z - a.start.z) * ease;
         }
 
-        if (p < 1) requestAnimationFrame(loop);
+        if (p < 1 && !disposed) rollAnimationFrameId = requestAnimationFrame(loop);
     }
 
-    requestAnimationFrame(loop);
+    rollAnimationFrameId = requestAnimationFrame(loop);
+}
+
+export function dispose() {
+    if (disposed) return;
+    disposed = true;
+    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    if (rollAnimationFrameId) cancelAnimationFrame(rollAnimationFrameId);
+    if (resizeHandler) window.removeEventListener("resize", resizeHandler);
+    if (canvasElement) canvasElement.removeEventListener("click", handleCanvasClick);
+    activeDice.forEach(mesh => {
+        scene?.remove(mesh);
+        mesh.traverse(obj => {
+            if (obj.isMesh) {
+                obj.geometry?.dispose();
+                if (Array.isArray(obj.material)) obj.material.forEach(material => material.dispose());
+                else obj.material?.dispose();
+            }
+        });
+    });
+    activeDice = [];
+    renderer?.dispose();
+    renderer?.domElement?.remove();
+    renderer = null;
+    scene = null;
+    camera = null;
+    dotNetRef = null;
+    canvasElement = null;
 }
