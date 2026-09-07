@@ -96,18 +96,20 @@ public sealed class MagicLinkService(
         var now = timeProvider.GetUtcNow().UtcDateTime;
         var hashedToken = HashToken(token);
 
-        var magicLinkToken = await dbContext.MagicLinkTokens
-            .SingleOrDefaultAsync(
-                entry => entry.TokenHash == hashedToken &&
-                         entry.ConsumedAtUtc == null,
-                cancellationToken);
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var consumed = await dbContext.MagicLinkTokens
+            .Where(entry => entry.TokenHash == hashedToken &&
+                            entry.ConsumedAtUtc == null &&
+                            entry.ExpiresAtUtc > now)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(entry => entry.ConsumedAtUtc, now), cancellationToken);
 
-        if (magicLinkToken is null || magicLinkToken.ExpiresAtUtc < now)
+        if (consumed != 1)
         {
             return null;
         }
 
-        magicLinkToken.ConsumedAtUtc = now;
+        var magicLinkToken = await dbContext.MagicLinkTokens
+            .SingleAsync(entry => entry.TokenHash == hashedToken, cancellationToken);
 
         var user = await dbContext.AuthUsers
             .SingleOrDefaultAsync(entry => entry.Email == magicLinkToken.Email, cancellationToken);
@@ -130,6 +132,7 @@ public sealed class MagicLinkService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return new MagicLinkVerificationResult(user, magicLinkToken.RedirectPath ?? "/");
     }

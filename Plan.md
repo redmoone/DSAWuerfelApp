@@ -522,7 +522,7 @@ Alle Pakete sind bei Erstellung dieser Datei OFFEN. Das vorangegangene Review is
 | P06 | OFFEN | |
 | P07 | ERLEDIGT | SessionId in Probe-/Master-Vertr�gen und Client-Transport erg�nzt; Master-Requests ohne Session werden abgewiesen; Build und 28 Tests erfolgreich |
 | P08 | OFFEN | |
-| P09 | OFFEN | |
+| P09 | ERLEDIGT | Tokenverbrauch per bedingtem UPDATE innerhalb einer DB-Transaktion atomar; Gesamt-Testlauf 28 erfolgreich |
 | P10 | OFFEN | |
 | P11 | OFFEN | |
 | P12 | OFFEN | |
@@ -610,4 +610,5 @@ Build: `dotnet build DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfol
 Manuell geprüft: Null/Leer, Nullgruppe, Count- und Seitenzahlgrenzen, 2×50, 51+50 sowie Wertebereich bei 100 Würfeln.
 Nicht geprüft / Einschränkung: Keine statistische Zufallsverteilung geprüft; keine weitergehende konfigurierbare Limit-Infrastruktur eingeführt.
 Nächstes zulässiges Paket: P06, nur nach ausdrücklicher Beauftragung.
+
 
