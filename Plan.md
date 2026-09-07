@@ -532,7 +532,7 @@ Alle Pakete sind bei Erstellung dieser Datei OFFEN. Das vorangegangene Review is
 | P16 | ERLEDIGT | Master-Kontext wird anhand Session, Modus, eigenem Hero und sortierten User/Hero-Paaren dedupliziert; Anzeigeaktualisierungen ohne fachlichen Wechsel laden keinen Kontext; 28 Tests erfolgreich |
 | P17 | ERLEDIGT | API-Strategie nur ohne Session; ausgew�hlte Session beansprucht Hub-Transport und meldet Verbindungsverlust explizit; 28 Tests erfolgreich |
 | P18 | ERLEDIGT | Dice3D-Dispose idempotent erg�nzt; Render-/Roll-Frames, Listener, Renderer und W�rfelressourcen werden freigegeben; Build und 28 Tests erfolgreich |
-| P19 | OFFEN | |
+| P19 | ERLEDIGT | artifacts/** aus Server- und Client-Default-Items ausgeschlossen; externer Release-Publish erfolgreich, Kataloge und GLB vorhanden, keine artifacts/DB/Keys im Output |
 | P20 | OFFEN | |
 
 Nach jedem Paket darunter einen kurzen Eintrag ergänzen:
@@ -610,6 +610,7 @@ Build: `dotnet build DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfol
 Manuell geprüft: Null/Leer, Nullgruppe, Count- und Seitenzahlgrenzen, 2×50, 51+50 sowie Wertebereich bei 100 Würfeln.
 Nicht geprüft / Einschränkung: Keine statistische Zufallsverteilung geprüft; keine weitergehende konfigurierbare Limit-Infrastruktur eingeführt.
 Nächstes zulässiges Paket: P06, nur nach ausdrücklicher Beauftragung.
+
 
 
 
