@@ -514,7 +514,7 @@ Alle Pakete sind bei Erstellung dieser Datei OFFEN. Das vorangegangene Review is
 | Paket | Status | Tatsächlich ausgeführte Prüfungen / Einschränkung |
 | --- | --- | --- |
 | P00 | ERLEDIGT | Branch/Commit gesichert; Release-Build erfolgreich, NU1903-Warnung blieb bestehen |
-| P01 | OFFEN | |
+| P01 | ERLEDIGT | Testprojekt ergänzt; TalentProbeEvaluatorTests 9/9 erfolgreich, Release-Build erfolgreich |
 | P02 | OFFEN | |
 | P03 | OFFEN | |
 | P04 | OFFEN | |
@@ -560,3 +560,13 @@ Build: Release-Build erfolgreich.
 Manuell geprüft: Branch, Remote, gestagte/ungestagte/unversionierte Dateien, Kampfdateien, `.editorconfig`, `nuget.config`, `structure.txt`; keine Datenbank- oder Schlüsseldateien im Commit.
 Nicht geprüft / Blocker: Kein Push, Publish und keine Browserprüfung; für P00 nicht erforderlich. Die bekannte SQLite-Sicherheitswarnung bleibt offen für spätere Planpakete.
 Nächstes zulässiges Paket: P01, nur nach ausdrücklicher Beauftragung.
+
+Paket / Datum: P01 / 07.09.2026
+Bestätigte Ursache: Es fehlte ein Testprojekt und eine deterministische fachliche Baseline für den bestehenden TalentProbeEvaluator.
+Geänderte Dateien: `DsaWuerfelApp/DsaWuerfelApp.Tests/DsaWuerfelApp.Tests.csproj`, `DsaWuerfelApp/DsaWuerfelApp.Tests/TalentProbeEvaluatorTests.cs`, `DsaWuerfelApp.sln`, `Plan.md`.
+Verhaltensänderung: Neues xUnit-Testprojekt für `net10.0` mit Serverreferenz; Tests decken die sieben vorgegebenen Auswertungsfälle sowie falsche Attribut- und Würfelanzahl ab. Keine Produktionslogik geändert.
+Tests (Kommando + Ergebnis + Anzahl): `dotnet test DsaWuerfelApp/DsaWuerfelApp.Tests/DsaWuerfelApp.Tests.csproj -c Release --no-restore --filter FullyQualifiedName~TalentProbeEvaluatorTests -v normal` erfolgreich, 9/9. `dotnet test DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfolgreich, 9/9.
+Build: `dotnet build DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfolgreich, 0 Fehler, 2 NU1903-Warnungen.
+Manuell geprüft: Testprojekt referenziert das Serverprojekt; Testprojekt liegt ohne automatisch erzeugte Solution-Untergruppe in der Solution.
+Nicht geprüft / Blocker: Keine zusätzlichen Produktions- oder Integrationstests; für P01 nicht erforderlich. NU1903 bleibt als bekannte Warnung bestehen.
+Nächstes zulässiges Paket: P02, nur nach ausdrücklicher Beauftragung.
