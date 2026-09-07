@@ -4,7 +4,7 @@ namespace DsaWuerfelApp.Client.Services;
 
 public interface IWuerfelApiClient
 {
-    Task<DicePageContextDto> GetContextAsync(Guid? heroId, CancellationToken cancellationToken = default);
+    Task<DicePageContextDto> GetContextAsync(Guid? heroId, string? sessionId, CancellationToken cancellationToken = default);
 
     Task<DicePageContextDto> GetCatalogContextAsync(CancellationToken cancellationToken = default);
 

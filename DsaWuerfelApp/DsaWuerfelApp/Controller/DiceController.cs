@@ -17,9 +17,10 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
     [HttpGet("context")]
     public async Task<ActionResult<DicePageContextDto>> GetContext(
         [FromQuery] Guid? heroId,
+        [FromQuery] string? sessionId,
         CancellationToken cancellationToken)
     {
-        var result = await workflow.GetContextAsync(heroId, UserId(), cancellationToken);
+        var result = await workflow.GetContextAsync(heroId, sessionId, UserId(), cancellationToken);
         return Ok(result);
     }
 
@@ -33,6 +34,7 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
     [HttpGet("probe-info")]
     public async Task<ActionResult<ProbeInfoResultDto>> GetProbeInfo(
         [FromQuery] Guid? heroId,
+        [FromQuery] string? sessionId,
         [FromQuery] string probeValue,
         [FromQuery] int modifier = 0,
         [FromQuery] string? badTraitName = null,
@@ -41,7 +43,7 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
     {
         var result =
             await workflow.GetProbeInfoAsync(
-                new ProbeInfoRequestDto(heroId, probeValue, modifier, badTraitName, spellOptionValue ?? []),
+                new ProbeInfoRequestDto(sessionId, heroId, probeValue, modifier, badTraitName, spellOptionValue ?? []),
                 UserId(), cancellationToken);
         return Ok(result);
     }

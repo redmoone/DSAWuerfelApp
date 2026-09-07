@@ -20,7 +20,7 @@ public sealed class RequestRejectionTests : IClassFixture<TestApplicationFactory
     {
         using var client = _factory.CreateClient();
         client.DefaultRequestHeaders.Add("X-Test-User-Id", "test-user");
-        var request = new MasterAttributeRollRequestDto([], ["MU"], 0, null);
+        var request = new MasterAttributeRollRequestDto("session", [], ["MU"], 0, null);
 
         using var response = await client.PostAsJsonAsync("/api/dice/master-attribute-roll", request);
         var body = await response.Content.ReadAsStringAsync();

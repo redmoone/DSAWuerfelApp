@@ -288,6 +288,7 @@ public sealed class WuerfelFacade(
         }
 
         var request = new MasterTalentRollRequestDto(
+            gameClient.CurrentSessionId!,
             targets,
             state.Current.SelectedProbeValue,
             state.Current.Modifier,
@@ -312,6 +313,7 @@ public sealed class WuerfelFacade(
         }
 
         var request = new MasterAttributeRollRequestDto(
+            gameClient.CurrentSessionId!,
             targets,
             state.Current.SelectedAttributes.ToArray(),
             state.Current.Modifier,

@@ -5,6 +5,7 @@ namespace DsaWuerfelApp.Client.Services;
 public sealed class WuerfelContextService(
     WuerfelState state,
     ActiveHeroState activeHeroState,
+    SessionState sessionState,
     IWuerfelApiClient apiClient,
     WuerfelUiOperationRunner operationRunner)
 {
@@ -28,7 +29,7 @@ public sealed class WuerfelContextService(
                         await apiClient.GetCatalogContextAsync(),
                         new Dictionary<string, IReadOnlyList<BadTraitOwnerInfo>>(StringComparer.Ordinal))
                 : new LoadedDicePageContext(
-                    await apiClient.GetContextAsync(activeHeroState.CurrentHero?.Id),
+                    await apiClient.GetContextAsync(activeHeroState.CurrentHero?.Id, sessionState.ActiveSessionId),
                     new Dictionary<string, IReadOnlyList<BadTraitOwnerInfo>>(StringComparer.Ordinal));
 
             state.ApplyContext(loadedContext.Context, loadedContext.BadTraitOwners);
@@ -56,6 +57,7 @@ public sealed class WuerfelContextService(
         }
 
         var request = new ProbeInfoRequestDto(
+            sessionState.ActiveSessionId,
             ResolveCurrentHeroId(),
             state.Current.SelectedProbeValue,
             state.Current.Modifier,
@@ -132,7 +134,7 @@ public sealed class WuerfelContextService(
         var catalogContextTask = apiClient.GetCatalogContextAsync();
         var targetContextsTask = Task.WhenAll(masterTargets.Select(async target => new TargetDicePageContext(
             target,
-            await apiClient.GetContextAsync(target.ActiveHeroId))));
+            await apiClient.GetContextAsync(target.ActiveHeroId, sessionState.ActiveSessionId))));
         await Task.WhenAll(catalogContextTask, targetContextsTask);
 
         var catalogContext = catalogContextTask.Result;

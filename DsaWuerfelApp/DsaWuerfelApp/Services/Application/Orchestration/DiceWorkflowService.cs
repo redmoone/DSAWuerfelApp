@@ -12,7 +12,7 @@ public sealed class DiceWorkflowService(
     RollMasterTalentHandler rollMasterTalentHandler,
     RollMasterAttributeHandler rollMasterAttributeHandler)
 {
-    public Task<DicePageContextDto> GetContextAsync(Guid? heroId, string userId, CancellationToken cancellationToken = default)
+    public Task<DicePageContextDto> GetContextAsync(Guid? heroId, string? sessionId, string userId, CancellationToken cancellationToken = default)
     {
         return getDicePageContextHandler.HandleAsync(heroId, userId, cancellationToken);
     }

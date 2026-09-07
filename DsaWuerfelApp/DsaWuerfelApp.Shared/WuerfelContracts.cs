@@ -40,6 +40,7 @@ public sealed record DicePageContextDto(
     bool ShowDebugForcedRolls);
 
 public sealed record ProbeInfoRequestDto(
+    string? SessionId,
     Guid? HeroId,
     string ProbeValue,
     int Modifier,
@@ -202,6 +203,7 @@ public sealed record MasterRollTargetDto(
     string? HeroName);
 
 public sealed record MasterTalentRollRequestDto(
+    string SessionId,
     MasterRollTargetDto[] Targets,
     string TalentKey,
     int Modifier,
@@ -219,6 +221,7 @@ public sealed record MasterTalentRollTargetResultDto(
     string? ErrorMessage);
 
 public sealed record MasterAttributeRollRequestDto(
+    string SessionId,
     MasterRollTargetDto[] Targets,
     string[] Attributes,
     int Modifier,

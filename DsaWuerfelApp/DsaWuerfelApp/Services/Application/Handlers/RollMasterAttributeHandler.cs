@@ -11,6 +11,11 @@ public sealed class RollMasterAttributeHandler(RollAttributeHandler rollAttribut
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        if (string.IsNullOrWhiteSpace(request.SessionId))
+        {
+            throw new RequestRejectedException(RequestRejectionReason.Validation, "F?r diesen Meisterwurf ist eine aktive Session erforderlich.");
+        }
+
         if (request.Targets.Length == 0)
         {
             throw new RequestRejectedException(RequestRejectionReason.Validation, "Bitte mindestens einen Spieler auswählen.");

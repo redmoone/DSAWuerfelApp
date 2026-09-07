@@ -6,11 +6,11 @@ namespace DsaWuerfelApp.Client.Services;
 
 public sealed class WuerfelApiClient(HttpClient httpClient) : IWuerfelApiClient
 {
-    public Task<DicePageContextDto> GetContextAsync(Guid? heroId, CancellationToken cancellationToken = default)
+    public Task<DicePageContextDto> GetContextAsync(Guid? heroId, string? sessionId, CancellationToken cancellationToken = default)
     {
         var uri = heroId.HasValue
-            ? $"api/dice/context?heroId={heroId.Value}"
-            : "api/dice/context";
+            ? $"api/dice/context?heroId={heroId.Value}&sessionId={Uri.EscapeDataString(sessionId ?? string.Empty)}"
+            : $"api/dice/context?sessionId={Uri.EscapeDataString(sessionId ?? string.Empty)}";
 
         return GetJsonAsync<DicePageContextDto>(uri, "Würfelkontext konnte nicht geladen werden.", cancellationToken);
     }
@@ -29,6 +29,7 @@ public sealed class WuerfelApiClient(HttpClient httpClient) : IWuerfelApiClient
     {
         var parameters = new List<string>
         {
+            $"sessionId={Uri.EscapeDataString(request.SessionId ?? string.Empty)}",
             $"probeValue={Uri.EscapeDataString(request.ProbeValue)}", $"modifier={request.Modifier}"
         };
 

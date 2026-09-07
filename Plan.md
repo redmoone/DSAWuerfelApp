@@ -520,7 +520,7 @@ Alle Pakete sind bei Erstellung dieser Datei OFFEN. Das vorangegangene Review is
 | P04 | ERLEDIGT | Verdeckte Würfe UI-seitig deaktiviert und serverseitig in allen vier Handlern vor Ausführung abgewiesen; Tests 17/17 |
 | P05 | ERLEDIGT | Zweistufige Dice-Validierung vor Allokation/RNG; Grenzfalltests und Gesamt-Testlauf erfolgreich |
 | P06 | OFFEN | |
-| P07 | OFFEN | |
+| P07 | ERLEDIGT | SessionId in Probe-/Master-Vertr�gen und Client-Transport erg�nzt; Master-Requests ohne Session werden abgewiesen; Build und 28 Tests erfolgreich |
 | P08 | OFFEN | |
 | P09 | OFFEN | |
 | P10 | OFFEN | |
@@ -610,3 +610,4 @@ Build: `dotnet build DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfol
 Manuell geprüft: Null/Leer, Nullgruppe, Count- und Seitenzahlgrenzen, 2×50, 51+50 sowie Wertebereich bei 100 Würfeln.
 Nicht geprüft / Einschränkung: Keine statistische Zufallsverteilung geprüft; keine weitergehende konfigurierbare Limit-Infrastruktur eingeführt.
 Nächstes zulässiges Paket: P06, nur nach ausdrücklicher Beauftragung.
+
