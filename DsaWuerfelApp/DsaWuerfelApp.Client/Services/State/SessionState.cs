@@ -382,8 +382,7 @@ public sealed class SessionState : IDisposable
             return;
         }
 
-        if (ActiveSession is null ||
-            !string.Equals(ActiveSession.SessionId, ActiveSessionId, StringComparison.Ordinal))
+        if (!string.IsNullOrWhiteSpace(ActiveSessionId))
         {
             try
             {

@@ -9,6 +9,7 @@ public sealed class SessionHeroSyncService(
     private Guid? _lastHeroId;
     private string? _lastHeroName;
     private string? _lastSessionId;
+    private readonly SemaphoreSlim _syncLock = new(1, 1);
 
     public async Task AttachAsync()
     {
@@ -48,6 +49,13 @@ public sealed class SessionHeroSyncService(
 
     private async Task SyncAsync()
     {
+        if (!await _syncLock.WaitAsync(0))
+        {
+            return;
+        }
+
+        try
+        {
         var sessionId = sessionState.ActiveSessionId;
         if (string.IsNullOrWhiteSpace(sessionId) || !gameClient.IsConnected)
         {
@@ -63,8 +71,6 @@ public sealed class SessionHeroSyncService(
             return;
         }
 
-        try
-        {
             await gameClient.UpdateActiveHero(
                 sessionId,
                 currentHeroId,
@@ -73,8 +79,13 @@ public sealed class SessionHeroSyncService(
             _lastHeroId = currentHeroId;
             _lastHeroName = currentHeroName;
         }
-        catch
+        catch (Exception exception)
         {
+            Console.Error.WriteLine($"Active-Hero-Synchronisierung fehlgeschlagen: {exception.Message}");
+        }
+        finally
+        {
+            _syncLock.Release();
         }
     }
 }
