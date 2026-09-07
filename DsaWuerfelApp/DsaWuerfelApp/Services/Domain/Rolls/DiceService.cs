@@ -6,6 +6,11 @@ namespace DsaWuerfelApp.Services;
 
 public class DiceService
 {
+    public const int MaxDicePerGroup = 100;
+    public const int MaxTotalDice = 100;
+    public const int MinSides = 2;
+    public const int MaxSides = 1_000_000;
+
     public DiceRollDto[] RollDice(IReadOnlyList<DiceRollGroupDto> dice)
     {
         if (dice is null || dice.Count == 0)
@@ -13,12 +18,22 @@ public class DiceService
             throw new ArgumentException("No dice selected.", nameof(dice));
         }
 
-        var allRolls = new List<DiceRollDto>(capacity: dice.Sum(group => group.Count));
-
+        var totalDice = 0;
         foreach (var group in dice)
         {
             ValidateGroup(group);
+            totalDice = checked(totalDice + group.Count);
+        }
 
+        if (totalDice > MaxTotalDice)
+        {
+            throw new ArgumentOutOfRangeException(nameof(dice), $"Maximal {MaxTotalDice} Würfel sind erlaubt.");
+        }
+
+        var allRolls = new List<DiceRollDto>(capacity: totalDice);
+
+        foreach (var group in dice)
+        {
             for (var index = 0; index < group.Count; index++)
             {
                 allRolls.Add(new DiceRollDto(group.Sides, RandomNumberGenerator.GetInt32(1, group.Sides + 1)));
@@ -38,7 +53,7 @@ public class DiceService
         ValidateModifier(modifier);
 
         var rolls = RollDice(dice.Select(group => new DiceRollGroupDto(group.Sides, group.Count)).ToArray());
-        var sum = rolls.Sum(roll => roll.Value);
+        var sum = checked(rolls.Sum(roll => roll.Value));
 
         return new RollResult
         {
@@ -46,7 +61,7 @@ public class DiceService
             Timestamp = DateTime.UtcNow,
             Rolls = rolls.Select(roll => new SingleRoll { Sides = roll.Sides, Value = roll.Value }).ToList(),
             Modifier = modifier,
-            TotalSum = sum + modifier
+            TotalSum = checked(sum + modifier)
         };
     }
 
@@ -60,12 +75,17 @@ public class DiceService
 
     private static void ValidateGroup(DiceRollGroupDto group)
     {
-        if (group.Count is < 1 or > 100)
+        if (group is null)
+        {
+            throw new ArgumentException("Dice groups may not be null.", nameof(group));
+        }
+
+        if (group.Count is < 1 or > MaxDicePerGroup)
         {
             throw new ArgumentOutOfRangeException(nameof(group.Count));
         }
 
-        if (group.Sides < 2)
+        if (group.Sides is < MinSides or > MaxSides)
         {
             throw new ArgumentOutOfRangeException(nameof(group.Sides));
         }

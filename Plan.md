@@ -518,7 +518,7 @@ Alle Pakete sind bei Erstellung dieser Datei OFFEN. Das vorangegangene Review is
 | P02 | ERLEDIGT | Isolierte Testdatenbank, Testauth, Fake-Mailversand und Smoke-Tests; Gesamt-Testlauf 11/11 erfolgreich |
 | P03 | ERLEDIGT | RequestRejectedException und zentrale HTTP-/Hub-Abbildung; 400/500-Transporttests und Gesamt-Testlauf erfolgreich |
 | P04 | ERLEDIGT | Verdeckte Würfe UI-seitig deaktiviert und serverseitig in allen vier Handlern vor Ausführung abgewiesen; Tests 17/17 |
-| P05 | OFFEN | |
+| P05 | ERLEDIGT | Zweistufige Dice-Validierung vor Allokation/RNG; Grenzfalltests und Gesamt-Testlauf erfolgreich |
 | P06 | OFFEN | |
 | P07 | OFFEN | |
 | P08 | OFFEN | |
@@ -600,3 +600,13 @@ Build: `dotnet build DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfol
 Manuell geprüft: Alle vier Handler prüfen `IsHidden` vor fachlicher Verarbeitung; UI-Schalter ist nicht anklickbar und die Meldung sichtbar.
 Nicht geprüft / Einschränkung: Kein echter SignalR-Testclient in P04; der Hub verwendet dieselben Requests und Handlerguards. Vollständige Hidden-Funktion bleibt vertagt.
 Nächstes zulässiges Paket: P05, nur nach ausdrücklicher Beauftragung.
+
+Paket / Datum: P05 / 07.09.2026
+Bestätigte Ursache: `DiceService.RollDice` summierte die angeforderten Counts vor der Gruppenvalidierung für die Listenkapazität und erlaubte unbegrenzte Gesamtmengen sowie Seitenzahlen oberhalb des vorgesehenen Bereichs.
+Geänderte Dateien: `DsaWuerfelApp/DsaWuerfelApp/Services/Domain/Rolls/DiceService.cs`, `RollFreeHandler.cs`, `DsaWuerfelApp.Tests/DiceServiceTests.cs`, `Plan.md`.
+Verhaltensänderung: Maximal 100 Würfel insgesamt, maximal 100 je Gruppe und 2 bis 1.000.000 Seiten. Alle Gruppen werden in einem ersten Durchlauf inklusive sicherer Summierung geprüft; erst danach werden Liste und kryptografischer RNG verwendet. Ungültige Free-Roll-Eingaben werden als erwartete 400-Ablehnung weitergegeben. Die neue Gesamtgrenze ist die technische Planvorgabe aus D04.
+Tests (Kommando + Ergebnis + Anzahl): `dotnet test DsaWuerfelApp/DsaWuerfelApp.Tests/DsaWuerfelApp.Tests.csproj -c Release --no-restore --filter FullyQualifiedName~DiceServiceTests -v minimal` erfolgreich, 11/11. `dotnet test DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfolgreich, 28/28.
+Build: `dotnet build DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfolgreich, 0 Fehler, 2 NU1903-Warnungen.
+Manuell geprüft: Null/Leer, Nullgruppe, Count- und Seitenzahlgrenzen, 2×50, 51+50 sowie Wertebereich bei 100 Würfeln.
+Nicht geprüft / Einschränkung: Keine statistische Zufallsverteilung geprüft; keine weitergehende konfigurierbare Limit-Infrastruktur eingeführt.
+Nächstes zulässiges Paket: P06, nur nach ausdrücklicher Beauftragung.

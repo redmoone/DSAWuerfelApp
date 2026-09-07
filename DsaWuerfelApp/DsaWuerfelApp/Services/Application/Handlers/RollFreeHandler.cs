@@ -15,10 +15,18 @@ public sealed class RollFreeHandler(DiceService diceService)
                 "Verdeckte Würfe sind derzeit nicht verfügbar.");
         }
 
-        DiceService.ValidateModifier(request.Modifier);
+        DiceRollDto[] rolls;
+        try
+        {
+            DiceService.ValidateModifier(request.Modifier);
+            rolls = diceService.RollDice(request.Dice);
+        }
+        catch (ArgumentException exception)
+        {
+            throw new RequestRejectedException(RequestRejectionReason.Validation, exception.Message);
+        }
 
         var timestamp = DateTime.UtcNow;
-        var rolls = diceService.RollDice(request.Dice);
         var equation = DiceResultFactory.CreateEquation(rolls, request.Modifier);
         var historyEntry = DiceResultFactory.CreateHistoryEntry(playerName, timestamp, equation);
 
