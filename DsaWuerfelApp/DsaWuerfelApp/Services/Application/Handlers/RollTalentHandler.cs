@@ -15,6 +15,13 @@ public sealed class RollTalentHandler(
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        if (request.IsHidden)
+        {
+            throw new RequestRejectedException(
+                RequestRejectionReason.Validation,
+                "Verdeckte Würfe sind derzeit nicht verfügbar.");
+        }
+
         var hero = request.HeroId.HasValue
             ? await heroContextReader.LoadRequiredAsync(request.HeroId.Value, cancellationToken)
             : null;

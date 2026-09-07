@@ -14,6 +14,13 @@ public sealed class RollBadTraitHandler(
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        if (request.IsHidden)
+        {
+            throw new RequestRejectedException(
+                RequestRejectionReason.Validation,
+                "Verdeckte Würfe sind derzeit nicht verfügbar.");
+        }
+
         var badTrait = request.HeroId.HasValue
             ? badTraitResolver.ResolveRequired(
                 await heroContextReader.LoadRequiredAsync(request.HeroId.Value, cancellationToken),

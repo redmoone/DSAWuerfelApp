@@ -517,7 +517,7 @@ Alle Pakete sind bei Erstellung dieser Datei OFFEN. Das vorangegangene Review is
 | P01 | ERLEDIGT | Testprojekt ergänzt; TalentProbeEvaluatorTests 9/9 erfolgreich, Release-Build erfolgreich |
 | P02 | ERLEDIGT | Isolierte Testdatenbank, Testauth, Fake-Mailversand und Smoke-Tests; Gesamt-Testlauf 11/11 erfolgreich |
 | P03 | ERLEDIGT | RequestRejectedException und zentrale HTTP-/Hub-Abbildung; 400/500-Transporttests und Gesamt-Testlauf erfolgreich |
-| P04 | OFFEN | |
+| P04 | ERLEDIGT | Verdeckte Würfe UI-seitig deaktiviert und serverseitig in allen vier Handlern vor Ausführung abgewiesen; Tests 17/17 |
 | P05 | OFFEN | |
 | P06 | OFFEN | |
 | P07 | OFFEN | |
@@ -590,3 +590,13 @@ Build: `dotnet build DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfol
 Manuell geprüft: DiceController enthält keine pauschalen `catch (Exception)`-Abbildungen mehr; Client-Fehlerpayload `{ error }` bleibt erhalten.
 Nicht geprüft / Einschränkung: 403/404 können vor P06/P07 noch nicht über echte Besitz-/Meisterpfade ausgelöst werden; ihre zentrale Reason-Abbildung ist vorbereitet. Kein separater SignalR-Testclient und kein expliziter Abbruch-Sammeltest in P03.
 Nächstes zulässiges Paket: P04, nur nach ausdrücklicher Beauftragung.
+
+Paket / Datum: P04 / 07.09.2026
+Bestätigte Ursache: `IsHidden` wurde aus dem Clientzustand in alle Requests übertragen, war aber als verfügbare UI-Funktion schaltbar und wurde serverseitig in den vier Wurfhandlern nicht geprüft.
+Geänderte Dateien: `DsaWuerfelApp/DsaWuerfelApp.Client/Components/WuerfelActionBar.razor`, `RollFreeHandler.cs`, `RollTalentHandler.cs`, `RollAttributeHandler.cs`, `RollBadTraitHandler.cs`, `DsaWuerfelApp.Tests/HiddenRollTests.cs`, `Plan.md`.
+Verhaltensänderung: Die UI zeigt den deaktivierten Hidden-Wurf-Schalter mit der Meldung „Verdeckte Würfe sind derzeit nicht verfügbar.“. HTTP-Requests mit `IsHidden == true` werden vor Heldenzugriff, RNG, Ergebnisbildung und Historie mit 400 und derselben Meldung abgewiesen.
+Tests (Kommando + Ergebnis + Anzahl): `dotnet test DsaWuerfelApp/DsaWuerfelApp.Tests/DsaWuerfelApp.Tests.csproj -c Release --no-restore --filter FullyQualifiedName~HiddenRollTests -v minimal` erfolgreich, 4/4. `dotnet test DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfolgreich, 17/17.
+Build: `dotnet build DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfolgreich, 0 Fehler, 2 NU1903-Warnungen.
+Manuell geprüft: Alle vier Handler prüfen `IsHidden` vor fachlicher Verarbeitung; UI-Schalter ist nicht anklickbar und die Meldung sichtbar.
+Nicht geprüft / Einschränkung: Kein echter SignalR-Testclient in P04; der Hub verwendet dieselben Requests und Handlerguards. Vollständige Hidden-Funktion bleibt vertagt.
+Nächstes zulässiges Paket: P05, nur nach ausdrücklicher Beauftragung.

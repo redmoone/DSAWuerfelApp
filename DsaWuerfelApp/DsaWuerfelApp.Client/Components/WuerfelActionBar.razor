@@ -13,12 +13,12 @@
                           DisplayValue="@CurrentDisplayModifier"
                           ValueChanged="ModifierChanged"/>
 
-            <button class="dsa-btn-icon @(IsHiddenRoll ? "active" : "")"
-                    @onclick="ToggleHiddenRollRequested"
-                    disabled="@IsBusy"
-                    title="Verdeckter Wurf">
+            <button class="dsa-btn-icon"
+                    disabled="true"
+                    title="Verdeckte Würfe sind derzeit nicht verfügbar.">
                 <img src="icons/eye-closed.svg" class="btn-icon" alt="Auge"/>
             </button>
+            <span>Verdeckte Würfe sind derzeit nicht verfügbar.</span>
 
             <MudIconButton Icon="@Icons.Material.Filled.Refresh"
                            Variant="Variant.Filled"
