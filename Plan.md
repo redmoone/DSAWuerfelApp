@@ -529,7 +529,7 @@ Alle Pakete sind bei Erstellung dieser Datei OFFEN. Das vorangegangene Review is
 | P13 | ERLEDIGT | ReplacePlayers �bernimmt ActiveHeroId/ActiveHeroName f�r verbleibende UserId; 28 Tests erfolgreich |
 | P14 | ERLEDIGT | Session wird nach Reconnect auch bei gleicher ID neu geladen; Hero-Sync serialisiert gleichzeitige Updates und verschluckt Fehler nicht; 28 Tests erfolgreich |
 | P15 | ERLEDIGT | Busy-Zustand z�hlt �berlappende UI-Operationen statt Bool-Toggles; 28 Tests erfolgreich |
-| P16 | OFFEN | |
+| P16 | ERLEDIGT | Master-Kontext wird anhand Session, Modus, eigenem Hero und sortierten User/Hero-Paaren dedupliziert; Anzeigeaktualisierungen ohne fachlichen Wechsel laden keinen Kontext; 28 Tests erfolgreich |
 | P17 | OFFEN | |
 | P18 | OFFEN | |
 | P19 | OFFEN | |
@@ -610,6 +610,7 @@ Build: `dotnet build DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfol
 Manuell geprüft: Null/Leer, Nullgruppe, Count- und Seitenzahlgrenzen, 2×50, 51+50 sowie Wertebereich bei 100 Würfeln.
 Nicht geprüft / Einschränkung: Keine statistische Zufallsverteilung geprüft; keine weitergehende konfigurierbare Limit-Infrastruktur eingeführt.
 Nächstes zulässiges Paket: P06, nur nach ausdrücklicher Beauftragung.
+
 
 
 
