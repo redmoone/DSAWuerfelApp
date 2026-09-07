@@ -28,7 +28,7 @@ public sealed class DicePageContextFactory(
             null,
             heroProbeCatalogBuilder.BuildAttributeValues(null),
             heroProbeCatalogBuilder.BuildCatalogProbes(),
-            [],
+            badTraitService.BuildCatalogBadTraits(),
             "Alle Talente und Zauber durchsuchen...",
             showDebugForcedRolls);
     }

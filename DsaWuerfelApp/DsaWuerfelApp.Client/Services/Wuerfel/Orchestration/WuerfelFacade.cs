@@ -44,10 +44,12 @@ public sealed class WuerfelFacade(
         _isAttached = false;
     }
 
-    public async Task SetMasterTargetsAsync(IReadOnlyList<SessionPlayerDto> targets)
+    public async Task SetMasterTargetsAsync(
+        IReadOnlyList<SessionPlayerDto> targets,
+        bool isMasterModeEnabled = false)
     {
-        state.SetMasterTargets(targets);
-        await contextService.LoadContextAsync(targets);
+        state.SetMasterTargets(targets, isMasterModeEnabled);
+        await contextService.LoadContextAsync(targets, isMasterModeEnabled);
     }
 
     public Task AddDieAsync(int sides)
@@ -146,15 +148,19 @@ public sealed class WuerfelFacade(
         {
             if (!string.IsNullOrWhiteSpace(state.Current.SelectedProbeValue))
             {
-                return ExecuteMasterTalentRollAsync();
+                return state.Current.MasterTargets.Count > 0
+                    ? ExecuteMasterTalentRollAsync()
+                    : ExecuteTalentRollAsync();
             }
 
             if (state.Current.SelectedAttributes.Count > 0)
             {
-                return ExecuteMasterAttributeRollAsync();
+                return state.Current.MasterTargets.Count > 0
+                    ? ExecuteMasterAttributeRollAsync()
+                    : ExecuteAttributeRollAsync();
             }
 
-            state.SetError("Im Meistermodus sind Sammelwürfe aktuell für Proben und Eigenschaften verfügbar.");
+            state.SetError("Im Meistermodus sind Proben, Eigenschaften und Sammelwuerfe verfuegbar.");
             return Task.CompletedTask;
         }
 
@@ -176,7 +182,7 @@ public sealed class WuerfelFacade(
     public Task ExecuteBadTraitRollAsync()
     {
         var heroId = state.Current.ActiveHeroId;
-        if (!heroId.HasValue)
+        if (!heroId.HasValue && !state.Current.IsMasterMode)
         {
             state.SetError("Für diese Probe muss ein aktiver Held gewählt sein.");
             return Task.CompletedTask;
@@ -190,8 +196,9 @@ public sealed class WuerfelFacade(
 
         var request = new BadTraitRollRequestDto(
             gameClient.CurrentSessionId,
-            heroId.Value,
+            heroId,
             state.Current.SelectedBadTraitName,
+            ResolveSelectedBadTraitValue(),
             state.Current.ForcedRollsText,
             state.Current.IsHiddenRoll);
 
@@ -221,7 +228,7 @@ public sealed class WuerfelFacade(
     private Task ExecuteTalentRollAsync()
     {
         var heroId = state.Current.ActiveHeroId;
-        if (!heroId.HasValue)
+        if (!heroId.HasValue && !state.Current.IsMasterMode)
         {
             state.SetError("Für diese Probe muss ein aktiver Held gewählt sein.");
             return Task.CompletedTask;
@@ -235,7 +242,7 @@ public sealed class WuerfelFacade(
 
         var request = new TalentRollRequestDto(
             gameClient.CurrentSessionId,
-            heroId.Value,
+            heroId,
             state.Current.SelectedProbeValue,
             state.Current.Modifier,
             state.Current.SelectedBadTraitName,
@@ -327,6 +334,14 @@ public sealed class WuerfelFacade(
                 target.ActiveHeroId!.Value,
                 target.ActiveHeroName))
             .ToArray();
+    }
+
+    private int ResolveSelectedBadTraitValue()
+    {
+        return string.IsNullOrWhiteSpace(state.Current.SelectedBadTraitName)
+            ? 0
+            : state.Current.BadTraits.FirstOrDefault(trait =>
+                string.Equals(trait.Name, state.Current.SelectedBadTraitName, StringComparison.Ordinal))?.Value ?? 0;
     }
 
     private Task ExecuteAsync<TResult>(WuerfelRollCommand<TResult> command)

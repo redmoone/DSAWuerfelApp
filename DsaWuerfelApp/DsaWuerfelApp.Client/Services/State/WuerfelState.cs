@@ -98,10 +98,11 @@ public sealed class WuerfelState
         Update(Current with { SelectedBadTraitName = nextSelection, ErrorMessage = null });
     }
 
-    public void SetMasterTargets(IReadOnlyList<SessionPlayerDto> targets)
+    public void SetMasterTargets(IReadOnlyList<SessionPlayerDto> targets, bool isMasterModeEnabled)
     {
         Update(Current with
         {
+            IsMasterModeEnabled = isMasterModeEnabled,
             MasterTargets = targets.ToArray(),
             BadTraitOwners = new Dictionary<string, IReadOnlyList<BadTraitOwnerInfo>>(StringComparer.Ordinal),
             ErrorMessage = null,
@@ -398,6 +399,7 @@ public sealed record WuerfelViewState
     public IReadOnlyDictionary<string, int> AttributeValues { get; init; } = new Dictionary<string, int>();
     public IReadOnlyList<ProbeSearchEntryDto> AvailableProbes { get; init; } = Array.Empty<ProbeSearchEntryDto>();
     public IReadOnlyList<BadTraitDto> BadTraits { get; init; } = Array.Empty<BadTraitDto>();
+    public bool IsMasterModeEnabled { get; init; }
 
     public IReadOnlyDictionary<string, IReadOnlyList<BadTraitOwnerInfo>> BadTraitOwners { get; init; } =
         new Dictionary<string, IReadOnlyList<BadTraitOwnerInfo>>(StringComparer.Ordinal);
@@ -435,7 +437,7 @@ public sealed record WuerfelViewState
     public long ResultVersion { get; init; }
 
     public bool HasActiveHero => ActiveHeroId.HasValue;
-    public bool IsMasterMode => MasterTargets.Count > 0;
+    public bool IsMasterMode => IsMasterModeEnabled;
     public bool IsMultiMasterMode => MasterTargets.Count > 1;
 
     public int ActiveBadTraitModifier => ActiveArea switch

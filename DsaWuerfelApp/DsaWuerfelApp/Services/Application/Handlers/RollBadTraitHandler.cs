@@ -14,8 +14,11 @@ public sealed class RollBadTraitHandler(
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var hero = await heroContextReader.LoadRequiredAsync(request.HeroId, cancellationToken);
-        var badTrait = badTraitResolver.ResolveRequired(hero, request.BadTraitName);
+        var badTrait = request.HeroId.HasValue
+            ? badTraitResolver.ResolveRequired(
+                await heroContextReader.LoadRequiredAsync(request.HeroId.Value, cancellationToken),
+                request.BadTraitName)
+            : new BadTraitDto(request.BadTraitName, request.BadTraitValue, request.BadTraitValue, request.BadTraitValue);
 
         return schlechteEigenschaftProbeService.RollProbe(
             new ResolvedBadTraitRollRequest(

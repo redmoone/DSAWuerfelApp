@@ -11,7 +11,9 @@ public sealed class WuerfelContextService(
     private CancellationTokenSource? _probeInfoRefreshCancellation;
     private int _probeInfoRefreshVersion;
 
-    public Task LoadContextAsync(IReadOnlyList<SessionPlayerDto>? masterTargets = null)
+    public Task LoadContextAsync(
+        IReadOnlyList<SessionPlayerDto>? masterTargets = null,
+        bool useCatalogWhenNoMasterTargets = false)
     {
         return operationRunner.RunAsync(async () =>
         {
@@ -21,6 +23,10 @@ public sealed class WuerfelContextService(
 
             var loadedContext = resolvedMasterTargets.Length > 0
                 ? await LoadMasterContextAsync(resolvedMasterTargets)
+                : useCatalogWhenNoMasterTargets
+                    ? new LoadedDicePageContext(
+                        await apiClient.GetCatalogContextAsync(),
+                        new Dictionary<string, IReadOnlyList<BadTraitOwnerInfo>>(StringComparer.Ordinal))
                 : new LoadedDicePageContext(
                     await apiClient.GetContextAsync(activeHeroState.CurrentHero?.Id),
                     new Dictionary<string, IReadOnlyList<BadTraitOwnerInfo>>(StringComparer.Ordinal));

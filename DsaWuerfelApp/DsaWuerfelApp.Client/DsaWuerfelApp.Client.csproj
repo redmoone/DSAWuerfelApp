@@ -26,13 +26,4 @@
     <Content Remove="Pages\CombatPage.razor"/>
   </ItemGroup>
 
-  <Target Name="DeleteStaleWasmSymbols" AfterTargets="Build">
-    <ItemGroup>
-      <_StaleWasmSymbols Include="$(OutputPath)wwwroot\_framework\*.pdb"/>
-      <_StaleWasmSymbols Include="$(OutputPath)wwwroot\_framework\*.pdb.gz"/>
-    </ItemGroup>
-
-    <Delete Files="@(_StaleWasmSymbols)"/>
-  </Target>
-
 </Project>

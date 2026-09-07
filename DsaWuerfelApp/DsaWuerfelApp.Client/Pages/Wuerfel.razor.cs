@@ -240,7 +240,7 @@ public partial class Wuerfel : IDisposable
             .Where(target => _selectedMasterTargetUserIds.Contains(target.UserId))
             .ToArray();
 
-        return Facade.SetMasterTargetsAsync(selectedTargets);
+        return Facade.SetMasterTargetsAsync(selectedTargets, true);
     }
 
     private static string? NormalizeUserId(string? userId)

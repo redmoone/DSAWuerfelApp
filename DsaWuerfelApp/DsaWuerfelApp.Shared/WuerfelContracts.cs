@@ -83,7 +83,7 @@ public sealed record FreeRollResultDto(
 
 public sealed record TalentRollRequestDto(
     string? SessionId,
-    Guid HeroId,
+    Guid? HeroId,
     string TalentKey,
     int Modifier,
     string? BadTraitName,
@@ -173,8 +173,9 @@ public sealed record AttributeRollResultDto(
 
 public sealed record BadTraitRollRequestDto(
     string? SessionId,
-    Guid HeroId,
+    Guid? HeroId,
     string BadTraitName,
+    int BadTraitValue,
     string? ForcedRollsText,
     bool IsHidden);
 

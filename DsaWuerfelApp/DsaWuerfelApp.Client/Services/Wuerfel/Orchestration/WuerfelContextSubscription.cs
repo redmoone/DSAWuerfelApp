@@ -2,6 +2,7 @@ namespace DsaWuerfelApp.Client.Services;
 
 public sealed class WuerfelContextSubscription(
     ActiveHeroState activeHeroState,
+    WuerfelState state,
     WuerfelContextService contextService)
 {
     private bool _isAttached;
@@ -33,6 +34,8 @@ public sealed class WuerfelContextSubscription(
 
     private void HandleActiveHeroChanged()
     {
-        _ = contextService.LoadContextAsync();
+        _ = state.Current.IsMasterMode
+            ? contextService.LoadContextAsync(state.Current.MasterTargets, true)
+            : contextService.LoadContextAsync();
     }
 }

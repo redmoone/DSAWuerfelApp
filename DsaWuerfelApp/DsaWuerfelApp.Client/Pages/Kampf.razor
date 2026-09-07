@@ -1,120 +1,312 @@
-﻿@page "/kampf"
+@page "/kampf"
 @using DsaWuerfelApp.Client.Components
 @attribute [Authorize]
 
-<div class="combat-container">
-    <div class="split-view pa-4">
-        <div class="left-column">
-            <div class="combat-zone hero-panel">
-                <h2 class="zone-title">Held</h2>
-
-                <div class="status-bars">
-                    <div class="status-row">
-                        <span class="status-label">LeP</span>
-                        <MudProgressLinear Color="Color.Error" Value="100" height="20px" Striped="true"
-                                           Class="flex-grow-1"/>
-                    </div>
-                    <div class="status-row mt-2">
-                        <span class="status-label">AuP</span>
-                        <MudProgressLinear Color="Color.Success" Value="100" height="20px" Striped="true"
-                                           Class="flex-grow-1"/>
-                    </div>
-                </div>
-
-                <div class="d-flex flex-wrap gap-3 my-5">
-                    <AttributePill ShortName="AT" Value="15" IconPath="sword.svg"/>
-                    <AttributePill ShortName="PA" Value="13" IconPath="shield.svg"/>
-                    <AttributePill ShortName="INI" Value="12" IconPath="feather.svg"/>
-                    <AttributePill ShortName="RS" Value="4" IconPath="weight.svg"/>
-                    <AttributePill ShortName="FK" Value="14" IconPath="icons/search.svg"/>
-                    <AttributePill ShortName="GS" Value="8" IconPath="icons/feather.svg"/>
-                    <AttributePill ShortName="BE" Value="1" IconPath="icons/weight.svg"/>
-                </div>
-
-                <div class="d-flex flex-wrap gap-2 my-4 justify-center">
-                    <AttributePill ShortName="MU" Value="14" IconPath="lion.svg"
-                                   OnClick="@(() => RollAttribute("MU", 14))"/>
-                    <AttributePill ShortName="KL" Value="13" IconPath="owl.svg"
-                                   OnClick="@(() => RollAttribute("KL", 13))"/>
-                    <AttributePill ShortName="IN" Value="15" IconPath="eye.svg"
-                                   OnClick="@(() => RollAttribute("IN", 15))"/>
-                    <AttributePill ShortName="CH" Value="12" IconPath="mask.svg"
-                                   OnClick="@(() => RollAttribute("CH", 12))"/>
-                    <AttributePill ShortName="FF" Value="15" IconPath="hand.svg"
-                                   OnClick="@(() => RollAttribute("FF", 15))"/>
-                    <AttributePill ShortName="GE" Value="15" IconPath="cat.svg"
-                                   OnClick="@(() => RollAttribute("GE", 15))"/>
-                    <AttributePill ShortName="KO" Value="14" IconPath="shield.svg"
-                                   OnClick="@(() => RollAttribute("KO", 14))"/>
-                    <AttributePill ShortName="KK" Value="13" IconPath="muscle.svg"
-                                   OnClick="@(() => RollAttribute("KK", 13))"/>
-                </div>
-
-                <div class="helden-details-container">
-                    <div class="wounds-section">
-                        <h4 class="zone-subtitle">Wunden</h4>
-                        <div class="wounds-tracker d-flex gap-2">
-                            <MudCheckBox T="bool" Color="Color.Error" Label="1"/>
-                            <MudCheckBox T="bool" Color="Color.Error" Label="2"/>
-                            <MudCheckBox T="bool" Color="Color.Error" Label="3"/>
-                        </div>
+<div class="combat-page">
+    <div class="combat-shell">
+        <section class="combat-surface combat-overview">
+            <div class="overview-grid">
+                <div class="subsurface status-panel">
+                    <div class="mini-header">
+                        <p class="mini-kicker">Status</p>
+                        <h2 class="mini-title">Zustand und Effekte</h2>
                     </div>
 
-                    <div class="equipment-section">
-                        <h4 class="zone-subtitle">Ausrüstung</h4>
-                        <ul class="equipment-list">
-                            <li>Langschwert (1W6+4)</li>
-                            <li>Kettenhemd (RS 4)</li>
-                            <li>Heiltrank (3)</li>
-                        </ul>
+                    <div class="hero-copy">
+                        <strong class="hero-name">Alrik vom Blautann</strong>
+                        <span class="hero-meta">Horasischer Fechter mit Langschwert und Schild</span>
                     </div>
-                </div>
 
-                <div class="action-grid mt-6">
-                    <button class="dsa-btn primary-action">Attacke</button>
-                    <button class="dsa-btn primary-action">Parade</button>
-                    <button class="dsa-btn secondary-action">Ausweichen</button>
-                </div>
-            </div>
-
-            <div class="combat-zone settings-panel mt-4">
-                <h2 class="zone-title">Kampfproben</h2>
-                <div class="d-flex align-center gap-4 mt-3">
-
-                    <div class="search-wrapper flex-grow-1">
-                        <img src="icons/search.svg" class="search-icon" alt=""/>
-                        <input type="text"
-                               class="search-input"
-                               placeholder="Manöver, Zauber, Artefakte..."
-                               @bind="SearchTerm"
-                               @bind:event="oninput"
-                               @onfocus="() => _isDropdownOpen = true"
-                               @onblur="HandleBlur"/>
-
-                        @if (_isDropdownOpen && FilteredManeuvers.Any())
+                    <div class="status-grid">
+                        @foreach (var status in _statusBars)
                         {
-                            <div class="search-dropdown">
-                                @foreach (var maneuver in FilteredManeuvers)
-                                {
-                                    <div class="dropdown-item" @onclick="() => SelectManeuver(maneuver)">
-                                        @maneuver
-                                    </div>
-                                }
+                            <div class="status-card">
+                                <div class="status-heading">
+                                    <span class="status-label">@status.Code</span>
+                                    <span class="status-value">@status.Current / @status.Maximum</span>
+                                </div>
+
+                                <div class="status-track">
+                                    <div class="status-fill @status.ToneClass" style="@($"width: {status.Percent}%;")"></div>
+                                </div>
+
+                                <span class="status-meta">@status.Label</span>
                             </div>
                         }
                     </div>
 
-                    <div class="ms-auto">
-                        <ModifierPill Value="0" />
+                    <div class="status-summary-grid">
+                        @foreach (var item in _statusSummary)
+                        {
+                            <div class="summary-card">
+                                <span class="summary-label">@item.Label</span>
+                                <strong>@item.Value</strong>
+                                <span>@item.Meta</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="effects-block">
+                        <div class="block-topline">
+                            <span class="section-chip">Aktive Effekte</span>
+                            <span class="section-meta">@_statusEffects.Count aktiv</span>
+                        </div>
+
+                        <div class="effect-list">
+                            @foreach (var effect in _statusEffects)
+                            {
+                                <div class="effect-card @effect.ToneClass">
+                                    <strong>@effect.Name</strong>
+                                    <span>@effect.Detail</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subsurface combat-state-panel">
+                    <div class="mini-header">
+                        <p class="mini-kicker">Kampfstatus</p>
+                        <h2 class="mini-title">Wunden und Waffen</h2>
+                    </div>
+
+                    <div class="state-section">
+                        <span class="section-chip">Wunden</span>
+                        <div class="wound-strip">
+                            @foreach (var wound in _wounds)
+                            {
+                                <div class="wound-slot @(wound.IsMarked ? "marked" : string.Empty)">
+                                    <span>@wound.Label</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="state-section">
+                        <span class="section-chip">Waffenlage</span>
+                        <div class="weapon-list">
+                            @foreach (var weapon in _weaponStates)
+                            {
+                                <div class="weapon-row">
+                                    <span class="weapon-slot">@weapon.Slot</span>
+                                    <strong>@weapon.Name</strong>
+                                    <span class="weapon-meta">@weapon.Stats</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="tag-strip">
+                        @foreach (var tag in _conditionTags)
+                        {
+                            <span class="tag-pill">@tag</span>
+                        }
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="combat-zone right-panel">
-            <h2 class="zone-title">Kampfverlauf</h2>
-            <div class="log-entries">
+        <section class="combat-surface combat-workbench">
+            <div class="surface-header">
+                <div class="surface-copy">
+                    <p class="surface-kicker">Kampfaktionen und Manoever</p>
+                    <h2 class="surface-title surface-title-small">Kampfwuerfe</h2>
+                    <p class="surface-subtitle">
+                        Suchpille fuer Manoever, zentraler Wurfbereich und ein separates Infofeld.
+                    </p>
+                </div>
             </div>
-        </div>
+
+            <div class="combat-search-row">
+                <label class="search-shell search-shell-wide" for="combat-search">
+                    <img src="icons/search.svg" alt="" class="search-icon" />
+                    <input id="combat-search"
+                           type="text"
+                           class="search-input"
+                           placeholder="Manoever, Sonderfertigkeit oder Notiz suchen ..."
+                           @bind="SearchTerm"
+                           @bind:event="oninput"
+                           @onfocus="@(() => _isSearchOpen = true)"
+                           @onblur="HandleSearchBlur" />
+
+                    @if (_isSearchOpen && FilteredManeuvers.Any())
+                    {
+                        <div class="search-dropdown">
+                            @foreach (var maneuver in FilteredManeuvers)
+                            {
+                                <button type="button"
+                                        class="search-dropdown-item"
+                                        @onclick="@(() => SelectManeuverFromSearch(maneuver.Name))">
+                                    <span class="maneuver-category">@maneuver.Category</span>
+                                    <strong class="maneuver-name">@maneuver.Name</strong>
+                                    <span class="maneuver-impact">@maneuver.Impact</span>
+                                </button>
+                            }
+                        </div>
+                    }
+                </label>
+            </div>
+
+            <div class="workbench-grid">
+                <div class="subsurface dice-zone">
+                    <div class="mini-header compact">
+                        <p class="mini-kicker">Wuerfelbereich</p>
+                        <h3 class="mini-title">Attacke, Parade, Ausweichen</h3>
+                    </div>
+
+                    <div class="dice-zone-toolbar">
+                        <ModifierPill Value="@Modifier" ValueChanged="HandleModifierChanged" />
+                    </div>
+
+                    <div class="action-grid">
+                        @foreach (var action in _quickActions)
+                        {
+                            <button type="button"
+                                    class="action-button @(action.Label == ActiveActionLabel ? "active" : string.Empty)"
+                                    @onclick="@(() => SelectAction(action.Label))">
+                                <span class="action-label">@action.Label</span>
+                                <span class="action-text">@action.Description</span>
+                            </button>
+                        }
+                    </div>
+
+                    <div class="roll-preview-strip">
+                        <div class="roll-preview-card">
+                            <span class="metric-label">Aktionswurf</span>
+                            <strong>@ActiveActionLabel</strong>
+                            <span>@ActiveManeuver.Name</span>
+                        </div>
+
+                        <div class="roll-preview-card">
+                            <span class="metric-label">Wurfmodus</span>
+                            <strong>1W20</strong>
+                            <span>Modifikator @FormattedModifier</span>
+                        </div>
+
+                        <div class="roll-preview-card">
+                            <span class="metric-label">Eigenschaft</span>
+                            <strong>@ActiveAttribute.Code @ActiveAttribute.Value</strong>
+                            <span>@ActiveAttribute.Label</span>
+                        </div>
+                    </div>
+
+                    <div class="attribute-strip">
+                        @foreach (var attributeEntry in _attributes)
+                        {
+                            <AttributePill ShortName="@attributeEntry.Code"
+                                           Value="@attributeEntry.Value"
+                                           IconPath="@attributeEntry.IconPath"
+                                           IsSelected="@(attributeEntry.Code == SelectedAttributeCode)"
+                                           OnClick="@(() => SelectAttribute(attributeEntry.Code))" />
+                        }
+                    </div>
+                </div>
+
+                <div class="subsurface combat-info-panel">
+                    <div class="mini-header compact">
+                        <p class="mini-kicker">Infofeld</p>
+                        <h3 class="mini-title">Manoeverinformation</h3>
+                    </div>
+
+                    <div class="combat-info-content">
+                        <div class="info-summary-card">
+                            <span class="detail-kicker">@ActiveManeuver.Category</span>
+                            <h3 class="detail-title">@ActiveManeuver.Name</h3>
+                            <p class="detail-summary">@ActiveManeuver.Summary</p>
+                        </div>
+
+                        <div class="detail-metrics">
+                            <div class="metric-card">
+                                <span class="metric-label">Ansage</span>
+                                <strong>@ActiveManeuver.Announcement</strong>
+                            </div>
+
+                            <div class="metric-card">
+                                <span class="metric-label">Probe</span>
+                                <strong>@ActiveManeuver.Check</strong>
+                            </div>
+
+                            <div class="metric-card">
+                                <span class="metric-label">Wirkung</span>
+                                <strong>@ActiveManeuver.Impact</strong>
+                            </div>
+                        </div>
+
+                        <div class="keyword-strip">
+                            @foreach (var keyword in ActiveManeuver.Keywords)
+                            {
+                                <span class="keyword-pill">@keyword</span>
+                            }
+                        </div>
+
+                        <div class="info-note-grid">
+                            @foreach (var note in ActiveManeuver.Notes)
+                            {
+                                <div class="info-note-card">
+                                    <span class="metric-label">@note.Label</span>
+                                    <p>@note.Text</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <aside class="combat-surface combat-sidebar">
+            <div class="surface-header">
+                <div class="surface-copy">
+                    <p class="surface-kicker">Initiative und Verlauf</p>
+                    <h2 class="surface-title surface-title-small">Ini und Kampf-History</h2>
+                    <p class="surface-subtitle">
+                        Oben die Reihenfolge im Schlagabtausch, darunter die saubere Chronik des Kampfes.
+                    </p>
+                </div>
+            </div>
+
+            <div class="sidebar-stack">
+                <div class="subsurface initiative-card">
+                    <div class="mini-header compact">
+                        <p class="mini-kicker">Ini-Uebersicht</p>
+                        <h3 class="mini-title">Reihenfolge</h3>
+                    </div>
+
+                    <div class="initiative-list">
+                        @foreach (var entry in _initiativeEntries)
+                        {
+                            <div class="initiative-row @(entry.IsActive ? "active" : string.Empty)">
+                                <span class="initiative-rank">@entry.Rank</span>
+                                <div class="initiative-copy">
+                                    <strong>@entry.Name</strong>
+                                    <span>@entry.Meta</span>
+                                </div>
+                                <span class="initiative-total">@entry.Value</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="subsurface history-card">
+                    <div class="mini-header compact">
+                        <p class="mini-kicker">Kampf-History</p>
+                        <h3 class="mini-title">Verlauf</h3>
+                    </div>
+
+                    <div class="history-list">
+                        @foreach (var entry in _historyEntries)
+                        {
+                            <article class="history-entry @entry.ToneClass">
+                                <div class="history-entry-top">
+                                    <span class="timeline-round">@entry.Round</span>
+                                    <strong>@entry.Actor</strong>
+                                    <span class="history-action">@entry.Action</span>
+                                </div>
+                                <p>@entry.Text</p>
+                            </article>
+                        }
+                    </div>
+                </div>
+            </div>
+        </aside>
     </div>
 </div>

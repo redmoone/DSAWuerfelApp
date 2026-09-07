@@ -143,6 +143,24 @@ else
 
 app.UseCors("AllowAll");
 
+app.Use(async (context, next) =>
+{
+    if (HttpMethods.IsGet(context.Request.Method) &&
+        (context.Request.Path == "/" || context.Request.Path == "/index.html"))
+    {
+        context.Response.OnStarting(static responseState =>
+        {
+            var response = (HttpResponse)responseState;
+            response.Headers.CacheControl = "no-cache, no-store, must-revalidate";
+            response.Headers.Pragma = "no-cache";
+            response.Headers.Expires = "0";
+            return Task.CompletedTask;
+        }, context.Response);
+    }
+
+    await next();
+});
+
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
 app.UseStaticFiles(new StaticFileOptions { ContentTypeProvider = provider });

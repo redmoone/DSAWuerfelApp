@@ -15,23 +15,28 @@ public sealed class RollTalentHandler(
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var hero = await heroContextReader.LoadRequiredAsync(request.HeroId, cancellationToken);
-        var probeData = probeResolutionService.ResolveProbe(hero, request.TalentKey, request.SpellOptionValues);
+        var hero = request.HeroId.HasValue
+            ? await heroContextReader.LoadRequiredAsync(request.HeroId.Value, cancellationToken)
+            : null;
+        var probeData = hero is null
+            ? probeResolutionService.ResolveProbeOrCatalog(null, request.TalentKey, request.SpellOptionValues)
+            : probeResolutionService.ResolveProbe(hero, request.TalentKey, request.SpellOptionValues);
         var probe = ProbeAttributes.Create(probeData.ProbeData.Probe);
-        if (probe.ToArray().Any(attribute => !hero.Eigenschaften.ContainsKey(attribute)))
+        if (hero is not null && probe.ToArray().Any(attribute => !hero.Eigenschaften.ContainsKey(attribute)))
         {
             throw new InvalidOperationException(
-                "Die ausgewählte Probe enthält variable oder unbekannte Eigenschaften und kann aktuell nicht automatisiert gewürfelt werden.");
+                "Die ausgewaehlte Probe enthaelt variable oder unbekannte Eigenschaften und kann aktuell nicht automatisiert gewuerfelt werden.");
         }
 
         var badTrait = badTraitResolver.ResolveOptional(hero, request.BadTraitName);
+        var attributeValues = hero?.Eigenschaften ?? HeroAttributeCatalog.DefaultValues;
 
         return talentProbeService.RollTalentProbe(
             new ResolvedTalentRollRequest(
                 probeData.Name,
                 probeData.ProbeData.Wert,
                 probe,
-                probe.ResolveValues(hero.Eigenschaften),
+                probe.ResolveValues(attributeValues),
                 request.Modifier,
                 probeData.SpecializationName,
                 probeData.SpecializationModifier,
