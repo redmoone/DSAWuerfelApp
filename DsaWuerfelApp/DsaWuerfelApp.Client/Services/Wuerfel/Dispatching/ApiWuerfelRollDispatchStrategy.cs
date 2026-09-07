@@ -1,10 +1,10 @@
 namespace DsaWuerfelApp.Client.Services;
 
-public sealed class ApiWuerfelRollDispatchStrategy(IWuerfelApiClient apiClient) : IWuerfelRollDispatchStrategy
+public sealed class ApiWuerfelRollDispatchStrategy(IWuerfelApiClient apiClient, GameClient gameClient) : IWuerfelRollDispatchStrategy
 {
     public bool CanHandle()
     {
-        return true;
+        return string.IsNullOrWhiteSpace(gameClient.CurrentSessionId);
     }
 
     public async Task<WuerfelRollDispatchResult<TResult>> DispatchAsync<TResult>(
