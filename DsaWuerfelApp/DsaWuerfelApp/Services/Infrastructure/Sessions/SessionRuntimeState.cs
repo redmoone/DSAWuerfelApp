@@ -103,6 +103,20 @@ public sealed class SessionRuntimeState
 
     public void ReplacePlayers(GameSession session, string masterUserId, PlayerInfo[] players)
     {
+        var existingPlayersByUserId = session.Players
+            .ToDictionary(player => player.UserId, StringComparer.Ordinal);
+
+        foreach (var player in players)
+        {
+            if (!existingPlayersByUserId.TryGetValue(player.UserId, out var existingPlayer))
+            {
+                continue;
+            }
+
+            player.ActiveHeroId = existingPlayer.ActiveHeroId;
+            player.ActiveHeroName = existingPlayer.ActiveHeroName;
+        }
+
         session.MasterUserId = masterUserId;
         session.Players = players;
     }
