@@ -4,6 +4,7 @@ namespace DsaWuerfelApp.Client.Services;
 
 public sealed class WuerfelState
 {
+    private int _loadingOperations;
     public WuerfelViewState Current { get; private set; } = WuerfelViewState.Empty;
 
     public event Action? Changed;
@@ -54,12 +55,14 @@ public sealed class WuerfelState
 
     public void BeginLoading()
     {
-        Update(Current with { IsBusy = true, ErrorMessage = null });
+        _loadingOperations++;
+        Update(Current with { IsBusy = _loadingOperations > 0, ErrorMessage = null });
     }
 
     public void EndLoading()
     {
-        Update(Current with { IsBusy = false });
+        _loadingOperations = Math.Max(0, _loadingOperations - 1);
+        Update(Current with { IsBusy = _loadingOperations > 0 });
     }
 
     public void SetError(string? errorMessage)
