@@ -271,19 +271,7 @@
 
     private static IEnumerable<ProbeInfoSectionDto> GetAdditionalProbeInfoSections(ProbeInfoResultDto probeInfo)
     {
-        return probeInfo.Sections.Where(section =>
-            !IsPrimaryProbeInfoSection(section) &&
-            (!HasSpellOptionPanel(probeInfo) || !IsSpellOptionSection(section)));
-    }
-
-    private static bool HasSpellOptionPanel(ProbeInfoResultDto probeInfo)
-    {
-        return probeInfo.SpellSelection is { Groups.Length: > 0 };
-    }
-
-    private static bool IsSpellOptionSection(ProbeInfoSectionDto section)
-    {
-        return section.Label is "Modifikationen" or "Varianten";
+        return probeInfo.Sections.Where(section => !IsPrimaryProbeInfoSection(section));
     }
 
     private static bool IsPrimaryProbeInfoSection(ProbeInfoSectionDto section)
