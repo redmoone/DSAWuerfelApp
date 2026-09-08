@@ -758,6 +758,16 @@ Umgesetzt in `DsaWuerfelApp/DsaWuerfelApp.Client/Pages/Wuerfel.razor.css` und `W
 
 Abgenommen am 08.09.2026 mit Release-Client-Build, `git diff --check` und Edge-Browserprüfung. Geprüfte Viewports: `1920x1080`, `1440x900`, `1280x800`, `1024x768`, `768x1024` und `390x844`; zusätzlich `1920x600` für den vertikalen Scroll. Alle Prüfungen liefen ohne horizontalen Overflow, Überschneidungen oder Seitenfehler. Auswahlwechsel, d6-Auswahl, normaler Wurf und Navigation blieben funktionsfähig.
 
+#### UI-04 - Informations- und Zauberoptionen kompakt darstellen
+
+Dateien: `DsaWuerfelApp/DsaWuerfelApp.Client/Components/WuerfelInformationPanel.razor`, `WuerfelInformationPanel.razor.css`, `WuerfelProbePanel.razor` und `WuerfelProbePanel.razor.css`.
+
+- Die Probeninfo zeigt nach dem Öffnen nur Zusammenfassung und kurzen Kontext direkt. Einzelne Infoabschnitte werden als native, tastaturbedienbare Details auf- und zuklappbar.
+- Zaubermodifikationen und Varianten werden in kompakten, getrennt aufklappbaren Gruppen mit sichtbarer Auswahlanzahl dargestellt.
+- Jeder Optionspunkt behält seinen direkten Auswahlbutton. Längere Beschreibungen liegen zusätzlich hinter einem kleinen Detailtaster.
+- Auswahlstatus, Deaktivierung, Tooltips und bestehende Modifikationsberechnung bleiben unverändert.
+- Keine Änderung an Daten, Regelauflösung, Requestverträgen oder serverseitiger Berechnung.
+
 ### Abnahme
 
 Die Umsetzung gilt erst als abgeschlossen, wenn alle drei Punkte in einem echten Browser geprüft sind:
