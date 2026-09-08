@@ -48,6 +48,51 @@
     align-items: center;
 }
 
+.hidden-roll-hint {
+    position: relative;
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: help;
+}
+
+.hidden-roll-hint:focus {
+    outline: 2px solid var(--dsa-white);
+    outline-offset: 3px;
+}
+
+.hidden-roll-hint::after {
+    position: absolute;
+    z-index: 10;
+    right: 0;
+    bottom: calc(100% + 0.5rem);
+    width: max-content;
+    max-width: min(18rem, calc(100vw - 2rem));
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--dsa-gold);
+    border-radius: 6px;
+    background-color: var(--dsa-blue);
+    color: var(--dsa-white);
+    content: attr(data-tooltip);
+    font-size: 0.8rem;
+    line-height: 1.25;
+    text-align: center;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(0.25rem);
+    transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
+}
+
+.hidden-roll-hint:hover::after,
+.hidden-roll-hint:focus::after {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+
 @media (min-width: 901px) {
     .global-actions-bar {
         flex: 1;

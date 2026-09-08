@@ -13,12 +13,18 @@
                           DisplayValue="@CurrentDisplayModifier"
                           ValueChanged="ModifierChanged"/>
 
-            <button class="dsa-btn-icon"
-                    disabled="true"
-                    title="Verdeckte Würfe sind derzeit nicht verfügbar.">
-                <img src="icons/eye-closed.svg" class="btn-icon" alt="Auge"/>
-            </button>
-            <span>Verdeckte Würfe sind derzeit nicht verfügbar.</span>
+            <span class="hidden-roll-hint"
+                  role="img"
+                  tabindex="0"
+                  aria-label="Verdeckte Würfe sind derzeit nicht verfügbar."
+                  data-tooltip="Verdeckte Würfe sind derzeit nicht verfügbar.">
+                <button class="dsa-btn-icon"
+                        disabled="true"
+                        aria-hidden="true"
+                        tabindex="-1">
+                    <img src="icons/eye-closed.svg" class="btn-icon" alt="" aria-hidden="true"/>
+                </button>
+            </span>
 
             <MudIconButton Icon="@Icons.Material.Filled.Refresh"
                            Variant="Variant.Filled"
