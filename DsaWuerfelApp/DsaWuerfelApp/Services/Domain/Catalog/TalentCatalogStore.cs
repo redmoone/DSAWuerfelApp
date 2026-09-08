@@ -183,17 +183,19 @@ public sealed class TalentCatalogStore(IHostEnvironment environment)
         var parts = new List<string>();
         if (specializations.Count > 0)
         {
-            parts.Add(string.Join(", ", specializations));
+            parts.Add(string.Join(
+                Environment.NewLine,
+                specializations.Select(specialization => $"- {specialization}")));
         }
 
         if (isOpen)
         {
-            parts.Add("Liste offen");
+            parts.Add("Weitere Spezialisierungen möglich.");
         }
 
         if (!string.IsNullOrWhiteSpace(hint))
         {
-            parts.Add(hint);
+            parts.Add($"Hinweis: {hint}");
         }
 
         if (!string.IsNullOrWhiteSpace(prerequisites))
