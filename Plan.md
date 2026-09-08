@@ -672,3 +672,73 @@ P18/P20 nur gemaess tatsaechlichem Ergebnis aktualisieren. Bei weiterem Blocker 
 Die zusaetzlichen Client-/Persistenz-/3D-Aenderungen nicht pauschal zuruecksetzen: Sie sind bereits miteinander getestet und einzeln nachvollziehbar committed. Ob ihr Zusatzumfang behalten werden soll, ist beim Review getrennt von P06/P08 zu betrachten. Reflection auf private Methoden und DispatchProxy in ClientStateTests sind wartungsanfaellig; ihre Bereinigung ist optional und rechtfertigt jetzt keinen neuen Umbau.
 
 Mindestens das Problem, dass ein Metadaten-Refresh das Speichern der Sessionauswahl unterbrechen konnte, entstand im Zuge der neuen Ladeversionen. Es wurde korrigiert und mit `Metadata_refresh_also_persists_current_selection` abgesichert. Solche Nacharbeiten nicht als ausschliesslich zuvor vorhandene Produktfehler darstellen.
+
+## 12. UI-Review und Umsetzungsplan / 08.09.2026
+
+### Auftrag
+
+Die folgenden drei sichtbaren UI-Probleme sollen gezielt behoben werden:
+
+1. Das Menü-Icon im linken Menü ist gegenüber den übrigen Icons anders ausgerichtet. Sein Abstand zum ersten Navigationseintrag unterscheidet sich ebenfalls.
+2. Der Text `Verdeckte Würfe sind derzeit nicht verfügbar.` steht dauerhaft neben dem deaktivierten Icon. Sichtbar bleiben soll nur der ausgegraute deaktivierte Button; die Erklärung soll als kurze Information beim Hover und beim Tastaturfokus erscheinen.
+3. Bei kleineren Fensterbreiten überlappen die Bereiche der Würfelseite. Die Seite soll sich responsiv verkleinern oder in sinnvolle Zeilen umbrechen, ohne dass Bedienelemente übereinander liegen oder am Viewportrand abgeschnitten werden.
+
+### Analyse des aktuellen Stands
+
+Beim Menü verwenden `.nav-expand-button` und `.nav-link` zwar ähnliche Maße, aber unterschiedliche Layoutpfade. Der Button liegt in einem eigenen `.nav-header`; zusätzlich erzeugt `.nav-panel` einen Abstand von `1rem`, während `.nav-links` nur `0.5rem` Abstand verwendet. Im aufgeklappten Zustand ändern Header und Links ihre Ausrichtung ebenfalls getrennt. Das erklärt die abweichende vertikale Position und den sichtbaren Abstand des Menü-Buttons. Die Korrektur soll gemeinsame Maße und einen gemeinsamen Abstand verwenden, ohne die Auf-/Zu-Funktion des Menüs zu ändern.
+
+Der Hinweistext ist direkt als sichtbares `span` in `WuerfelActionBar.razor` neben dem deaktivierten Button eingebaut. Der Button besitzt bereits ein `title`, aber ein natives deaktiviertes Element ist für Tastaturfokus und zuverlässige Tooltip-Anzeige ungeeignet. Der Hinweis braucht deshalb einen umgebenden Tooltip- oder Hinweis-Wrapper mit zugänglicher Beschriftung. Der Serverguard für `IsHidden` und der deaktivierte Zustand bleiben unverändert.
+
+Die Würfelseite kombiniert in `Wuerfel.razor.css` eine feste `height: 100vh` mit `overflow: hidden`, mehreren festen `min-height`-/`min-width`-Werten und breitenabhängigen Grid-Spalten. Zusätzlich erzwingen die Action-Bar und einzelne Pill-Komponenten Mindestbreiten. Bei kleinen Viewports kann die Summe der Mindestgrößen nicht in die verfügbare Fläche passen; das Abschneiden durch `overflow: hidden` verschärft den Effekt. Die responsive Lösung muss deshalb die tatsächliche Inhaltsgröße berücksichtigen, Mindestbreiten abbauen oder an Breakpoints neu anordnen und vertikales Scrollen zulassen, wenn die Bildschirmhöhe nicht reicht.
+
+### Begrenzte Umsetzung
+
+#### UI-01 – Menü-Icon und Navigation vereinheitlichen
+
+Dateien: `DsaWuerfelApp/DsaWuerfelApp.Client/Layout/NavMenu.razor`, `DsaWuerfelApp/DsaWuerfelApp.Client/Layout/NavMenu.razor.css`, bei Bedarf `MainLayout.razor.css`.
+
+- Button und Navigationseinträge auf eine gemeinsame Icon-Fläche, Höhe, Zentrierung und Außenabstände bringen.
+- Den zusätzlichen Header-Abstand gegenüber `.nav-links` entfernen oder auf denselben definierten Abstand reduzieren.
+- Im eingeklappten Zustand alle runden Einträge einschließlich Menü-Button optisch gleich ausrichten.
+- Im aufgeklappten Zustand Textausrichtung und Icon-Abstand beibehalten; nur die unterschiedliche vertikale Position beseitigen.
+- Keine neuen Icons, keine Änderung der Navigation und keine Änderung der Desktop-/Mobile-Funktionalität.
+
+#### UI-02 – Verdeckte Würfe kompakt und zugänglich darstellen
+
+Dateien: `DsaWuerfelApp/DsaWuerfelApp.Client/Components/WuerfelActionBar.razor`, zugehörige `WuerfelActionBar.razor.css`.
+
+- Das sichtbare Erklärung-`span` entfernen.
+- Den Button weiterhin deaktiviert und sichtbar ausgegraut lassen.
+- Die Erklärung `Verdeckte Würfe sind derzeit nicht verfügbar.` ausschließlich über einen Tooltip bzw. einen zugänglichen Hinweis am Icon bereitstellen.
+- Hover und Tastaturfokus müssen denselben Hinweis zeigen; die Beschriftung darf nicht von einem nicht fokussierbaren deaktivierten Element abhängen.
+- Keine Änderung an Requestverträgen, Hidden-Roll-Serverprüfung oder Fachlogik.
+
+#### UI-03 – Responsive Würfelseite stabilisieren
+
+Dateien: `DsaWuerfelApp/DsaWuerfelApp.Client/Pages/Wuerfel.razor.css`, bei Bedarf die CSS-Dateien der direkt betroffenen Action-Bar-/Pill-Komponenten.
+
+- Layoutgrenzen und Breakpoints anhand der real verfügbaren Inhaltsbreite festlegen, nicht nur anhand der Browserbreite.
+- Bei kleinen und mittleren Breiten die Bereiche in klare Zeilen untereinander umbrechen: Historie/Information, Würfelaktionen/3D und die vier unteren Aktionskarten.
+- `overflow: hidden` nur für einzelne Karteninhalte verwenden, wenn deren eigener Scrollbereich beabsichtigt ist. Die Seite selbst darf bei geringer Bildschirmhöhe vertikal scrollen.
+- Grid-Kinder mit `min-width: 0` und flexiblen Spaltenbreiten versehen; feste Mindestbreiten der Action-Bar und ihrer Pillen an den Breakpoints reduzieren oder die Elemente gezielt untereinander anordnen.
+- Keine Elemente durch negative Abstände, feste Überlagerungen oder ein bloßes Verkleinern der Schrift aus dem sichtbaren Bereich drücken.
+- Desktopaufteilung mit Historie, 3D-Bereich und Zusatzinformationen erhalten, sofern die Mindestbreite ausreicht.
+
+### Abnahme
+
+Die Umsetzung gilt erst als abgeschlossen, wenn alle drei Punkte in einem echten Browser geprüft sind:
+
+- Menü eingeklappt und aufgeklappt: Menü-Icon, Account-/Seiten-Icons und Abstände sind zentriert und gleichmäßig.
+- Hidden-Icon: kein dauerhafter Hinweistext; Tooltip erscheint bei Maus-Hover und Tastaturfokus; Button bleibt sichtbar deaktiviert.
+- Würfelseite bei mindestens `1920x1080`, `1440x900`, `1280x800`, `1024x768`, `768x1024` und `390x844`: keine überlappenden Karten, Inputs, Buttons oder Überschriften; kein unerwarteter horizontaler Overflow; notwendiger vertikaler Scroll funktioniert.
+- Ein normaler Wurf, eine Auswahländerung und die Navigation bleiben nach der CSS-Anpassung funktionsfähig.
+- Screenshots vor/nach der Änderung oder ein kurzer Browser-Testbericht dokumentieren die geprüften Viewports. Keine neue allgemeine Testplattform und keine fachlichen Tests für reine CSS-Regeln hinzufügen.
+
+### Commitgrenze
+
+Die UI-Änderung kann in höchstens zwei fachlichen Commits umgesetzt werden:
+
+1. `fix(ui): align navigation and compact hidden-roll control`
+2. `fix(ui): make dice page responsive without overlap`
+
+Plan- und Abnahmeeintrag erst nach tatsächlicher Browserprüfung ergänzen. Keine Aussage `UI erledigt`, solange mindestens ein genannter Viewport oder der Tastaturfokus-Hinweis nicht geprüft wurde.
