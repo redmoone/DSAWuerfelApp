@@ -48,6 +48,14 @@
     font-size: 30px !important;
 }
 
+.die-selector {
+    padding-block: 4px;
+}
+
+.die-text {
+    line-height: 1;
+}
+
 .modifier-container {
     background-color: var(--pill-bg);
     border: 3px solid var(--dsa-gold);
