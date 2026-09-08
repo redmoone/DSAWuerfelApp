@@ -18,8 +18,24 @@
 
                 @if (ProbeInfo is not null && ProbeInfo.Sections.Length > 0)
                 {
+                    @if (HasPrimaryProbeInfoSections(ProbeInfo))
+                    {
+                        <details class="probe-info-primary" open>
+                            <summary class="probe-info-primary-title">Grundinformationen</summary>
+                            <div class="probe-info-primary-fields">
+                                @foreach (var section in GetPrimaryProbeInfoSections(ProbeInfo))
+                                {
+                                    <div class="probe-info-primary-field">
+                                        <span class="probe-info-primary-label">@(section.Label)</span>
+                                        <p class="probe-info-primary-text">@(section.Text)</p>
+                                    </div>
+                                }
+                            </div>
+                        </details>
+                    }
+
                     <div class="probe-info-sections">
-                        @foreach (var section in ProbeInfo.Sections)
+                        @foreach (var section in GetAdditionalProbeInfoSections(ProbeInfo))
                         {
                             <details class="probe-info-section">
                                 <summary class="probe-info-section-label">@(section.Label)</summary>
@@ -241,6 +257,31 @@
     {
         return probeInfo is not null &&
                (!string.IsNullOrWhiteSpace(probeInfo.DetailsText) || probeInfo.Sections.Length > 0);
+    }
+
+    private static bool HasPrimaryProbeInfoSections(ProbeInfoResultDto probeInfo)
+    {
+        return probeInfo.Sections.Any(IsPrimaryProbeInfoSection);
+    }
+
+    private static IEnumerable<ProbeInfoSectionDto> GetPrimaryProbeInfoSections(ProbeInfoResultDto probeInfo)
+    {
+        return probeInfo.Sections.Where(IsPrimaryProbeInfoSection);
+    }
+
+    private static IEnumerable<ProbeInfoSectionDto> GetAdditionalProbeInfoSections(ProbeInfoResultDto probeInfo)
+    {
+        return probeInfo.Sections.Where(section => !IsPrimaryProbeInfoSection(section));
+    }
+
+    private static bool IsPrimaryProbeInfoSection(ProbeInfoSectionDto section)
+    {
+        return section.Label switch
+        {
+            "Probe" or "Zauberdauer" or "Wirkung" or "Kosten" or
+            "Zielobjekt" or "Reichweite" or "Wirkungsdauer" => true,
+            _ => false
+        };
     }
 
     private static string FormatModifier(int modifier)
