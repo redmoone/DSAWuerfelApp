@@ -72,27 +72,28 @@ public class HeroesController(HeroDbContext dbContext, HeroImportService heroImp
     }
 
     [HttpPut("{id:guid}/activate")]
-    public async Task<ActionResult<Hero>> ActivateHero(Guid id)
+    public async Task<ActionResult<Hero>> ActivateHero(Guid id, CancellationToken cancellationToken = default)
     {
         var userId = GetRequiredUserId();
-        var hero = await dbContext.Heroes.FirstOrDefaultAsync(existingHero =>
-            existingHero.Id == id && existingHero.OwnerUserId == userId);
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var hero = await dbContext.Heroes.AsNoTracking().FirstOrDefaultAsync(existingHero =>
+            existingHero.Id == id && existingHero.OwnerUserId == userId, cancellationToken);
         if (hero is null)
         {
             return NotFound();
         }
 
-        await using var transaction = await dbContext.Database.BeginTransactionAsync();
         await dbContext.Heroes
             .Where(existingHero => existingHero.OwnerUserId == userId && existingHero.IsActive && existingHero.Id != id)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(existingHero => existingHero.IsActive, false));
+            .ExecuteUpdateAsync(setters => setters.SetProperty(existingHero => existingHero.IsActive, false), cancellationToken);
 
-        await dbContext.Heroes
+        var activated = await dbContext.Heroes
             .Where(existingHero => existingHero.Id == id && existingHero.OwnerUserId == userId)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(existingHero => existingHero.IsActive, true));
-        await transaction.CommitAsync();
+            .ExecuteUpdateAsync(setters => setters.SetProperty(existingHero => existingHero.IsActive, true), cancellationToken);
+        if (activated != 1) throw new InvalidOperationException("Aktivierung konnte nicht abgeschlossen werden.");
 
-        hero = await dbContext.Heroes.AsNoTracking().SingleAsync(existingHero => existingHero.Id == id);
+        hero = await dbContext.Heroes.AsNoTracking().SingleAsync(existingHero => existingHero.Id == id && existingHero.OwnerUserId == userId, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return Ok(hero);
     }

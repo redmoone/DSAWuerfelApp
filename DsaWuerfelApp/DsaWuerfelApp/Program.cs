@@ -219,6 +219,7 @@ static void EnsureHeroSchema(HeroDbContext dbContext)
     }
 
     reader.Close();
+    using var schemaTransaction = dbContext.Database.BeginTransaction();
 
     var requiredColumns = new (string Name, string Sql)[]
     {
@@ -262,6 +263,7 @@ static void EnsureHeroSchema(HeroDbContext dbContext)
         ON Heroes (OwnerUserId)
         WHERE IsActive = 1 AND OwnerUserId IS NOT NULL AND OwnerUserId <> '';
         """);
+    schemaTransaction.Commit();
 
 }
 

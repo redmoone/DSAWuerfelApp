@@ -56,7 +56,7 @@ public class HeroDbContext : DbContext
             entity.Property(hero => hero.SourceFileName).HasMaxLength(260);
             entity.Property(hero => hero.ImportVersion).HasDefaultValue(0);
             entity.HasIndex(hero => hero.OwnerUserId);
-            entity.HasIndex(hero => hero.OwnerUserId)
+            entity.HasIndex(hero => hero.OwnerUserId, "IX_Heroes_OneActivePerOwner")
                 .HasDatabaseName("IX_Heroes_OneActivePerOwner")
                 .HasFilter("IsActive = 1 AND OwnerUserId IS NOT NULL AND OwnerUserId <> ''")
                 .IsUnique();

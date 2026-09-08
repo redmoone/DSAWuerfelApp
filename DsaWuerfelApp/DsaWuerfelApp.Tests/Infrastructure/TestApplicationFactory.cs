@@ -12,7 +12,16 @@ namespace DsaWuerfelApp.Tests.Infrastructure;
 
 public sealed class TestApplicationFactory : WebApplicationFactory<Program>
 {
-    private readonly TestDatabase _database = new();
+    private readonly TestDatabase _database;
+    private readonly bool _ownsDatabase;
+
+    public TestApplicationFactory() : this(new TestDatabase(), true) { }
+    internal TestApplicationFactory(TestDatabase database) : this(database, false) { }
+    private TestApplicationFactory(TestDatabase database, bool ownsDatabase)
+    {
+        _database = database;
+        _ownsDatabase = ownsDatabase;
+    }
 
     public TestDatabase Database => _database;
 
@@ -53,7 +62,7 @@ public sealed class TestApplicationFactory : WebApplicationFactory<Program>
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        if (disposing)
+        if (disposing && _ownsDatabase)
         {
             _database.Dispose();
         }
