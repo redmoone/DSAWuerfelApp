@@ -1,6 +1,7 @@
 using System.Text.Json;
 
 using DsaWuerfelApp.Shared;
+using DsaWuerfelApp.Shared.Models;
 
 namespace DsaWuerfelApp.Services;
 
@@ -250,6 +251,26 @@ public sealed record TalentCatalogEntry(
     IReadOnlyList<ProbeInfoSectionDto> InfoSections)
 {
     public IReadOnlyList<string> AlternativeNames { get; } = Array.Empty<string>();
+
+    public bool TryGetProbe(string? requestedProbe, out string probe)
+    {
+        var requestedCanonical = CanonicalizeProbe(requestedProbe);
+        if (string.IsNullOrWhiteSpace(requestedCanonical))
+        {
+            probe = string.Empty;
+            return false;
+        }
+
+        probe = ProbeAlternatives.FirstOrDefault(candidate =>
+            string.Equals(CanonicalizeProbe(candidate), requestedCanonical, StringComparison.Ordinal)) ??
+            string.Empty;
+        return !string.IsNullOrWhiteSpace(probe);
+    }
+
+    private static string CanonicalizeProbe(string? probe)
+    {
+        return TalentCatalogText.CanonicalizeText(TalentCatalogText.NormalizeProbe(probe));
+    }
 }
 
 public sealed record TalentSpecializationRules(
@@ -263,4 +284,41 @@ public sealed record TalentSpecializationRules(
         new Dictionary<int, int>(),
         false,
         string.Empty);
+
+    public bool TryGetAvailableSpecialization(
+        TalentData talent,
+        string? requestedSpecialization,
+        out string? matchedSpecialization)
+    {
+        ArgumentNullException.ThrowIfNull(talent);
+
+        var requestedCanonical = TalentCatalogText.CanonicalizeText(requestedSpecialization);
+        if (string.IsNullOrWhiteSpace(requestedCanonical))
+        {
+            matchedSpecialization = null;
+            return false;
+        }
+
+        var specializations = talent.Specializations
+            .Where(specialization => !string.IsNullOrWhiteSpace(specialization))
+            .DistinctBy(TalentCatalogText.CanonicalizeText, StringComparer.Ordinal)
+            .ToArray();
+        var specializationIndex = Array.FindIndex(
+            specializations,
+            specialization => string.Equals(
+                TalentCatalogText.CanonicalizeText(specialization),
+                requestedCanonical,
+                StringComparison.Ordinal));
+
+        if (specializationIndex < 0 ||
+            !MinimumTalentValues.TryGetValue(specializationIndex + 1, out var minimumTalentValue) ||
+            talent.Wert < minimumTalentValue)
+        {
+            matchedSpecialization = null;
+            return false;
+        }
+
+        matchedSpecialization = specializations[specializationIndex];
+        return true;
+    }
 }

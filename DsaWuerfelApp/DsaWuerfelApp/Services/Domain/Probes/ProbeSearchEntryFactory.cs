@@ -13,14 +13,15 @@ public sealed class ProbeSearchEntryFactory(
     {
         var talentEntries = talentCatalogStore.Entries
             .Where(entry => !heroTalentIndexBuilder.IsRitualKnowledgeTalent(entry.Name))
-            .Select(entry => BuildCatalogProbeEntry(ProbeSelectionKind.Talent, entry.Name, entry.Probe));
+            .Select(entry => BuildCatalogProbeEntry(entry));
 
         var spellEntries = spellCatalogStore.Entries
             .Select(entry => BuildCatalogProbeEntry(ProbeSelectionKind.Spell, entry.Name, entry.Probe));
 
         return talentEntries
             .Concat(spellEntries)
-            .Where(entry => entry.IsSelectable && !string.IsNullOrWhiteSpace(entry.Value))
+            .Where(entry => (entry.IsSelectable || entry.Alternatives.Length > 0) &&
+                            !string.IsNullOrWhiteSpace(entry.Value))
             .OrderBy(entry => entry.DisplayLabel, StringComparer.Ordinal)
             .ToArray();
     }
@@ -35,11 +36,7 @@ public sealed class ProbeSearchEntryFactory(
             .Where(entry => !heroTalentIndexBuilder.IsRitualKnowledgeTalent(entry.Key))
             .OrderBy(entry => entry.Key, StringComparer.Ordinal)
             .Select(entry => heroTalentIndexBuilder.IsTalentRollable(entry.Key, entry.Value)
-                ? new ProbeSearchEntryDto(
-                    BuildProbeLabel(entry.Key, entry.Value.Talent),
-                    ProbeSelectionValue.EncodeBase(ProbeSelectionKind.Talent, entry.Key),
-                    true,
-                    BuildTalentSpecializationAlternatives(entry.Key, entry.Value.Talent))
+                ? BuildTalentSearchEntry(entry.Key, entry.Value.Talent)
                 : BuildInactiveProbeSearchEntry(entry.Key, entry.Value, activeAlternatives));
 
         var spellEntries = knownSpells
@@ -84,6 +81,15 @@ public sealed class ProbeSearchEntryFactory(
             : $"{probeName} [{probeData.Wert}] ({probeData.Probe})";
     }
 
+    private ProbeSearchEntryDto BuildCatalogProbeEntry(TalentCatalogEntry entry)
+    {
+        return new ProbeSearchEntryDto(
+            entry.Name,
+            ProbeSelectionValue.EncodeBase(ProbeSelectionKind.Talent, entry.Name),
+            ProbeAttributes.TryCreate(entry.Probe) is not null,
+            BuildTalentProbeAlternatives(entry.Name, entry.ProbeAlternatives));
+    }
+
     private static ProbeSearchEntryDto BuildCatalogProbeEntry(
         ProbeSelectionKind kind,
         string probeName,
@@ -94,6 +100,15 @@ public sealed class ProbeSearchEntryFactory(
             ProbeSelectionValue.EncodeBase(kind, probeName),
             ProbeAttributes.TryCreate(probe) is not null,
             []);
+    }
+
+    private ProbeSearchEntryDto BuildTalentSearchEntry(string talentName, TalentData talent)
+    {
+        return new ProbeSearchEntryDto(
+            BuildProbeLabel(talentName, talent),
+            ProbeSelectionValue.EncodeBase(ProbeSelectionKind.Talent, talentName),
+            HasSelectableTalentProbe(talentName, talent),
+            BuildTalentAlternatives(talentName, talent));
     }
 
     private ProbeSearchEntryDto BuildInactiveProbeSearchEntry(
@@ -134,13 +149,59 @@ public sealed class ProbeSearchEntryFactory(
             : $"{talentName} nicht aktiviert ({talent.Probe})";
     }
 
-    private static ProbeSearchAlternativeDto[] BuildTalentSpecializationAlternatives(
+    private bool HasSelectableTalentProbe(string talentName, TalentData talent)
+    {
+        if (!string.IsNullOrWhiteSpace(talent.Probe))
+        {
+            return true;
+        }
+
+        return talentCatalogStore.TryGetEntry(talentName, out var catalogEntry) &&
+               catalogEntry.ProbeAlternatives.Count == 1 &&
+               ProbeAttributes.TryCreate(catalogEntry.ProbeAlternatives[0]) is not null;
+    }
+
+    private ProbeSearchAlternativeDto[] BuildTalentAlternatives(
+        string talentName,
+        TalentData talent)
+    {
+        var alternatives = new List<ProbeSearchAlternativeDto>();
+        if (talentCatalogStore.TryGetEntry(talentName, out var catalogEntry))
+        {
+            alternatives.AddRange(BuildTalentProbeAlternatives(talentName, catalogEntry.ProbeAlternatives));
+        }
+
+        alternatives.AddRange(BuildTalentSpecializationAlternatives(talentName, talent));
+        return alternatives
+            .GroupBy(alternative => alternative.Value, StringComparer.Ordinal)
+            .Select(group => group.First())
+            .ToArray();
+    }
+
+    private static ProbeSearchAlternativeDto[] BuildTalentProbeAlternatives(
+        string talentName,
+        IReadOnlyList<string> probes)
+    {
+        return probes.Count <= 1
+            ? []
+            : probes
+                .Where(probe => ProbeAttributes.TryCreate(probe) is not null)
+                .Distinct(StringComparer.Ordinal)
+                .Select(probe => new ProbeSearchAlternativeDto(
+                    $"{talentName} ({probe})",
+                    ProbeSelectionValue.EncodeTalentProbe(talentName, probe)))
+                .ToArray();
+    }
+
+    private ProbeSearchAlternativeDto[] BuildTalentSpecializationAlternatives(
         string talentName,
         TalentData talent)
     {
         return talent.Specializations
             .Where(specialization => !string.IsNullOrWhiteSpace(specialization))
-            .Distinct(StringComparer.Ordinal)
+            .Where(specialization => talentCatalogStore.SpecializationRules
+                .TryGetAvailableSpecialization(talent, specialization, out _))
+            .DistinctBy(TalentCatalogText.CanonicalizeText, StringComparer.Ordinal)
             .OrderBy(specialization => specialization, StringComparer.Ordinal)
             .Select(specialization => new ProbeSearchAlternativeDto(
                 ProbeSelectionValue.FormatSpecializationLabel(talentName, specialization),

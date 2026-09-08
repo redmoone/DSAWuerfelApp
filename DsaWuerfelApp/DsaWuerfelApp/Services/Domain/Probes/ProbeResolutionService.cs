@@ -147,7 +147,9 @@ public sealed class ProbeResolutionService(
 
     private bool TryResolveTalent(Hero hero, ParsedProbeSelection selection, out ResolvedProbeData resolvedProbe)
     {
-        if (selection.HasOption && selection.OptionKind != ProbeSelectionOptionKind.Specialization)
+        if (selection.HasOption &&
+            selection.OptionKind is not ProbeSelectionOptionKind.Specialization and
+                not ProbeSelectionOptionKind.TalentProbe)
         {
             resolvedProbe = null!;
             return false;
@@ -156,28 +158,32 @@ public sealed class ProbeResolutionService(
         var knownTalents = heroProbeCatalogBuilder.BuildKnownTalentMap(hero);
         if (!TryFindEntry(knownTalents, selection.ProbeName, out var talentName, out var talentEntry) ||
             !heroProbeCatalogBuilder.IsTalentRollable(talentName, talentEntry) ||
+            !TryResolveTalentProbe(talentName, talentEntry.Talent, selection, out var probe) ||
             !TryResolveSpecializationName(talentEntry.Talent, selection, out var specializationName))
         {
             resolvedProbe = null!;
             return false;
         }
 
+        var probeData = CloneWithProbe(talentEntry.Talent, probe);
         resolvedProbe = new ResolvedProbeData(
             ProbeSelectionKind.Talent,
             talentName,
             selection.HasOption ? selection.DisplayName : talentName,
-            talentEntry.Talent,
-            specializationName,
+            probeData,
+            selection.HasOption ? selection.OptionName : null,
             selection.OptionKind,
             [],
             specializationName,
-            selection.OptionModifier);
+            specializationName is null ? 0 : -2);
         return true;
     }
 
     private bool TryResolveCatalogTalent(ParsedProbeSelection selection, out ResolvedProbeData resolvedProbe)
     {
-        if (selection.HasOption && selection.OptionKind != ProbeSelectionOptionKind.Specialization)
+        if (selection.HasOption &&
+            selection.OptionKind is not ProbeSelectionOptionKind.Specialization and
+                not ProbeSelectionOptionKind.TalentProbe)
         {
             resolvedProbe = null!;
             return false;
@@ -185,7 +191,7 @@ public sealed class ProbeResolutionService(
 
         if (!talentCatalogStore.TryGetEntry(selection.ProbeName, out var talentEntry) ||
             heroProbeCatalogBuilder.IsRitualKnowledgeTalent(talentEntry.Name) ||
-            ProbeAttributes.TryCreate(talentEntry.Probe) is null)
+            !TryResolveCatalogTalentProbe(talentEntry, selection, out var probe))
         {
             resolvedProbe = null!;
             return false;
@@ -202,16 +208,96 @@ public sealed class ProbeResolutionService(
             new TalentData
             {
                 Wert = 0,
-                Probe = talentEntry.Probe,
+                Probe = probe,
                 Specializations = []
             },
-            specializationName,
+            selection.HasOption ? selection.OptionName : null,
             selection.OptionKind,
             [],
             specializationName,
-            selection.OptionKind == ProbeSelectionOptionKind.Specialization ? selection.OptionModifier : 0);
+            0);
         resolvedProbe = resolvedProbe with { UsesCatalogValue = true };
         return true;
+    }
+
+    private bool TryResolveTalentProbe(
+        string talentName,
+        TalentData talent,
+        ParsedProbeSelection selection,
+        out string probe)
+    {
+        if (!selection.HasOption || selection.OptionKind != ProbeSelectionOptionKind.TalentProbe)
+        {
+            if (!string.IsNullOrWhiteSpace(talent.Probe))
+            {
+                probe = talent.Probe;
+                return true;
+            }
+
+            if (talentCatalogStore.TryGetEntry(talentName, out var catalogEntry) &&
+                catalogEntry.ProbeAlternatives.Count == 1)
+            {
+                probe = catalogEntry.ProbeAlternatives[0];
+                return true;
+            }
+
+            probe = string.Empty;
+            return false;
+        }
+
+        if (talentCatalogStore.TryGetEntry(talentName, out var talentCatalogEntry) &&
+            talentCatalogEntry.TryGetProbe(selection.OptionName, out probe))
+        {
+            return true;
+        }
+
+        if (string.Equals(
+                TalentCatalogText.CanonicalizeText(talent.Probe),
+                TalentCatalogText.CanonicalizeText(selection.OptionName),
+                StringComparison.Ordinal))
+        {
+            probe = talent.Probe;
+            return true;
+        }
+
+        probe = string.Empty;
+        return false;
+    }
+
+    private static bool TryResolveCatalogTalentProbe(
+        TalentCatalogEntry talentEntry,
+        ParsedProbeSelection selection,
+        out string probe)
+    {
+        if (selection.HasOption && selection.OptionKind == ProbeSelectionOptionKind.TalentProbe)
+        {
+            return talentEntry.TryGetProbe(selection.OptionName, out probe);
+        }
+
+        if (!string.IsNullOrWhiteSpace(talentEntry.Probe))
+        {
+            probe = talentEntry.Probe;
+            return true;
+        }
+
+        if (talentEntry.ProbeAlternatives.Count == 1)
+        {
+            probe = talentEntry.ProbeAlternatives[0];
+            return true;
+        }
+
+        probe = string.Empty;
+        return false;
+    }
+
+    private static TalentData CloneWithProbe(TalentData talent, string probe)
+    {
+        return new TalentData
+        {
+            Wert = talent.Wert,
+            Probe = probe,
+            Specializations = talent.Specializations.ToArray()
+        };
     }
 
     private bool TryResolveSpell(
@@ -290,7 +376,7 @@ public sealed class ProbeResolutionService(
         return true;
     }
 
-    private static bool TryResolveSpecializationName(
+    private bool TryResolveSpecializationName(
         TalentData talent,
         ParsedProbeSelection selection,
         out string? specializationName)
@@ -301,15 +387,22 @@ public sealed class ProbeResolutionService(
             return true;
         }
 
-        specializationName = selection.OptionKind != ProbeSelectionOptionKind.Specialization
-            ? null
-            : talent.Specializations.FirstOrDefault(existingSpecialization =>
-                string.Equals(
-                    TalentCatalogText.CanonicalizeText(existingSpecialization),
-                    TalentCatalogText.CanonicalizeText(selection.OptionName),
-                    StringComparison.Ordinal));
+        if (selection.OptionKind == ProbeSelectionOptionKind.TalentProbe)
+        {
+            specializationName = null;
+            return true;
+        }
 
-        return !string.IsNullOrWhiteSpace(specializationName);
+        if (selection.OptionKind != ProbeSelectionOptionKind.Specialization)
+        {
+            specializationName = null;
+            return false;
+        }
+
+        return talentCatalogStore.SpecializationRules.TryGetAvailableSpecialization(
+            talent,
+            selection.OptionName,
+            out specializationName);
     }
 
     private static bool TryFindEntry<TEntry>(

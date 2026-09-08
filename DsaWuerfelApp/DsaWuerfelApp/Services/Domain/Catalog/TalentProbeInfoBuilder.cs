@@ -113,8 +113,15 @@ internal static class TalentProbeInfoBuilder
 
         return resolvedProbe.SelectedOptionKind switch
         {
-            ProbeSelectionOptionKind.Specialization when !string.IsNullOrWhiteSpace(resolvedProbe.SpecializationName) =>
+            ProbeSelectionOptionKind.Specialization when
+                !string.IsNullOrWhiteSpace(resolvedProbe.SpecializationName) &&
+                resolvedProbe.SpecializationModifier == -2 =>
                 $" Gewählte {GetSpecializationLabel(resolvedProbe.Kind)}: {resolvedProbe.SpecializationName}. Dadurch ist die Probe um 2 Punkte erleichtert.",
+            ProbeSelectionOptionKind.Specialization when
+                !string.IsNullOrWhiteSpace(resolvedProbe.SpecializationName) =>
+                $" Angezeigte Katalogspezialisierung: {resolvedProbe.SpecializationName}. Ein Katalogeintrag verleiht keine Spezialisierung.",
+            ProbeSelectionOptionKind.TalentProbe when !string.IsNullOrWhiteSpace(resolvedProbe.ProbeData.Probe) =>
+                $" Gewaehlte alternative Talentprobe: {resolvedProbe.ProbeData.Probe}.",
             _ => string.Empty
         };
     }

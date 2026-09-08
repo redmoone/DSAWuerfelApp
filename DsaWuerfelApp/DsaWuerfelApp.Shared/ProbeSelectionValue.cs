@@ -36,6 +36,15 @@ public static class ProbeSelectionValue
                 optionModifier.ToString(CultureInfo.InvariantCulture));
     }
 
+    public static string EncodeTalentProbe(string talentName, string probe)
+    {
+        return EncodeOption(
+            ProbeSelectionKind.Talent,
+            talentName,
+            ProbeSelectionOptionKind.TalentProbe,
+            TalentCatalogText.NormalizeProbe(probe));
+    }
+
     public static ParsedProbeSelection Parse(string? value)
     {
         var normalizedValue = TalentCatalogText.NormalizeCatalogText(value);
@@ -111,6 +120,7 @@ public static class ProbeSelectionValue
         {
             ProbeSelectionOptionKind.Specialization => FormatSpecializationLabel(normalizedProbeName,
                 normalizedOptionName),
+            ProbeSelectionOptionKind.TalentProbe => normalizedOptionName,
             ProbeSelectionOptionKind.SpellModification => normalizedOptionName,
             ProbeSelectionOptionKind.SpellVariant => normalizedOptionName,
             _ => normalizedProbeName
@@ -135,6 +145,7 @@ public static class ProbeSelectionValue
         {
             ProbeSelectionOptionKind.Specialization => FormatSpecializationLabel(kind, normalizedProbeName,
                 normalizedOptionName),
+            ProbeSelectionOptionKind.TalentProbe => $"{normalizedProbeName} ({normalizedOptionName})",
             ProbeSelectionOptionKind.SpellModification => $"{normalizedProbeName} ({normalizedOptionName})",
             ProbeSelectionOptionKind.SpellVariant => $"{normalizedProbeName} ({normalizedOptionName})",
             _ => normalizedProbeName
@@ -216,6 +227,7 @@ public static class ProbeSelectionValue
         return optionKind switch
         {
             ProbeSelectionOptionKind.Specialization => "specialization",
+            ProbeSelectionOptionKind.TalentProbe => "talent-probe",
             ProbeSelectionOptionKind.SpellModification => "spell-modification",
             ProbeSelectionOptionKind.SpellVariant => "spell-variant",
             _ => "none"
@@ -245,6 +257,9 @@ public static class ProbeSelectionValue
             case "specialization":
                 optionKind = ProbeSelectionOptionKind.Specialization;
                 return true;
+            case "talent-probe":
+                optionKind = ProbeSelectionOptionKind.TalentProbe;
+                return true;
             case "spell-modification":
                 optionKind = ProbeSelectionOptionKind.SpellModification;
                 return true;
@@ -269,6 +284,7 @@ public enum ProbeSelectionOptionKind
 {
     None,
     Specialization,
+    TalentProbe,
     SpellModification,
     SpellVariant
 }
