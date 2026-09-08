@@ -31,7 +31,7 @@ public sealed class TestApplicationFactory : WebApplicationFactory<Program>
                 ["DataProtection:ApplicationName"] = "DsaWuerfelApp.Tests",
                 ["MagicLinkAuth:ResendApiKey"] = "",
                 ["MagicLinkAuth:FromEmail"] = "",
-                ["PublicBaseUrl"] = "http://localhost"
+                ["MagicLinkAuth:PublicBaseUrl"] = "https://login.example/app"
             });
         });
         builder.ConfigureTestServices(services =>

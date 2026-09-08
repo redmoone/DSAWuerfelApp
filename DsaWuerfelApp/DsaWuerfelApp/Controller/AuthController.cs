@@ -33,7 +33,6 @@ public sealed class AuthController(MagicLinkService magicLinkService) : Controll
             var requestResult = await magicLinkService.RequestMagicLinkAsync(
                 request.Email,
                 request.RedirectPath,
-                BuildBaseUrl(),
                 HttpContext.Connection.RemoteIpAddress?.ToString(),
                 cancellationToken);
 
@@ -70,7 +69,7 @@ public sealed class AuthController(MagicLinkService magicLinkService) : Controll
             BuildPrincipal(verificationResult.User),
             new AuthenticationProperties { IsPersistent = true });
 
-        return Redirect(verificationResult.RedirectPath);
+        return LocalRedirect(Url.IsLocalUrl(verificationResult.RedirectPath) ? verificationResult.RedirectPath : "/");
     }
 
     [HttpPost("logout")]
@@ -80,10 +79,6 @@ public sealed class AuthController(MagicLinkService magicLinkService) : Controll
         return Ok();
     }
 
-    private string BuildBaseUrl()
-    {
-        return $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
-    }
 
     private static ClaimsPrincipal BuildPrincipal(AuthUser user)
     {

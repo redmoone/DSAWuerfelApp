@@ -46,7 +46,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ExpireTimeSpan = TimeSpan.FromDays(authSessionLifetimeDays);
     });
 builder.Services.AddAuthorization();
-builder.Services.Configure<MagicLinkAuthOptions>(builder.Configuration.GetSection(MagicLinkAuthOptions.SectionName));
+builder.Services.AddOptions<MagicLinkAuthOptions>()
+    .Bind(builder.Configuration.GetSection(MagicLinkAuthOptions.SectionName))
+    .Validate(options => options.HasValidPublicBaseUrl(builder.Environment.IsDevelopment()),
+        "MagicLinkAuth:PublicBaseUrl ist erforderlich: absolute HTTPS-Adresse ohne UserInfo, Query oder Fragment (HTTP nur in Development).")
+    .ValidateOnStart();
 builder.Services.AddHttpClient<IMagicLinkEmailSender, ResendMagicLinkEmailSender>(client =>
 {
     client.BaseAddress = new Uri("https://api.resend.com/");

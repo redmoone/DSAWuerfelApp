@@ -20,7 +20,6 @@ public sealed class MagicLinkService(
     public async Task<MagicLinkRequestOutcome> RequestMagicLinkAsync(
         string email,
         string? redirectPath,
-        string baseUrl,
         string? requestIp,
         CancellationToken cancellationToken = default)
     {
@@ -60,7 +59,7 @@ public sealed class MagicLinkService(
         dbContext.MagicLinkTokens.Add(token);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var magicLink = BuildMagicLink(baseUrl, rawToken);
+        var magicLink = BuildMagicLink(_options.PublicBaseUrl, rawToken);
         try
         {
             await emailSender.SendAsync(normalizedEmail, magicLink, cancellationToken);
@@ -179,8 +178,10 @@ public sealed class MagicLinkService(
             return "/";
         }
 
-        return redirectPath.StartsWith("/", StringComparison.Ordinal) &&
-               !redirectPath.StartsWith("//", StringComparison.Ordinal)
+        var urlHelper = new Microsoft.AspNetCore.Mvc.Routing.UrlHelper(new Microsoft.AspNetCore.Mvc.ActionContext(
+            new DefaultHttpContext(), new Microsoft.AspNetCore.Routing.RouteData(),
+            new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor()));
+        return urlHelper.IsLocalUrl(redirectPath)
             ? redirectPath
             : "/";
     }
