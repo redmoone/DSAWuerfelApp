@@ -1,5 +1,7 @@
 # AusfÃ¼hrungsplan fÃ¼r GPT Luna
 
+> **Aktuelle Uebergabe vom 08.09.2026:** Alte ERLEDIGT-Eintraege sind historische Meldungen. Massgeblich fuer den aktuellen Stand und die begrenzten Restarbeiten ist Abschnitt 11. P06/P08 sind implementiert und getestet; die komplette Browserabnahme P20 bleibt offen. Nicht alle Pakete erneut bearbeiten.
+
 Stand: 07.09.2026. Grundlage: Code-Review und erneute PrÃ¼fung der aktuellen Arbeitskopie.
 Dieses Dokument ist ein Implementierungsauftrag, kein Nachweis bereits erledigter Korrekturen.
 Bei seiner Erstellung wurde ausschlieÃŸlich diese Datei hinzugefÃ¼gt.
@@ -519,21 +521,21 @@ Alle Pakete sind bei Erstellung dieser Datei OFFEN. Das vorangegangene Review is
 | P03 | ERLEDIGT | RequestRejectedException und zentrale HTTP-/Hub-Abbildung; 400/500-Transporttests und Gesamt-Testlauf erfolgreich |
 | P04 | ERLEDIGT | Verdeckte WÃ¼rfe UI-seitig deaktiviert und serverseitig in allen vier Handlern vor AusfÃ¼hrung abgewiesen; Tests 17/17 |
 | P05 | ERLEDIGT | Zweistufige Dice-Validierung vor Allokation/RNG; Grenzfalltests und Gesamt-Testlauf erfolgreich |
-| P06 | OFFEN | |
-| P07 | ERLEDIGT | SessionId in Probe-/Master-Verträgen und Client-Transport ergänzt; Master-Requests ohne Session werden abgewiesen; Build und 28 Tests erfolgreich |
-| P08 | OFFEN | |
+| P06 | ERLEDIGT | Eigentuemer- und expliziter Session-Meisterzugriff; HTTP-/Hub-Tests in HeroAccessTests, siehe Abschnitt 11. |
+| P07 | ERLEDIGT | Masterziele vor Berechnung aus Serverzustand aufgeloest; ActiveHero prueft Besitz und verwendet Servernamen. |
+| P08 | ERLEDIGT | Validierte PublicBaseUrl, lokale Redirects und Startup-Ablehnung; 14 Testfaelle in AuthRedirectTests. |
 | P09 | ERLEDIGT | Tokenverbrauch per bedingtem UPDATE innerhalb einer DB-Transaktion atomar; Gesamt-Testlauf 28 erfolgreich |
-| P10 | ERLEDIGT | Startup weist verwaisten Helden keinen AuthUser mehr zu; Build und 28 Tests erfolgreich. Altbestand braucht explizite Zuordnung mit Backup und bekanntem Eigentümer. |
-| P11 | ERLEDIGT | Gefilterter Unique-Index und transaktionale Eigentümer-Aktivierung umgesetzt; bestehende Konflikte werden beim Schema-Upgrade diagnostiziert; 28 Tests erfolgreich |
-| P12 | ERLEDIGT | EF/ASP.NET-Paketkette auf 10.0.11 aktualisiert; SQLitePCLRaw 2.1.12 wird aufgelöst, Vulnerability-Scan ohne Treffer, 28 Tests erfolgreich |
-| P13 | ERLEDIGT | ReplacePlayers übernimmt ActiveHeroId/ActiveHeroName für verbleibende UserId; 28 Tests erfolgreich |
-| P14 | ERLEDIGT | Session wird nach Reconnect auch bei gleicher ID neu geladen; Hero-Sync serialisiert gleichzeitige Updates und verschluckt Fehler nicht; 28 Tests erfolgreich |
-| P15 | ERLEDIGT | Busy-Zustand zählt überlappende UI-Operationen statt Bool-Toggles; 28 Tests erfolgreich |
-| P16 | ERLEDIGT | Master-Kontext wird anhand Session, Modus, eigenem Hero und sortierten User/Hero-Paaren dedupliziert; Anzeigeaktualisierungen ohne fachlichen Wechsel laden keinen Kontext; 28 Tests erfolgreich |
-| P17 | ERLEDIGT | API-Strategie nur ohne Session; ausgewählte Session beansprucht Hub-Transport und meldet Verbindungsverlust explizit; 28 Tests erfolgreich |
-| P18 | ERLEDIGT | Dice3D-Dispose idempotent ergänzt; Render-/Roll-Frames, Listener, Renderer und Würfelressourcen werden freigegeben; Build und 28 Tests erfolgreich |
+| P10 | ERLEDIGT | Startup weist verwaisten Helden keinen AuthUser mehr zu; Build und 28 Tests erfolgreich. Altbestand braucht explizite Zuordnung mit Backup und bekanntem EigentÃ¼mer. |
+| P11 | ERLEDIGT | Gefilterter Unique-Index und transaktionale EigentÃ¼mer-Aktivierung umgesetzt; bestehende Konflikte werden beim Schema-Upgrade diagnostiziert; 28 Tests erfolgreich |
+| P12 | ERLEDIGT | EF/ASP.NET-Paketkette auf 10.0.11 aktualisiert; SQLitePCLRaw 2.1.12 wird aufgelÃ¶st, Vulnerability-Scan ohne Treffer, 28 Tests erfolgreich |
+| P13 | ERLEDIGT | ReplacePlayers Ã¼bernimmt ActiveHeroId/ActiveHeroName fÃ¼r verbleibende UserId; 28 Tests erfolgreich |
+| P14 | IMPLEMENTIERT | Reconnect und Hero-Abgleich umgesetzt; Neustart-Browserpfad bestanden, gesamte Browserabnahme noch offen. |
+| P15 | IMPLEMENTIERT | Ladeversionen, Cancellation und serialisierte Speicherung; Clienttests bestanden. Zusaetzlicher Umfang, siehe Abschnitt 11. |
+| P16 | IMPLEMENTIERT | Zentraler Kontextvergleich und expliziter Hero-Refresh; Metadaten erhalten vorbereitete Eingaben. |
+| P17 | ERLEDIGT | API-Strategie nur ohne Session; ausgewÃ¤hlte Session beansprucht Hub-Transport und meldet Verbindungsverlust explizit; 28 Tests erfolgreich |
+| P18 | TEILABNAHME | Instanzgebundene 3D-Ressourcen; isolierter Browser-Lebenszyklustest bestanden, finale Blazor-Navigation noch offen. |
 | P19 | ERLEDIGT | artifacts/** aus Server- und Client-Default-Items ausgeschlossen; externer Release-Publish erfolgreich, Kataloge und GLB vorhanden, keine artifacts/DB/Keys im Output |
-| P20 | ERLEDIGT | Release-Build ohne Warnungen/Fehler, Release-Testlauf 28/28, Vulnerability-Scan ohne Treffer, externer Publish erfolgreich; offene Planstände P06 und P08 bleiben ausdrücklich offen, daher keine Freigabeempfehlung für Kampfentwicklung |
+| P20 | OFFEN | 78 Release-Testfaelle bestanden; finale Browserfassung nicht komplett erfolgreich ausgefuehrt. Restauftrag in Abschnitt 11. |
 
 Nach jedem Paket darunter einen kurzen Eintrag ergÃ¤nzen:
 
@@ -611,15 +613,62 @@ Manuell geprÃ¼ft: Null/Leer, Nullgruppe, Count- und Seitenzahlgrenzen, 2Ã—50, 51
 Nicht geprÃ¼ft / EinschrÃ¤nkung: Keine statistische Zufallsverteilung geprÃ¼ft; keine weitergehende konfigurierbare Limit-Infrastruktur eingefÃ¼hrt.
 NÃ¤chstes zulÃ¤ssiges Paket: P06, nur nach ausdrÃ¼cklicher Beauftragung.
 
+## 11. Begrenzte Uebergabe nach Umfangsreview / 08.09.2026
 
+### Auftrag und Grenze
 
+Der Nutzer wollte die offenen Punkte P06 und P08 abschliessen. Notwendige P07-Anpassungen gehoeren zu P06. Die darueber hinaus erfolgten Arbeiten an Persistenz, Clientzustand und 3D waren eine zu grosse Ausweitung. Sie sind jetzt in separaten lokalen Commits nachvollziehbar erhalten. Keine weiteren funktionalen Aenderungen beim Aufteilen der Commits vorgenommen; keine neuen Tests dafuer gestartet. Einzelne alte Windows-Umlautbytes in dieser Datei wurden fuer gueltiges UTF-8 normalisiert.
 
+Das naechste Modell soll ausschliesslich die unten genannten Restpunkte bearbeiten. Kein neues Sicherheitsframework, keine neuen Kampfregeln, kein allgemeines Refactoring und keine Erweiterung der Testinfrastruktur. Insbesondere nicht aus der Zahl gruener Tests auf eine vollstaendige Abnahme schliessen.
 
+### Lokale Commits
 
+| Commit | Inhalt |
+| --- | --- |
+| a7d0655 | P08: Login-Basisadresse, lokale Redirects, Konfiguration, AuthRedirectTests und Deploymenthinweis |
+| a136bfd | P06/P07: Eigentumspruefung, serverseitige Masterziele, ActiveHero-Validierung und HTTP-/Hub-Tests |
+| 48d2739 | Zusatzumfang: atomare Aktivierung/Schema-Upgrades und Persistenz-/Mitgliedschaftsregressionstests |
+| 6f7b347 | Zusatzumfang P14-P17: veraltete Antworten, Logout, Auswahlpersistenz, Kontextvergleich und Clienttests |
+| 21d3a3d | Zusatzumfang P18: instanzgebundener 3D-Lebenszyklus und isolierter Browsertest |
+| da33cf6 | Entwurf P20: isolierter Browser-Workflow; finale Navigationsfassung noch nicht komplett abgenommen |
 
+Die Commits wurden inhaltlich aufgeteilt; Zwischencommits wurden nicht jeweils separat gebaut/getestet. Nachfolgende Ergebnisse beziehen sich auf den gemeinsamen Stand vor der rein dokumentarischen Uebergabe. Es wurde nicht gepusht.
 
+### Tatsaechlich vorhandene Nachweise
 
+- Letzter Gesamtlauf: `dotnet test DsaWuerfelApp.sln -c Release --no-restore -v quiet` -> 78 bestanden, 0 fehlgeschlagen, 0 uebersprungen. Davon 28 vorher vorhandene und 50 ergaenzte Testfaelle.
+- Davon 26 neue Faelle fuer Heldenzugriff/Login, 12 fuer Clientzustand und 12 fuer Persistenz/Mitgliedschaft. Viele Faelle sind kurze Theory-Varianten.
+- Release-Publish ausserhalb des Repository erfolgreich: zuletzt `%TEMP%/dsa-review-final-20260908b`. Katalogdateien und `wwwroot/models/dice_set.glb` enthalten; keine DBs, Schluessel oder artifacts/obj-Verzeichnisse enthalten. Temp-Ausgabe ist nur ein lokaler Nachweis, keine Voraussetzung fuer das naechste Modell.
+- Paketpruefung ohne bekannte anfaellige Pakete. EF/Sqlite 10.0.11, SQLitePCLRaw 2.1.12; native Version ueber die .NET-Verbindung: `SELECT sqlite_version()` -> 3.53.3. Bezug: https://github.com/advisories/GHSA-2m69-gcr7-jv3q (native Korrektur ab 3.50.2).
+- `Browser/dice-lifecycle.cjs` mit Edge bestanden: zehn Aufbau-/Abbauzyklen, zwei unabhaengige Szenen, Dispose waehrend Modellladen, neueste Vorschau, Abbruch alter Rollanimation, Ressourcenfreigabe; danach 0 Frames und 0 Listener. Dies war ein isolierter Szenentest, keine vollstaendige Blazor-Seitennavigation.
+- In `Browser/app-workflows.cjs` bestanden in bisherigen Laeufen: drei echte Cookie-Logins mit isolierten Testkonten, Session erstellen/beitreten, Heldenzuordnungen, normaler Wurf, Umbenennung ohne Formularverlust, Austritt ohne Verlust verbleibender Helden, Reload der Auswahl sowie Serverneustart mit Hero-/Historienabgleich und Ablehnung eines getrennten Sessionwurfs.
+- Einschraenkung des Master-Browserpfads: Der Test klickt den Meisterwurf, prueft dessen Ergebnis aber noch nicht ausdruecklich. Serverseitiger Erfolg und Nichtmeister-Ablehnung sind in HeroAccessTests geprueft.
+- Kampf-WIP (`Kampf.razor.cs` / `.razor.css`) unveraendert gegen Checkpoint 6f779be.
 
+### R01 - Letzte Browserabnahme gezielt abschliessen (offen)
 
+Datei: `DsaWuerfelApp/DsaWuerfelApp.Tests/Browser/app-workflows.cjs`.
 
+1. Die letzte Aenderung ersetzt beim Navigieren den unsichtbaren Linknamen durch `.nav-links a[href=...]` und nimmt Kampf in die Navigation auf. Diese Fassung wurde noch nicht komplett erfolgreich ausgefuehrt. Bei Selektorproblemen nur den betroffenen Schritt untersuchen; nicht erneut eine allgemeine Browser-Testplattform bauen.
+2. Direkt beim Meisterwurf die Antwort von `/api/dice/master-attribute-roll` auf Erfolg und vorhandene Zielergebnisse pruefen. Keine weitere Rechte-Matrix im Browser duplizieren.
+3. Den bestehenden Ablauf einmal komplett erfolgreich abschliessen, einschliesslich zehn Navigationszyklen und Fehlerpruefung am Ende. Vorherige Teilerfolge nicht als Gesamterfolg ausgeben.
+4. Ausschliesslich frische temporaere DB/Keys verwenden. Der Script-Entwurf startet/stoppt seinen eigenen Testserver auf Port 5298. Bei belegtem Port keinen fremden Prozess beenden. Kein externer Mailversand. Ein echter Import ueber den Java-Konverter wurde nicht getestet; die Browserhelden sind Testfixtures. XML-Reimport/Eigentum sind separat in StartupOwnershipTests geprueft.
 
+Vorhandene Ausfuehrung (vom Repository-Root, Edge und Node erforderlich):
+
+```powershell
+npm install --prefix "$env:TEMP/dsa-browser-tests" playwright three@0.160.0
+$env:NODE_PATH = "$env:TEMP/dsa-browser-tests/node_modules"
+# Vorhandenen aktuellen externen Publish verwenden oder einmal in einen frischen Temp-Pfad publishen.
+node DsaWuerfelApp/DsaWuerfelApp.Tests/Browser/app-workflows.cjs <externer-publish-pfad>
+```
+
+### R02 - Abschluss dokumentieren (offen, nach R01)
+
+P18/P20 nur gemaess tatsaechlichem Ergebnis aktualisieren. Bei weiterem Blocker den konkreten Schritt und Fehler festhalten. Wenn ausschliesslich Testselektoren/Dokumentation geaendert werden, keine weiteren umfassenden .NET-Test-/Publish-Wiederholungen. Bei einem reproduzierten Produktionsfehler: kleinster Fix und passende vorhandene Tests, danach noetige Abschlusspruefung.
+
+### Ausdruecklich kein sofortiger Folgeauftrag
+
+Die zusaetzlichen Client-/Persistenz-/3D-Aenderungen nicht pauschal zuruecksetzen: Sie sind bereits miteinander getestet und einzeln nachvollziehbar committed. Ob ihr Zusatzumfang behalten werden soll, ist beim Review getrennt von P06/P08 zu betrachten. Reflection auf private Methoden und DispatchProxy in ClientStateTests sind wartungsanfaellig; ihre Bereinigung ist optional und rechtfertigt jetzt keinen neuen Umbau.
+
+Mindestens das Problem, dass ein Metadaten-Refresh das Speichern der Sessionauswahl unterbrechen konnte, entstand im Zuge der neuen Ladeversionen. Es wurde korrigiert und mit `Metadata_refresh_also_persists_current_selection` abgesichert. Solche Nacharbeiten nicht als ausschliesslich zuvor vorhandene Produktfehler darstellen.
