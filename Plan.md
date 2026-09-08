@@ -703,6 +703,17 @@ Dateien: `DsaWuerfelApp/DsaWuerfelApp.Client/Layout/NavMenu.razor`, `DsaWuerfelA
 - Im aufgeklappten Zustand Textausrichtung und Icon-Abstand beibehalten; nur die unterschiedliche vertikale Position beseitigen.
 - Keine neuen Icons, keine Änderung der Navigation und keine Änderung der Desktop-/Mobile-Funktionalität.
 
+#### UI-01 - Ergebnis / Abnahme
+
+Umgesetzt in `DsaWuerfelApp/DsaWuerfelApp.Client/Layout/NavMenu.razor.css`:
+
+- Gemeinsame Variablen für Eintragsgröße und Abstand eingeführt.
+- Menübutton und Navigationseinträge auf 3,25 rem Höhe/Breite vereinheitlicht.
+- Headerabstand und Abstand der Navigationseinträge auf 0,5 rem vereinheitlicht.
+- Eingeklappte Einträge horizontal zentriert; die aufgeklappte Textausrichtung bleibt erhalten.
+
+Abgenommen am 08.09.2026 mit einem Release-Client-Build, `git diff --check` und einer Edge-Browserprüfung bei 1280x800. Dabei wurden eingeklappte Zentrierung, gleiche Maße, 8 px Abstand und die unveränderte Buttonhöhe beim Aufklappen geprüft.
+
 #### UI-02 – Verdeckte Würfe kompakt und zugänglich darstellen
 
 Dateien: `DsaWuerfelApp/DsaWuerfelApp.Client/Components/WuerfelActionBar.razor`, zugehörige `WuerfelActionBar.razor.css`.
