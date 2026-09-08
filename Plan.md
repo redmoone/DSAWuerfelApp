@@ -776,3 +776,107 @@ Die UI-Änderung kann in höchstens zwei fachlichen Commits umgesetzt werden:
 2. `fix(ui): make dice page responsive without overlap`
 
 Plan- und Abnahmeeintrag erst nach tatsächlicher Browserprüfung ergänzen. Keine Aussage `UI erledigt`, solange mindestens ein genannter Viewport oder der Tastaturfokus-Hinweis nicht geprüft wurde.
+
+## Datenbasis und Zauberinfo – Planentwurf vom 08.09.2026
+
+Status: **ZT-01 umgesetzt; ZT-02 ist der nächste Umsetzungsschritt.**
+
+### Verbindliche Grundlage
+
+- Zauber: `C:/Users/Bosko/Downloads/Zauber_wuerfelbot_v8.1_final_QA (1).json`, interne Version `v8.1_final_QA`.
+- Talente: `C:/Users/Bosko/Downloads/Talente_Anzeige_v1.1_mit_Spezialisierungen.json`, interne Version `v1.1_talente_anzeige_mit_spezialisierungen`.
+- Regelprüfung für Modifikationen und Varianten: `Y:/DSA4/01.Regelwerke/C01 - Liber Cantiones.pdf` und `Y:/DSA4/01.Regelwerke/DSA 4.1 - Wege der Zauberei.pdf`. Diese Werke dürfen zur Auslegung der bereits gelieferten Daten herangezogen werden; es werden daraus keine zusätzlichen Regeln vermutet, die in den freigegebenen Daten nicht belegt sind.
+- Diese Dateien bestimmen Regeln und Anzeigetexte. Keine Ergänzungen oder Korrekturen aus allgemeinem DSA-Wissen. Bestehende abweichende Regeln nicht ungeprüft übernehmen.
+- Geprüfter ausführlicher Text hat bei scheinbaren Widersprüchen Vorrang; unklare Fälle bleiben manuell. Originaldaten unverändert erhalten.
+- Heldenwerte, erlernte Spezialisierungen und Repräsentationen kommen aus Charakterdaten. Ein Katalogeintrag verleiht dem Helden keine Fähigkeit.
+- Sichtbarkeit (vom Nutzer bestätigt): Spieler sehen nur die Zauber ihres Helden. Der Meister sieht alle Zauber und benötigt diesen Zugriff auch für NPCs; ein eigener Held muss den Zauber dafür nicht beherrschen. Katalogzugriff und konkrete Probenwerte sind getrennt zu behandeln.
+
+### Befunde aus Dateien und Code
+
+Die JSON-Dateien wurden eingelesen und ihre Eintragsstrukturen untersucht. Die Angaben zur Prüfung gegen Regelwerke stammen aus dem Auftrag bzw. den Dateien; eine erneute Regelwerksprüfung ist nicht Teil dieser Analyse.
+
+- Zauberkatalog: 268 Zauber, 450 Varianten und 802 spontane Modifikationen. Darüber hinaus 56 Folgeproben, 116 situative Zauberprobenmodifikatoren, 33 Schadensangaben, 18 ZfP*-Schwellen, 15 Wertänderungen und 49 Hinweise unter `Meisterentscheidungen`.
+- Talentkatalog: 105 Talente sowie ein separater Bereich mit vier Sprach-/Schriftvorlagen. `Probe` enthält Listen von Eigenschaftskombinationen. Singen, Sinnenschärfe und Fährtensuchen haben jeweils zwei Kombinationen. Attributo benötigt eine dynamisch gewählte dritte Eigenschaft.
+- `Voraussetzung`, `Probenmodifikator` und `VorabZfP` sind nicht einheitlich numerisch: Es gibt null, Zahlen, Texte und Objekte mit Unterfällen. Beispiel Zauberdauer: Verkürzen und Verlängern haben unterschiedliche Kosten und Modifikatoren. Ein einzelner Auswahlchip reicht dafür fachlich nicht aus.
+- `AutomatischAuswertbar` ist bei Folgeproben, situativen Modifikatoren und Schaden vorhanden; bei Varianten, spontanen Modifikationen, Schwellen und Wertänderungen fehlt es. Seine Behandlung muss feldbezogen erfolgen, nicht als pauschale Freigabe aller Zahlen.
+- Auch strukturierte Angaben können nur Teilinformationen enthalten: Accuratum, Variante „Sackleinen und Spinnenseide“, enthält strukturiert Mindest-ZfW 14 und +7; zusätzliche Erschwernis, Repräsentationsbeschränkung und Unvereinbarkeit mit „Haltbarkeit“ stehen im Text. Ein Zahlenwert allein bedeutet daher keine vollständig automatisierbare Variante.
+- `SpellCatalogStore.cs` lädt bisher `Data/Zauber.json` (mit zusätzlichem Downloads-Fallback), nicht die neue Datei. Er liest alte `AnzeigenWenn`-Voraussetzungen; `Voraussetzung`, strukturierte Grunddaten, `Probenmodifikator`, `VorabZfP` und die neuen Regelbereiche werden nicht abgebildet. Fehlende Dateien und Ladefehler ergeben still einen leeren Katalog.
+- `TalentCatalogStore.cs` erwartet bisher eine Liste unter `talente_mit_spezialisierungen.json` mit `Eigenschaften`, `Zweck`, `Kernregel` usw. Die neue Datei ist ein Wurzelobjekt mit `Talente`, `Probe`, `Kurzbeschreibung` und Regelbasis. Bloßes Ersetzen der Datei wäre inkompatibel.
+- `SpellSelectionResolver.cs` bildet Optionsmodifikatoren derzeit nur aus einer passenden Zauberspezialisierung ab (0 oder -2). Die echten Zuschläge und Vorab-ZfP der neuen Datei werden dort nicht verwendet. Ein getrenntes Vorab-ZfP-Feld fehlt auch in `ResolvedSpellOption`.
+- `SpellInfoSectionFactory.cs` gibt Grundtexte und gefilterte Varianten/Modifikationen aus. `WuerfelInformationPanel.razor` zeigt Detailabschnitte erst bei `ShowProbeInfoDetails`. Neue Regelbereiche erreichen diese Anzeige derzeit nicht über den Katalog.
+- Talentspezialisierungen laufen derzeit als Modifikator -2 durch `TalentProbeService`. Ob dies auch bei Ergebnisgrenzen der geforderten Erhöhung des effektiven TaW entspricht, muss gezielt geprüft werden; gleiche Erfolgschance allein genügt nicht.
+
+Das sind statische Integrationsbefunde, kein Nachweis eines konkreten Anzeigefehlers. Dass einem Spieler nicht erlernte Zauber fehlen, ist beabsichtigt. Die bestehende Trennung zwischen Heldenauswahl und vollständigem Meisterkatalog muss erhalten bleiben.
+
+### Vorgeschlagene Umsetzung in begrenzten Schritten
+
+Für Zauber werden Anzeige und Berechnung gemeinsam umgesetzt. ZT-01, ZT-02 und die zauberbezogenen Ergebnisregeln aus ZT-04 gehören deshalb zu einem fachlichen Zauberpaket. Es gibt keinen Zwischenstand, in dem Varianten zwar angezeigt, aber noch nicht korrekt für die Probe berücksichtigt werden.
+
+#### ZT-01 – Neue Datenbasis und Zauberinfo integrieren
+
+- Die beiden freigegebenen Dateien unverändert als versionierte Projektdaten aufnehmen und ihre Auslieferung beim Publish sicherstellen. Laufzeit nicht von einem persönlichen Downloads-Verzeichnis abhängig machen.
+- Bestehende Katalogleser auf die tatsächlichen Wurzelobjekte und Feldtypen anpassen. Fehlende/ungültige Daten erkennbar melden, statt kommentarlos leere Info zu liefern. Keine zweite allgemeine Katalogplattform bauen.
+- Neue Informationen durch Auswahl → Info-Anfrage → Namenszuordnung → Antwort → Detailanzeige integrieren. Spieler erhalten Informationen zu ihren erlernten Zaubern, der Meister zu allen Katalogzaubern, unabhängig vom eigenen Helden. Mehrdeutige Namen nicht still dem falschen Zauber zuordnen.
+- Zaubergrunddaten und geprüfte Texte zuverlässig anzeigen. Sonderregeln, Folgeproben und Meisterhinweise getrennt von auswählbaren Varianten darstellen. Talent-Kurzbeschreibungen bevorzugen; ausführliche Texte über Detailansicht zugänglich halten.
+- Vorhandene alte Ersatz-/Fallback-Regeln mit der neuen Datenbasis abgleichen. Nicht von der neuen Basis gedeckte Regeln als Klärungsbedarf behandeln, nicht still weiterverwenden.
+- Abschluss dieses Schritts: verlässliche Information. Noch nicht unterstützte Berechnungen ausdrücklich als manuell kennzeichnen; keine rechnerisch wirkungslosen Optionen als vollständig unterstützt anbieten.
+
+#### ZT-01 – Ergebnis / Abnahme
+
+Umgesetzt:
+
+- Die freigegebenen JSON-Dateien liegen unverändert unter `DsaWuerfelApp/DsaWuerfelApp/Data/` und werden über `CopyToOutputDirectory` sowie `CopyToPublishDirectory` ausgeliefert. Es gibt keinen Laufzeit-Fallback auf ein persönliches Downloads-Verzeichnis.
+- Beide Loader lesen die tatsächlichen Wurzelobjekte. Fehlende Dateien, leere Wurzellisten und ungültiges JSON führen zu einer erkennbaren Ausnahme statt zu einem still leeren Katalog.
+- Zaubergrunddaten, strukturierte Grundprobe, Varianten/Modifikationen und die getrennten Regelbereiche werden in die bestehende Infoantwort übernommen. Nicht auswertbare Regelteile werden mit einem manuellen Hinweis angezeigt.
+- Der Katalogpfad funktioniert ohne Heldenwert. Spieler bleiben auf die Zauber ihres Helden begrenzt; der Meister kann Katalogzauber auch ohne eigenen Heldenwert anzeigen.
+- Talente verwenden `Kurzbeschreibung`, mehrere Probe-Kombinationen, Behinderung, Voraussetzungen, Regelhinweise und Spezialisierungsdaten. Bei mehreren Probenkombinationen wird nicht still die erste gewählt.
+- Neue Varianten und spontane Modifikationen sind in ZT-01 noch nicht auswählbar. Ihre Regeltexte und strukturierten Werte werden angezeigt; Auswahl und Berechnung folgen gemeinsam in ZT-02.
+
+Prüfung:
+
+- `dotnet build DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfolgreich, 0 Fehler/0 Warnungen.
+- `dotnet test DsaWuerfelApp.sln -c Release --no-restore -v minimal` erfolgreich, 79/79.
+- Smoke-Test für den Katalogkontext und Katalogzauberinfo ohne Heldenwert ergänzt.
+- Release-Publish erfolgreich; beide Katalogdateien liegen im veröffentlichten `Data/`-Ordner.
+
+#### ZT-02 – Zauberauswahl und Probenwerte korrekt verbinden
+
+- Bestehende Auswahl-/Request-/Ergebnismodelle gezielt um unveränderten ZfW, Vorab-ZfP, echte Probenmodifikatoren und erforderliche Eingaben erweitern. Dieselben Regeln in Einzel- und Sessionwürfen anwenden.
+- Mindest-ZfW gegen den ursprünglichen Heldenwert prüfen. Vorab-ZfP reduzieren den verfügbaren Probenvorrat und die erreichbaren ZfP*, nicht den rohen ZfW. Ergebnisgrenzen und Sonderergebnisse anhand der freigegebenen Regeln klären, bevor gerechnet wird.
+- Varianten von Sonderregeln trennen. Bei spontanen Modifikationen Unterfall und Stufe auswählen lassen; Einschränkungen, Kombinationen, Repräsentation und Anzahl der Modifikationsstufen aus der Datei beachten.
+- MR, dynamische Eigenschaften und situative Werte nur mit gesicherter Herkunft oder expliziter Eingabe verwenden. Automatisierbare Bedingungen gelten nicht automatisch als erfüllt.
+- Klar abgegrenzte unterstützte Fälle rechnen; bei komplexen oder unvollständigen Fällen darf der Spieler die Erschwernis oder Erleichterung der aktuellen Probe manuell eingeben. Diese Eingabe wird sichtbar als manuell gesetzt behandelt; der Bot leitet daraus keine eigene Regel und keine Änderung des rohen ZfW ab.
+
+#### ZT-03 – Talentinformationen und passende Spezialisierungen
+
+- Neue Kurzbeschreibungen, BE-Angaben, Voraussetzungen und Regelhinweise in die bestehende Info integrieren. Mehrere Probenkombinationen erhalten; keine willkürliche Wahl der ersten Kombination.
+- Erlernte Spezialisierungen mit Charakterdaten abgleichen und nur bei ausdrücklich passender Anwendung +2 effektiven TaW ansetzen. Grund-TaW unverändert lassen; Ergebnis und Anzeige konsistent halten.
+- Katalogmöglichkeiten von tatsächlich erlernten Spezialisierungen unterscheiden. Offene Kategorien offen lassen; unbekannte importierte Namen nicht automatisch als ungültig löschen.
+- Schwellen 7/14/21/28 und das Verbot identischer Mehrfachwahl bei der Auswertung berücksichtigen. Eine Erwerbs-, Änderungs- oder Heldenverwaltungsfunktion gehört nicht zu diesem Vorhaben.
+
+#### ZT-04 – Ergebnisbezogene Zauberhinweise im Zauberpaket
+
+- Erst nach erfolgreicher Probe die tatsächlichen ZfP* auf relevante Schwellen und eindeutig unterstützte Wirkungsformeln anwenden. Variantenbezogene Regeln nur bei gewählter Variante berücksichtigen.
+- Folgeproben getrennt von der Zauberprobe anbieten bzw. anzeigen; nicht automatisch für Opfer oder Beobachter würfeln.
+- Schaden, Dauer, Kosten und Wertänderungen nur bei eindeutig unterstützter Struktur berechnen. `AutomatischAuswertbar=false/null` bleibt bei entsprechend gekennzeichneten Bereichen manuell; fehlende Eingaben nicht durch 0 ersetzen.
+- Meisterentscheidungen mit vorhandenem Text kennzeichnen. Keine automatische Änderung von Heldenwerten oder Ressourcen ohne gesondert geklärten Umfang.
+
+### Offene Fragen zur Finalisierung
+
+1. **Sichtbarkeit – geklärt:** Spieler sehen nur erlernte Zauber ihres Helden; der Meister sieht alle Zauber, insbesondere für NPCs. Daraus ergibt sich kein Infofehler. Diese Frage ist beantwortet.
+2. **Umfang/Reihenfolge – geklärt:** Zauberanzeige und Zauberberechnung werden gemeinsam umgesetzt. ZT-01, ZT-02 und ZT-04 bilden ein zusammenhängendes Zauberpaket. Eine angezeigte Variante muss bei ihrer Auswahl auch mit ihren geprüften Voraussetzungen, Probenmodifikatoren und Vorab-ZfP korrekt in die Probe einfließen. ZT-03 für normale Talente folgt als eigener Bereich.
+3. **Kurze Zaubertexte – geklärt:** Die Texte in den bereitgestellten JSON-Dateien sind bereits aufbereitet und gekürzt. Es werden keine zusätzlichen Kurztexte erstellt. Für die Anzeige werden die vorhandenen Felder verwendet, insbesondere `Wirkung` bei Zaubern sowie `Kurzbeschreibung` und `RegelhinweiseKurz` bei Talenten.
+4. **Manuelle Fälle – geklärt:** Bei wirklich komplexen oder nicht eindeutig automatisierbaren Regeln gibt der Spieler die Erschwernis oder Erleichterung der aktuellen Probe selbst ein. Die Eingabe wird ausdrücklich als manuell angezeigt und nur für diese Probe verwendet. Der Bot ergänzt keine vermuteten Regeln und verändert den rohen ZfW nicht.
+5. **Probenkontext – geklärt:** Die Heldendaten kommen aus dem XML. Beim Beispiel `Darian.xml` stehen aktuelle Eigenschaften und MR unter `eigenschaften`, Talentwert, Probe, Probenwerte, BE und Spezialisierungen unter `talentliste/talent` sowie ZfW, Probe, Probenwerte, Repräsentation, Merkmale und MR-Bezug unter `zauberliste/zauber`. Diese Werte werden für den jeweiligen Helden verwendet. Die Oberfläche fragt nur noch Kontext ab, der nicht im eigenen Held steckt: Ziel bzw. Ziel-MR, eine dynamische Eigenschaft wie bei Attributo, die konkrete alternative Talentprobe sowie die gewählten Modifikationsstufen und Varianten. Bei einem Meister kann der Zielheld bzw. NPC ausgewählt werden; fehlt ein benötigter Zielwert, bleibt die Eingabe manuell. Modifikations- und Variantenregeln werden anhand von Liber Cantiones und Wege der Zauberei geprüft und mit den freigegebenen JSON-Daten verbunden.
+6. **Spezialisierungen und Heldenverwaltung – geklärt:** Es werden ausschließlich bereits vorhandene Heldendaten und importierte Spezialisierungen gelesen. Keine neue Heldenverwaltung, kein XML-Editor, kein Import- oder Erwerbsdialog und keine Änderung an der bestehenden Heldenverwaltung im Rahmen dieses Vorhabens. Offene Spezialisierungskategorien bleiben offen; die vier Sprach-/Schriftvorlagen dürfen als Katalogdaten für Proben verwendet werden.
+7. **Automatisierungsgrenze – vorläufig bestätigt:** Explizite einfache Variantenwerte und Schwellen dürfen verwendet werden, wenn Text und Bedingungen eindeutig sind. Bei Folgeproben, situativen Modifikatoren und Schaden ist `AutomatischAuswertbar=true` erforderlich. Komplexe Fälle bleiben manuell. Für Zauberspezialisierungen und nicht eindeutig abgedeckte Ergebnis- oder Rundungsgrenzen gelten ausschließlich die freigegebenen Daten und Regelquellen; bei einem konkreten Widerspruch wird der Fall erneut geklärt.
+8. **Ressourcen und Wirkungen – vorläufig bestätigt:** AsP, Schaden und Wertänderungen werden zunächst berechnet und angezeigt, aber nicht automatisch auf dem Helden verbucht. Reichweitenstufen, Rundungen und Grenzfälle werden nur umgesetzt, wenn sie in den freigegebenen Daten oder Regelquellen eindeutig festgelegt sind. Unklare Fälle bleiben manuell.
+9. **Zusammenspiel manueller und automatischer Modifikatoren – geklärt:** Automatische und manuelle Modifikatoren werden getrennt angezeigt und addiert. Die manuelle Eingabe startet bei 0 und ersetzt nur dann einen nicht automatisierbaren Teil, wenn sie ausdrücklich als vollständiger Ersatzwert eingegeben wird.
+
+### Schlanke Prüfung und Abschluss
+
+- Die reine Planphase ist abgeschlossen. Umsetzung und Abnahme werden pro vereinbartem Schritt dokumentiert.
+- Bei Umsetzung vorhandene Tests gezielt ergänzen: Laden beider Originalschemas, echte Variantenerschwernis versus Vorab-ZfP, Mindest-ZfW unverändert, manuelle Fälle ohne automatische Berechnung, passende Spezialisierung +2 effektiver TaW und Ergebnisgrenze.
+- Kleine repräsentative Fälle aus den Dateien verwenden (z.B. Abvenenum/Accuratum, Attributo, alternative Talentprobe); keine hunderte textidentischen Tests und keine neue Testplattform.
+- Visuelle Abnahme übernimmt auf Wunsch der Nutzer. Je Schritt kurzer Bericht über geändertes Verhalten, durchgeführte Prüfungen und verbleibende manuelle Fälle; keine umfangreichen Browserläufe ohne Bedarf.
+- Nach ZT-01 folgt ZT-02 mit der gemeinsamen Auswahl- und Berechnungslogik für Varianten und spontane Modifikationen; dabei bleiben komplexe Fälle manuell.
