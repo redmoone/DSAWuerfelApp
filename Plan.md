@@ -724,6 +724,18 @@ Dateien: `DsaWuerfelApp/DsaWuerfelApp.Client/Components/WuerfelActionBar.razor`,
 - Hover und Tastaturfokus müssen denselben Hinweis zeigen; die Beschriftung darf nicht von einem nicht fokussierbaren deaktivierten Element abhängen.
 - Keine Änderung an Requestverträgen, Hidden-Roll-Serverprüfung oder Fachlogik.
 
+#### UI-02 - Ergebnis / Abnahme
+
+Umgesetzt in `DsaWuerfelApp/DsaWuerfelApp.Client/Components/WuerfelActionBar.razor` und `WuerfelActionBar.razor.css`:
+
+- Den dauerhaft sichtbaren Erklärungstext aus dem Layout entfernt.
+- Den deaktivierten und ausgegrauten Button in einem fokussierbaren Hinweis-Wrapper belassen.
+- Einen zugänglichen Hinweis mit `role="img"`, `tabindex="0"` und `aria-label` ergänzt.
+- Hover und Fokus zeigen denselben Tooltiptext über dem Icon.
+- Requestverträge, Hidden-Roll-Serverprüfung und Fachlogik unverändert gelassen.
+
+Abgenommen am 08.09.2026 mit einem Release-Client-Build, `git diff --check` und einer Edge-Browserprüfung. Der Hinweistext erscheint nicht dauerhaft, der Button bleibt deaktiviert, der Fokuspfad funktioniert bei 1280x900 und der Hoverpfad bei 1920x900. Bei 1280x900 überlagert der bestehende Würfeln-Button den Iconbereich teilweise und fängt dort den Mauszeiger ab; die Behebung bleibt UI-03 vorbehalten.
+
 #### UI-03 – Responsive Würfelseite stabilisieren
 
 Dateien: `DsaWuerfelApp/DsaWuerfelApp.Client/Pages/Wuerfel.razor.css`, bei Bedarf die CSS-Dateien der direkt betroffenen Action-Bar-/Pill-Komponenten.
