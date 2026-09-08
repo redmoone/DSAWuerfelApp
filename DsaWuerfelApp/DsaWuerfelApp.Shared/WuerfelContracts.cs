@@ -68,7 +68,8 @@ public sealed record ProbeInfoResultDto(
     string? SummaryText,
     string? DetailsText,
     ProbeInfoSectionDto[] Sections,
-    SpellSelectionPanelDto? SpellSelection);
+    SpellSelectionPanelDto? SpellSelection,
+    ProbeSelectionKind Kind = ProbeSelectionKind.Unknown);
 
 public sealed record FreeRollRequestDto(
     string? SessionId,

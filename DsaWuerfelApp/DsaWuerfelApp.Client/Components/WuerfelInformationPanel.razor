@@ -18,31 +18,46 @@
 
                 @if (ProbeInfo is not null && ProbeInfo.Sections.Length > 0)
                 {
-                    @if (HasPrimaryProbeInfoSections(ProbeInfo))
+                    @if (IsTalentProbeInfo(ProbeInfo))
                     {
-                        <details class="probe-info-primary" open>
-                            <summary class="probe-info-primary-title">Grundinformationen</summary>
-                            <div class="probe-info-primary-fields">
-                                @foreach (var section in GetPrimaryProbeInfoSections(ProbeInfo))
-                                {
-                                    <div class="probe-info-primary-field">
-                                        <span class="probe-info-primary-label">@(section.Label)</span>
-                                        <p class="probe-info-primary-text">@(section.Text)</p>
-                                    </div>
-                                }
-                            </div>
-                        </details>
+                        <div class="probe-info-compact-fields">
+                            @foreach (var section in ProbeInfo.Sections)
+                            {
+                                <div class="probe-info-compact-field">
+                                    <span class="probe-info-compact-label">@(section.Label)</span>
+                                    <p class="probe-info-compact-text">@(section.Text)</p>
+                                </div>
+                            }
+                        </div>
                     }
-
-                    <div class="probe-info-sections">
-                        @foreach (var section in GetAdditionalProbeInfoSections(ProbeInfo))
+                    else
+                    {
+                        @if (HasPrimaryProbeInfoSections(ProbeInfo))
                         {
-                            <details class="probe-info-section">
-                                <summary class="probe-info-section-label">@(section.Label)</summary>
-                                <p class="probe-info-section-text">@(section.Text)</p>
+                            <details class="probe-info-primary" open>
+                                <summary class="probe-info-primary-title">Grundinformationen</summary>
+                                <div class="probe-info-primary-fields">
+                                    @foreach (var section in GetPrimaryProbeInfoSections(ProbeInfo))
+                                    {
+                                        <div class="probe-info-primary-field">
+                                            <span class="probe-info-primary-label">@(section.Label)</span>
+                                            <p class="probe-info-primary-text">@(section.Text)</p>
+                                        </div>
+                                    }
+                                </div>
                             </details>
                         }
-                    </div>
+
+                        <div class="probe-info-sections">
+                            @foreach (var section in GetAdditionalProbeInfoSections(ProbeInfo))
+                            {
+                                <details class="probe-info-section">
+                                    <summary class="probe-info-section-label">@(section.Label)</summary>
+                                    <p class="probe-info-section-text">@(section.Text)</p>
+                                </details>
+                            }
+                        </div>
+                    }
                 }
             }
         </section>
@@ -262,6 +277,11 @@
     private static bool HasPrimaryProbeInfoSections(ProbeInfoResultDto probeInfo)
     {
         return probeInfo.Sections.Any(IsPrimaryProbeInfoSection);
+    }
+
+    private static bool IsTalentProbeInfo(ProbeInfoResultDto probeInfo)
+    {
+        return probeInfo.Kind == ProbeSelectionKind.Talent;
     }
 
     private static IEnumerable<ProbeInfoSectionDto> GetPrimaryProbeInfoSections(ProbeInfoResultDto probeInfo)

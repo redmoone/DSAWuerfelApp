@@ -28,7 +28,8 @@ internal static class TalentProbeInfoBuilder
             BuildSummaryText(hero, resolvedProbe, probeAttributes, effectiveModifier),
             BuildDetailsText(hero, resolvedProbe, probeAttributes, badTrait),
             [.. infoSections],
-            spellSelection);
+            spellSelection,
+            resolvedProbe.Kind);
     }
 
     public static ProbeInfoResultDto BuildFallbackInfo(string probeValue, BadTraitDto? badTrait)
