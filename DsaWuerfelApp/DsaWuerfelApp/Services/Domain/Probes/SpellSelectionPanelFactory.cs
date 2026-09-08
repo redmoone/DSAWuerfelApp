@@ -121,15 +121,16 @@ public sealed class SpellSelectionPanelFactory(
 
     private static string BuildOptionDescription(SpellOptionEntry option)
     {
-        if (!option.RequiresManualCalculation)
+        var displayText = SpellOptionDisplayFormatter.RemoveSubcaseLine(option.DisplayText);
+        var manualText = SpellOptionDisplayFormatter.GetManualNote(option);
+        if (string.IsNullOrWhiteSpace(manualText))
         {
-            return option.DisplayText;
+            return displayText;
         }
 
-        var manualText = "Manuelle Erschwernis/Erleichterung für diesen Unterfall erforderlich.";
-        return string.IsNullOrWhiteSpace(option.DisplayText)
+        return string.IsNullOrWhiteSpace(displayText)
             ? manualText
-            : $"{option.DisplayText}{Environment.NewLine}{manualText}";
+            : $"{displayText}{Environment.NewLine}{manualText}";
     }
 
     private static bool TryFindEntry<TEntry>(
