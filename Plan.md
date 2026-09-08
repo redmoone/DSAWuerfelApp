@@ -747,6 +747,17 @@ Dateien: `DsaWuerfelApp/DsaWuerfelApp.Client/Pages/Wuerfel.razor.css`, bei Bedar
 - Keine Elemente durch negative Abstände, feste Überlagerungen oder ein bloßes Verkleinern der Schrift aus dem sichtbaren Bereich drücken.
 - Desktopaufteilung mit Historie, 3D-Bereich und Zusatzinformationen erhalten, sofern die Mindestbreite ausreicht.
 
+#### UI-03 - Ergebnis / Abnahme
+
+Umgesetzt in `DsaWuerfelApp/DsaWuerfelApp.Client/Pages/Wuerfel.razor.css` und `WuerfelActionBar.razor.css`:
+
+- Die feste Seitenhöhe und das globale Abschneiden des Würfelbereichs entfernt, damit notwendiger Inhalt vertikal scrollen kann.
+- Grid-Kinder auf `min-width: 0` umgestellt und die Action-Bar bei geringer eigener Breite gezielt umgebrochen.
+- Die Aufteilung von Aktionsbereich und 3D-Ansicht an die tatsächliche Containerbreite gekoppelt; bei kleinen und mittleren Breiten stehen sie untereinander.
+- Die Desktop-Zweispaltenaufteilung bleibt bei ausreichender Inhaltsbreite erhalten.
+
+Abgenommen am 08.09.2026 mit Release-Client-Build, `git diff --check` und Edge-Browserprüfung. Geprüfte Viewports: `1920x1080`, `1440x900`, `1280x800`, `1024x768`, `768x1024` und `390x844`; zusätzlich `1920x600` für den vertikalen Scroll. Alle Prüfungen liefen ohne horizontalen Overflow, Überschneidungen oder Seitenfehler. Auswahlwechsel, d6-Auswahl, normaler Wurf und Navigation blieben funktionsfähig.
+
 ### Abnahme
 
 Die Umsetzung gilt erst als abgeschlossen, wenn alle drei Punkte in einem echten Browser geprüft sind:
