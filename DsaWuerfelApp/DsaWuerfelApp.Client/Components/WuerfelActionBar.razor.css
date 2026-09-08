@@ -1,6 +1,7 @@
 .results-bar {
+    container: results-bar / inline-size;
     width: 100%;
-    height: 175px;
+    height: auto;
     box-sizing: border-box;
     min-height: 175px;
     min-width: 0;
@@ -32,6 +33,7 @@
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    min-width: 0;
     flex-wrap: wrap;
     gap: 16px;
 }
@@ -40,12 +42,14 @@
     display: flex;
     align-items: center;
     gap: 16px;
+    min-width: 0;
     flex-wrap: wrap;
 }
 
 .right-actions {
     display: flex;
     align-items: center;
+    min-width: 0;
 }
 
 .hidden-roll-hint {
@@ -223,5 +227,21 @@
 
     .right-actions {
         width: auto;
+    }
+}
+
+@container results-bar (max-width: 560px) {
+    .global-actions-bar {
+        flex-wrap: wrap;
+    }
+
+    .left-actions {
+        flex: 1 1 100%;
+        flex-wrap: wrap;
+    }
+
+    .right-actions {
+        flex: 0 0 100%;
+        justify-content: flex-end;
     }
 }
