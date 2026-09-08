@@ -21,10 +21,10 @@
                     <div class="probe-info-sections">
                         @foreach (var section in ProbeInfo.Sections)
                         {
-                            <div class="probe-info-section">
-                                <span class="probe-info-section-label">@(section.Label)</span>
+                            <details class="probe-info-section">
+                                <summary class="probe-info-section-label">@(section.Label)</summary>
                                 <p class="probe-info-section-text">@(section.Text)</p>
-                            </div>
+                            </details>
                         }
                     </div>
                 }

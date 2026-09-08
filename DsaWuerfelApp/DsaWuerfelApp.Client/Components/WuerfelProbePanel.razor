@@ -28,21 +28,33 @@
 
         @foreach (var group in spellSelection.Groups)
         {
-            <div class="spell-selection-group">
-                <span class="spell-selection-group-label">@group.Label</span>
+            <details class="spell-selection-group" open="@HasSelectedOption(group)">
+                <summary class="spell-selection-group-summary">
+                    <span class="spell-selection-group-label">@group.Label</span>
+                    <span class="spell-selection-count">@GetGroupSummary(group)</span>
+                </summary>
                 <div class="spell-selection-buttons">
                     @foreach (var option in group.Options)
                     {
-                        <button type="button"
-                                class="spell-selection-button @(option.IsSelected ? "active" : string.Empty)"
-                                disabled="@option.IsDisabled"
-                                title="@option.Description"
-                                @onclick='() => SpellOptionToggleRequested.InvokeAsync(option.Value)'>
-                            @option.Label
-                        </button>
+                        <div class="spell-selection-option">
+                            <button type="button"
+                                    class="spell-selection-button @(option.IsSelected ? "active" : string.Empty)"
+                                    disabled="@option.IsDisabled"
+                                    title="@option.Description"
+                                    @onclick='() => SpellOptionToggleRequested.InvokeAsync(option.Value)'>
+                                @option.Label
+                            </button>
+                            @if (!string.IsNullOrWhiteSpace(option.Description))
+                            {
+                                <details class="spell-option-details">
+                                    <summary title="Beschreibung anzeigen" aria-label="Beschreibung für @option.Label">i</summary>
+                                    <p>@option.Description</p>
+                                </details>
+                            }
+                        </div>
                     }
                 </div>
-            </div>
+            </details>
         }
     </div>
 }

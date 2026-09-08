@@ -4,14 +4,14 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
 }
 
 .additional-info-panel {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 14px 16px;
+    gap: 8px;
+    padding: 9px 10px;
     border-radius: 8px;
     border: 1px solid rgba(212, 175, 55, 0.32);
     background: rgba(9, 25, 48, 0.35);
@@ -27,37 +27,56 @@
 
 .additional-info-text {
     margin: 0;
-    line-height: 1.55;
+    line-height: 1.4;
     color: rgba(255, 248, 220, 0.9);
 }
 
 .probe-info-sections {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 4px;
 }
 
 .probe-info-section {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 10px 12px;
-    border-radius: 8px;
+    border-radius: 6px;
     border: 1px solid rgba(212, 175, 55, 0.2);
     background: rgba(255, 255, 255, 0.04);
+    overflow: hidden;
 }
 
 .probe-info-section-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 8px;
+    cursor: pointer;
     font-size: 0.76rem;
     font-weight: 700;
     letter-spacing: 0.04em;
+    list-style: none;
     text-transform: uppercase;
     color: var(--dsa-gold);
 }
 
+.probe-info-section-label::-webkit-details-marker {
+    display: none;
+}
+
+.probe-info-section-label::after {
+    content: "+";
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.probe-info-section[open] > .probe-info-section-label::after {
+    content: "−";
+}
+
 .probe-info-section-text {
     margin: 0;
-    line-height: 1.55;
+    padding: 0 8px 8px;
+    line-height: 1.4;
     color: rgba(255, 248, 220, 0.9);
     white-space: pre-line;
 }

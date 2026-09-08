@@ -30,6 +30,17 @@ public partial class WuerfelProbePanel
         return ForcedRollsTextChanged.InvokeAsync(args.Value?.ToString() ?? string.Empty);
     }
 
+    private static bool HasSelectedOption(SpellOptionGroupDto group)
+    {
+        return group.Options.Any(option => option.IsSelected);
+    }
+
+    private static string GetGroupSummary(SpellOptionGroupDto group)
+    {
+        var selectedCount = group.Options.Count(option => option.IsSelected);
+        return $"{selectedCount}/{group.Options.Length} ausgewählt";
+    }
+
     private string BuildInfoButtonStyle()
     {
         var backgroundColor = IsInfoExpanded ? "var(--dsa-gold)" : "var(--pill-bg)";

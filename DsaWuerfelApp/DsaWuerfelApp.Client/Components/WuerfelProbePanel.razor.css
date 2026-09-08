@@ -12,22 +12,24 @@
 .spell-selection-panel {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-top: 12px;
-    padding: 14px 16px;
-    border-radius: 10px;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
     border: 1px solid rgba(212, 175, 55, 0.28);
     background: rgba(9, 25, 48, 0.28);
 }
 
 .spell-selection-header {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    align-items: baseline;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 4px 10px;
 }
 
 .spell-selection-title {
-    font-size: 0.92rem;
+    font-size: 0.86rem;
     font-weight: 700;
     color: var(--dsa-gold);
 }
@@ -39,33 +41,82 @@
 }
 
 .spell-selection-group {
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.025);
+    overflow: hidden;
+}
+
+.spell-selection-group-summary {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
     gap: 8px;
+    padding: 6px 8px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.spell-selection-group-summary::-webkit-details-marker,
+.spell-option-details summary::-webkit-details-marker {
+    display: none;
+}
+
+.spell-selection-group-summary::after {
+    content: "+";
+    flex: 0 0 auto;
+    color: var(--dsa-gold);
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.spell-selection-group[open] > .spell-selection-group-summary::after {
+    content: "−";
 }
 
 .spell-selection-group-label {
-    font-size: 0.78rem;
+    min-width: 0;
+    font-size: 0.74rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: rgba(212, 175, 55, 0.92);
 }
 
+.spell-selection-count {
+    flex: 0 0 auto;
+    color: rgba(255, 248, 220, 0.62);
+    font-size: 0.72rem;
+}
+
 .spell-selection-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+    gap: 4px;
+    padding: 4px 6px 6px;
+}
+
+.spell-selection-option {
     display: flex;
+    align-items: flex-start;
     flex-wrap: wrap;
-    gap: 8px;
+    min-width: 0;
+    gap: 4px;
 }
 
 .spell-selection-button {
+    flex: 1 1 calc(100% - 28px);
+    min-width: 0;
     background-color: rgba(212, 175, 55, 0.1);
     border: 1px solid rgba(212, 175, 55, 0.42);
-    border-radius: 999px;
+    border-radius: 6px;
     color: var(--dsa-white);
     cursor: pointer;
     font: inherit;
-    padding: 7px 12px;
+    font-size: 0.8rem;
+    line-height: 1.25;
+    min-height: 30px;
+    padding: 5px 8px;
     text-align: left;
     transition: background-color 0.15s ease, border-color 0.15s ease;
 }
@@ -83,6 +134,46 @@
 .spell-selection-button:disabled {
     opacity: 0.45;
     cursor: not-allowed;
+}
+
+.spell-option-details {
+    flex: 0 0 24px;
+    min-width: 24px;
+}
+
+.spell-option-details[open] {
+    flex-basis: 100%;
+}
+
+.spell-option-details summary {
+    display: grid;
+    width: 24px;
+    height: 30px;
+    place-items: center;
+    border: 1px solid rgba(212, 175, 55, 0.32);
+    border-radius: 6px;
+    color: rgba(255, 248, 220, 0.76);
+    cursor: pointer;
+    font-size: 0.75rem;
+    line-height: 1;
+    list-style: none;
+}
+
+.spell-option-details summary:hover,
+.spell-option-details[open] summary {
+    border-color: rgba(212, 175, 55, 0.7);
+    color: var(--dsa-gold);
+}
+
+.spell-option-details p {
+    margin: 2px 0 0;
+    padding: 6px 8px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 248, 220, 0.74);
+    font-size: 0.75rem;
+    line-height: 1.35;
+    white-space: pre-line;
 }
 
 .probe-info-button {
@@ -159,6 +250,6 @@
     }
 
     .spell-selection-panel {
-        padding: 12px;
+        padding: 7px;
     }
 }
