@@ -193,7 +193,7 @@ public sealed class TalentCatalogStore(IHostEnvironment environment)
             parts.Add("Weitere Spezialisierungen möglich.");
         }
 
-        if (!string.IsNullOrWhiteSpace(hint))
+        if (!isOpen && !string.IsNullOrWhiteSpace(hint))
         {
             parts.Add($"Hinweis: {hint}");
         }
