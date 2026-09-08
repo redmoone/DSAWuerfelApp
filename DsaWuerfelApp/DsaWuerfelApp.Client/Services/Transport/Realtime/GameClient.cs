@@ -9,6 +9,7 @@ public class GameClient : IAsyncDisposable
 {
     private readonly SemaphoreSlim _connectionLock = new(1, 1);
     private readonly HubConnection _hub;
+    private long _selectionVersion;
 
     public GameClient(NavigationManager navigationManager)
     {
@@ -67,6 +68,7 @@ public class GameClient : IAsyncDisposable
 
     public async Task DisconnectAsync()
     {
+        var version = ++_selectionVersion;
         await _connectionLock.WaitAsync();
         try
         {
@@ -80,6 +82,7 @@ public class GameClient : IAsyncDisposable
             _connectionLock.Release();
         }
 
+        if (version != _selectionVersion) return;
         CurrentSessionId = null;
         MyUserName = null;
         SessionChanged?.Invoke();
@@ -87,15 +90,16 @@ public class GameClient : IAsyncDisposable
 
     public async Task<string> CreateSession(string userName, string? sessionName)
     {
+        var version = ++_selectionVersion;
         MyUserName = userName;
         var session = await _hub.InvokeAsync<SessionConnectionDto>("CreateSession", userName, sessionName);
-        CurrentSessionId = session.SessionId;
-        SessionChanged?.Invoke();
+        if (version == _selectionVersion) { CurrentSessionId = session.SessionId; SessionChanged?.Invoke(); }
         return session.JoinCode;
     }
 
     public async Task<bool> JoinSession(string code, string userName)
     {
+        var version = ++_selectionVersion;
         MyUserName = userName;
         var session = await _hub.InvokeAsync<SessionConnectionDto?>("JoinSession", code, userName);
         if (session is null)
@@ -103,6 +107,7 @@ public class GameClient : IAsyncDisposable
             return false;
         }
 
+        if (version != _selectionVersion) return false;
         CurrentSessionId = session.SessionId;
         SessionChanged?.Invoke();
         return true;
@@ -110,14 +115,18 @@ public class GameClient : IAsyncDisposable
 
     public async Task OpenSession(string sessionId)
     {
+        var version = ++_selectionVersion;
         var session = await _hub.InvokeAsync<SessionConnectionDto>("OpenSession", sessionId);
+        if (version != _selectionVersion) return;
         CurrentSessionId = session.SessionId;
         SessionChanged?.Invoke();
     }
 
     public async Task LeaveSession(string sessionId)
     {
+        var version = ++_selectionVersion;
         await _hub.InvokeAsync("LeaveSession", sessionId);
+        if (version != _selectionVersion) return;
         if (string.Equals(CurrentSessionId, sessionId, StringComparison.Ordinal))
         {
             CurrentSessionId = null;
@@ -127,6 +136,7 @@ public class GameClient : IAsyncDisposable
 
     public void ClearActiveSession()
     {
+        ++_selectionVersion;
         if (string.IsNullOrWhiteSpace(CurrentSessionId))
         {
             return;
@@ -187,6 +197,7 @@ public class GameClient : IAsyncDisposable
 
     private void HandleSessionClosed(string sessionId)
     {
+        if (CurrentSessionId == sessionId) ++_selectionVersion;
         if (string.Equals(CurrentSessionId, sessionId, StringComparison.Ordinal))
         {
             CurrentSessionId = null;
@@ -198,6 +209,8 @@ public class GameClient : IAsyncDisposable
 
     private async Task HandleReconnectedAsync(string? _)
     {
+        var version = _selectionVersion;
+        var sessionId = CurrentSessionId;
         if (string.IsNullOrWhiteSpace(CurrentSessionId))
         {
             SessionChanged?.Invoke();
@@ -206,11 +219,12 @@ public class GameClient : IAsyncDisposable
 
         try
         {
-            await _hub.InvokeAsync<SessionConnectionDto>("OpenSession", CurrentSessionId);
-            SessionChanged?.Invoke();
+            await _hub.InvokeAsync<SessionConnectionDto>("OpenSession", sessionId);
+            if (version == _selectionVersion && sessionId == CurrentSessionId && IsConnected) SessionChanged?.Invoke();
         }
         catch
         {
+            if (version != _selectionVersion || sessionId != CurrentSessionId) return;
             CurrentSessionId = null;
             SessionChanged?.Invoke();
         }

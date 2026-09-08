@@ -5,7 +5,6 @@ namespace DsaWuerfelApp.Client.Services;
 public sealed class WuerfelFacade(
     WuerfelState state,
     GameClient gameClient,
-    ActiveHeroState activeHeroState,
     IWuerfelApiClient apiClient,
     SessionState sessionState,
     WuerfelSelectionService selectionService,
@@ -17,7 +16,6 @@ public sealed class WuerfelFacade(
     WuerfelRollCommandDispatcher rollCommandDispatcher)
 {
     private bool _isAttached;
-    private string? _masterContextKey;
 
     public async Task AttachAsync()
     {
@@ -50,23 +48,8 @@ public sealed class WuerfelFacade(
         IReadOnlyList<SessionPlayerDto> targets,
         bool isMasterModeEnabled = false)
     {
-        var contextKey = BuildMasterContextKey(targets, isMasterModeEnabled);
         state.SetMasterTargets(targets, isMasterModeEnabled);
-        if (string.Equals(_masterContextKey, contextKey, StringComparison.Ordinal))
-        {
-            return;
-        }
-
-        _masterContextKey = contextKey;
         await contextService.LoadContextAsync(targets, isMasterModeEnabled);
-    }
-
-    private string BuildMasterContextKey(IReadOnlyList<SessionPlayerDto> targets, bool isMasterModeEnabled)
-    {
-        var targetKey = string.Join(";", targets
-            .Select(target => $"{target.UserId}:{target.ActiveHeroId}")
-            .OrderBy(value => value, StringComparer.Ordinal));
-        return $"{gameClient.CurrentSessionId}|{isMasterModeEnabled}|{activeHeroState.CurrentHero?.Id}|{targetKey}";
     }
 
     public Task AddDieAsync(int sides)

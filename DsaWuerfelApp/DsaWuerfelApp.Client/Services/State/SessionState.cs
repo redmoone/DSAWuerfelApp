@@ -14,6 +14,21 @@ public sealed class SessionState : IDisposable
 
     private readonly ISessionApiClient _sessionApiClient;
     private bool _disposed;
+    private long _loadVersion;
+    private long _refreshVersion;
+    private Task? _refreshTask;
+    private CancellationTokenSource? _loadCancellation;
+    private readonly SemaphoreSlim _storageLock = new(1, 1);
+    private string? _lastStorageKey;
+
+    private void InvalidateLoad()
+    {
+        ++_loadVersion;
+        _loadCancellation?.Cancel();
+        _loadCancellation?.Dispose();
+        _loadCancellation = null;
+    }
+
 
     public SessionState(
         ISessionApiClient sessionApiClient,
@@ -47,6 +62,8 @@ public sealed class SessionState : IDisposable
         _gameClient.SessionChanged -= HandleSessionChanged;
         _gameClient.SessionsChanged -= HandleSessionsChanged;
         _disposed = true;
+        InvalidateLoad();
+        ++_refreshVersion;
     }
 
     public event Action? Changed;
@@ -68,7 +85,10 @@ public sealed class SessionState : IDisposable
         await RestoreActiveSessionAsync(cancellationToken);
     }
 
-    public async Task RefreshAsync(CancellationToken cancellationToken = default)
+    public Task RefreshAsync(CancellationToken cancellationToken = default)
+        => _refreshTask = RefreshCoreAsync(cancellationToken);
+
+    private async Task RefreshCoreAsync(CancellationToken cancellationToken)
     {
         if (!_authState.Current.IsAuthenticated)
         {
@@ -78,10 +98,17 @@ public sealed class SessionState : IDisposable
             return;
         }
 
-        Sessions = await _sessionApiClient.GetMySessionsAsync(cancellationToken);
+        var refreshVersion = ++_refreshVersion;
+        var selectedSessionId = ActiveSessionId;
+        var userId = _authState.Current.User?.Id;
+        IReadOnlyList<SessionSummaryDto> sessions;
+        try { sessions = await _sessionApiClient.GetMySessionsAsync(cancellationToken); }
+        catch (Exception) when (_disposed || refreshVersion != _refreshVersion || userId != _authState.Current.User?.Id || !_authState.Current.IsAuthenticated) { return; }
+        if (_disposed || refreshVersion != _refreshVersion || userId != _authState.Current.User?.Id || !_authState.Current.IsAuthenticated) return;
+        Sessions = sessions;
         IsLoaded = true;
 
-        if (!string.IsNullOrWhiteSpace(ActiveSessionId) &&
+        if (ActiveSessionId == selectedSessionId && !string.IsNullOrWhiteSpace(ActiveSessionId) &&
             Sessions.All(session => !string.Equals(session.SessionId, ActiveSessionId, StringComparison.Ordinal)))
         {
             await ClearActiveSessionAsync(clearClientState: true);
@@ -143,11 +170,26 @@ public sealed class SessionState : IDisposable
             return;
         }
 
+        var version = _loadVersion;
+        var userId = _authState.Current.User?.Id;
+        var selectedSessionId = ActiveSessionId;
+        bool IsCurrent() => !_disposed && version == _loadVersion &&
+            userId == _authState.Current.User?.Id && _authState.Current.IsAuthenticated &&
+            selectedSessionId == ActiveSessionId && !cancellationToken.IsCancellationRequested;
         var storedSessionId = await GetStoredActiveSessionIdAsync();
+        if (!IsCurrent()) return;
         if (string.IsNullOrWhiteSpace(storedSessionId))
         {
             return;
         }
+
+        Task? refresh;
+        do
+        {
+            refresh = _refreshTask;
+            if (refresh is not null) await refresh;
+            if (!IsCurrent()) return;
+        } while (refresh != _refreshTask);
 
         if (Sessions.All(session => !string.Equals(session.SessionId, storedSessionId, StringComparison.Ordinal)))
         {
@@ -158,12 +200,14 @@ public sealed class SessionState : IDisposable
         try
         {
             await _gameClient.StartAsync();
+            if (!IsCurrent()) return;
             await _gameClient.OpenSession(storedSessionId);
+            if (_disposed || !_authState.Current.IsAuthenticated || userId != _authState.Current.User?.Id || ActiveSessionId != storedSessionId) return;
             await LoadActiveSessionAsync(storedSessionId, cancellationToken);
         }
         catch
         {
-            await ClearActiveSessionAsync(clearClientState: true);
+            if (IsCurrent()) await ClearActiveSessionAsync(clearClientState: true);
         }
     }
 
@@ -174,7 +218,7 @@ public sealed class SessionState : IDisposable
             var wasActive = string.Equals(ActiveSessionId, sessionId, StringComparison.Ordinal);
             await _gameClient.LeaveSession(sessionId);
 
-            if (wasActive)
+            if (wasActive && ActiveSessionId is null)
             {
                 await ClearActiveSessionAsync(clearClientState: false);
             }
@@ -191,7 +235,7 @@ public sealed class SessionState : IDisposable
 
             if (string.Equals(ActiveSessionId, sessionId, StringComparison.Ordinal))
             {
-                await LoadActiveSessionAsync(sessionId, persistSelection: false);
+                await LoadActiveSessionAsync(sessionId);
             }
         });
 
@@ -204,7 +248,7 @@ public sealed class SessionState : IDisposable
 
             if (string.Equals(ActiveSessionId, sessionId, StringComparison.Ordinal))
             {
-                await LoadActiveSessionAsync(sessionId, persistSelection: false);
+                await LoadActiveSessionAsync(sessionId);
             }
         });
 
@@ -215,7 +259,7 @@ public sealed class SessionState : IDisposable
             var wasActive = string.Equals(ActiveSessionId, sessionId, StringComparison.Ordinal);
             await _gameClient.DeleteSession(sessionId);
 
-            if (wasActive)
+            if (wasActive && ActiveSessionId is null)
             {
                 await ClearActiveSessionAsync(clearClientState: false);
             }
@@ -225,41 +269,55 @@ public sealed class SessionState : IDisposable
 
     private async Task LoadActiveSessionAsync(
         string sessionId,
-        CancellationToken cancellationToken = default,
-        bool persistSelection = true)
+        CancellationToken cancellationToken = default)
     {
-        var session = await _sessionApiClient.GetSessionAsync(sessionId, cancellationToken);
-        await SetActiveSessionAsync(session, persistSelection);
-    }
-
-    private async Task SetActiveSessionAsync(SessionDetailsDto? session, bool persistSelection = true)
-    {
-        ActiveSession = session;
-
-        if (persistSelection)
+        if (_disposed || sessionId != ActiveSessionId || !_authState.Current.IsAuthenticated) return;
+        InvalidateLoad();
+        var version = _loadVersion;
+        var userId = _authState.Current.User?.Id;
+        _loadCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var token = _loadCancellation.Token;
+        bool IsCurrent() => !_disposed && !token.IsCancellationRequested && version == _loadVersion &&
+            sessionId == ActiveSessionId && _authState.Current.IsAuthenticated && userId == _authState.Current.User?.Id;
+        try
         {
-            if (session is null)
-            {
-                await ClearStoredActiveSessionIdAsync();
-            }
-            else
-            {
-                await StoreActiveSessionIdAsync(session.SessionId);
-            }
+            var session = await _sessionApiClient.GetSessionAsync(sessionId, token);
+            if (!IsCurrent()) return;
+            ActiveSession = session;
+            await PersistSelectionAsync(session?.SessionId, version);
+            if (!IsCurrent()) return;
+            ActiveSessionChanged?.Invoke();
+            Changed?.Invoke();
         }
-
-        ActiveSessionChanged?.Invoke();
-        Changed?.Invoke();
+        catch (Exception) when (!IsCurrent()) { }
     }
 
     private async Task ClearActiveSessionAsync(bool clearClientState)
     {
-        if (clearClientState)
-        {
-            _gameClient.ClearActiveSession();
-        }
+        InvalidateLoad();
+        ActiveSession = null;
+        if (clearClientState) _gameClient.ClearActiveSession();
+        var version = _loadVersion;
+        await PersistSelectionAsync(null, version);
+        if (version != _loadVersion || ActiveSession is not null) return;
+        ActiveSessionChanged?.Invoke();
+        Changed?.Invoke();
+    }
 
-        await SetActiveSessionAsync(null);
+    private async Task PersistSelectionAsync(string? sessionId, long version)
+    {
+        var key = BuildActiveSessionStorageKey() ?? _lastStorageKey;
+        if (key is null) return;
+        _lastStorageKey = key;
+        await _storageLock.WaitAsync();
+        try
+        {
+            if (_disposed || version != _loadVersion) return;
+            if (sessionId is null) await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", key);
+            else await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, sessionId);
+        }
+        catch (JSException) { }
+        finally { _storageLock.Release(); }
     }
 
     private async Task<string?> GetStoredActiveSessionIdAsync()
@@ -280,39 +338,7 @@ public sealed class SessionState : IDisposable
         }
     }
 
-    private async Task StoreActiveSessionIdAsync(string sessionId)
-    {
-        var key = BuildActiveSessionStorageKey();
-        if (string.IsNullOrWhiteSpace(key))
-        {
-            return;
-        }
-
-        try
-        {
-            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", key, sessionId);
-        }
-        catch (JSException)
-        {
-        }
-    }
-
-    private async Task ClearStoredActiveSessionIdAsync()
-    {
-        var key = BuildActiveSessionStorageKey();
-        if (string.IsNullOrWhiteSpace(key))
-        {
-            return;
-        }
-
-        try
-        {
-            await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", key);
-        }
-        catch (JSException)
-        {
-        }
-    }
+    private Task ClearStoredActiveSessionIdAsync() => PersistSelectionAsync(null, _loadVersion);
 
     private static async Task ExecuteHubCallAsync(Func<Task> action)
     {
@@ -357,7 +383,8 @@ public sealed class SessionState : IDisposable
         {
             Sessions = Array.Empty<SessionSummaryDto>();
             IsLoaded = true;
-            ActiveSession = null;
+            ++_refreshVersion;
+            await ClearActiveSessionAsync(clearClientState: true);
             ActiveSessionChanged?.Invoke();
             Changed?.Invoke();
             return;
@@ -386,7 +413,7 @@ public sealed class SessionState : IDisposable
         {
             try
             {
-                await LoadActiveSessionAsync(ActiveSessionId, persistSelection: true);
+                await LoadActiveSessionAsync(ActiveSessionId);
             }
             catch
             {
@@ -413,7 +440,7 @@ public sealed class SessionState : IDisposable
 
         try
         {
-            await LoadActiveSessionAsync(ActiveSessionId, persistSelection: false);
+            await LoadActiveSessionAsync(ActiveSessionId);
         }
         catch
         {

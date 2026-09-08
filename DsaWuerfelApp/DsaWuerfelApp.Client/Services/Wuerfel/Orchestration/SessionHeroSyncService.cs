@@ -3,13 +3,13 @@ namespace DsaWuerfelApp.Client.Services;
 public sealed class SessionHeroSyncService(
     GameClient gameClient,
     SessionState sessionState,
-    ActiveHeroState activeHeroState)
+    ActiveHeroState activeHeroState,
+    AuthState authState,
+    ILogger<SessionHeroSyncService> logger)
 {
     private bool _isAttached;
-    private Guid? _lastHeroId;
-    private string? _lastHeroName;
-    private string? _lastSessionId;
-    private readonly SemaphoreSlim _syncLock = new(1, 1);
+    private bool _running;
+    private bool _pending;
 
     public async Task AttachAsync()
     {
@@ -37,9 +37,7 @@ public sealed class SessionHeroSyncService(
         activeHeroState.Changed -= HandleStateChanged;
         sessionState.ActiveSessionChanged -= HandleStateChanged;
         _isAttached = false;
-        _lastHeroId = null;
-        _lastHeroName = null;
-        _lastSessionId = null;
+        _pending = false;
     }
 
     private void HandleStateChanged()
@@ -49,43 +47,35 @@ public sealed class SessionHeroSyncService(
 
     private async Task SyncAsync()
     {
-        if (!await _syncLock.WaitAsync(0))
-        {
-            return;
-        }
-
+        _pending = true;
+        if (_running) return;
+        _running = true;
+        var sent = new HashSet<(string Session, Guid? Hero, string? Name)>();
         try
         {
-        var sessionId = sessionState.ActiveSessionId;
-        if (string.IsNullOrWhiteSpace(sessionId) || !gameClient.IsConnected)
-        {
-            return;
-        }
-
-        var currentHeroId = activeHeroState.CurrentHero?.Id;
-        var currentHeroName = activeHeroState.CurrentHero?.Name;
-        if (string.Equals(_lastSessionId, sessionId, StringComparison.Ordinal) &&
-            _lastHeroId == currentHeroId &&
-            string.Equals(_lastHeroName, currentHeroName, StringComparison.Ordinal))
-        {
-            return;
-        }
-
-            await gameClient.UpdateActiveHero(
-                sessionId,
-                currentHeroId,
-                currentHeroName);
-            _lastSessionId = sessionId;
-            _lastHeroId = currentHeroId;
-            _lastHeroName = currentHeroName;
+            while (_pending && _isAttached)
+            {
+                _pending = false;
+                var sessionId = sessionState.ActiveSessionId;
+                if (string.IsNullOrWhiteSpace(sessionId) || !gameClient.IsConnected) return;
+                var hero = activeHeroState.CurrentHero;
+                var desired = (sessionId, hero?.Id, hero?.Name);
+                var player = sessionState.ActiveSession?.SessionId == sessionId
+                    ? sessionState.ActiveSession.Players.FirstOrDefault(player => player.UserId == authState.Current.User?.Id)
+                    : null;
+                if (player is null) return;
+                if (player.ActiveHeroId == hero?.Id && player.ActiveHeroName == hero?.Name) continue;
+                if (!sent.Add(desired)) continue;
+                await gameClient.UpdateActiveHero(sessionId, hero?.Id, hero?.Name);
+                var latest = activeHeroState.CurrentHero;
+                if (sessionId != sessionState.ActiveSessionId || latest?.Id != hero?.Id || latest?.Name != hero?.Name)
+                    _pending = true;
+            }
         }
         catch (Exception exception)
         {
-            Console.Error.WriteLine($"Active-Hero-Synchronisierung fehlgeschlagen: {exception.Message}");
+            logger.LogWarning(exception, "Aktiver Held konnte nicht mit der Sitzung synchronisiert werden.");
         }
-        finally
-        {
-            _syncLock.Release();
-        }
+        finally { _running = false; }
     }
 }

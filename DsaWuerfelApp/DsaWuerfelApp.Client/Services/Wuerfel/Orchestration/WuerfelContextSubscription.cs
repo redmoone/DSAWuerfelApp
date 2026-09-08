@@ -35,7 +35,7 @@ public sealed class WuerfelContextSubscription(
     private void HandleActiveHeroChanged()
     {
         _ = state.Current.IsMasterMode
-            ? contextService.LoadContextAsync(state.Current.MasterTargets, true)
-            : contextService.LoadContextAsync();
+            ? contextService.LoadContextAsync(state.Current.MasterTargets, true, forceRefresh: true)
+            : contextService.LoadContextAsync(forceRefresh: true);
     }
 }

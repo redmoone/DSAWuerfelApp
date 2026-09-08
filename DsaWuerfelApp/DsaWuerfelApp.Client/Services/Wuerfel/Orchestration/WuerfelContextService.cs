@@ -2,37 +2,90 @@ using DsaWuerfelApp.Shared;
 
 namespace DsaWuerfelApp.Client.Services;
 
-public sealed class WuerfelContextService(
-    WuerfelState state,
-    ActiveHeroState activeHeroState,
-    SessionState sessionState,
-    IWuerfelApiClient apiClient,
-    WuerfelUiOperationRunner operationRunner)
+public sealed class WuerfelContextService : IDisposable
 {
+    private readonly WuerfelState state;
+    private readonly ActiveHeroState activeHeroState;
+    private readonly SessionState sessionState;
+    private readonly IWuerfelApiClient apiClient;
+    private readonly WuerfelUiOperationRunner operationRunner;
+    private readonly AuthState authState;
+    private CancellationTokenSource? _contextCancellation;
+    private long _contextVersion;
+    private ContextKey? _contextKey;
+    private bool _disposed;
+    private sealed record ContextKey(string? SessionId, bool MasterMode, Guid? HeroId, string Targets);
+
+    public WuerfelContextService(WuerfelState state, ActiveHeroState activeHeroState, SessionState sessionState,
+        IWuerfelApiClient apiClient, WuerfelUiOperationRunner operationRunner, AuthState authState)
+    {
+        this.state = state; this.activeHeroState = activeHeroState; this.sessionState = sessionState;
+        this.apiClient = apiClient; this.operationRunner = operationRunner; this.authState = authState;
+        sessionState.ActiveSessionChanged += CheckContext;
+        authState.Changed += CheckContext;
+    }
+
+    private void CheckContext()
+    {
+        if (!authState.Current.IsAuthenticated || _contextKey?.SessionId != sessionState.ActiveSessionId) Invalidate();
+    }
+
+    private void Invalidate()
+    {
+        ++_contextVersion;
+        _contextCancellation?.Cancel();
+        _contextCancellation?.Dispose();
+        _contextCancellation = null;
+        _contextKey = null;
+        CancelProbeInfoRefresh();
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        sessionState.ActiveSessionChanged -= CheckContext;
+        authState.Changed -= CheckContext;
+        Invalidate();
+    }
+
     private CancellationTokenSource? _probeInfoRefreshCancellation;
     private int _probeInfoRefreshVersion;
 
     public Task LoadContextAsync(
         IReadOnlyList<SessionPlayerDto>? masterTargets = null,
-        bool useCatalogWhenNoMasterTargets = false)
+        bool useCatalogWhenNoMasterTargets = false,
+        bool forceRefresh = false)
     {
+        var targets = (masterTargets ?? state.Current.MasterTargets).Where(target => target.ActiveHeroId.HasValue).ToArray();
+        var sessionId = sessionState.ActiveSessionId;
+        var heroId = activeHeroState.CurrentHero?.Id;
+        var key = new ContextKey(sessionId, useCatalogWhenNoMasterTargets, heroId,
+            System.Text.Json.JsonSerializer.Serialize(targets.OrderBy(target => target.UserId, StringComparer.Ordinal)
+                .Select(target => (target.UserId, target.ActiveHeroId)).Select(pair => new { pair.UserId, pair.ActiveHeroId })));
+        if (!forceRefresh && key == _contextKey) return Task.CompletedTask;
+        Invalidate();
+        _contextKey = key;
+        var version = _contextVersion;
+        _contextCancellation = new CancellationTokenSource();
+        var token = _contextCancellation.Token;
+        bool IsCurrent() => !_disposed && !token.IsCancellationRequested && version == _contextVersion && sessionId == sessionState.ActiveSessionId;
         return operationRunner.RunAsync(async () =>
         {
-            var resolvedMasterTargets = (masterTargets ?? state.Current.MasterTargets)
-                .Where(target => target.ActiveHeroId.HasValue)
-                .ToArray();
-
-            var loadedContext = resolvedMasterTargets.Length > 0
-                ? await LoadMasterContextAsync(resolvedMasterTargets)
-                : useCatalogWhenNoMasterTargets
-                    ? new LoadedDicePageContext(
-                        await apiClient.GetCatalogContextAsync(),
-                        new Dictionary<string, IReadOnlyList<BadTraitOwnerInfo>>(StringComparer.Ordinal))
-                : new LoadedDicePageContext(
-                    await apiClient.GetContextAsync(activeHeroState.CurrentHero?.Id, sessionState.ActiveSessionId),
-                    new Dictionary<string, IReadOnlyList<BadTraitOwnerInfo>>(StringComparer.Ordinal));
-
-            state.ApplyContext(loadedContext.Context, loadedContext.BadTraitOwners);
+            try
+            {
+                var loadedContext = targets.Length > 0
+                    ? await LoadMasterContextAsync(targets, sessionId, token)
+                    : useCatalogWhenNoMasterTargets
+                        ? new LoadedDicePageContext(await apiClient.GetCatalogContextAsync(token), new Dictionary<string, IReadOnlyList<BadTraitOwnerInfo>>(StringComparer.Ordinal))
+                        : new LoadedDicePageContext(await apiClient.GetContextAsync(heroId, sessionId, token), new Dictionary<string, IReadOnlyList<BadTraitOwnerInfo>>(StringComparer.Ordinal));
+                if (IsCurrent()) state.ApplyContext(loadedContext.Context, loadedContext.BadTraitOwners);
+            }
+            catch (Exception) when (!IsCurrent()) { }
+            catch
+            {
+                if (IsCurrent()) _contextKey = null;
+                throw;
+            }
         });
     }
 
@@ -63,8 +116,8 @@ public sealed class WuerfelContextService(
             state.Current.Modifier,
             state.Current.SelectedBadTraitName,
             state.Current.SelectedSpellOptionValues.ToArray());
-        var refreshVersion = Interlocked.Increment(ref _probeInfoRefreshVersion);
         var cancellationToken = ResetProbeInfoRefreshCancellation().Token;
+        var refreshVersion = Interlocked.Increment(ref _probeInfoRefreshVersion);
 
         return RefreshProbeInfoAsync(request, refreshVersion, cancellationToken);
     }
@@ -108,6 +161,7 @@ public sealed class WuerfelContextService(
 
     private void CancelProbeInfoRefresh()
     {
+        ++_probeInfoRefreshVersion;
         _probeInfoRefreshCancellation?.Cancel();
         _probeInfoRefreshCancellation?.Dispose();
         _probeInfoRefreshCancellation = null;
@@ -129,12 +183,12 @@ public sealed class WuerfelContextService(
         return activeHeroState.CurrentHero?.Id ?? state.Current.ActiveHeroId;
     }
 
-    private async Task<LoadedDicePageContext> LoadMasterContextAsync(IReadOnlyList<SessionPlayerDto> masterTargets)
+    private async Task<LoadedDicePageContext> LoadMasterContextAsync(IReadOnlyList<SessionPlayerDto> masterTargets, string? sessionId, CancellationToken cancellationToken)
     {
-        var catalogContextTask = apiClient.GetCatalogContextAsync();
+        var catalogContextTask = apiClient.GetCatalogContextAsync(cancellationToken);
         var targetContextsTask = Task.WhenAll(masterTargets.Select(async target => new TargetDicePageContext(
             target,
-            await apiClient.GetContextAsync(target.ActiveHeroId, sessionState.ActiveSessionId))));
+            await apiClient.GetContextAsync(target.ActiveHeroId, sessionId, cancellationToken))));
         await Task.WhenAll(catalogContextTask, targetContextsTask);
 
         var catalogContext = catalogContextTask.Result;

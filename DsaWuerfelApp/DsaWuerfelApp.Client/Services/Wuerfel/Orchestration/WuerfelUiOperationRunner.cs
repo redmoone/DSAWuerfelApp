@@ -10,6 +10,9 @@ public sealed class WuerfelUiOperationRunner(WuerfelState state)
         {
             await action();
         }
+        catch (OperationCanceledException)
+        {
+        }
         catch (Exception exception)
         {
             state.SetError(exception.Message);

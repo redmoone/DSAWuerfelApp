@@ -4,6 +4,8 @@ namespace DsaWuerfelApp.Client.Services;
 
 public sealed class ActiveHeroState : IDisposable
 {
+    private long _loadVersion;
+    private bool _disposed;
     private readonly AuthState _authState;
     private readonly IHeroApiClient _heroApiClient;
 
@@ -19,6 +21,8 @@ public sealed class ActiveHeroState : IDisposable
     public void Dispose()
     {
         _authState.Changed -= HandleAuthChanged;
+        _disposed = true;
+        ++_loadVersion;
     }
 
     public event Action? Changed;
@@ -41,18 +45,26 @@ public sealed class ActiveHeroState : IDisposable
             return;
         }
 
-        CurrentHero = await _heroApiClient.GetActiveHeroAsync();
-
-        if (CurrentHero is null)
+        var version = ++_loadVersion;
+        var userId = _authState.Current.User?.Id;
+        bool IsCurrent() => !_disposed && version == _loadVersion && _authState.Current.IsAuthenticated && userId == _authState.Current.User?.Id;
+        Hero? hero;
+        try
         {
-            CurrentHero = (await _heroApiClient.GetHeroesAsync()).FirstOrDefault();
+            hero = await _heroApiClient.GetActiveHeroAsync();
+            if (!IsCurrent()) return;
+            if (hero is null) hero = (await _heroApiClient.GetHeroesAsync()).FirstOrDefault();
+            if (!IsCurrent()) return;
         }
+        catch (Exception) when (!IsCurrent()) { return; }
+        CurrentHero = hero;
 
         Changed?.Invoke();
     }
 
     public void SetCurrentHero(Hero? hero)
     {
+        ++_loadVersion;
         CurrentHero = hero;
         Changed?.Invoke();
     }
@@ -64,6 +76,7 @@ public sealed class ActiveHeroState : IDisposable
             return;
         }
 
+        ++_loadVersion;
         CurrentHero = null;
         Changed?.Invoke();
     }
@@ -78,6 +91,7 @@ public sealed class ActiveHeroState : IDisposable
 
     private void Clear()
     {
+        ++_loadVersion;
         if (CurrentHero is null)
         {
             return;
