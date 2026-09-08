@@ -16,6 +16,12 @@ public sealed class TalentProbeService(DiceService diceService)
         }
 
         DiceService.ValidateModifier(request.BasisModifier);
+        DiceService.ValidateModifier(request.AutomaticModifier);
+
+        if (request.PreRollZfp is < 0 or > 999)
+        {
+            throw new ArgumentOutOfRangeException(nameof(request.PreRollZfp));
+        }
 
         if (request.SchlechteEigenschaftModifier is < 0 or > 20)
         {
@@ -35,7 +41,7 @@ public sealed class TalentProbeService(DiceService diceService)
         var timestamp = DateTime.UtcNow;
         var rolledDice = CreateRolls(request.ForcedRolls);
         var rollValues = rolledDice.Select(roll => roll.Value).ToArray();
-        var totalModifier = request.BasisModifier + request.SpecializationModifier +
+        var totalModifier = request.BasisModifier + request.AutomaticModifier + request.SpecializationModifier +
                             request.SchlechteEigenschaftModifier;
         var evaluatedProbe =
             TalentProbeEvaluator.Evaluate(request.TalentValue, totalModifier, request.AttributeValues, rollValues);
@@ -49,7 +55,7 @@ public sealed class TalentProbeService(DiceService diceService)
         var equation = DiceResultFactory.CreateEquation(rolledDice, 0);
         var historyEntry = DiceResultFactory.CreateHistoryEntry(playerName, timestamp, equation);
 
-        return new TalentRollResultDto(
+        var result = new TalentRollResultDto(
             playerName,
             timestamp,
             request.TalentName,
@@ -79,6 +85,24 @@ public sealed class TalentProbeService(DiceService diceService)
             },
             equation,
             historyEntry);
+
+        if (request.SpellContext is not null)
+        {
+            result = result with
+            {
+                SpellDetails = new SpellProbeRollDetailsDto(
+                    request.TalentValue,
+                    request.AutomaticModifier,
+                    request.BasisModifier,
+                    request.PreRollZfp,
+                    evaluatedProbe.Rest,
+                    Math.Max(evaluatedProbe.Rest - request.PreRollZfp, 0),
+                    request.SpellContext.ManualModifierRequired,
+                    request.SpellContext.SelectedOptions)
+            };
+        }
+
+        return result;
     }
 
     private DiceRollDto[] CreateRolls(ForcedRollValues? forcedRolls)
@@ -148,4 +172,11 @@ public sealed record ResolvedTalentRollRequest(
     int SpecializationModifier,
     string? SchlechteEigenschaftName,
     int SchlechteEigenschaftModifier,
-    ForcedRollValues? ForcedRolls);
+    ForcedRollValues? ForcedRolls,
+    int AutomaticModifier = 0,
+    int PreRollZfp = 0,
+    SpellRollCalculationContext? SpellContext = null);
+
+public sealed record SpellRollCalculationContext(
+    bool ManualModifierRequired,
+    string[] SelectedOptions);

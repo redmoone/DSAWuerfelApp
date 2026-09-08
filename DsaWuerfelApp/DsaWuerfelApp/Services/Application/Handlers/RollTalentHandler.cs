@@ -50,7 +50,14 @@ public sealed class RollTalentHandler(
                 probeData.SpecializationModifier,
                 badTrait?.Name,
                 badTrait?.TalentModifier ?? 0,
-                ForcedRollValues.CreateOptional(request.ForcedRollsText, 3)),
+                ForcedRollValues.CreateOptional(request.ForcedRollsText, 3),
+                probeData.AutomaticSpellModifier,
+                probeData.SpellPreRollZfp,
+                probeData.Kind == ProbeSelectionKind.Spell
+                    ? new SpellRollCalculationContext(
+                        probeData.SpellRequiresManualInput,
+                        probeData.SelectedSpellOptions.Select(option => option.DisplayName).ToArray())
+                    : null),
             playerName);
     }
 }

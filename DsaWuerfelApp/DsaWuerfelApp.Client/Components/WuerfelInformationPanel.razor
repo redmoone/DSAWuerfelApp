@@ -46,6 +46,18 @@
                     <span>Probe: @TalentResult.Probe</span>
                     <span>Wert: @TalentResult.TalentValue</span>
                     <span>Mod.: @FormatModifier(TalentResult.BasisModifier)</span>
+                    @if (TalentResult.SpellDetails is { } spellDetails)
+                    {
+                        <span>Zauber automatisch: @FormatModifier(spellDetails.AutomaticModifier)</span>
+                        @if (spellDetails.PreRollZfp > 0)
+                        {
+                            <span>Vorab-ZfP: @spellDetails.PreRollZfp · verfügbar: @spellDetails.AvailableZfp</span>
+                        }
+                        @if (spellDetails.ManualModifierRequired)
+                        {
+                            <span>Manuelle Ergänzung erforderlich</span>
+                        }
+                    }
                     @if (TalentResult.SpecializationModifier != 0 &&
                          !string.IsNullOrWhiteSpace(TalentResult.SpecializationName))
                     {

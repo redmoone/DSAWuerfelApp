@@ -21,7 +21,8 @@ internal static class TalentProbeInfoBuilder
         int basisModifier)
     {
         var probeAttributes = ProbeAttributes.TryCreate(resolvedProbe.ProbeData.Probe)?.ToArray() ?? [];
-        var effectiveModifier = basisModifier + (badTrait?.TalentModifier ?? 0) + resolvedProbe.SpecializationModifier;
+        var effectiveModifier = basisModifier + (badTrait?.TalentModifier ?? 0) +
+                                resolvedProbe.SpecializationModifier + resolvedProbe.AutomaticSpellModifier;
 
         return new ProbeInfoResultDto(
             BuildSummaryText(hero, resolvedProbe, probeAttributes, effectiveModifier),
@@ -132,6 +133,15 @@ internal static class TalentProbeInfoBuilder
                                  !string.IsNullOrWhiteSpace(resolvedProbe.SpecializationName)
             ? $" Passende Zauberspezialisierung: {resolvedProbe.SpecializationName}. Dadurch ist die Probe um 2 Punkte erleichtert."
             : string.Empty;
+        var automaticModifierText = resolvedProbe.AutomaticSpellModifier == 0
+            ? string.Empty
+            : $" Automatischer Probenmodifikator aus der Auswahl: {FormatModifier(resolvedProbe.AutomaticSpellModifier)}.";
+        var preRollText = resolvedProbe.SpellPreRollZfp == 0
+            ? string.Empty
+            : $" Vorab-ZfP: {resolvedProbe.SpellPreRollZfp}; sie reduzieren die erreichbaren ZfP*.";
+        var manualText = resolvedProbe.SpellRequiresManualInput
+            ? " Die Auswahl enthält einen komplexen Wert; die aktuelle Erschwernis oder Erleichterung muss manuell eingegeben werden."
+            : string.Empty;
 
         var parts = new List<string>();
         if (selectedVariants.Length > 0)
@@ -144,9 +154,15 @@ internal static class TalentProbeInfoBuilder
             parts.Add($"Gewählte Modifikationen: {string.Join(", ", selectedModifications)}.");
         }
 
-        return parts.Count == 0
+        return parts.Count == 0 && string.IsNullOrWhiteSpace(automaticModifierText) &&
+               string.IsNullOrWhiteSpace(preRollText) && string.IsNullOrWhiteSpace(manualText)
             ? string.Empty
-            : $" {string.Join(" ", parts)}{specializationText}";
+            : $" {string.Join(" ", parts)}{specializationText}{automaticModifierText}{preRollText}{manualText}";
+    }
+
+    private static string FormatModifier(int modifier)
+    {
+        return modifier > 0 ? $"+{modifier}" : modifier.ToString();
     }
 
     private static string GetValueLabel(ProbeSelectionKind kind)

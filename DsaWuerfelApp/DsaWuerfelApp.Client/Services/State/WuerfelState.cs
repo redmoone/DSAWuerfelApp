@@ -474,14 +474,12 @@ public sealed record WuerfelViewState
         IReadOnlyList<string> selectedSpellOptionValues)
     {
         var baseModifier = ProbeSelectionValue.Parse(selectedProbeValue).OptionModifier;
-        var spellOptionModifier = selectedSpellOptionValues
-            .Select(value => ProbeSelectionValue.TryParseSpellOption(value, out var parsedOption)
+        var spellOptionModifier = selectedSpellOptionValues.Sum(value =>
+            ProbeSelectionValue.TryParseSpellOption(value, out var parsedOption)
                 ? parsedOption.OptionModifier
-                : 0)
-            .DefaultIfEmpty(0)
-            .Min();
+                : 0);
 
-        return Math.Min(baseModifier, spellOptionModifier);
+        return baseModifier + spellOptionModifier;
     }
 }
 

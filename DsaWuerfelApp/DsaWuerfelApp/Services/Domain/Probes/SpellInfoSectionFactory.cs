@@ -61,10 +61,11 @@ public sealed class SpellInfoSectionFactory(
     private static string BuildOptionText(SpellOptionEntry option)
     {
         var label = string.IsNullOrWhiteSpace(option.DisplayLabel) ? option.Name : option.DisplayLabel;
-        var manualText = option.IsSelectionEnabled
-            ? string.Empty
-            : "Manuelle Prüfung erforderlich; automatische Auswahl/Berechnung ist noch nicht hinterlegt.";
-        var details = new[] { manualText, option.DisplayText }
+        var manualText = !option.IsSelectionEnabled
+            ? "Manuelle Pruefung erforderlich; automatische Auswahl/Berechnung ist noch nicht hinterlegt."
+            : option.RequiresManualCalculation
+                ? "Dieser Unterfall ist auswaehlbar; die aktuelle Erschwernis oder Erleichterung muss manuell eingegeben werden."
+                : string.Empty;        var details = new[] { manualText, option.DisplayText }
             .Where(text => !string.IsNullOrWhiteSpace(text))
             .ToArray();
         if (details.Length == 0 ||

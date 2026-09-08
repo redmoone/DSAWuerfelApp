@@ -6,6 +6,7 @@ public sealed class RollMasterTalentHandler(
     HeroContextReader heroContextReader,
     ProbeResolutionService probeResolutionService,
     AttributeProbeService attributeProbeService,
+    TalentProbeService talentProbeService,
     BadTraitResolver badTraitResolver)
 {
     public async Task<MasterTalentRollTargetResultDto[]> HandleAsync(
@@ -52,11 +53,45 @@ public sealed class RollMasterTalentHandler(
 
                 var probe = ProbeAttributes.Create(probeData.ProbeData.Probe);
                 var badTrait = badTraitResolver.ResolveOptional(hero, request.BadTraitName);
-                var result = attributeProbeService.RollAttributeProbe(
+                if (probeData.Kind == ProbeSelectionKind.Spell && !probeData.UsesCatalogValue)
+                {
+                    var result = talentProbeService.RollTalentProbe(
+                        new ResolvedTalentRollRequest(
+                            probeData.Name,
+                            probeData.ProbeData.Wert,
+                            probe,
+                            probe.ResolveValues(hero.Eigenschaften),
+                            request.Modifier,
+                            probeData.SpecializationName,
+                            probeData.SpecializationModifier,
+                            badTrait?.Name,
+                            badTrait?.TalentModifier ?? 0,
+                            ForcedRollValues.CreateOptional(request.ForcedRollsText, 3),
+                            probeData.AutomaticSpellModifier,
+                            probeData.SpellPreRollZfp,
+                            probeData.Kind == ProbeSelectionKind.Spell
+                                ? new SpellRollCalculationContext(
+                                    probeData.SpellRequiresManualInput,
+                                    probeData.SelectedSpellOptions.Select(option => option.DisplayName).ToArray())
+                                : null),
+                        target.PlayerName);
+
+                    results.Add(new MasterTalentRollTargetResultDto(
+                        target.UserId,
+                        target.PlayerName,
+                        target.HeroId,
+                        target.HeroName,
+                        result,
+                        null,
+                        null));
+                    continue;
+                }
+
+                var requirementResult = attributeProbeService.RollAttributeProbe(
                     new ResolvedAttributeRollRequest(
                         AttributeSelection.Create(probe.ToArray()),
                         probe.ResolveValues(hero.Eigenschaften),
-                        request.Modifier + probeData.SpecializationModifier,
+                        request.Modifier + probeData.SpecializationModifier + probeData.AutomaticSpellModifier,
                         badTrait?.Name,
                         badTrait?.TalentModifier ?? 0,
                         probeData.Name,
@@ -69,7 +104,7 @@ public sealed class RollMasterTalentHandler(
                     target.HeroId,
                     target.HeroName,
                     null,
-                    result,
+                    requirementResult,
                     null));
             }
             catch (OperationCanceledException)

@@ -95,7 +95,9 @@ public sealed class SpellSelectionResolver(
                 matchedLegacyOption.Name,
                 matchedLegacyOption.DisplayLabel,
                 selection.OptionKind,
-                ResolveSpellOptionModifier(spell, matchedLegacyOption.Name, out _)));
+                matchedLegacyOption.ProbeModifier.NumericValue ?? 0,
+                matchedLegacyOption.PreRollZfp.NumericValue ?? 0,
+                matchedLegacyOption.RequiresManualCalculation));
         }
 
         foreach (var spellOptionValue in spellOptionValues)
@@ -143,17 +145,13 @@ public sealed class SpellSelectionResolver(
                 matchedOption.Name,
                 matchedOption.DisplayLabel,
                 parsedOption.OptionKind,
-                ResolveSpellOptionModifier(spell, matchedOption.Name, out _)));
+                matchedOption.ProbeModifier.NumericValue ?? 0,
+                matchedOption.PreRollZfp.NumericValue ?? 0,
+                matchedOption.RequiresManualCalculation));
         }
 
         selectedSpellOptions = resolvedOptions.ToArray();
         return true;
-    }
-
-    private static int ResolveSpellOptionModifier(TalentData spell, string optionName, out string? specializationName)
-    {
-        specializationName = ResolveMatchingSpellSpecialization(spell, optionName);
-        return string.IsNullOrWhiteSpace(specializationName) ? 0 : -2;
     }
 
     private static string? ResolveSelectedSpellOptionName(

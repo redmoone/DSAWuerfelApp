@@ -95,7 +95,6 @@ public sealed class SpellSelectionPanelFactory(
                 .OrderBy(option => option.DisplayLabel, StringComparer.Ordinal)
                 .Select(option =>
                 {
-                    var optionModifier = ResolveSpellOptionModifier(spell, option.Name, out _);
                     var isSelected = resolvedProbe.SelectedSpellOptions.Any(selectedOption =>
                         selectedOption.Kind == optionKind &&
                         string.Equals(
@@ -109,23 +108,28 @@ public sealed class SpellSelectionPanelFactory(
                             spellName,
                             optionKind,
                             option.Name,
-                            optionModifier),
+                            option.ProbeModifier.IsSimpleNumeric
+                                ? option.ProbeModifier.NumericValue ?? 0
+                                : 0),
                         isSelected,
                         !isSelected && maximumSelectableOptions.HasValue &&
                         selectedOptionCount >= maximumSelectableOptions.Value,
-                        option.DisplayText);
+                        BuildOptionDescription(option));
                 })
                 .ToArray());
     }
 
-    private static int ResolveSpellOptionModifier(TalentData spell, string optionName, out string? specializationName)
+    private static string BuildOptionDescription(SpellOptionEntry option)
     {
-        specializationName = spell.Specializations.FirstOrDefault(existingSpecialization =>
-            string.Equals(
-                TalentCatalogText.CanonicalizeName(existingSpecialization),
-                TalentCatalogText.CanonicalizeName(optionName),
-                StringComparison.Ordinal));
-        return string.IsNullOrWhiteSpace(specializationName) ? 0 : -2;
+        if (!option.RequiresManualCalculation)
+        {
+            return option.DisplayText;
+        }
+
+        var manualText = "Manuelle Erschwernis/Erleichterung für diesen Unterfall erforderlich.";
+        return string.IsNullOrWhiteSpace(option.DisplayText)
+            ? manualText
+            : $"{option.DisplayText}{Environment.NewLine}{manualText}";
     }
 
     private static bool TryFindEntry<TEntry>(

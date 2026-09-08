@@ -70,11 +70,11 @@ public sealed class SpellCatalogStore(IHostEnvironment environment)
         var name = CatalogJsonValue.ReadText(item, "Zauber");
         var probeDefinition = MapProbeDefinition(item);
         var modifications = CatalogJsonValue.ReadArray(item, "Modifikationen")
-            .Select(MapOption)
+            .SelectMany(MapOption)
             .Where(option => !string.IsNullOrWhiteSpace(option.Name))
             .ToArray();
         var variants = CatalogJsonValue.ReadArray(item, "Varianten")
-            .Select(MapOption)
+            .SelectMany(MapOption)
             .Where(option => !string.IsNullOrWhiteSpace(option.Name))
             .ToArray();
 
@@ -93,27 +93,37 @@ public sealed class SpellCatalogStore(IHostEnvironment environment)
             MapStructuredValue(item, "WirkungsdauerStrukturiert"));
     }
 
-    private static SpellOptionEntry MapOption(JsonElement item)
+    private static IReadOnlyList<SpellOptionEntry> MapOption(JsonElement item)
     {
         var name = CatalogJsonValue.ReadText(item, "Bezeichnung");
+        var branchNames = GetStructuredOptionBranches(item).ToArray();
+
+        return branchNames.Length == 0
+            ? [MapOption(item, name, null)]
+            : branchNames.Select(branch => MapOption(item, $"{name}: {branch}", branch)).ToArray();
+    }
+
+    private static SpellOptionEntry MapOption(JsonElement item, string name, string? branchName)
+    {
         var requirementText = ReadOptionalValue(item, "Voraussetzung");
         var requirement = MapRequirement(item, requirementText);
-        var probeModifier = MapOptionValue(item, "Probenmodifikator");
-        var preRollZfp = MapOptionValue(item, "VorabZfP");
-        var costChange = MapOptionValue(item, "Kostenänderung");
-        var castingTimeChange = MapOptionValue(item, "Zauberdaueränderung");
-        var durationChange = MapOptionValue(item, "Wirkungsdaueränderung");
+        var probeModifier = MapOptionValue(item, "Probenmodifikator", branchName);
+        var preRollZfp = MapOptionValue(item, "VorabZfP", branchName);
+        var costChange = MapOptionValue(item, "Kosten\u00e4nderung", branchName);
+        var castingTimeChange = MapOptionValue(item, "Zauberdauer\u00e4nderung", branchName);
+        var durationChange = MapOptionValue(item, "Wirkungsdauer\u00e4nderung", branchName);
 
         var displayParts = new[]
         {
+            BuildLabeledValue("Unterfall", branchName),
             CatalogJsonValue.ReadText(item, "Regel"),
             CatalogJsonValue.ReadText(item, "Wirkung"),
             BuildLabeledValue("Voraussetzung", requirementText),
             BuildLabeledValue("Probenmodifikator", probeModifier.DisplayText),
             BuildLabeledValue("Vorab-ZfP", preRollZfp.DisplayText),
-            BuildLabeledValue("Kostenänderung", costChange.DisplayText),
-            BuildLabeledValue("Zauberdaueränderung", castingTimeChange.DisplayText),
-            BuildLabeledValue("Wirkungsdaueränderung", durationChange.DisplayText)
+            BuildLabeledValue("Kosten\u00e4nderung", costChange.DisplayText),
+            BuildLabeledValue("Zauberdauer\u00e4nderung", castingTimeChange.DisplayText),
+            BuildLabeledValue("Wirkungsdauer\u00e4nderung", durationChange.DisplayText)
         }.Where(text => !string.IsNullOrWhiteSpace(text));
 
         return new SpellOptionEntry(
@@ -126,9 +136,32 @@ public sealed class SpellCatalogStore(IHostEnvironment environment)
             costChange,
             castingTimeChange,
             durationChange,
-            false);
+            !requirement.RequiresManualCheck);
     }
 
+    private static IEnumerable<string> GetStructuredOptionBranches(JsonElement item)
+    {
+        var branches = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var propertyName in new[] { "Probenmodifikator", "VorabZfP" })
+        {
+            if (!CatalogJsonValue.TryGetProperty(item, propertyName, out var value) ||
+                value.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            foreach (var property in value.EnumerateObject())
+            {
+                var branch = CatalogJsonValue.NormalizeDisplayText(property.Name);
+                if (!string.IsNullOrWhiteSpace(branch))
+                {
+                    branches.Add(branch);
+                }
+            }
+        }
+
+        return branches.OrderBy(branch => branch, StringComparer.Ordinal);
+    }
     private static SpellOptionRequirement MapRequirement(JsonElement item, string? requirementText)
     {
         if (!CatalogJsonValue.TryGetProperty(item, "Voraussetzung", out var requirementValue) ||
@@ -221,7 +254,7 @@ public sealed class SpellCatalogStore(IHostEnvironment environment)
         return [representation];
     }
 
-    private static SpellOptionValue MapOptionValue(JsonElement item, string propertyName)
+    private static SpellOptionValue MapOptionValue(JsonElement item, string propertyName, string? branchName = null)
     {
         if (!CatalogJsonValue.TryGetProperty(item, propertyName, out var value) ||
             value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
@@ -229,13 +262,22 @@ public sealed class SpellCatalogStore(IHostEnvironment environment)
             return SpellOptionValue.Empty;
         }
 
+        if (!string.IsNullOrWhiteSpace(branchName) && value.ValueKind == JsonValueKind.Object)
+        {
+            if (!CatalogJsonValue.TryGetProperty(value, branchName, out value) ||
+                value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            {
+                return SpellOptionValue.Empty;
+            }
+        }
+
         return new SpellOptionValue(
             CatalogJsonValue.FormatValue(value),
             CatalogJsonValue.ReadInt(value),
             value.ValueKind == JsonValueKind.Number ||
-            value.ValueKind == JsonValueKind.String && CatalogJsonValue.ReadInt(value).HasValue);
+            value.ValueKind == JsonValueKind.String && CatalogJsonValue.ReadInt(value).HasValue,
+            true);
     }
-
     private static string? ReadOptionalValue(JsonElement item, string propertyName)
     {
         if (!CatalogJsonValue.TryGetProperty(item, propertyName, out var value) ||
@@ -458,14 +500,35 @@ public sealed record SpellOptionEntry(
     SpellOptionValue CostChange,
     SpellOptionValue CastingTimeChange,
     SpellOptionValue DurationChange,
-    bool IsSelectionEnabled);
+    bool IsSelectionEnabled)
+{
+    public bool RequiresManualCalculation
+    {
+        get
+        {
+            if (ProbeModifier.IsPresent && !ProbeModifier.IsSimpleNumeric ||
+                PreRollZfp.IsPresent && !PreRollZfp.IsSimpleNumeric)
+            {
+                return true;
+            }
+
+            if (!ProbeModifier.IsPresent && !PreRollZfp.IsPresent)
+            {
+                return !string.IsNullOrWhiteSpace(DisplayText);
+            }
+
+            return false;
+        }
+    }
+}
 
 public sealed record SpellOptionValue(
     string DisplayText,
     int? NumericValue,
-    bool IsSimpleNumeric)
+    bool IsSimpleNumeric,
+    bool IsPresent = false)
 {
-    public static SpellOptionValue Empty { get; } = new(string.Empty, null, false);
+    public static SpellOptionValue Empty { get; } = new(string.Empty, null, false, false);
 }
 
 public sealed record SpellOptionRequirement(

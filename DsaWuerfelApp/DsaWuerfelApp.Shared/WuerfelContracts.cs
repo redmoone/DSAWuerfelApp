@@ -101,6 +101,16 @@ public sealed record TalentRollDetailDto(
     int RemainingRest,
     bool Success);
 
+public sealed record SpellProbeRollDetailsDto(
+    int OriginalZfw,
+    int AutomaticModifier,
+    int ManualModifier,
+    int PreRollZfp,
+    int RawZfp,
+    int AvailableZfp,
+    bool ManualModifierRequired,
+    string[] SelectedOptions);
+
 public sealed record TalentRollResultDto(
     string PlayerName,
     DateTime Timestamp,
@@ -121,7 +131,10 @@ public sealed record TalentRollResultDto(
     bool Success,
     int Margin,
     RollEquationDto Equation,
-    RollHistoryEntryDto HistoryEntry);
+    RollHistoryEntryDto HistoryEntry)
+{
+    public SpellProbeRollDetailsDto? SpellDetails { get; init; }
+}
 
 public sealed record AttributeRollRequestDto(
     string? SessionId,

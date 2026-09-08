@@ -46,4 +46,34 @@ public sealed class TalentProbeEvaluatorTests
 
         Assert.NotNull(exception);
     }
+
+    [Fact]
+    public void Spell_calculation_keeps_zfw_and_applies_pre_roll_zfp_separately()
+    {
+        var service = new TalentProbeService(new DiceService());
+        var result = service.RollTalentProbe(
+            new ResolvedTalentRollRequest(
+                "Testzauber",
+                10,
+                ProbeAttributes.Create("KL/KL/FF"),
+                [10, 10, 10],
+                0,
+                null,
+                0,
+                null,
+                0,
+                ForcedRollValues.CreateOptional("10,10,10", 3),
+                2,
+                3,
+                new SpellRollCalculationContext(true, ["Testoption"])),
+            "Tester");
+
+        Assert.Equal(10, result.TalentValue);
+        Assert.Equal(8, result.EffectiveTalentValue);
+        Assert.Equal(2, result.SpellDetails!.AutomaticModifier);
+        Assert.Equal(3, result.SpellDetails.PreRollZfp);
+        Assert.Equal(8, result.SpellDetails.RawZfp);
+        Assert.Equal(5, result.SpellDetails.AvailableZfp);
+        Assert.True(result.SpellDetails.ManualModifierRequired);
+    }
 }

@@ -15,6 +15,18 @@ public sealed record ResolvedProbeData(
     int SpecializationModifier)
 {
     public bool UsesCatalogValue { get; init; }
+
+    public int AutomaticSpellModifier => SelectedSpellOptions.Sum(option => option.Modifier);
+
+    public int SpellPreRollZfp => SelectedSpellOptions.Sum(option => option.PreRollZfp);
+
+    public bool SpellRequiresManualInput => SelectedSpellOptions.Any(option => option.RequiresManualCalculation);
 }
 
-public sealed record ResolvedSpellOption(string Name, string DisplayName, ProbeSelectionOptionKind Kind, int Modifier);
+public sealed record ResolvedSpellOption(
+    string Name,
+    string DisplayName,
+    ProbeSelectionOptionKind Kind,
+    int Modifier,
+    int PreRollZfp,
+    bool RequiresManualCalculation);
