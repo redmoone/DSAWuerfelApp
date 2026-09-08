@@ -779,7 +779,7 @@ Plan- und Abnahmeeintrag erst nach tatsächlicher Browserprüfung ergänzen. Kei
 
 ## Datenbasis und Zauberinfo – Planentwurf vom 08.09.2026
 
-Status: **ZT-01 umgesetzt; ZT-02 ist der nächste Umsetzungsschritt.**
+Status: **ZT-02 umgesetzt; ZT-03 und ZT-04 bleiben offen.**
 
 ### Verbindliche Grundlage
 
@@ -846,6 +846,22 @@ Prüfung:
 - Varianten von Sonderregeln trennen. Bei spontanen Modifikationen Unterfall und Stufe auswählen lassen; Einschränkungen, Kombinationen, Repräsentation und Anzahl der Modifikationsstufen aus der Datei beachten.
 - MR, dynamische Eigenschaften und situative Werte nur mit gesicherter Herkunft oder expliziter Eingabe verwenden. Automatisierbare Bedingungen gelten nicht automatisch als erfüllt.
 - Klar abgegrenzte unterstützte Fälle rechnen; bei komplexen oder unvollständigen Fällen darf der Spieler die Erschwernis oder Erleichterung der aktuellen Probe manuell eingeben. Diese Eingabe wird sichtbar als manuell gesetzt behandelt; der Bot leitet daraus keine eigene Regel und keine Änderung des rohen ZfW ab.
+
+#### ZT-02 - Ergebnis / Abnahme
+
+Umgesetzt:
+
+- Varianten und spontane Modifikationen werden aus der freigegebenen Datei geladen. Objektwerte werden in auswählbare Unterfälle aufgeteilt, zum Beispiel `Zauberdauer: Verkürzen` und `Zauberdauer: Verlängern`.
+- Echte numerische Probenmodifikatoren werden serverseitig aus dem Katalog übernommen und mit dem manuellen Modifikator addiert. Der Wert aus der Auswahl wird nicht aus der Clientangabe vertraut.
+- Mindest-ZfW wird gegen den unveränderten Heldenwert geprüft. Vorab-ZfP bleiben getrennt vom ZfW und werden im Ergebnis als Roh-ZfP* und verfügbare ZfP* ausgewiesen.
+- Nicht eindeutig numerische oder stufenabhängige Angaben werden auswählbar angezeigt, aber ausdrücklich als manuell zu ergänzen markiert. Der Bot ersetzt solche Angaben nicht durch eine Vermutung.
+- Bekannte Zauber werden im Meister-Sammelwurf mit dem konkreten ZfW des Zielhelden gerechnet. Reine Katalogfälle behalten die bestehende Anforderungsdarstellung ohne erfundenen ZfW.
+
+Prüfung:
+
+- `dotnet build DsaWuerfelApp.sln --no-restore -p:BaseOutputPath=<Temp-Ausgabe>` erfolgreich, 0 Fehler/0 Warnungen.
+- `dotnet test DsaWuerfelApp.sln --no-build --no-restore` erfolgreich, 81/81.
+- Repräsentativer HTTP-Test für Abvenenum prüft den Unterfall `Verlängern`, den echten Modifikator `-3`, den unveränderten ZfW und die ZfP*-Ausgabe. Ein zusätzlicher Servicetest prüft die Trennung von Probenmodifikator, Roh-ZfP* und verfügbaren ZfP*.
 
 #### ZT-03 – Talentinformationen und passende Spezialisierungen
 
