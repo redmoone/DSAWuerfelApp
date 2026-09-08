@@ -112,11 +112,12 @@ public sealed class SpellCatalogStore(IHostEnvironment environment)
         var costChange = MapOptionValue(item, "Kosten\u00e4nderung", branchName);
         var castingTimeChange = MapOptionValue(item, "Zauberdauer\u00e4nderung", branchName);
         var durationChange = MapOptionValue(item, "Wirkungsdauer\u00e4nderung", branchName);
+        var ruleText = GetBranchRuleText(item, branchName);
 
         var displayParts = new[]
         {
             BuildLabeledValue("Unterfall", branchName),
-            CatalogJsonValue.ReadText(item, "Regel"),
+            ruleText,
             CatalogJsonValue.ReadText(item, "Wirkung"),
             BuildLabeledValue("Voraussetzung", requirementText),
             BuildLabeledValue("Probenmodifikator", probeModifier.DisplayText),
@@ -137,6 +138,40 @@ public sealed class SpellCatalogStore(IHostEnvironment environment)
             castingTimeChange,
             durationChange,
             !requirement.RequiresManualCheck);
+    }
+
+    private static string? GetBranchRuleText(JsonElement item, string? branchName)
+    {
+        var ruleText = CatalogJsonValue.ReadText(item, "Regel");
+        if (string.IsNullOrWhiteSpace(ruleText) || string.IsNullOrWhiteSpace(branchName))
+        {
+            return ruleText;
+        }
+
+        var branches = GetStructuredOptionBranches(item).ToArray();
+        if (branches.Length < 2)
+        {
+            return ruleText;
+        }
+
+        var marker = $"{branchName}:";
+        var start = ruleText.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (start < 0)
+        {
+            return ruleText;
+        }
+
+        var contentStart = start + marker.Length;
+        var nextBranchStart = branches
+            .Where(branch => !string.Equals(branch, branchName, StringComparison.OrdinalIgnoreCase))
+            .Select(branch => ruleText.IndexOf($"{branch}:", contentStart, StringComparison.OrdinalIgnoreCase))
+            .Where(index => index >= 0)
+            .DefaultIfEmpty(-1)
+            .Min();
+        var contentEnd = nextBranchStart >= 0 ? nextBranchStart : ruleText.Length;
+        var branchRule = ruleText[contentStart..contentEnd].Trim();
+
+        return string.IsNullOrWhiteSpace(branchRule) ? ruleText : branchRule;
     }
 
     private static IEnumerable<string> GetStructuredOptionBranches(JsonElement item)
