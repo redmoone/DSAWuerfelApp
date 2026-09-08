@@ -3,6 +3,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { SUPERSAMPLE, DICE_SCALE, USE_EDGE_OUTLINE, diceRotations } from "./dice-constants.js";
 import { initScene, resizeScene } from "./dice-scene.js";
 
+export function createDiceScene() {
 let renderer, scene, camera;
 let diceModels = new Map();
 let activeDice = [];
@@ -12,16 +13,20 @@ let rollAnimationFrameId = 0;
 let resizeHandler = null;
 let canvasElement = null;
 let disposed = false;
+let ready = false;
+let pendingDice = null;
+let pendingRoll = null;
+let modelRoot = null;
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-export function setDotNetRef(ref) {
+function setDotNetRef(ref) {
     dotNetRef = ref;
 }
 
-export async function init(canvas) {
-    disposed = false;
+async function init(canvas) {
+    if (disposed) return;
     canvasElement = canvas;
     const setup = initScene(canvas, SUPERSAMPLE);
     renderer = setup.renderer;
@@ -30,10 +35,10 @@ export async function init(canvas) {
 
     const loader = new GLTFLoader();
     const gltf = await loader.loadAsync("./models/dice_set.glb");
+    modelRoot = gltf.scene;
     if (disposed) {
-        gltf.scene.traverse((obj) => {
-            if (obj.isMesh) obj.geometry?.dispose();
-        });
+        releaseResources([modelRoot]);
+        modelRoot = null;
         return;
     }
 
@@ -78,6 +83,10 @@ export async function init(canvas) {
     };
     window.addEventListener("resize", resizeHandler);
 
+    ready = true;
+    if (pendingDice) updateDice(pendingDice);
+    if (pendingRoll) rollDice(pendingRoll);
+    pendingDice = pendingRoll = null;
     animate(canvas);
 }
 
@@ -177,8 +186,16 @@ function addEdgeOverlay(root) {
     });
 }
 
-export function updateDice(sidesArray) {
-    activeDice.forEach((mesh) => scene.remove(mesh));
+function updateDice(sidesArray) {
+    if (disposed) return;
+    if (!ready) { pendingDice = [...sidesArray]; pendingRoll = null; return; }
+    cancelAnimationFrame(rollAnimationFrameId);
+    activeDice.forEach((mesh) => {
+        scene.remove(mesh);
+        mesh.traverse(obj => {
+            if (obj.isLineSegments) { obj.geometry.dispose(); obj.material.dispose(); }
+        });
+    });
     activeDice = [];
 
     sidesArray.forEach((sides, index) => {
@@ -214,7 +231,10 @@ export function updateDice(sidesArray) {
     }
 }
 
-export function rollDice(resultsArray) {
+function rollDice(resultsArray) {
+    if (disposed) return;
+    if (!ready) { pendingRoll = [...resultsArray]; return; }
+    cancelAnimationFrame(rollAnimationFrameId);
     const start = performance.now();
     const duration = 1000;
 
@@ -242,6 +262,7 @@ export function rollDice(resultsArray) {
     });
 
     function loop(t) {
+        if (disposed) return;
         const p = Math.min(1, (t - start) / duration);
         const ease = 1 - Math.pow(1 - p, 3);
 
@@ -257,29 +278,35 @@ export function rollDice(resultsArray) {
     rollAnimationFrameId = requestAnimationFrame(loop);
 }
 
-export function dispose() {
+function dispose() {
     if (disposed) return;
     disposed = true;
     if (animationFrameId) cancelAnimationFrame(animationFrameId);
     if (rollAnimationFrameId) cancelAnimationFrame(rollAnimationFrameId);
     if (resizeHandler) window.removeEventListener("resize", resizeHandler);
     if (canvasElement) canvasElement.removeEventListener("click", handleCanvasClick);
-    activeDice.forEach(mesh => {
-        scene?.remove(mesh);
-        mesh.traverse(obj => {
-            if (obj.isMesh) {
-                obj.geometry?.dispose();
-                if (Array.isArray(obj.material)) obj.material.forEach(material => material.dispose());
-                else obj.material?.dispose();
-            }
-        });
-    });
+    releaseResources([scene, modelRoot]);
     activeDice = [];
+    diceModels.clear();
     renderer?.dispose();
-    renderer?.domElement?.remove();
-    renderer = null;
-    scene = null;
-    camera = null;
-    dotNetRef = null;
-    canvasElement = null;
+    renderer = scene = camera = modelRoot = dotNetRef = canvasElement = null;
+    pendingDice = pendingRoll = null;
+}
+
+function releaseResources(roots) {
+    const geometries = new Set(), materials = new Set(), textures = new Set();
+    for (const root of roots) root?.traverse(obj => {
+        if (obj.geometry) geometries.add(obj.geometry);
+        for (const mat of (Array.isArray(obj.material) ? obj.material : [obj.material])) {
+            if (!mat) continue;
+            materials.add(mat);
+            for (const value of Object.values(mat)) if (value?.isTexture) textures.add(value);
+        }
+        obj.shadow?.dispose();
+    });
+    textures.forEach(resource => resource.dispose());
+    materials.forEach(resource => resource.dispose());
+    geometries.forEach(resource => resource.dispose());
+}
+return { init, setDotNetRef, updateDice, rollDice, dispose };
 }
