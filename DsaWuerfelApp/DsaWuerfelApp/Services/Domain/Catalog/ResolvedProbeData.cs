@@ -12,6 +12,9 @@ public sealed record ResolvedProbeData(
     ProbeSelectionOptionKind SelectedOptionKind,
     ResolvedSpellOption[] SelectedSpellOptions,
     string? SpecializationName,
-    int SpecializationModifier);
+    int SpecializationModifier)
+{
+    public bool UsesCatalogValue { get; init; }
+}
 
 public sealed record ResolvedSpellOption(string Name, string DisplayName, ProbeSelectionOptionKind Kind, int Modifier);

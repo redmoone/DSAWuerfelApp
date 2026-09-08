@@ -13,7 +13,32 @@ public sealed class SpellOptionAvailabilityService(SpellCatalogStore spellCatalo
         IEnumerable<SpellOptionEntry> options)
     {
         return options
-            .Where(option => IsOptionAvailable(spellName, spell, knownSpells, heroSpellcastingContext, option))
+            .Where(option => option.IsSelectionEnabled &&
+                             IsOptionAvailable(
+                                 spellName,
+                                 spell,
+                                 knownSpells,
+                                 heroSpellcastingContext,
+                                 option,
+                                 allowManualRequirements: false))
+            .ToArray();
+    }
+
+    internal SpellOptionEntry[] FilterOptionsForInformation(
+        string spellName,
+        TalentData spell,
+        IReadOnlyDictionary<string, TalentData> knownSpells,
+        HeroSpellcastingContext heroSpellcastingContext,
+        IEnumerable<SpellOptionEntry> options)
+    {
+        return options
+            .Where(option => IsOptionAvailable(
+                spellName,
+                spell,
+                knownSpells,
+                heroSpellcastingContext,
+                option,
+                allowManualRequirements: true))
             .ToArray();
     }
 
@@ -47,7 +72,14 @@ public sealed class SpellOptionAvailabilityService(SpellCatalogStore spellCatalo
                 continue;
             }
 
-            if (!IsOptionAvailable(spellName, spell, knownSpells, heroSpellcastingContext, option))
+            if (!option.IsSelectionEnabled ||
+                !IsOptionAvailable(
+                    spellName,
+                    spell,
+                    knownSpells,
+                    heroSpellcastingContext,
+                    option,
+                    allowManualRequirements: false))
             {
                 return false;
             }
@@ -64,9 +96,15 @@ public sealed class SpellOptionAvailabilityService(SpellCatalogStore spellCatalo
         TalentData spell,
         IReadOnlyDictionary<string, TalentData> knownSpells,
         HeroSpellcastingContext heroSpellcastingContext,
-        SpellOptionEntry option)
+        SpellOptionEntry option,
+        bool allowManualRequirements)
     {
         var requirement = option.Requirement;
+        if (requirement.RequiresManualCheck && !allowManualRequirements)
+        {
+            return false;
+        }
+
         if (spell.Wert < requirement.MinimumSpellValue)
         {
             return false;

@@ -210,6 +210,7 @@ public sealed class ProbeResolutionService(
             [],
             specializationName,
             selection.OptionKind == ProbeSelectionOptionKind.Specialization ? selection.OptionModifier : 0);
+        resolvedProbe = resolvedProbe with { UsesCatalogValue = true };
         return true;
     }
 
@@ -285,6 +286,7 @@ public sealed class ProbeResolutionService(
             [],
             specializationName,
             selection.OptionKind == ProbeSelectionOptionKind.Specialization ? selection.OptionModifier : 0);
+        resolvedProbe = resolvedProbe with { UsesCatalogValue = true };
         return true;
     }
 

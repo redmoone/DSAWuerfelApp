@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 using DsaWuerfelApp.Shared;
 
@@ -27,212 +26,411 @@ public sealed class SpellCatalogStore(IHostEnvironment environment)
     {
         var candidatePaths = new[]
         {
-            Path.Combine(environment.ContentRootPath, "Data", CatalogFileName), Path.GetFullPath(Path.Combine(
-                environment.ContentRootPath, "..", "..", "..", "..", "Downloads",
-                CatalogFileName)),
+            Path.Combine(environment.ContentRootPath, "Data", CatalogFileName),
             Path.Combine(AppContext.BaseDirectory, "Data", CatalogFileName)
         };
 
-        return candidatePaths.FirstOrDefault(File.Exists) ?? candidatePaths[0];
+        return candidatePaths.FirstOrDefault(File.Exists) ??
+               throw new FileNotFoundException(
+                   $"Der Zauberkatalog '{CatalogFileName}' wurde nicht gefunden. Erwartete Pfade: " +
+                   string.Join("; ", candidatePaths),
+                   candidatePaths[0]);
     }
 
     private static IReadOnlyDictionary<string, SpellCatalogEntry> LoadEntries(string path)
     {
-        if (!File.Exists(path))
-        {
-            return new Dictionary<string, SpellCatalogEntry>(StringComparer.Ordinal);
-        }
-
         try
         {
             using var stream = File.OpenRead(path);
-            var catalog = JsonSerializer.Deserialize<SpellCatalogRoot>(stream) ?? new SpellCatalogRoot();
+            using var document = JsonDocument.Parse(stream);
+            var spellItems = CatalogJsonValue.ReadArray(document.RootElement, "Zauber");
+            if (spellItems.Count == 0)
+            {
+                throw new InvalidDataException(
+                    $"Der Zauberkatalog '{path}' enthält keine Zaubereinträge.");
+            }
 
-            return catalog.Spells
+            return spellItems
                 .Select(MapItem)
                 .Where(entry => !string.IsNullOrWhiteSpace(entry.Name))
                 .GroupBy(entry => TalentCatalogText.CanonicalizeName(entry.Name), StringComparer.Ordinal)
                 .Where(group => !string.IsNullOrWhiteSpace(group.Key))
                 .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
         }
-        catch
+        catch (JsonException exception)
         {
-            return new Dictionary<string, SpellCatalogEntry>(StringComparer.Ordinal);
+            throw new InvalidDataException(
+                $"Der Zauberkatalog '{path}' ist kein gültiges JSON im erwarteten Wurzelformat.",
+                exception);
         }
     }
 
-    private static SpellCatalogEntry MapItem(SpellCatalogItem item)
+    private static SpellCatalogEntry MapItem(JsonElement item)
     {
-        var name = TalentCatalogText.NormalizeCatalogText(item.Name);
-        var modifications = item.Modifications
+        var name = CatalogJsonValue.ReadText(item, "Zauber");
+        var probeDefinition = MapProbeDefinition(item);
+        var modifications = CatalogJsonValue.ReadArray(item, "Modifikationen")
             .Select(MapOption)
             .Where(option => !string.IsNullOrWhiteSpace(option.Name))
             .ToArray();
-        var variants = item.Variants
+        var variants = CatalogJsonValue.ReadArray(item, "Varianten")
             .Select(MapOption)
             .Where(option => !string.IsNullOrWhiteSpace(option.Name))
             .ToArray();
 
         return new SpellCatalogEntry(
             name,
-            TalentCatalogText.NormalizeProbe(item.Probe),
+            probeDefinition.MachineProbe,
             modifications,
             variants,
-            BuildInfoSections(item));
+            BuildInfoSections(item, probeDefinition),
+            BuildRuleSections(item),
+            probeDefinition,
+            MapStructuredValue(item, "ZauberdauerStrukturiert"),
+            MapStructuredValue(item, "KostenStrukturiert"),
+            MapStructuredValue(item, "ZielobjektStrukturiert"),
+            MapStructuredValue(item, "ReichweiteStrukturiert"),
+            MapStructuredValue(item, "WirkungsdauerStrukturiert"));
     }
 
-    private static SpellOptionEntry MapOption(SpellOptionItem item)
+    private static SpellOptionEntry MapOption(JsonElement item)
     {
-        var name = TalentCatalogText.NormalizeCatalogText(item.Label);
-        var displayLabel = NormalizeOptionalText(item.Heading) ?? name;
-        var displayText = NormalizeOptionalText(item.ShortText) ??
-                          BuildFallbackDisplayText(item.Rule, item.Effect) ??
-                          displayLabel;
+        var name = CatalogJsonValue.ReadText(item, "Bezeichnung");
+        var requirementText = ReadOptionalValue(item, "Voraussetzung");
+        var requirement = MapRequirement(item, requirementText);
+        var probeModifier = MapOptionValue(item, "Probenmodifikator");
+        var preRollZfp = MapOptionValue(item, "VorabZfP");
+        var costChange = MapOptionValue(item, "Kostenänderung");
+        var castingTimeChange = MapOptionValue(item, "Zauberdaueränderung");
+        var durationChange = MapOptionValue(item, "Wirkungsdaueränderung");
+
+        var displayParts = new[]
+        {
+            CatalogJsonValue.ReadText(item, "Regel"),
+            CatalogJsonValue.ReadText(item, "Wirkung"),
+            BuildLabeledValue("Voraussetzung", requirementText),
+            BuildLabeledValue("Probenmodifikator", probeModifier.DisplayText),
+            BuildLabeledValue("Vorab-ZfP", preRollZfp.DisplayText),
+            BuildLabeledValue("Kostenänderung", costChange.DisplayText),
+            BuildLabeledValue("Zauberdaueränderung", castingTimeChange.DisplayText),
+            BuildLabeledValue("Wirkungsdaueränderung", durationChange.DisplayText)
+        }.Where(text => !string.IsNullOrWhiteSpace(text));
 
         return new SpellOptionEntry(
             name,
-            displayLabel,
-            displayText,
-            MapRequirement(item.Visibility));
+            name,
+            string.Join(Environment.NewLine, displayParts),
+            requirement,
+            probeModifier,
+            preRollZfp,
+            costChange,
+            castingTimeChange,
+            durationChange,
+            false);
     }
 
-    private static SpellOptionRequirement MapRequirement(SpellOptionRequirementItem? item)
+    private static SpellOptionRequirement MapRequirement(JsonElement item, string? requirementText)
     {
-        if (item is null)
+        if (!CatalogJsonValue.TryGetProperty(item, "Voraussetzung", out var requirementValue) ||
+            requirementValue.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
         {
             return SpellOptionRequirement.Empty;
         }
 
-        var modes = item.Modes
-            .Select(MapRequirementMode)
-            .ToArray();
+        if (requirementValue.ValueKind != JsonValueKind.Object)
+        {
+            return new SpellOptionRequirement(
+                false,
+                false,
+                0,
+                [],
+                SpellRepresentationRestriction.Empty,
+                [],
+                requirementText ?? string.Empty,
+                true);
+        }
+
+        var minimumSpellValue = CatalogJsonValue.ReadInt(requirementValue, "MindestZfW") ?? 0;
+        var allowedRepresentations = MapRepresentation(
+            requirementValue,
+            "Repräsentation",
+            out var hasUnresolvedAllowedRepresentation);
+        var disallowedRepresentations = MapRepresentation(
+            requirementValue,
+            "NichtRepräsentation",
+            out var hasUnresolvedDisallowedRepresentation);
+
+        var recognizedProperties = new[]
+        {
+            CatalogJsonValue.CanonicalizePropertyName("MindestZfW"),
+            CatalogJsonValue.CanonicalizePropertyName("Repräsentation"),
+            CatalogJsonValue.CanonicalizePropertyName("NichtRepräsentation")
+        }.ToHashSet(StringComparer.Ordinal);
+        var hasUnknownProperty = requirementValue.EnumerateObject()
+            .Any(property => !recognizedProperties.Contains(
+                CatalogJsonValue.CanonicalizePropertyName(property.Name)));
 
         return new SpellOptionRequirement(
-            item.RequiresOwnRepresentation,
-            item.AllowsForeignRepresentationWithMatrixUnderstanding,
-            item.MinimumSpellValue ?? 0,
-            modes,
+            false,
+            false,
+            minimumSpellValue,
+            [],
             new SpellRepresentationRestriction(
-                item.AllowedRepresentations
-                    .Select(SpellRepresentationText.Canonicalize)
-                    .Where(value => !string.IsNullOrWhiteSpace(value))
-                    .Distinct(StringComparer.Ordinal)
-                    .ToArray(),
-                item.DisallowedRepresentations
-                    .Select(SpellRepresentationText.Canonicalize)
-                    .Where(value => !string.IsNullOrWhiteSpace(value))
-                    .Distinct(StringComparer.Ordinal)
-                    .ToArray()),
-            item.AdditionalRequirements
-                .Select(TalentCatalogText.NormalizeCatalogText)
+                allowedRepresentations,
+                disallowedRepresentations),
+            [],
+            requirementText ?? string.Empty,
+            hasUnknownProperty ||
+            hasUnresolvedAllowedRepresentation ||
+            hasUnresolvedDisallowedRepresentation);
+    }
+
+    private static string[] MapRepresentation(
+        JsonElement requirement,
+        string propertyName,
+        out bool unresolved)
+    {
+        unresolved = false;
+        if (!CatalogJsonValue.TryGetProperty(requirement, propertyName, out var value))
+        {
+            return [];
+        }
+
+        var text = CatalogJsonValue.ReadText(value);
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            unresolved = true;
+            return [];
+        }
+
+        var canonicalText = CatalogJsonValue.CanonicalizePropertyName(text);
+        if (canonicalText.Contains("und", StringComparison.Ordinal) ||
+            canonicalText.Contains(",", StringComparison.Ordinal))
+        {
+            unresolved = true;
+            return [];
+        }
+
+        var representation = SpellRepresentationText.Canonicalize(text);
+        if (string.IsNullOrWhiteSpace(representation))
+        {
+            unresolved = true;
+            return [];
+        }
+
+        return [representation];
+    }
+
+    private static SpellOptionValue MapOptionValue(JsonElement item, string propertyName)
+    {
+        if (!CatalogJsonValue.TryGetProperty(item, propertyName, out var value) ||
+            value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return SpellOptionValue.Empty;
+        }
+
+        return new SpellOptionValue(
+            CatalogJsonValue.FormatValue(value),
+            CatalogJsonValue.ReadInt(value),
+            value.ValueKind == JsonValueKind.Number ||
+            value.ValueKind == JsonValueKind.String && CatalogJsonValue.ReadInt(value).HasValue);
+    }
+
+    private static string? ReadOptionalValue(JsonElement item, string propertyName)
+    {
+        if (!CatalogJsonValue.TryGetProperty(item, propertyName, out var value) ||
+            value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
+        var text = CatalogJsonValue.FormatValue(value);
+        return string.IsNullOrWhiteSpace(text) ? null : text;
+    }
+
+    private static SpellProbeDefinition MapProbeDefinition(JsonElement item)
+    {
+        var rawText = CatalogJsonValue.ReadText(item, "Probe");
+        var structuredAttributes = CatalogJsonValue.TryGetProperty(
+                item,
+                "ProbeStrukturiert",
+                out var structuredProbeValue)
+            ? CatalogJsonValue.ReadArray(structuredProbeValue, "Eigenschaften")
+                .Select(CatalogJsonValue.ReadText)
+                .Where(attribute => !string.IsNullOrWhiteSpace(attribute))
+                .ToArray()
+            : [];
+        var machineProbe = structuredAttributes.Length == 3
+            ? string.Join("/", structuredAttributes)
+            : NormalizeMachineProbe(rawText);
+
+        var structuredProbe = structuredProbeValue;
+
+        return new SpellProbeDefinition(
+            rawText,
+            machineProbe,
+            structuredAttributes,
+            CatalogJsonValue.ReadText(structuredProbe, "DynamischeEigenschaft"),
+            CatalogJsonValue.ReadBool(structuredProbe, "GegenMR") ?? false,
+            CatalogJsonValue.ReadArray(structuredProbe, "WeitereModifikatoren")
+                .Select(CatalogJsonValue.ReadText)
                 .Where(value => !string.IsNullOrWhiteSpace(value))
                 .ToArray());
     }
 
-    private static SpellOptionRequirementMode MapRequirementMode(SpellOptionRequirementModeItem item)
+    private static string NormalizeMachineProbe(string value)
     {
-        return new SpellOptionRequirementMode(
-            TalentCatalogText.NormalizeCatalogText(item.Name),
-            item.MinimumSpellValue ?? 0);
+        var withoutModifiers = value.Split('(', 2, StringSplitOptions.TrimEntries)[0];
+        return TalentCatalogText.NormalizeProbe(withoutModifiers);
     }
 
-    private static string? NormalizeOptionalText(string? value)
+    private static SpellStructuredValue? MapStructuredValue(JsonElement item, string propertyName)
     {
-        var normalized = TalentCatalogText.NormalizeCatalogText(value);
-        return string.IsNullOrWhiteSpace(normalized) ? null : normalized;
+        if (!CatalogJsonValue.TryGetProperty(item, propertyName, out var value) ||
+            value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
+        var values = value.ValueKind == JsonValueKind.Object
+            ? value.EnumerateObject()
+                .ToDictionary(
+                    property => CatalogJsonValue.NormalizeDisplayText(property.Name),
+                    property => CatalogJsonValue.FormatValue(property.Value),
+                    StringComparer.Ordinal)
+            : new Dictionary<string, string>(StringComparer.Ordinal);
+
+        return new SpellStructuredValue(
+            CatalogJsonValue.ReadText(value, "Typ"),
+            CatalogJsonValue.ReadText(value, "Rohtext"),
+            values);
     }
 
-    private static string? BuildFallbackDisplayText(string? rule, string? effect)
+    private static ProbeInfoSectionDto[] BuildInfoSections(
+        JsonElement item,
+        SpellProbeDefinition probeDefinition)
     {
-        var parts = new[] { NormalizeOptionalText(rule), NormalizeOptionalText(effect) }
-            .Where(value => !string.IsNullOrWhiteSpace(value))
-            .ToArray();
-
-        return parts.Length == 0 ? null : string.Join(" ", parts);
-    }
-
-    private static ProbeInfoSectionDto[] BuildInfoSections(SpellCatalogItem item)
-    {
-        var sections = new List<ProbeInfoSectionDto>(capacity: 8);
-        AddInfoSection(sections, "Zauberdauer", item.CastingTime);
-        AddInfoSection(sections, "Wirkung", item.Effect);
-        AddInfoSection(sections, "Kosten", item.Cost);
-        AddInfoSection(sections, "Zielobjekt", item.TargetObject);
-        AddInfoSection(sections, "Reichweite", item.Range);
-        AddInfoSection(sections, "Wirkungsdauer", item.Duration);
-        AddInfoSection(sections, "Reversalis", item.Reversalis);
-        AddInfoSection(sections, "Antimagie", item.AntiMagic);
+        var sections = new List<ProbeInfoSectionDto>(capacity: 10);
+        AddInfoSection(sections, "Probe", probeDefinition.RawText);
+        AddInfoSection(sections, "Zauberdauer", CatalogJsonValue.ReadText(item, "Zauberdauer"));
+        AddInfoSection(sections, "Wirkung", CatalogJsonValue.ReadText(item, "Wirkung"));
+        AddInfoSection(sections, "Kosten", CatalogJsonValue.ReadText(item, "Kosten"));
+        AddInfoSection(sections, "Zielobjekt", CatalogJsonValue.ReadText(item, "Zielobjekt"));
+        AddInfoSection(sections, "Reichweite", CatalogJsonValue.ReadText(item, "Reichweite"));
+        AddInfoSection(sections, "Wirkungsdauer", CatalogJsonValue.ReadText(item, "Wirkungsdauer"));
+        AddInfoSection(sections, "Reversalis", CatalogJsonValue.ReadText(item, "Reversalis"));
+        AddInfoSection(sections, "Antimagie", CatalogJsonValue.ReadText(item, "Antimagie"));
         return sections.ToArray();
     }
 
-    private static void AddInfoSection(ICollection<ProbeInfoSectionDto> sections, string label, string? value)
+    private static SpellInfoRuleSection[] BuildRuleSections(JsonElement item)
     {
-        var normalizedValue = TalentCatalogText.NormalizeCatalogText(value);
-        if (string.IsNullOrWhiteSpace(normalizedValue))
+        var sections = new List<SpellInfoRuleSection>(capacity: 7);
+        AddRuleSection(
+            sections,
+            "Sonderregeln",
+            CatalogJsonValue.ReadArray(item, "Sonderregeln"),
+            FormatSpecialRule);
+        AddRuleSection(
+            sections,
+            "Folgeproben",
+            CatalogJsonValue.ReadArray(item, "Folgeproben"),
+            value => FormatRule(value, "Akteur", "Probe", "Modifikator", "BeiMisslingen", "Quelle", "Regelsatz",
+                "AutomatischAuswertbar"));
+        AddRuleSection(
+            sections,
+            "Schaden",
+            CatalogJsonValue.ReadArray(item, "Schaden"),
+            value => FormatRule(value, "Ausdruck", "Art", "Quelle", "QuelleText", "AutomatischAuswertbar"));
+        AddRuleSection(
+            sections,
+            "ZfP*-Schwellen",
+            CatalogJsonValue.ReadArray(item, "ZfP_Schwellen"),
+            value => FormatRule(value, "Schwelle", "Kontext", "Quelle"));
+        AddRuleSection(
+            sections,
+            "Wertänderungen",
+            CatalogJsonValue.ReadArray(item, "Wertänderungen"),
+            value => CatalogJsonValue.FormatValue(value));
+        AddRuleSection(
+            sections,
+            "Zauberprobenmodifikatoren",
+            CatalogJsonValue.ReadArray(item, "ZauberprobenModifikatoren"),
+            value => FormatRule(value, "Quelle", "Modifikator", "Regelsatz", "AutomatischAuswertbar"));
+        AddRuleSection(
+            sections,
+            "Meisterentscheidungen",
+            CatalogJsonValue.ReadArray(item, "Meisterentscheidungen"),
+            value => FormatRule(value, "Quelle", "Regel"));
+        return sections.ToArray();
+    }
+
+    private static void AddRuleSection(
+        ICollection<SpellInfoRuleSection> sections,
+        string label,
+        IReadOnlyList<JsonElement> values,
+        Func<JsonElement, string> formatter)
+    {
+        var entries = values
+            .Select(formatter)
+            .Where(text => !string.IsNullOrWhiteSpace(text))
+            .ToArray();
+        if (entries.Length > 0)
         {
-            return;
+            sections.Add(new SpellInfoRuleSection(label, entries));
+        }
+    }
+
+    private static string FormatSpecialRule(JsonElement value)
+    {
+        if (value.ValueKind != JsonValueKind.Object)
+        {
+            return CatalogJsonValue.FormatValue(value);
         }
 
-        sections.Add(new ProbeInfoSectionDto(label, normalizedValue));
+        return FormatRule(value, "Bezeichnung", "Regel", "Wirkung");
     }
 
-    private sealed class SpellCatalogRoot
+    private static string FormatRule(JsonElement value, params string[] propertyNames)
     {
-        [JsonPropertyName("Zauber")] public List<SpellCatalogItem> Spells { get; set; } = [];
+        if (value.ValueKind != JsonValueKind.Object)
+        {
+            return CatalogJsonValue.FormatValue(value);
+        }
+
+        var parts = propertyNames
+            .Select(propertyName => BuildLabeledValue(
+                propertyName,
+                ReadOptionalValue(value, propertyName)))
+            .Where(text => !string.IsNullOrWhiteSpace(text))
+            .ToList();
+
+        var automatic = CatalogJsonValue.ReadBool(value, "AutomatischAuswertbar");
+        if (automatic.HasValue)
+        {
+            parts.Add(automatic.Value
+                ? "Automatisch auswertbar: ja"
+                : "Automatisch auswertbar: nein; manuell prüfen");
+        }
+
+        return string.Join("; ", parts);
     }
 
-    private sealed class SpellCatalogItem
+    private static string BuildLabeledValue(string label, string? value)
     {
-        [JsonPropertyName("Zauber")] public string Name { get; set; } = string.Empty;
-        [JsonPropertyName("Probe")] public string Probe { get; set; } = string.Empty;
-        [JsonPropertyName("Zauberdauer")] public string CastingTime { get; set; } = string.Empty;
-        [JsonPropertyName("Wirkung")] public string Effect { get; set; } = string.Empty;
-        [JsonPropertyName("Kosten")] public string Cost { get; set; } = string.Empty;
-        [JsonPropertyName("Zielobjekt")] public string TargetObject { get; set; } = string.Empty;
-        [JsonPropertyName("Reichweite")] public string Range { get; set; } = string.Empty;
-        [JsonPropertyName("Wirkungsdauer")] public string Duration { get; set; } = string.Empty;
-        [JsonPropertyName("Reversalis")] public string Reversalis { get; set; } = string.Empty;
-        [JsonPropertyName("Antimagie")] public string AntiMagic { get; set; } = string.Empty;
-        [JsonPropertyName("Modifikationen")] public List<SpellOptionItem> Modifications { get; set; } = [];
-        [JsonPropertyName("Varianten")] public List<SpellOptionItem> Variants { get; set; } = [];
+        return string.IsNullOrWhiteSpace(value) ? string.Empty : $"{label}: {value}";
     }
 
-    private sealed class SpellOptionItem
+    private static void AddInfoSection(
+        ICollection<ProbeInfoSectionDto> sections,
+        string label,
+        string? value)
     {
-        [JsonPropertyName("Bezeichnung")] public string Label { get; set; } = string.Empty;
-        [JsonPropertyName("Regel")] public string Rule { get; set; } = string.Empty;
-        [JsonPropertyName("Wirkung")] public string Effect { get; set; } = string.Empty;
-        [JsonPropertyName("Überschrift")] public string Heading { get; set; } = string.Empty;
-        [JsonPropertyName("Kurztext")] public string ShortText { get; set; } = string.Empty;
-        [JsonPropertyName("AnzeigenWenn")] public SpellOptionRequirementItem? Visibility { get; set; }
-    }
-
-    private sealed class SpellOptionRequirementItem
-    {
-        [JsonPropertyName("EigeneRepräsentation")]
-        public bool RequiresOwnRepresentation { get; set; }
-
-        [JsonPropertyName("MatrixverständnisErlaubt")]
-        public bool AllowsForeignRepresentationWithMatrixUnderstanding { get; set; }
-
-        [JsonPropertyName("MindestZfW")] public int? MinimumSpellValue { get; set; }
-
-        [JsonPropertyName("Modi")] public List<SpellOptionRequirementModeItem> Modes { get; set; } = [];
-
-        [JsonPropertyName("ErlaubteRepräsentationen")]
-        public List<string> AllowedRepresentations { get; set; } = [];
-
-        [JsonPropertyName("AusgeschlosseneRepräsentationen")]
-        public List<string> DisallowedRepresentations { get; set; } = [];
-
-        [JsonPropertyName("WeitereVoraussetzungen")]
-        public List<string> AdditionalRequirements { get; set; } = [];
-    }
-
-    private sealed class SpellOptionRequirementModeItem
-    {
-        [JsonPropertyName("Name")] public string Name { get; set; } = string.Empty;
-        [JsonPropertyName("MindestZfW")] public int? MinimumSpellValue { get; set; }
+        var normalizedValue = CatalogJsonValue.NormalizeDisplayText(value);
+        if (!string.IsNullOrWhiteSpace(normalizedValue))
+        {
+            sections.Add(new ProbeInfoSectionDto(label, normalizedValue));
+        }
     }
 }
 
@@ -241,13 +439,34 @@ public sealed record SpellCatalogEntry(
     string Probe,
     IReadOnlyList<SpellOptionEntry> Modifications,
     IReadOnlyList<SpellOptionEntry> Variants,
-    IReadOnlyList<ProbeInfoSectionDto> InfoSections);
+    IReadOnlyList<ProbeInfoSectionDto> InfoSections,
+    IReadOnlyList<SpellInfoRuleSection> RuleSections,
+    SpellProbeDefinition ProbeDefinition,
+    SpellStructuredValue? CastingTimeStructured,
+    SpellStructuredValue? CostStructured,
+    SpellStructuredValue? TargetObjectStructured,
+    SpellStructuredValue? RangeStructured,
+    SpellStructuredValue? DurationStructured);
 
 public sealed record SpellOptionEntry(
     string Name,
     string DisplayLabel,
     string DisplayText,
-    SpellOptionRequirement Requirement);
+    SpellOptionRequirement Requirement,
+    SpellOptionValue ProbeModifier,
+    SpellOptionValue PreRollZfp,
+    SpellOptionValue CostChange,
+    SpellOptionValue CastingTimeChange,
+    SpellOptionValue DurationChange,
+    bool IsSelectionEnabled);
+
+public sealed record SpellOptionValue(
+    string DisplayText,
+    int? NumericValue,
+    bool IsSimpleNumeric)
+{
+    public static SpellOptionValue Empty { get; } = new(string.Empty, null, false);
+}
 
 public sealed record SpellOptionRequirement(
     bool RequiresOwnRepresentation,
@@ -255,7 +474,9 @@ public sealed record SpellOptionRequirement(
     int MinimumSpellValue,
     IReadOnlyList<SpellOptionRequirementMode> Modes,
     SpellRepresentationRestriction RepresentationRestriction,
-    IReadOnlyList<string> AdditionalRequirements)
+    IReadOnlyList<string> AdditionalRequirements,
+    string RequirementText = "",
+    bool RequiresManualCheck = false)
 {
     public static SpellOptionRequirement Empty { get; } = new(
         false,
@@ -277,3 +498,20 @@ public sealed record SpellRepresentationRestriction(
     public static SpellRepresentationRestriction Empty { get; } =
         new(Array.Empty<string>(), Array.Empty<string>());
 }
+
+public sealed record SpellInfoRuleSection(
+    string Label,
+    IReadOnlyList<string> Entries);
+
+public sealed record SpellProbeDefinition(
+    string RawText,
+    string MachineProbe,
+    IReadOnlyList<string> Attributes,
+    string DynamicAttribute,
+    bool AgainstMagicResistance,
+    IReadOnlyList<string> FurtherModifiers);
+
+public sealed record SpellStructuredValue(
+    string Type,
+    string RawText,
+    IReadOnlyDictionary<string, string> Values);

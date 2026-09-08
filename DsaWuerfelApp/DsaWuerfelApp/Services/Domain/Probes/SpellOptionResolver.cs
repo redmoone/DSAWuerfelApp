@@ -25,7 +25,7 @@ public sealed class SpellOptionResolver(
             out resolvedSelection);
     }
 
-    public IReadOnlyList<ProbeInfoSectionDto> BuildSpellInfoSections(Hero hero, string spellName, SpellCatalogEntry spellEntry)
+    public IReadOnlyList<ProbeInfoSectionDto> BuildSpellInfoSections(Hero? hero, string spellName, SpellCatalogEntry spellEntry)
     {
         return spellInfoSectionFactory.Build(hero, spellName, spellEntry);
     }

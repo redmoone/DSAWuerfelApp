@@ -1,1715 +1,2837 @@
-[
-  {
-    "Name": "Anderthalbhänder",
-    "Kategorie": "Bewaffneter Nahkampf",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "BE-2",
-    "Ersatz": "Schwerter, Zweihandschwerter/-säbel",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Armbrust",
-    "Kategorie": "Fernkampf",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "BE-5",
-    "Ersatz": "Bogen",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Belagerungswaffen",
-    "Kategorie": "Fernkampf",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Blasrohr",
-    "Kategorie": "Fernkampf",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "BE-5",
-    "Ersatz": "",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Bogen",
-    "Kategorie": "Fernkampf",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "BE-3",
-    "Ersatz": "",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Diskus",
-    "Kategorie": "Fernkampf",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "BE-2",
-    "Ersatz": "",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Dolche",
-    "Kategorie": "Bewaffneter Nahkampf",
-    "Eigenschaften": "",
-    "Typ": "Basis",
-    "eBE": "BE-1",
-    "Ersatz": "Fechtwaffen, Raufen",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Fechtwaffen",
-    "Kategorie": "Bewaffneter Nahkampf",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "BE-1",
-    "Ersatz": "Dolche, Schwerter",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Hiebwaffen",
-    "Kategorie": "Bewaffneter Nahkampf",
-    "Eigenschaften": "",
-    "Typ": "Basis",
-    "eBE": "BE-4",
-    "Ersatz": "Säbel",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Infanteriewaffen",
-    "Kategorie": "Bewaffneter Nahkampf",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "BE-3",
-    "Ersatz": "Speere, Zweihand-Hiebwaffen",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Kettenstäbe",
-    "Kategorie": "Bewaffneter Nahkampf",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "BE-1",
-    "Ersatz": "Kettenwaffen, Zweihandflegel",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Kettenwaffen",
-    "Kategorie": "Bewaffneter Nahkampf",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "BE-3",
-    "Ersatz": "Kettenstäbe, Zweihandflegel",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Lanzenreiten",
-    "Kategorie": "Bew. Kampf; AT-Technik",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Peitsche",
-    "Kategorie": "Bew. Kampf; AT-Technik",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "BE-1",
-    "Ersatz": "",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Raufen",
-    "Kategorie": "Waffenlos",
-    "Eigenschaften": "",
-    "Typ": "Basis",
-    "eBE": "BE",
-    "Ersatz": "",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Ringen",
-    "Kategorie": "Waffenlos",
-    "Eigenschaften": "",
-    "Typ": "Basis",
-    "eBE": "BE",
-    "Ersatz": "",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Säbel",
-    "Kategorie": "Bewaffneter Nahkampf",
-    "Eigenschaften": "",
-    "Typ": "Basis",
-    "eBE": "BE-2",
-    "Ersatz": "Hiebwaffen, Schwerter",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Schleuder",
-    "Kategorie": "Fernkampf",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "BE-2",
-    "Ersatz": "",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Schwerter",
-    "Kategorie": "Bewaffneter Nahkampf",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "BE-2",
-    "Ersatz": "Anderthalbhänder, Fechtwaffen, Säbel",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Speere",
-    "Kategorie": "Bewaffneter Nahkampf",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "BE-3",
-    "Ersatz": "Infanteriewaffen",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Stäbe",
-    "Kategorie": "Bewaffneter Nahkampf",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "BE-2",
-    "Ersatz": "Speere",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Wurfbeile",
-    "Kategorie": "Fernkampf",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "BE-2",
-    "Ersatz": "Wurfspeere, Wurfmesser",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Wurfmesser",
-    "Kategorie": "Fernkampf",
-    "Eigenschaften": "",
-    "Typ": "Basis",
-    "eBE": "BE-3",
-    "Ersatz": "Wurfbeile, Wurfspeere",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Wurfspeere",
-    "Kategorie": "Fernkampf",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "BE-2",
-    "Ersatz": "Wurfbeile",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Zweihandflegel",
-    "Kategorie": "Bewaffneter Nahkampf",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "BE-3",
-    "Ersatz": "Infanteriewaffen, Kettenwaffen",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Zweihand-Hiebwaffen",
-    "Kategorie": "Bewaffneter Nahkampf",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "BE-3",
-    "Ersatz": "Hiebwaffen, Infanteriewaffen",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Zweihandschwerter/-säbel",
-    "Kategorie": "Bewaffneter Nahkampf",
-    "Eigenschaften": "",
-    "Typ": "Spezial",
-    "eBE": "BE-2",
-    "Ersatz": "Anderthalbhänder, Schwerter, Säbel",
-    "Spezialisierungen": ""
-  },
-  {
-    "Name": "Akrobatik",
-    "Kategorie": "Körperliche Talente",
-    "Eigenschaften": "(MU/GE/KK)",
-    "Typ": "Spezial",
-    "eBE": "BEx2",
-    "Ersatz": "Körperbeherrschung+5, Athletik+10",
-    "Spezialisierungen": "Balancieren, Bodenakrobatik, Schwingen, Sprünge, Winden",
-    "Zweck": "Willentliche Akrobatik, Balancieren, Schwingen, Salti, Winden, Entfesseln",
-    "Kernregel": "+1 Ausweichen je 3 volle TaP über 9; Voraussetzung Körperbeherrschung 4",
-    "Misslingen": "Sturz, Hängenbleiben, misslingendes Winden/Entfesseln",
-    "Modifikatoren": "BE, Enge, Fesseln, Sturzgefahr",
-    "Optional": "Vorteil Schlangenmensch"
-  },
-  {
-    "Name": "Athletik",
-    "Kategorie": "Körperliche Talente",
-    "Eigenschaften": "(GE/KO/KK)",
-    "Typ": "Basis",
-    "eBE": "BEx2",
-    "Ersatz": "Körperbeherrschung+5, Akrobatik+10",
-    "Spezialisierungen": "Hochsprung, Kraftakte, Langlauf, Sprint, Weitsprung",
-    "Zweck": "Sprint, Langlauf, Kraftakte, Sprungweite/-höhe",
-    "Kernregel": "Langlauf auf GE/KO/KO; erhöht GS, senkt AU-Verlust, stützt KK-Proben, steigert Sprünge",
-    "Misslingen": "langsamer, mehr AU-Verlust, Last/Sprung scheitert",
-    "Modifikatoren": "BE, Strecke, Last, Sprungdistanz",
-    "Optional": ""
-  },
-  {
-    "Name": "Fliegen",
-    "Kategorie": "Körperliche Talente",
-    "Eigenschaften": "(MU/IN/GE)",
-    "Typ": "Spezial",
-    "eBE": "BE",
-    "Ersatz": "Akrobatik+10",
-    "Spezialisierungen": "Hexenbesen, Fliegender Teppich, weitere magische Fluggeräte",
-    "Zweck": "Magische Fluggeräte ohne Eigenwillen steuern",
-    "Kernregel": "Probe bei Manövern, Verfolgungsjagden, Fensterflug, Steilkehre, Looping",
-    "Misslingen": "Sturz, oft tödlich",
-    "Modifikatoren": "BE, Gerätetyp, Manöver",
-    "Optional": "Fliegende Wesen über Reiten"
-  },
-  {
-    "Name": "Gaukeleien",
-    "Kategorie": "Körperliche Talente",
-    "Eigenschaften": "(MU/CH/FF)",
-    "Typ": "Spezial",
-    "eBE": "BEx2",
-    "Ersatz": "Falschspiel+10, Taschendiebstahl+10",
-    "Spezialisierungen": "Bauchreden, Feuerkunst, Jonglieren, Possenreißen, Taschenspielereien",
-    "Zweck": "Kleine Kunststücke, Ablenkung, Hütchenspiel",
-    "Kernregel": "Eigenschaften je Darbietung variabel; z.B. Bauchreden IN/CH/KO, Feuerspucken MU/CH/KO",
-    "Misslingen": "Blamage, Entdeckung, misslingende Ablenkung",
-    "Modifikatoren": "BE, Darbietungsart",
-    "Optional": ""
-  },
-  {
-    "Name": "Klettern",
-    "Kategorie": "Körperliche Talente",
-    "Eigenschaften": "(MU/GE/KK)",
-    "Typ": "Basis",
-    "eBE": "BEx2",
-    "Ersatz": "Akrobatik+5, Athletik+5, Körperbeherrschung+10",
-    "Spezialisierungen": "Bergsteigen, Eisklettern, Freiklettern, Seilklettern",
-    "Zweck": "Schwierige Klettertouren, Mauern, Klippen",
-    "Kernregel": "Längere Touren auf MU/GE/KO; TaP* ansammeln möglich",
-    "Misslingen": "Sturz, Festhängen, Tour scheitert",
-    "Modifikatoren": "Höhe, Griffmöglichkeiten, Kletterhilfen, Höhenangst, BE",
-    "Optional": "Sturzregeln beachten"
-  },
-  {
-    "Name": "Körperbeherrschung",
-    "Kategorie": "Körperliche Talente",
-    "Eigenschaften": "(MU/IN/GE)",
-    "Typ": "Basis",
-    "eBE": "BEx2",
-    "Ersatz": "Akrobatik+5, Athletik+10",
-    "Spezialisierungen": "Fallen, Sprünge, Standfestigkeit",
-    "Zweck": "Abrollen, Balance, Reaktionen, Stand halten",
-    "Kernregel": "Für intuitive Körperkontrolle; nicht für willentliche Akrobatik/Kraftakte",
-    "Misslingen": "Sturz, Ausrutscher, Umfallen",
-    "Modifikatoren": "Situationsschwere, BE",
-    "Optional": "Vorteil Balance, SF Standfest"
-  },
-  {
-    "Name": "Reiten",
-    "Kategorie": "Körperliche Talente",
-    "Eigenschaften": "(CH/GE/KK)",
-    "Typ": "Spezial",
-    "eBE": "BE-2",
-    "Ersatz": "Körperbeherrschung+10, Akrobatik+15",
-    "Spezialisierungen": "Pferd/Esel/Muli, Kamel, Strauß, Reitechse, Flugechse, Hippogriff, goblinisches Reit-Wildschwein",
-    "Zweck": "Reittiere lenken; Galopp, Hindernisse, Gelände",
-    "Kernregel": "Unbekannte Reittiere mit Zuschlag; fliegende Wesen ohne passende Spezialisierung +5",
-    "Misslingen": "Kontrollverlust, Sturz, falsche Richtung",
-    "Modifikatoren": "Tempo, Gelände, Sprunghöhe/-länge, Tierart, BE",
-    "Optional": "Wichtig für Kampf zu Pferd"
-  },
-  {
-    "Name": "Schleichen",
-    "Kategorie": "Körperliche Talente",
-    "Eigenschaften": "(MU/IN/GE)",
-    "Typ": "Basis",
-    "eBE": "BE",
-    "Ersatz": "Körperbeherrschung+10, Sich Verstecken+10",
-    "Spezialisierungen": "Eis/Schnee, Gebäude, Geröll, Straßen, Wald/Dschungel",
-    "Zweck": "Geräuschlos bewegen, anschleichen",
-    "Kernregel": "Kann durch Sinnenschärfe gekontert werden; Meister kann verdeckt würfeln",
-    "Misslingen": "Geräusch, Entdeckung",
-    "Modifikatoren": "Boden, Rüstung, Schuhwerk, Gelände, BE",
-    "Optional": ""
-  },
-  {
-    "Name": "Schwimmen",
-    "Kategorie": "Körperliche Talente",
-    "Eigenschaften": "(GE/KO/KK)",
-    "Typ": "Basis",
-    "eBE": "BEx2",
-    "Ersatz": "Athletik+10",
-    "Spezialisierungen": "Langstreckenschwimmen, Schnellschwimmen, Tauchen, Unterwasserkampf",
-    "Zweck": "Schwimmen, Tauchen, Last/Gefährten transportieren, UW-Kampf",
-    "Kernregel": "TaW 2 reicht fürs Überwasserhalten; guter TaW Vorbedingung Unterwasserkampf",
-    "Misslingen": "Erschöpfung, Untergehen, Transport/Kampf scheitert",
-    "Modifikatoren": "Wasserbewegtheit bis +8, Rüstung, BE",
-    "Optional": "AU begrenzt Strecke"
-  },
-  {
-    "Name": "Selbstbeherrschung",
-    "Kategorie": "Körperliche Talente",
-    "Eigenschaften": "(MU/KO/KK)",
-    "Typ": "Basis",
-    "eBE": "",
-    "Ersatz": "",
-    "Spezialisierungen": "Erschöpfung Ignorieren, Schmerz Unterdrücken, Störungen Ignorieren, Wunden Ignorieren",
-    "Zweck": "Schmerz, Versuchung, Spott, Erschöpfung widerstehen",
-    "Kernregel": "Je ignoriertem Punkt Probenmodifikation +5; Wirkung 5 KR",
-    "Misslingen": "Zusammenbruch, Nachgeben, Kontrollverlust",
-    "Modifikatoren": "Jähzorn, Stolz u.ä. als Erschwernis",
-    "Optional": "MU/MU/KL bei innerer Beherrschung"
-  },
-  {
-    "Name": "Sich Verstecken",
-    "Kategorie": "Körperliche Talente",
-    "Eigenschaften": "(MU/IN/GE)",
-    "Typ": "Basis",
-    "eBE": "BE-2",
-    "Ersatz": "Schleichen+10, Körperbeherrschung+15",
-    "Spezialisierungen": "Gebäude, Gebirge, Grasland, Eis/Schnee, Stadt, Wald/Dschungel, Wüste",
-    "Zweck": "Versteck blitzschnell finden und nutzen",
-    "Kernregel": "Kann verdeckt und vergleichend gegen Sinnenschärfe laufen",
-    "Misslingen": "schlechtes Versteck, zu spät",
-    "Modifikatoren": "Umgebung, Verfolger, BE",
-    "Optional": ""
-  },
-  {
-    "Name": "Singen",
-    "Kategorie": "Körperliche Talente",
-    "Eigenschaften": "(IN/CH/CH) o. (IN/CH/KO)",
-    "Typ": "Basis",
-    "eBE": "BE-3",
-    "Ersatz": "",
-    "Spezialisierungen": "Balladenvortrag, Chorgesang, Mehrstimmigkeit, Operngesang",
-    "Zweck": "Sologesang, Eposvortrag, Begleitung",
-    "Kernregel": "Lautes Singen/Koloraturen auf IN/CH/KO",
-    "Misslingen": "schiefer Vortrag, Blamage",
-    "Modifikatoren": "BE",
-    "Optional": ""
-  },
-  {
-    "Name": "Sinnenschärfe",
-    "Kategorie": "Körperliche Talente",
-    "Eigenschaften": "(KL/IN/IN) o. (KL/IN/FF)",
-    "Typ": "Basis",
-    "eBE": "situationsabhängig bis BE",
-    "Ersatz": "",
-    "Spezialisierungen": "Hören, Riechen/Schmecken, Sehen, Tasten",
-    "Zweck": "Wahrnehmen: Hören, Riechen, Sehen, Tasten, Schmecken",
-    "Kernregel": "Meist KL/IN/IN, Tastsinn KL/IN/FF; Meister würfelt oft verdeckt",
-    "Misslingen": "nichts bemerkt oder Täuschung",
-    "Modifikatoren": "Umgebungslärm, Verletzungen, Herausragender/Eingeschränkter Sinn, BE",
-    "Optional": "oft passiver Teil vergleichender Proben"
-  },
-  {
-    "Name": "Skifahren",
-    "Kategorie": "Körperliche Talente",
-    "Eigenschaften": "(GE/GE/KO)",
-    "Typ": "Spezial",
-    "eBE": "BE-2",
-    "Ersatz": "Athletik+10, Körperbeherrschung+15",
-    "Spezialisierungen": "",
-    "Zweck": "Schneefelder überwinden, Strecke steigern, Gefahren ausweichen",
-    "Kernregel": "Für Abfahrten und Sprünge hohe Zuschläge",
-    "Misslingen": "Sturz, Kontrollverlust",
-    "Modifikatoren": "Abfahrt, Sprünge, Schnee/Terrain, BE",
-    "Optional": "keine Spezialisierungen"
-  },
-  {
-    "Name": "Stimmen Imitieren",
-    "Kategorie": "Körperliche Talente",
-    "Eigenschaften": "(KL/IN/CH)",
-    "Typ": "Spezial",
-    "eBE": "BE-4",
-    "Ersatz": "Gaukeleien(Bauchreden)+5",
-    "Spezialisierungen": "Haustiere, Jagdwild, Menschliche Stimmen, Raubtiere, Vögel",
-    "Zweck": "Tier- und Menschenstimmen nachahmen",
-    "Kernregel": "Gelegenheit zum Einprägen nötig; Meisterimitator für spontane Menschenstimmen ab TaW 15; Voraussetzung Sinnenschärfe 4",
-    "Misslingen": "falscher Ton, Entlarvung",
-    "Modifikatoren": "Übung, Zielstimme, BE",
-    "Optional": ""
-  },
-  {
-    "Name": "Tanzen",
-    "Kategorie": "Körperliche Talente",
-    "Eigenschaften": "(CH/GE/GE)",
-    "Typ": "Basis",
-    "eBE": "BEx2",
-    "Ersatz": "Akrobatik+5, Körperbeherrschung+5",
-    "Spezialisierungen": "Ausdruckstänze, Formationstänze, Höfische Tänze, Kulttänze, Meditationstänze",
-    "Zweck": "Tanzen, gesellschaftliche/kultische Wirkung",
-    "Kernregel": "Höfische Tänze mit Etikette; fremde Tänze mit Kulturkunde; Voraussetzungen: Höfische Tänze Etikette 6+, Kulttänze Götter/Kulte 6+",
-    "Misslingen": "Blamage, Ansehensverlust",
-    "Modifikatoren": "BE, Etikette, Kulturkunde",
-    "Optional": ""
-  },
-  {
-    "Name": "Taschendiebstahl",
-    "Kategorie": "Körperliche Talente",
-    "Eigenschaften": "(MU/IN/FF)",
-    "Typ": "Spezial",
-    "eBE": "BEx2",
-    "Ersatz": "Gaukeleien(Taschenspielereien)+10",
-    "Spezialisierungen": "",
-    "Zweck": "Beutelschneiden, unbemerktes Stibitzen",
-    "Kernregel": "Gegen Sinnenschärfe vergleichbar; Voraussetzung Menschenkenntnis 4 für TaW >10",
-    "Misslingen": "Entdeckung, Verdacht",
-    "Modifikatoren": "Misstrauen des Opfers, Sperrigkeit, Ablenkung/Komplize, BE",
-    "Optional": "keine Spezialisierungen"
-  },
-  {
-    "Name": "Zechen",
-    "Kategorie": "Körperliche Talente",
-    "Eigenschaften": "(IN/KO/KK)",
-    "Typ": "Basis",
-    "eBE": "",
-    "Ersatz": "",
-    "Spezialisierungen": "",
-    "Zweck": "Alkohol- und Rauschmittelverträglichkeit, Kater mindern",
-    "Kernregel": "Gelungene Probe wehrt Eigenschaftsabzüge und schweren Kopf ab",
-    "Misslingen": "Kater, Kontrollverlust, Abzüge, enthemmtes Verhalten",
-    "Modifikatoren": "Rauschmittelart, Menge",
-    "Optional": "keine Spezialisierungen"
-  },
-  {
-    "Name": "Betören",
-    "Kategorie": "Gesellschaftliche Talente",
-    "Eigenschaften": "(IN/CH/CH)",
-    "Typ": "Spezial",
-    "eBE": "BE-2",
-    "Ersatz": "Überreden+10, Überzeugen+10",
-    "Spezialisierungen": "nach Kultur",
-    "Zweck": "Anziehung erzeugen, Gegenüber gewogen machen",
-    "Kernregel": "Menschenkenntnis 4; kann durch Menschenkenntnis oder Betören gekontert werden; TaP* ansammeln möglich",
-    "Misslingen": "Abfuhr, Misstrauen",
-    "Modifikatoren": "harte Nuss, Spezies, Geschlecht, Kulturkreis, Einstellung, BE",
-    "Optional": ""
-  },
-  {
-    "Name": "Etikette",
-    "Kategorie": "Gesellschaftliche Talente",
-    "Eigenschaften": "(KL/IN/CH)",
-    "Typ": "Spezial",
-    "eBE": "BE-2",
-    "Ersatz": "",
-    "Spezialisierungen": "nach Kultur",
-    "Zweck": "Hofformen, Anrede, Wappen, Mode, Tafelsitten",
-    "Kernregel": "Meister kann verdeckt würfeln; voller Nutzen kulturabhängig/Kulturkunde",
-    "Misslingen": "Fauxpas, Blamage",
-    "Modifikatoren": "Kultur, Stand, Anlass, BE",
-    "Optional": ""
-  },
-  {
-    "Name": "Gassenwissen",
-    "Kategorie": "Gesellschaftliche Talente",
-    "Eigenschaften": "(KL/IN/CH)",
-    "Typ": "Spezial",
-    "eBE": "BE-4",
-    "Ersatz": "Menschenkenntnis+10",
-    "Spezialisierungen": "Beschatten, Hehlerei, Kontakte, Ortseinschätzung",
-    "Zweck": "Stadt einschätzen, richtige Leute, Unterschlupf, Gardisten, Kanäle, Fluchtwege",
-    "Kernregel": "Meister verdeckt; kulturelle Unterschiede relevant",
-    "Misslingen": "Fehleinschätzung, falsche Anlaufstelle, schlechter Ort",
-    "Modifikatoren": "Kulturfremde, Ortskenntnis, Innerer Kompass, Richtungssinn",
-    "Optional": ""
-  },
-  {
-    "Name": "Lehren",
-    "Kategorie": "Gesellschaftliche Talente",
-    "Eigenschaften": "(KL/IN/CH)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Überzeugen+10",
-    "Spezialisierungen": "nach Talentgruppe",
-    "Zweck": "Wissen/Fertigkeiten vermitteln, Unterricht",
-    "Kernregel": "TaW>10: Menschenkenntnis 4; relevant für Lernregeln",
-    "Misslingen": "Unterrichtsansatz scheitert, Lernfortschritt stockt",
-    "Modifikatoren": "Schüler, Stoff, Umstände",
-    "Optional": ""
-  },
-  {
-    "Name": "Menschenkenntnis",
-    "Kategorie": "Gesellschaftliche Talente",
-    "Eigenschaften": "(KL/IN/CH)",
-    "Typ": "Basis",
-    "eBE": "",
-    "Ersatz": "Heilkunde Seele+5",
-    "Spezialisierungen": "nach Kultur",
-    "Zweck": "Absichten, Verlässlichkeit, Gefühle, Motive einschätzen",
-    "Kernregel": "Meister verdeckt; vergleichend gegen Überreden möglich; fremde Spezies erschwert, fremde Kultur meist erschwert",
-    "Misslingen": "Fehleinschätzung, falsches Vertrauen",
-    "Modifikatoren": "Erfahrung der Zielperson, Spezies, Kulturkunde",
-    "Optional": ""
-  },
-  {
-    "Name": "Schauspielerei",
-    "Kategorie": "Gesellschaftliche Talente",
-    "Eigenschaften": "(MU/KL/CH)",
-    "Typ": "Spezial",
-    "eBE": "rollenabhängig",
-    "Ersatz": "Überreden+10",
-    "Spezialisierungen": "Komödie, Posse, Tragödie",
-    "Zweck": "Rollen, Deklamation, Mimik, Bühnenhandwerk",
-    "Kernregel": "TaW>10: Etikette, Sich Verkleiden, Singen, Überreden, Überzeugen je 4",
-    "Misslingen": "unglaubwürdige Rolle, Blamage",
-    "Modifikatoren": "Rolle, Auftrittsform, Publikum",
-    "Optional": ""
-  },
-  {
-    "Name": "Schriftlicher Ausdruck",
-    "Kategorie": "Gesellschaftliche Talente",
-    "Eigenschaften": "(KL/IN/IN)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "verwendete Sprache+10, Überzeugen(schriftliche Rhetorik)+5",
-    "Spezialisierungen": "Schreiber, Schriftsteller",
-    "Zweck": "verständliche, stilvolle Texte; Briefe, Epen, Abhandlungen",
-    "Kernregel": "Voraussetzung Lesen/Schreiben[Schrift] 6",
-    "Misslingen": "unklarer, schwacher, unbrauchbarer Text",
-    "Modifikatoren": "Handschrift, Stilanspruch, Textsorte",
-    "Optional": ""
-  },
-  {
-    "Name": "Sich Verkleiden",
-    "Kategorie": "Gesellschaftliche Talente",
-    "Eigenschaften": "(MU/CH/GE)",
-    "Typ": "Spezial",
-    "eBE": "0 bis BEx2",
-    "Ersatz": "Schauspielerei+10",
-    "Spezialisierungen": "anderer Stand, anderes Geschlecht, andere Rasse, fremde Kultur",
-    "Zweck": "Aussehen, Verhalten, Mode, Schminken, Identität tarnen",
-    "Kernregel": "offene Probe; TaP* können Überreden erleichtern; Gespräch ersetzt Verkleidung nicht",
-    "Misslingen": "Entlarvung, Verdacht, schlechte Tarnung",
-    "Modifikatoren": "Art der Verkleidung, Körpermerkmale, Situation",
-    "Optional": ""
-  },
-  {
-    "Name": "Überreden",
-    "Kategorie": "Gesellschaftliche Talente",
-    "Eigenschaften": "(MU/IN/CH)",
-    "Typ": "Basis",
-    "eBE": "situativ bis BE-4; Betteln sichtbar gerüstet BEx2",
-    "Ersatz": "Überzeugen+10",
-    "Spezialisierungen": "Aufwiegeln, Betteln, Einschüchtern, Feilschen, Lügen",
-    "Zweck": "kurzfristig beeinflussen, herausreden, feilschen, lügen",
-    "Kernregel": "TaW>10: Menschenkenntnis 4; Feilschen: +0=5%, +1=10%, +2=15% ... +9=50%; Menschenkenntnis kann Lügen durchschauen",
-    "Misslingen": "Misstrauen, Ablehnung, Entlarvung",
-    "Modifikatoren": "Kultur, Einstellung, Klugheit des Opfers, Anlass",
-    "Optional": ""
-  },
-  {
-    "Name": "Überzeugen",
-    "Kategorie": "Gesellschaftliche Talente",
-    "Eigenschaften": "(KL/IN/CH)",
-    "Typ": "Spezial",
-    "eBE": "situativ bis BE-4",
-    "Ersatz": "Überreden+10",
-    "Spezialisierungen": "Öffentliche Rede(Demagogie, Plädoyer, Predigt), Einzelgespräch(Verhör, Bekehrung), Diskussions-Rhetorik, schriftliche Rhetorik",
-    "Zweck": "langfristige Meinungsänderung, Bekehrung, Predigt, Verhör",
-    "Kernregel": "Voraussetzung Menschenkenntnis 4; Wirkung mindestens einige Tage",
-    "Misslingen": "Widerstand, Ablehnung, Gegenreaktion",
-    "Modifikatoren": "Klugheit, Lebenseinstellung, Kultur, Einstellung des Opfers",
-    "Optional": ""
-  },
-  {
-    "Name": "Fährtensuchen",
-    "Kategorie": "Naturtalente",
-    "Eigenschaften": "(KL/IN/IN) o. (KL/IN/KO)",
-    "Typ": "Basis",
-    "eBE": "",
-    "Ersatz": "Sinnenschärfe+10",
-    "Spezialisierungen": "Eis/Schnee, Gebirge, Grasland, Stadt, Sumpf, Unterirdisch, Wald/Dschungel, Wüste",
-    "Zweck": "Spuren finden, verfolgen, auswerten",
-    "Kernregel": "Verfolgen: KL/IN/KO; Detailinfos: KL/IN/IN; Terrainwechsel meist Probe -7 bis +12; TaW>10: Sinnenschärfe 4",
-    "Misslingen": "Spur verloren, Fehldeutung",
-    "Modifikatoren": "Boden, Licht, Witterung, Wahrnehmungsbehinderung",
-    "Optional": "Meister verdeckt"
-  },
-  {
-    "Name": "Fallenstellen",
-    "Kategorie": "Naturtalente",
-    "Eigenschaften": "(KL/FF/KK)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Wildnisleben+10",
-    "Spezialisierungen": "Gruben, Schlingen, Speere",
-    "Zweck": "Wildfallen bauen, platzieren, tarnen",
-    "Kernregel": "pro TaP* 0,5 Rationen, min. 1; Platzieren ca. 1 h; TaW>10: Wildnisleben 4; TaW 6+ auch für intelligente Wesen schwerer zu entdecken",
-    "Misslingen": "Fallen leer; Patzer: Mehrzahl unbrauchbar",
-    "Modifikatoren": "Umgebung, Köderwahl, Tierkunde als Hilfe",
-    "Optional": ""
-  },
-  {
-    "Name": "Fesseln/Entfesseln",
-    "Kategorie": "Naturtalente",
-    "Eigenschaften": "(FF/GE/KK)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Seiler+10, Seefahrt+10, Entfesseln: Akrobatik(Winden)+5, Gaukeleien(passende Spez)+10, Taschendiebstahl+10, Ringen-PA+10",
-    "Spezialisierungen": "Entfesseln, Fesseln, Knotenkunde, Taue Spleißen, Netze Knüpfen",
-    "Zweck": "binden, lösen, Knoten, Taue, Netze",
-    "Kernregel": "Ersatztalente teils nur für Entfesseln oder passende Spezialisierung",
-    "Misslingen": "Knoten hält nicht / sitzt falsch / Flucht scheitert",
-    "Modifikatoren": "Material, Enge, Zeit, Bewegungsfreiheit",
-    "Optional": ""
-  },
-  {
-    "Name": "Fischen/Angeln",
-    "Kategorie": "Naturtalente",
-    "Eigenschaften": "(IN/FF/KK)",
-    "Typ": "Spezial",
-    "eBE": "BE bei bestimmten Angelarten",
-    "Ersatz": "Wildnisleben+10",
-    "Spezialisierungen": "Flüsse/Bäche, Hochseeangeln, Seen/Sumpf/Brackwasser, Strand/Riff, Seefischerei",
-    "Zweck": "Fischfang, Gewässer einschätzen, Nahrung",
-    "Kernregel": "Probe auf Fang; je TaP* 0,5 Rationen, min. 1; stündlich möglich; Gewässerbewertung ggf. IN/IN/KL",
-    "Misslingen": "kein brauchbarer Fang",
-    "Modifikatoren": "Gewässertyp, Köderwahl, Angelart",
-    "Optional": ""
-  },
-  {
-    "Name": "Orientierung",
-    "Kategorie": "Naturtalente",
-    "Eigenschaften": "(KL/IN/IN)",
-    "Typ": "Basis",
-    "eBE": "",
-    "Ersatz": "Sternkunde+10",
-    "Spezialisierungen": "Dschungel, Eis/Schnee, Gebirge, Grasland, Meer, Stadt, Unterirdisch, Wald, Wüste",
-    "Zweck": "Himmelsrichtungen, Wegfinden, Raumgefühl",
-    "Kernregel": "Meister verdeckt; in Extremgelände/Gebäudelabyrinthen besonders wichtig",
-    "Misslingen": "verirrt, falsche Richtung",
-    "Modifikatoren": "gleichförmige Umgebung, Helmblickfeld bis +3, Richtungssinn, Innerer Kompass, Geländekunde, Ortskundig",
-    "Optional": ""
-  },
-  {
-    "Name": "Wettervorhersage",
-    "Kategorie": "Naturtalente",
-    "Eigenschaften": "(KL/IN/IN)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Wildnisleben+10",
-    "Spezialisierungen": "nach Geländetyp/Region",
-    "Zweck": "Schlechtwetter früh erkennen, Vorsorge",
-    "Kernregel": "Meister verdeckt; passende Geländekunde als Hilfstalent",
-    "Misslingen": "Wetterumschwung überrascht",
-    "Modifikatoren": "Geländetyp, Region, Wetterkonstanz, Ortsfremde",
-    "Optional": ""
-  },
-  {
-    "Name": "Wildnisleben",
-    "Kategorie": "Naturtalente",
-    "Eigenschaften": "(IN/GE/KO)",
-    "Typ": "Basis",
-    "eBE": "situativ; beim Einschätzen irrelevant",
-    "Ersatz": "Tierkunde+10, Pflanzenkunde+10",
-    "Spezialisierungen": "Dschungel, Eis/Schnee, Gebirge, Meer, Steppe, Sumpf, Wald, Wüste",
-    "Zweck": "Lager, Feuer, Brennstoff, Jagdstellen, Überleben draußen",
-    "Kernregel": "Meister verdeckt; Geländekunde/Ortskenntnis können erleichtern",
-    "Misslingen": "schlechter Lagerplatz, nasse Ausrüstung, Ressourcenfehler",
-    "Modifikatoren": "Umgebung, Bekanntheit des Geländes, Wetter",
-    "Optional": ""
-  },
-  {
-    "Name": "Anatomie",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(MU/KL/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Heilkunde Wunden+5, Heilkunde Krankheiten+10",
-    "Spezialisierungen": "nach Spezies",
-    "Zweck": "Körperbau, Organe, Schwachstellen",
-    "Kernregel": "Voraussetzung keine Totenangst; TaW 10+: waffenlos gegen menschenähnliche Ziele +1 TP",
-    "Misslingen": "falsche Einordnung, Fehlbehandlung",
-    "Modifikatoren": "Speziesfremde, Zustand des Körpers",
-    "Optional": "oft Hilfstalent"
-  },
-  {
-    "Name": "Baukunst",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/KL/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Zimmermann+10, Maurer+10, Steinmetz+10",
-    "Spezialisierungen": "Hochbau(Wohn- und Repräsentationsgebäude), Tiefbau(Brücken, Kanäle, Straßen), Wehranlagen",
-    "Zweck": "Bauten planen, Konstruktion beurteilen, Bau überwachen",
-    "Kernregel": "Voraussetzung Lesen/Schreiben 4, Malen/Zeichnen 5, Rechnen 5",
-    "Misslingen": "Planungsfehler, instabile Konstruktion, Fehleinschätzung",
-    "Modifikatoren": "Bauart, Material, Maßstab",
-    "Optional": ""
-  },
-  {
-    "Name": "Brettspiel",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/KL/IN)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Kriegskunst(Strategie)+10, Rechnen+10",
-    "Spezialisierungen": "nach Spiel",
-    "Zweck": "Regeln, Technik, Kombinationen, Stellungseinschätzung",
-    "Kernregel": "offene Probe für Spielstärke/Wettstreit naheliegend",
-    "Misslingen": "Fehlzug, Fehleinschätzung, Niederlage",
-    "Modifikatoren": "Spieltyp, Gegnerstärke",
-    "Optional": ""
-  },
-  {
-    "Name": "Geographie",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/KL/IN)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Sagen/Legenden+10",
-    "Spezialisierungen": "nach Region",
-    "Zweck": "Landschaften, Klima, Böden, Flüsse, Pässe, Regionen",
-    "Kernregel": "kulturelle Detailfragen ohne Kulturkunde erschwert; Sitten eher Etikette, Mythen eher Sagen/Legenden oder Götter/Kulte",
-    "Misslingen": "falsche Regionalinfos, Fehlplanung",
-    "Modifikatoren": "Kulturkunde, Regionenfremde, Detailtiefe",
-    "Optional": ""
-  },
-  {
-    "Name": "Geschichtswissen",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/KL/IN)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Sagen/Legenden+10, passende Fach-Talente+10",
-    "Spezialisierungen": "nach Kultur; Bau- und Kunstgeschichte, Militär-, Religions-, Wissenschaftsgeschichte",
-    "Zweck": "Historie, alte Quellen, Einordnung, Bewertung",
-    "Kernregel": "Voraussetzung Lesen/Schreiben 4; ohne Kulturkunde oft erschwert",
-    "Misslingen": "falsche Datierung, Fehlinterpretation",
-    "Modifikatoren": "Quellenlage, Kulturkunde, Thema",
-    "Optional": ""
-  },
-  {
-    "Name": "Gesteinskunde",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/IN/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Steinmetz+5, Bergbau+10, Baukunst+10, Steinschneider+10, Hüttenkunde+10",
-    "Spezialisierungen": "Baugestein, Edelmetalle, Edelsteine",
-    "Zweck": "Gestein/Erz/Edelstein bestimmen, Bauzweck prüfen, Erzadern/Schürfstellen finden",
-    "Kernregel": "Materialeigenschaften, Baueignung, Bodensuche nach Erz/Edelmetallen/Edelsteinen",
-    "Misslingen": "Fehlbestimmung, wertlose Suche, falsche Materialeinschätzung",
-    "Modifikatoren": "Gesteinsart, Probequalität, Umgebung, Fachnähe",
-    "Optional": ""
-  },
-  {
-    "Name": "Götter/Kulte",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/KL/IN)",
-    "Typ": "Basis",
-    "eBE": "",
-    "Ersatz": "Geschichtswissen+10, Sagen/Legenden+10",
-    "Spezialisierungen": "je nach Glaubensausrichtung",
-    "Zweck": "Riten, Bekenntnisse, Heiligenlegenden, geziemende Anreden/Verbeugungen",
-    "Kernregel": "Eigener Glaube; TaW 7+ erlaubt Vertiefung anderer Religionen; fremde Religionen ohne passende Kulturkunde erschwert",
-    "Misslingen": "ritueller Fauxpas, falsche Anrede, Irrtum über Glaubensinhalte",
-    "Modifikatoren": "Kulturkunde, Fremdreligion, Sektennähe, Detailgrad",
-    "Optional": ""
-  },
-  {
-    "Name": "Heraldik",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/KL/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Etikette+10",
-    "Spezialisierungen": "nach Staat",
-    "Zweck": "Wappen, Feldzeichen, Helmzieren, Erblinien, Regimenterfarben erkennen",
-    "Kernregel": "Herkunft, Zweiglinie, Fälschung/Phantasiewappen; kulturabhängig",
-    "Misslingen": "falsche Zuordnung, gefälschtes Wappen nicht erkannt",
-    "Modifikatoren": "Kulturkunde, Sichtbarkeit, Komplexität, Staatsfremdheit",
-    "Optional": ""
-  },
-  {
-    "Name": "Hüttenkunde",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/IN/KO)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Alchimie+10, Metallguss+10, Grobschmied+15",
-    "Spezialisierungen": "nach Metall/Erz (Edelmetalle, Eisen/Stahl, Kupfer/Bronze/Messing, Zinn, Magische Metalle ...)",
-    "Zweck": "Metalle aus Erz gewinnen, Legierungen herstellen, Metallwaren/Erzadern bewerten",
-    "Kernregel": "Schlüsselwissen zwischen Bergbau und Schmiede; Qualität von Metall und Erz einschätzen",
-    "Misslingen": "schlechte Schmelze/Legierung, Fehleinschätzung von Ware oder Ader",
-    "Modifikatoren": "Metallart, Erzqualität, Ofen/Verfahren, Reinheit",
-    "Optional": ""
-  },
-  {
-    "Name": "Kriegskunst",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(MU/KL/CH)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Brett-/Kartenspiel+10; Rechnen, Menschenkenntnis, Tierkunde situativ",
-    "Spezialisierungen": "Logistik, Militärgeschichte, Monstren, Seegefechte, Strategie, Taktik",
-    "Zweck": "Schlachten lenken, Truppen bewegen/versorgen/motivieren, Gegner/Terrain beurteilen",
-    "Kernregel": "Strategie, Taktik, Hauptmannsentscheidungen; wichtig für Kampfeinschätzung",
-    "Misslingen": "falscher Plan, schlechte Aufstellung, Fehlurteil über Gegner/Terrain",
-    "Modifikatoren": "Truppenstärke, Informationslage, Gelände, Zeitdruck, Gegnertyp",
-    "Optional": "Zwergisch zusätzlich Drachenbekämpfung"
-  },
-  {
-    "Name": "Kryptographie",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/KL/IN)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Rechnen+10, Sprachenkunde+10",
-    "Spezialisierungen": "",
-    "Zweck": "Texte ver- und entschlüsseln, Geheimschriften analysieren",
-    "Kernregel": "Meister kann verdeckt würfeln; Entschlüsselung meist als längerfristiger Talenteinsatz mit TaP*-Ansammlung",
-    "Misslingen": "Fehldeutung, kein Fortschritt, falsche Klartextannahme",
-    "Modifikatoren": "Verschlüsselungssystem, Textmenge, Hinweise, Zeit",
-    "Optional": "Voraussetzung L/S 6, Rechnen 6, Sprachenkunde 4, M/Z 4"
-  },
-  {
-    "Name": "Magiekunde",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/KL/IN)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Sagen/Legenden+10, Götter/Kulte+10(Sphärologie)",
-    "Spezialisierungen": "Artefaktherstellung, Dämonologie, Elementarismus, Magiehistorie, Magietheorie, Magische Analyse, Sphärologie, Zauberpraxis, Zauberwerkstatt",
-    "Zweck": "Zauberwirkungen, Artefakte, Spuren, arkane Hintergründe erkennen/deuten",
-    "Kernregel": "Auch für Nichtzauberer; Zauberpraxis erkennt Gesten/Formeln/Wirkungen; TaW >10 nur mit Lesen/Schreiben 6",
-    "Misslingen": "falsche Deutung von Zauber, Artefakt oder Spur",
-    "Modifikatoren": "Spezialisierung, Beobachtungsnähe, Vorwissen, Magiegebiet",
-    "Optional": ""
-  },
-  {
-    "Name": "Mechanik",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/KL/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Feinmechanik+10",
-    "Spezialisierungen": "Belagerungswaffen, Kräne/Hebewerke/Mahlwerke, Materialkunde, Pumpen und Wasserkraft, Windkraft",
-    "Zweck": "Hebelgesetze, Reibung, Flaschenzug, schiefe Ebene; Geräte planen/prüfen",
-    "Kernregel": "Improvisierte Geräte per Probe; komplexe Konstruktionen mit Zuschlag bzw. TaP*-Ansammlung; Meister kann verdeckt würfeln",
-    "Misslingen": "Gerät funktioniert nicht oder versagt erst im Einsatz",
-    "Modifikatoren": "Komplexität, Material, Bauqualität, Probelauf",
-    "Optional": "nützlich für Armbrüste/Belagerungswaffen; TaW >10 nur mit L/S, M/Z, Rechnen 6"
-  },
-  {
-    "Name": "Pflanzenkunde",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/IN/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Wildnisleben+10",
-    "Spezialisierungen": "nach Gelände: Dschungel, Gebirge, Grasland, Meer, Steppe, Sumpf, Tundra, Wald, Wüste",
-    "Zweck": "Pflanzen suchen, bestimmen, Heil-/Giftstoffe gewinnen, Elixiere brauen",
-    "Kernregel": "Drei Einsatzfelder: Suche, Bestimmung, Brauen; Bestimmungs- und Brauproben können verdeckt laufen",
-    "Misslingen": "Pflanze nicht gefunden, falsch bestimmt, gefährlicher Fehltrank",
-    "Modifikatoren": "Gelände, Saison, Pflanzenart, Verarbeitungsaufwand",
-    "Optional": ""
-  },
-  {
-    "Name": "Philosophie",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/KL/IN)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Götter/Kulte+10, Magiekunde+10, Geschichtswissen+15, Sagen/Legenden+15",
-    "Spezialisierungen": "",
-    "Zweck": "Denkschulen, Logik, Ethik, Erkenntnistheorie, Kosmogonie",
-    "Kernregel": "Vergleich von Weltbildern und Lehrsystemen unabhängig vom Glaubensbekenntnis",
-    "Misslingen": "Fehlschluss, falsche Schule/Lehre, schlechte Argumentation",
-    "Modifikatoren": "Abstraktionsgrad, Thema, Quellenlage",
-    "Optional": ""
-  },
-  {
-    "Name": "Rechnen",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/KL/IN)",
-    "Typ": "Basis",
-    "eBE": "",
-    "Ersatz": "",
-    "Spezialisierungen": "Arithmetik, Buchführung, Geometrie",
-    "Zweck": "Zählen, Grundrechenarten, Geometrie, Zinseszins, höhere Mathematik",
-    "Kernregel": "TaW 0 nur zählen; 1-2 mühselig; 3 Grundrechenarten; 4 Mindestbasis vieler Wissenstalente; ab 6 höhere Mathematik",
-    "Misslingen": "Rechenfehler, falsche Kalkulation",
-    "Modifikatoren": "Komplexität, Hilfsmittel, Zeit",
-    "Optional": ""
-  },
-  {
-    "Name": "Rechtskunde",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/KL/IN)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Etikette+10, Staatskunst+10",
-    "Spezialisierungen": "Gildenrecht, Kirchenrecht, Strafrecht, Staatsrecht oder nach jeweiligem Staat",
-    "Zweck": "Rechtssysteme von Ländern, Gilden, Kirchen; Vergehen vermeiden/handhaben",
-    "Kernregel": "Meister kann verdeckt würfeln; Kulturkunde modifiziert vorhandene oder fehlende Rechtsnähe",
-    "Misslingen": "Rechtsirrtum, falsches Verhalten gegenüber Obrigkeit/Gericht",
-    "Modifikatoren": "Staat, Rechtsgebiet, Kulturkunde, Fallkomplexität",
-    "Optional": ""
-  },
-  {
-    "Name": "Sagen/Legenden",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/IN/CH)",
-    "Typ": "Basis",
-    "eBE": "",
-    "Ersatz": "Geschichtswissen+10, Götter/Kulte+10",
-    "Spezialisierungen": "nach Kultur",
-    "Zweck": "Mythen, Götter/Heroen, Bräuche, mündliche und schriftliche Überlieferung",
-    "Kernregel": "Eigene Kultur meist ohne Probe; fremde Völker ohne passende Kulturkunde erschwert",
-    "Misslingen": "falsche Sage, irreführender Brauch, Mythos verwechselt",
-    "Modifikatoren": "Kulturkunde, Fremdkultur, Seltenheit, Quellenlage",
-    "Optional": ""
-  },
-  {
-    "Name": "Schätzen",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/IN/IN)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Feinmechanik(Goldschmied)+5, Handel+5, Steinschneider/Juwelier+5",
-    "Spezialisierungen": "Antiquitäten, Materialwert, Schmuck, Handwerksgüter",
-    "Zweck": "Marktwert und Verkaufspreis materieller Gegenstände erkennen",
-    "Kernregel": "Meister kann verdeckt würfeln; betrifft materielle Werte, nicht Entfernungen/Baustoffmengen",
-    "Misslingen": "Über-/Unterbewertung, Fehlkauf, schlechter Verkauf",
-    "Modifikatoren": "Zustand, Seltenheit, Echtheit, Warengruppe",
-    "Optional": ""
-  },
-  {
-    "Name": "Sprachenkunde",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/KL/IN)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "",
-    "Spezialisierungen": "nach Sprachfamilie",
-    "Zweck": "Verwandtschaft von Sprachen/Schriften erkennen, Dialekte und Sprachentwicklung deuten",
-    "Kernregel": "Erlaubt Schlüsse von bekannter auf unbekannte verwandte Sprache/Schrift; nötig für manche alten Fremdsprachen",
-    "Misslingen": "falsche Zuordnung, Dialekt/Schrift fehlgedeutet",
-    "Modifikatoren": "Nähe der Sprachfamilie, Kenntnis verwandter Sprache, Schriftsystem",
-    "Optional": ""
-  },
-  {
-    "Name": "Staatskunst",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/IN/CH)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Hauswirtschaft+10, Rechtskunde(Staatsrecht)+10",
-    "Spezialisierungen": "Diplomatie, Intrige, Verwaltung",
-    "Zweck": "Herrschaftsformen, Staatsfinanzen, Zusammenleben von Staaten und Völkern",
-    "Kernregel": "Theoriewissen für Diplomaten, Beamte, Adlige; Politik- und Verwaltungsverständnis",
-    "Misslingen": "politische Fehleinschätzung, Verwaltungs-/Diplomatiefehler",
-    "Modifikatoren": "Staatsfremdheit, Komplexität, Informationslage",
-    "Optional": ""
-  },
-  {
-    "Name": "Sternkunde",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(KL/KL/IN)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Gabe Prophezeien(Astrologie)+5",
-    "Spezialisierungen": "Himmelskartographie, Horoskope, Navigation, Zeitbestimmung",
-    "Zweck": "Sterne zur Deutung, Navigation, Zeitmessung und Himmelsbeobachtung nutzen",
-    "Kernregel": "Astrologie, Navigation, Zeitbestimmung und Theorie des Himmelslaufs; TaW >10 nur mit Sprache/Schrift, Rechnen, Sinnenschärfe 6",
-    "Misslingen": "falscher Kurs, falsche Zeitbestimmung, Fehlhoroskop",
-    "Modifikatoren": "Sicht, Wetter, Instrumente, Jahreszeit, Region",
-    "Optional": ""
-  },
-  {
-    "Name": "Tierkunde",
-    "Kategorie": "Wissenstalente",
-    "Eigenschaften": "(MU/KL/IN)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "je nach Wesen Reiten+10, Viehzucht+10 oder Wildnisleben+10",
-    "Spezialisierungen": "Drachen, Jagdwild, Meeresgetier, Monstren, Nutztiere, Raubtiere, Schädlinge, Vielbeiner, Vögel oder nach Region",
-    "Zweck": "Tierarten bestimmen, Verhalten vorausahnen, Jagd unterstützen, Grundanatomie kennen",
-    "Kernregel": "Auch unbekannte Tiere per Vergleich mit vertrauten Arten einschätzen",
-    "Misslingen": "Art/Verhalten falsch eingeschätzt, Jagdfehler",
-    "Modifikatoren": "Wesenart, Regionsfremdheit, Beobachtungsqualität, Spezialgebiet",
-    "Optional": ""
-  },
-  {
-    "Name": "Abrichten",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(MU/IN/CH)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "je nach Wesen Reiten+10, Tierkunde+10, Viehzucht+10",
-    "Spezialisierungen": "Dompteur, Echsenbändiger, Falkner, Hundeführer, Zureiter",
-    "Zweck": "Tieren Kunststücke, Gehorsam und Spezialausbildung beibringen",
-    "Kernregel": "TaP* meist ansammeln; Fehlversuche +2 je gescheiterter Probe; Schwierigkeit nach Kunststück, Lernfähigkeit und Loyalität; TaW >10 nur mit Tierkunde 4",
-    "Misslingen": "kein Fortschritt, steigende Erschwernis, Ausbildung scheitert",
-    "Modifikatoren": "Kunststückschwierigkeit, Fehlversuche, Loyalität, Tierart",
-    "Optional": ""
-  },
-  {
-    "Name": "Ackerbau",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(IN/FF/KO)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Viehzucht+10, Pflanzenkunde+10",
-    "Spezialisierungen": "evtl. nach angebauter Frucht oder nach Klimazone, zwergische Pilzzucht",
-    "Zweck": "Boden, Aussaat, Ernte, Feldbestellung, Lagerung; Nutzpflanzen und Nahrungswert erkennen",
-    "Kernregel": "Erkennt auch fremde Nutzpflanzen, Wert und Haltbarkeit von Nahrungsmitteln; umfasst Umgang mit Pflug, Hacke, Dreschflegel",
-    "Misslingen": "schlechte Aussaat/Ernte, falsche Haltbarkeit, Nutzpflanze verkannt",
-    "Modifikatoren": "Boden, Klima, Saison, Fruchtart, Lagerbedingungen",
-    "Optional": ""
-  },
-  {
-    "Name": "Alchimie",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(MU/KL/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Kochen(Tränke)+10, Pflanzenkunde+10",
-    "Spezialisierungen": "Brandmittel, Gifte, Laborpraxis, Zauber-Elixiere, Farben/Lacke, Materialveredelung, Theoretische Alchimie",
-    "Zweck": "Mixturen, Chemikalien, Analyse unbekannter Stoffe",
-    "Kernregel": "Meister setzt Zuschlag; Rezeptur+Zutaten nötig; Voraussetzung L/S 4, Rechnen 4; Labor oder Untersuchungsausrüstung",
-    "Misslingen": "Fehlanalyse, Fehlmischung, Stinkwolke bis Explosion",
-    "Modifikatoren": "Rezeptur, Zutatenqualität, Labor, Gefährlichkeit",
-    "Optional": ""
-  },
-  {
-    "Name": "Bergbau",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(IN/KO/KK)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Baukunst+10, Gesteinskunde+10, Maurer+10, Steinmetz+10",
-    "Spezialisierungen": "Bergwerke, Kanalisation, natürliche Höhlen, Sappeur, unterirdische Städte",
-    "Zweck": "Schächte/Tunnel anlegen, Untergrundanlagen beurteilen",
-    "Kernregel": "Erkennt Erbauer, Umbauten, bauliche Schwächen; Voraussetzung für TaW>10: Gesteinskunde 4",
-    "Misslingen": "Fehlanlage, Fehlbeurteilung, übersehene Gefahr",
-    "Modifikatoren": "Gestein, Belüftung, Entwässerung, Komplexität",
-    "Optional": ""
-  },
-  {
-    "Name": "Bogenbau",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/IN/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Holzbearbeitung+10, Feinmechanik+10, Grobschmied+15 nur Armbrüste",
-    "Spezialisierungen": "Armbrust, Bogen, Bolzen/Pfeile, Torsionswaffen",
-    "Zweck": "Schusswaffen/Geschosse bauen, Qualität einschätzen",
-    "Kernregel": "Einzige Fertigkeit für spannungsbasierte Schusswaffen; Voraussetzung Holzbearbeitung 4",
-    "Misslingen": "unbrauchbare, ungenaue oder gefährliche Waffe/Munition",
-    "Modifikatoren": "Waffentyp, Material, Spannkraft, Präzisionsanspruch",
-    "Optional": ""
-  },
-  {
-    "Name": "Boote Fahren",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(GE/KO/KK)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Seefahrt+5",
-    "Spezialisierungen": "Einmaster(Segeln), Flöße(Staken), Kanus/Kajaks(Paddeln), Ruderboote(Rudern), Eissegler",
-    "Zweck": "Kleine Wasserfahrzeuge bewegen",
-    "Kernregel": "Stillwasser oft ohne Probe; Segeln, Wildwasser, Manöver mit Probe; große Schiffe über Seefahrt",
-    "Misslingen": "Abtreiben, Kenter-/Unfallgefahr, Kontrollverlust",
-    "Modifikatoren": "Gewässer, Wetter, Fahrzeugtyp, Manöver",
-    "Optional": ""
-  },
-  {
-    "Name": "Brauer",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/FF/KK)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Alchimie+10",
-    "Spezialisierungen": "",
-    "Zweck": "Stärkebasierte Gärgetränke herstellen, lagern, beurteilen",
-    "Kernregel": "Kennt Getreidelagerung und Gebräuqualität",
-    "Misslingen": "verdorbenes, schwaches oder ungenießbares Gebräu",
-    "Modifikatoren": "Rohstoff, Gärung, Lagerung, Reinheit",
-    "Optional": ""
-  },
-  {
-    "Name": "Drucker",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/FF/KK)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Mechanik+10, Stoffe Färben+10, Alchimie+10, Metallguss+15",
-    "Spezialisierungen": "Buchdruck, Druckereitechnik, Pamphlete, Typographie",
-    "Zweck": "Drucksatz, Farben, Druckstöcke, Pressen",
-    "Kernregel": "Voraussetzung L/S 6, Mechanik 4, Malen/Zeichnen 4",
-    "Misslingen": "unsauberer Druck, beschädigter Satz, Pressfehler",
-    "Modifikatoren": "Vorlage, Typensatz, Farbqualität, Pressentechnik",
-    "Optional": ""
-  },
-  {
-    "Name": "Fahrzeug Lenken",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(IN/CH/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "",
-    "Spezialisierungen": "Lastkarren, Streitwagen, Zuggespanne, Hunde- und Dachsschlitten",
-    "Zweck": "Wagen/Gespanne steuern, Manöver fahren",
-    "Kernregel": "Schwierigkeit nach Fahrzeug und Zugtierzahl; vierspännige Rennkutsche schon bei langsam +4",
-    "Misslingen": "Kontrollverlust, Kollision, Umkippen, Gespann scheut",
-    "Modifikatoren": "Fahrzeugtyp, Zugtiere, Tempo, Gelände, Manöver",
-    "Optional": "Streitwagen wichtig für Reiterkampf"
-  },
-  {
-    "Name": "Falschspiel",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(MU/CH/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Gaukeleien(Taschenspielereien)+10",
-    "Spezialisierungen": "Würfel, Karten",
-    "Zweck": "Bei Glücksspielen betrügen, Manipulation verbergen",
-    "Kernregel": "Menschenkenntnis 4; Meister oft verdeckt; hohes Falschspiel/Sinnenschärfe erkennt Betrug",
-    "Misslingen": "Entdeckung, Streit, Strafe",
-    "Modifikatoren": "Spielart, Ablenkung, Gegenspieler, Kontrolle",
-    "Optional": ""
-  },
-  {
-    "Name": "Feinmechanik",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/FF/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "",
-    "Spezialisierungen": "Gold- und Silberschmied, Gravieren, Schlösser, Siegelstöcke, Trickwaffen/Fallen, Uhrwerke",
-    "Zweck": "Kleinstmechanik, Schmuck, Gravuren, Schlösser, Präzisionsarbeit",
-    "Kernregel": "Voraussetzung Malen/Zeichnen 4",
-    "Misslingen": "klemmender Mechanismus, Wertverlust, Bruch",
-    "Modifikatoren": "Feinheit, Material, Werkzeug, Komplexität",
-    "Optional": ""
-  },
-  {
-    "Name": "Feuersteinbearbeitung",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/FF/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Steinmetz+10",
-    "Spezialisierungen": "",
-    "Zweck": "Werkzeuge, Klingen, Spitzen aus Feuerstein/Vulkanglas",
-    "Kernregel": "Weiterverarbeitung teils auch mit Holzbearbeitung; sehr scharf möglich, aber spröde",
-    "Misslingen": "brüchiges, stumpfes oder unbrauchbares Werkzeug",
-    "Modifikatoren": "Steinart, Schlagtechnik, Weiterverarbeitung",
-    "Optional": ""
-  },
-  {
-    "Name": "Fleischer",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/FF/KK)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Anatomie+10, Fischen/Angeln+10, Kochen+10, Tierkunde+10, Viehzucht+10, Gerber/Kürschner(Trophäen)+10",
-    "Spezialisierungen": "Fische, Geflügel, Reptilien, Säugetiere",
-    "Zweck": "Schlachten, verwerten, konservieren, Fleisch beurteilen",
-    "Kernregel": "TaW 10+: +1 TP gegen grob ähnliches Schlachtvieh; nicht kumulativ mit Anatomie",
-    "Misslingen": "Verderb, Materialverlust, schlechte Zerlegung",
-    "Modifikatoren": "Tierart, Zustand, Hygiene, Haltbarmachung",
-    "Optional": ""
-  },
-  {
-    "Name": "Gerber/Kürschner",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/FF/KO)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Alchimie+10, Fleischer+10",
-    "Spezialisierungen": "Gerber, Kürschner, Trophäen",
-    "Zweck": "Häute/Felle haltbar machen, Leder/Pelz/Trophäen",
-    "Kernregel": "Beurteilt Wert und Qualität von Pelz- und Lederwaren",
-    "Misslingen": "verdorbene Haut, Haarverlust, Wertverlust",
-    "Modifikatoren": "Tierart, Frische, Chemikalien, Verarbeitung",
-    "Optional": ""
-  },
-  {
-    "Name": "Glaskunst",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(FF/FF/KO)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Steinschneider/Juwelier+10",
-    "Spezialisierungen": "Fensterscheiben, Glasbläserei, Linsenschleifen, Spiegel",
-    "Zweck": "Glaswaren herstellen, Qualität/Wert beurteilen",
-    "Kernregel": "Umfasst Gebrauchs- und Feinglas",
-    "Misslingen": "Sprung, Trübung, Verzug, Bruch",
-    "Modifikatoren": "Glasart, Reinheit, Hitze, Formgenauigkeit",
-    "Optional": ""
-  },
-  {
-    "Name": "Grobschmied",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(FF/KO/KK)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Metallguss+15",
-    "Spezialisierungen": "Drahtzieher/Sarwirker, Hufschmied, Plättner, Schwarzschmied, Spengler, Waffenschmied",
-    "Zweck": "Geschmiedete Metallwaren, Waffen, Rüstungen, Beschläge",
-    "Kernregel": "Für Schmiedearbeit, nicht Guss; Reparatur und Neubau je nach Teilgebiet",
-    "Misslingen": "Riss, schlechte Härte, Verzug, unbrauchbares Werkstück",
-    "Modifikatoren": "Metall, Esse, Werkzeug, Werkstückgröße",
-    "Optional": ""
-  },
-  {
-    "Name": "Handel",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/IN/CH)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Hauswirtschaft+10, Geographie+15, Schätzen+15",
-    "Spezialisierungen": "nach Region oder Warengruppe, z.B. Korn, Metalle, Sklaven, Geldwechsel",
-    "Zweck": "Preise, Ankauf/Verkauf, Transport, Münzen bewerten/tauschen",
-    "Kernregel": "Voraussetzung Rechnen 4; umfasst auch Geldwechsel und Marktkenntnis",
-    "Misslingen": "Fehlkauf, Verlustgeschäft, Falschbewertung",
-    "Modifikatoren": "Marktlage, Region, Warengruppe, Informationsstand",
-    "Optional": ""
-  },
-  {
-    "Name": "Hauswirtschaft",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(IN/CH/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Rechnen(Buchführung)+10",
-    "Spezialisierungen": "Bewirtung/Feiern, Personal, Vorratshaltung",
-    "Zweck": "Haushalt führen, Vorräte, Dienstboten, Gäste, Feste",
-    "Kernregel": "Nützlich für Herbergen, Tempel, große Haushalte",
-    "Misslingen": "Chaos, Mangel, schlechte Bewirtung, Personalfehler",
-    "Modifikatoren": "Haushaltsgröße, Gästezahl, Vorratslage, Personal",
-    "Optional": ""
-  },
-  {
-    "Name": "Heilkunde Gift",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(MU/KL/IN)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Alchimie(Gifte)+5, Heilkunde Krankheiten+10, Kochen(Tränke)+10",
-    "Spezialisierungen": "alchimistische/Zaubergifte, mineralische, pflanzliche, tierische; Atem-, Einnahme-, Kontakt-, Waffengifte; Tierheilkunde",
-    "Zweck": "Gifte erkennen, behandeln, Folgeschaden mindern",
-    "Kernregel": "Erkennen +1/2 Giftstufe; Behandlung +Giftstufe; Nachbehandlung nach 12h +1/2 Giftstufe; Behandlung/Nachbehandlung heilen TaP* LeP",
-    "Misslingen": "keine Heilung; Patzer/Fehlschlag nach Start: +1W6 SP",
-    "Modifikatoren": "Giftstufe, Giftart, Symptomklarheit, Zeit",
-    "Optional": "Zeiten: 5 KR/1 SR/1 SR"
-  },
-  {
-    "Name": "Heilkunde Krankheiten",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(MU/KL/CH)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Heilkunde Gift+10",
-    "Spezialisierungen": "nach Region, Tierheilkunde",
-    "Zweck": "Krankheiten diagnostizieren, behandeln, nachbehandeln",
-    "Kernregel": "Erkennen +1/2 Stufe; Behandlung +Stufe; tägliche Nachbehandlung +1/2 Stufe; Behandlung/Nachbehandlung heilen TaP* LeP",
-    "Misslingen": "erste Probe: keine Heilung; spätere Probe: Heilung stoppt, +1W6 SP",
-    "Modifikatoren": "Krankheitsstufe, Symptomklarheit, Region, Zeit",
-    "Optional": "Zeiten: 1 SR/6 SR/täglich 6 SR"
-  },
-  {
-    "Name": "Heilkunde Seele",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(IN/CH/CH)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Menschenkenntnis+10, Überzeugen+10",
-    "Spezialisierungen": "",
-    "Zweck": "Magische/geistige Schäden, Schlechte Eigenschaften lindern",
-    "Kernregel": "Magische Ursachen: +3x ZfP*; akut gegen Schlechte Eigenschaft: Probe +2x Wert, Erfolg 1h um 1W6+TaP* gesenkt, Misslingen +1W6",
-    "Misslingen": "Verschlimmerung, neue/erhöhte Schlechte Eigenschaft, geistige Einbuße",
-    "Modifikatoren": "wie Gesellschaftstalente, Schwere, magische Ursache",
-    "Optional": "Dauertherapie: Zuschlag 18-Eigenschaftswert; 1 Tag Klausur"
-  },
-  {
-    "Name": "Heilkunde Wunden",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/CH/FF)",
-    "Typ": "Basis",
-    "eBE": "",
-    "Ersatz": "Anatomie+10",
-    "Spezialisierungen": "Brüche/Quetschungen, Innere Verletzungen, Schnitte, Tierheilkunde, Verbrennungen, Zahnleiden",
-    "Zweck": "Erste Hilfe, Blutstillung, Wundheilung fördern, Nachbehandlung",
-    "Kernregel": "Erste Hilfe bei 0/-LeP: +2x unter 0, Dauer 2x unter 0 KR-TaP*, min 2 KR; Erfolg 1 LeP. Heilförderung: 1. Probe 4 SR; 2. Probe 6 SR, 1/2 Punktüberschuss als LeP, je 7 TaP* heilt 1 Wunde sofort; tägliche Nachbehandlung 6 SR, je 3 TaP* +1 LeP",
-    "Misslingen": "Erste Hilfe: +1W6 SP; 2./Nachbehandlung: 24h Heilstopp, +1W6 SP",
-    "Modifikatoren": "+3 einfache Gliedmaßenwunde, +5 Kopf/Rumpf oberflächlich, +7 Bruch, +9 Schädel, +12 innere/schwerste Gliedmaßen, +15 fast-tödliche Kopf/Rumpf; Werkzeug/Verbände",
-    "Optional": ""
-  },
-  {
-    "Name": "Holzbearbeitung",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/FF/KK)",
-    "Typ": "Basis",
-    "eBE": "",
-    "Ersatz": "Zimmermann+5",
-    "Spezialisierungen": "Beinschnitzerei, Holzkunde, Holzwaffen, Küfer/Wagner, Möbelschreinerei/Tischlerei, Schnitzen",
-    "Zweck": "Holz-/Beinobjekte herstellen, reparieren, schnitzen",
-    "Kernregel": "komplizierte Holzgeräte/Kunstschnitzerei erschwert; TaP* für künstlerischen Eindruck",
-    "Misslingen": "bruchig, instabil, unbrauchbar",
-    "Modifikatoren": "Komplexität, Material, Zeit, Werkzeug",
-    "Optional": ""
-  },
-  {
-    "Name": "Instrumentenbauer",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/IN/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Holzbearbeitung+10, Feinmechanik+10",
-    "Spezialisierungen": "Blasinstrumente, Saiteninstrumente, Tasteninstrumente, Trommeln",
-    "Zweck": "Instrumente bauen, reparieren, Wert/Qualität schätzen",
-    "Kernregel": "Voraussetzung Holzbearbeitung 4, Feinmechanik 4, Musizieren 4",
-    "Misslingen": "verstimmt, schlecht klingend, unbrauchbar",
-    "Modifikatoren": "Instrumentengruppe, Material, Feinheit, Stimmung",
-    "Optional": ""
-  },
-  {
-    "Name": "Kartographie",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/KL/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Orientierung+10, Sternkunde+10",
-    "Spezialisierungen": "Gebäude, Höhlen/Tunnel, Küsten/Meere, Landschaften, Stadt",
-    "Zweck": "Karten/Pläne, Distanzen, Höhlen/Gebäude/Landschaften",
-    "Kernregel": "Voraussetzung Malen/Zeichnen 4; kartierte Gebiete erleichtern Orientierung; Kartenlesen ohne Talent fehleranfällig",
-    "Misslingen": "Fehlplan, Fehlinterpretation, falsche Distanz",
-    "Modifikatoren": "Gelände, Maßstab, Genauigkeit, Vorerkundung",
-    "Optional": ""
-  },
-  {
-    "Name": "Kochen",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/IN/FF)",
-    "Typ": "Basis",
-    "eBE": "",
-    "Ersatz": "Alchimie(Tränke)+10, Fleischer+10, Fischen/Angeln+10, Wildnisleben+10",
-    "Spezialisierungen": "Backen/Braten, Festmahle, Haltbarmachen, Marschversorgung, Tränke, Vorkoster",
-    "Zweck": "Speisen, Tränke, Vorrat, Marschverpflegung",
-    "Kernregel": "knapp gelungen=essbar; 3 TaP*=genießbar; 6 TaP*=schmackhaft",
-    "Misslingen": "verbrannt, fad, verdorben",
-    "Modifikatoren": "Zutaten, Herd, Zeit, Anlass",
-    "Optional": ""
-  },
-  {
-    "Name": "Kristallzucht",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/IN/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Alchimie+15",
-    "Spezialisierungen": "",
-    "Zweck": "Kristalle nach Farbe, Struktur, Eigenschaft züchten",
-    "Kernregel": "Schmelze/Lösung unter konstanten oder regelmäßig veränderten Bedingungen führen",
-    "Misslingen": "trüb, rissig, gewöhnlich, wertlos",
-    "Modifikatoren": "Reinheit, Stabilität, Temperatur, Zeit",
-    "Optional": "v.a. Zwerge"
-  },
-  {
-    "Name": "Lederarbeiten",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/FF/FF)",
-    "Typ": "Basis",
-    "eBE": "",
-    "Ersatz": "Gerber/Kürschner+10, Schneidern+10",
-    "Spezialisierungen": "Gurte/Riemen, Lederkleidung, Lederrüstungen, Sättel, Schuhwerk",
-    "Zweck": "Lederwaren herstellen, flicken, beurteilen",
-    "Kernregel": "Schuster können Lederrüstungen vollständig wiederherstellen",
-    "Misslingen": "schlechter Sitz, Nahtfehler, nur provisorisch repariert",
-    "Modifikatoren": "Lederart, Passform, Verschleiß, Werkzeug",
-    "Optional": ""
-  },
-  {
-    "Name": "Malen/Zeichnen",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/IN/FF)",
-    "Typ": "Basis",
-    "eBE": "",
-    "Ersatz": "Kartographie+10, Steinmetz(Bildhauer)+10, Tätowieren+5",
-    "Spezialisierungen": "Architektur, Landschaften, Porträt, technische Skizze",
-    "Zweck": "Bilder, Porträts, Skizzen, Entwürfe",
-    "Kernregel": "TaP* bestimmen künstlerischen Eindruck",
-    "Misslingen": "unähnlich, unbrauchbare Skizze",
-    "Modifikatoren": "Sujet, Detailgrad, Zeit, Material",
-    "Optional": ""
-  },
-  {
-    "Name": "Maurer",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(FF/GE/KK)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Baukunst+10",
-    "Spezialisierungen": "Steinbau, Steinguss, Ziegelbau",
-    "Zweck": "Mauern, Bögen, Gewölbe, Mörtel/Gussgranit, Materialbedarf",
-    "Kernregel": "beurteilt Qualität/Einsturzgefahr von Stein-/Ziegelbauten",
-    "Misslingen": "instabil, falsche Mischung, Materialfehler",
-    "Modifikatoren": "Bauart, Material, Größe, Statik",
-    "Optional": ""
-  },
-  {
-    "Name": "Metallguss",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/FF/KK)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Hüttenkunde+10, Grobschmied+10",
-    "Spezialisierungen": "Klangkörper, Rohre, Reliefplatten/Statuen",
-    "Zweck": "Gusswaren, Rohre, Reliefs, Statuen",
-    "Kernregel": "Voraussetzung Hüttenkunde 4; Legierung, Aufheiz-/Abkühlzeiten, Formenbau",
-    "Misslingen": "Fehlguss, Riss, Lunker, unbrauchbares Werk",
-    "Modifikatoren": "Metall, Form, Größe, Kühlung",
-    "Optional": ""
-  },
-  {
-    "Name": "Musizieren",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(IN/CH/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "",
-    "Spezialisierungen": "Blechblasinstrumente, Flöten, Harfen, Kapellmeister/Dirigent, Lauten, Rhythmusinstrumente, Streichinstrumente, Tasteninstrumente",
-    "Zweck": "Vortrag, Geld verdienen, Unterkunft sichern, Tiere besänftigen",
-    "Kernregel": "einfach gelungen=hörbar; 4 TaP*=damit Geld verdienen",
-    "Misslingen": "schräg, Blamage, Wirkung bleibt aus",
-    "Modifikatoren": "Instrument, Raum, Publikum, Schwierigkeit",
-    "Optional": "Wettstreit meist offene Probe"
-  },
-  {
-    "Name": "Schlösser Knacken",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(IN/FF/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Feinmechanik+5",
-    "Spezialisierungen": "Fallen, Schlösser",
-    "Zweck": "Schlösser öffnen, mechanische Fallen entschärfen",
-    "Kernregel": "untrainiert: FF-Probe mind. +7; Draht/Haarnadel -1, Dietrich -2; nur 1 Versuch pro Held",
-    "Misslingen": "Werkzeug bricht, Folgeversuche erschwert; Falle löst aus",
-    "Modifikatoren": "Schlossart, Werkzeug, Zeit, Komplexität",
-    "Optional": "zwergische Kombinationsschlösser/gestaffelte Fallen via längerfristiger Talenteinsatz"
-  },
-  {
-    "Name": "Schnaps Brennen",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/IN/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Alchimie+5, Brauer+10, Winzer+10",
-    "Spezialisierungen": "alchimistische Destillation, Beeren-/Obstbrände, Kornbrände, Kräuterschnäpse, Lagerung",
-    "Zweck": "Schnaps destillieren, lagern, beurteilen",
-    "Kernregel": "Brennerei oder transportable Destille nötig; aus fast jedem Alkohol trinkbarer Schnaps",
-    "Misslingen": "ungenießbar, schwach, verunreinigt",
-    "Modifikatoren": "Ausgangsgetränk, Destille, Reinheit, Lagerung",
-    "Optional": ""
-  },
-  {
-    "Name": "Schneidern",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/FF/FF)",
-    "Typ": "Basis",
-    "eBE": "",
-    "Ersatz": "Lederarbeiten+10, Webkunst+10",
-    "Spezialisierungen": "Entwurf/Festgewänder, Flick-/Gebrauchsschneiderei, Maßschneidern, Tuchrüstungen",
-    "Zweck": "flicken, ändern, Kleidung/Tuchrüstung herstellen, Qualität schätzen",
-    "Kernregel": "von Flickarbeit bis Wunderwerk aus schlichtem Stoff",
-    "Misslingen": "schlechter Sitz, Nahtfehler, Wertverlust",
-    "Modifikatoren": "Stoffart, Passform, Zuschnitt, Verzierung",
-    "Optional": ""
-  },
-  {
-    "Name": "Seefahrt",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(FF/GE/KK)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Boote Fahren+10",
-    "Spezialisierungen": "Ruderschiff, Segelschiff, Steuermann",
-    "Zweck": "mehrmastige Schiffe bedienen, instand halten, navigieren",
-    "Kernregel": "Steuermann-Spezialisierung für Mannschaftsorganisation und Navigation",
-    "Misslingen": "Fehlkurs, Manöverfehler, Schiffsschaden",
-    "Modifikatoren": "Schiffstyp, Wetter, See, Mannschaft",
-    "Optional": "kleine Wasserfahrzeuge über Boote Fahren"
-  },
-  {
-    "Name": "Seiler",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(FF/FF/KK)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Fesseln(Taue spleißen)+10",
-    "Spezialisierungen": "",
-    "Zweck": "Seile/Stricke herstellen, bewerten, reparieren, spleißen",
-    "Kernregel": "Herstellung braucht Reeperbahn; Spleißen/Altseilverwertung mobil möglich",
-    "Misslingen": "zu schwach, schlecht gespleißt, wertlos",
-    "Modifikatoren": "Material, Stärke, Länge, Zugbelastung",
-    "Optional": ""
-  },
-  {
-    "Name": "Steinmetz",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(FF/FF/KK)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Baukunst+10, Bergbau+10, Malen/Zeichnen+10, Maurer+10",
-    "Spezialisierungen": "Baugestein, Reliefs, Statuen",
-    "Zweck": "Skulpturen/Reliefs, Baugestein, Steinbauten prüfen",
-    "Kernregel": "Voraussetzung Gesteinskunde 4; prüft Gebäude/Steinbrücken, nicht Tunnel/Stollen",
-    "Misslingen": "Fehlbeurteilung, Materialfehler, unsauberes Werk",
-    "Modifikatoren": "Gesteinsart, Detailgrad, Bauart, Größe",
-    "Optional": ""
-  },
-  {
-    "Name": "Steinschneider/Juwelier",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(IN/FF/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Feinmechanik+10, Kristallzucht+10",
-    "Spezialisierungen": "",
-    "Zweck": "Edelsteine/Kristalle schneiden, schleifen, polieren, einfassen; Schmuck schätzen",
-    "Kernregel": "TaW >10 nur mit Gesteinskunde 4",
-    "Misslingen": "Sprung, Wertverlust, schlechter Schliff",
-    "Modifikatoren": "Steinart, Reinheit, Fassung, Präzision",
-    "Optional": ""
-  },
-  {
-    "Name": "Stellmacher",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/FF/KK)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Zimmermann+10",
-    "Spezialisierungen": "Karren/Wagen, Schlitten, Streitwagen",
-    "Zweck": "Kutschen/Schlitten bauen und instand halten",
-    "Kernregel": "Voraussetzung Holzbearbeitung 4, Lederarbeiten 4, Grobschmied 4",
-    "Misslingen": "instabil, Achs-/Rahmenfehler, unbrauchbar",
-    "Modifikatoren": "Fahrzeugtyp, Material, Belastung, Präzision",
-    "Optional": ""
-  },
-  {
-    "Name": "Stoffe Färben",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/FF/KK)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Alchimie+10, Drucker(Stoffdruck)+10",
-    "Spezialisierungen": "alchimistische Farben, mineralische Farben, pflanzliche Farben, tierische Farben, nach Art des Stoffes, Stoffdruck",
-    "Zweck": "Stoff/Leder dauerhaft färben, Herkunft/Wert der Färbung beurteilen",
-    "Kernregel": "Stoffdruck als Spezialfall",
-    "Misslingen": "ausbleichend, auswaschend, stoffschädigend",
-    "Modifikatoren": "Farbstoffart, Material, Fixierung, Druck",
-    "Optional": ""
-  },
-  {
-    "Name": "Tätowieren",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(IN/FF/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Malen/Zeichnen+10",
-    "Spezialisierungen": "Naturalistische Darstellung, Ornamente, Zaubertätowierungen",
-    "Zweck": "dauerhafte Hautbilder, Motivplatzierung, Farbmenge",
-    "Kernregel": "Voraussetzung Malen/Zeichnen 4; nur Tätowierer fertigen dauerhafte Hautbilder",
-    "Misslingen": "unschön, schlecht platziert, verwaschen",
-    "Modifikatoren": "Hauttyp, Motiv, Farbe, Größe",
-    "Optional": "Luloa-Hautmalerei über Malen/Zeichnen"
-  },
-  {
-    "Name": "Töpfern",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/FF/FF)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Maurer+10, Steinmetz+10",
-    "Spezialisierungen": "Gefäße, Statuetten, Ziegelei",
-    "Zweck": "Töpferwaren, Improvisationsgefäße, Bau-/Schmuckziegel, Ton/Lehm beurteilen",
-    "Kernregel": "auch ungebrannte Notgefäße; bewertet Ton- und Steingutwaren sowie Stabilität von Ziegelkonstruktionen",
-    "Misslingen": "rissig, schief, undicht, instabil",
-    "Modifikatoren": "Tonerde, Brennen, Form, Größe, Ziegelqualität",
-    "Optional": ""
-  },
-  {
-    "Name": "Viehzucht",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/IN/KK)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Tierkunde+10",
-    "Spezialisierungen": "nach Tierart: Rind, Schaf/Ziege, Schwein, Pferd, Hund etc.",
-    "Zweck": "Nutztiere halten, füttern, beurteilen, Zuchtauswahl",
-    "Kernregel": "kennt Futter, Weideflächen, Marktqualität; erkennt bestimmte Nutztierschäden/-krankheiten; wählt gute Zuchttiere",
-    "Misslingen": "Fehlkauf, schlechte Zuchtwahl, Haltungsfehler, Krankheit übersehen",
-    "Modifikatoren": "Tierart, Blutlinie, Futter, Stallung, Markt, Krankheitsanzeichen",
-    "Optional": ""
-  },
-  {
-    "Name": "Webkunst",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(FF/FF/KK)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Schneidern+10",
-    "Spezialisierungen": "nach Material oder nach Technik(Häkeln, Klöppeln, Stricken, Teppichknüpfen, Weben)",
-    "Zweck": "Stoffe/Tuche aus Garn oder Fäden herstellen, Qualität/Preis beurteilen",
-    "Kernregel": "meist Webstuhl nötig; umfasst auch andere Faden-zu-Stoff-Techniken",
-    "Misslingen": "unregelmäßig, locker, fehlerhaft, wertlos",
-    "Modifikatoren": "Material, Technik, Webstuhl, Muster, Feinheit",
-    "Optional": ""
-  },
-  {
-    "Name": "Winzer",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/FF/KK)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "",
-    "Spezialisierungen": "Wein, Fruchtweine, Schaumweine, Weinkenner",
-    "Zweck": "Anbaugebiete, Kelterei, Reifezeiten, Weinbeurteilung",
-    "Kernregel": "umfasst auch Herstellung von Schaum- und Fruchtweinen",
-    "Misslingen": "schwacher, verdorbener, falsch behandelter Wein",
-    "Modifikatoren": "Rebsorte/Frucht, Boden, Kelterung, Reifezeit, Lagerung",
-    "Optional": ""
-  },
-  {
-    "Name": "Zimmermann",
-    "Kategorie": "Handwerkstalente",
-    "Eigenschaften": "(KL/FF/KK)",
-    "Typ": "Spezial",
-    "eBE": "",
-    "Ersatz": "Holzbearbeitung+10",
-    "Spezialisierungen": "Dachdecker, Holzkonstruktionen, Schiffszimmermann, Schiffbau",
-    "Zweck": "große Holzbauten, Statik, Verbindungen, Wert/Stabilität von Holzkonstruktionen",
-    "Kernregel": "für Treppen, Dachbalken, Masten etc.; TaW>10 nur mit Holzbearbeitung 4; Schiffbau: Lesen/Schreiben 4, Malen/Zeichnen 4, Rechnen 4, Seefahrt 4",
-    "Misslingen": "instabil, schlecht verbunden, statischer Fehler",
-    "Modifikatoren": "Holzart, Größe, Verbindung, Statik, Witterung",
-    "Optional": ""
+{
+  "Version": "v1.1_talente_anzeige_mit_spezialisierungen",
+  "Quelle": "DSA 4.1 - Wege des Schwertes, Talentkapitel und Talentübersicht",
+  "Hinweis": "Kurzbeschreibungen weiterhin eigenständig paraphrasiert. Die Namen möglicher Talentspezialisierungen werden kanonisch geführt, damit sie mit Charakterdaten abgeglichen werden können. Listen mit 'nach Kultur/Region/Tierart' sind bewusst als offene Spezialisierungskategorien gekennzeichnet.",
+  "Talente": [
+    {
+      "Name": "Akrobatik",
+      "Kategorie": "Körper",
+      "Probe": [
+        [
+          "MU",
+          "GE",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Für bewusst ausgeführte akrobatische Kunststücke wie Balancieren, Salti, Schwingen oder das Bewegen durch sehr enge Passagen.",
+      "EffektiveBehinderung": "BE×2",
+      "Voraussetzung": "Körperbeherrschung 4",
+      "RegelhinweiseKurz": [
+        "Je 3 volle TaP über TaW 9 erhöhen den Ausweichen-Wert um 1."
+      ],
+      "Spezialisierungen": [
+        "Balancieren",
+        "Bodenakrobatik",
+        "Schwingen",
+        "Sprünge",
+        "Winden"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Athletik",
+      "Kategorie": "Körper",
+      "Probe": [
+        [
+          "GE",
+          "KO",
+          "KK"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Bündelt aktive körperliche Leistung wie Sprinten, Springen, Langstreckenlauf und das Bewegen oder Stemmen schwerer Lasten.",
+      "EffektiveBehinderung": "BE×2",
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [
+        "Kann u.a. Sprint, Sprungweite, Gewichtheben und Langstreckenleistung unterstützen."
+      ],
+      "Spezialisierungen": [
+        "Hochsprung",
+        "Kraftakte",
+        "Langlauf",
+        "Sprint",
+        "Weitsprung"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Fliegen",
+      "Kategorie": "Körper",
+      "Probe": [
+        [
+          "MU",
+          "IN",
+          "GE"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Dient zum sicheren Steuern nicht selbstständig handelnder Fluggeräte und für anspruchsvolle Flugmanöver.",
+      "EffektiveBehinderung": "BE",
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [
+        "Fliegende Lebewesen werden über Reiten abgehandelt, nicht über dieses Talent."
+      ],
+      "Spezialisierungen": [
+        "Hexenbesen",
+        "Fliegender Teppich",
+        "weitere magische Fluggeräte"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Weitere magische Fluggeräte können jeweils als eigene Spezialisierung gewählt werden.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Gaukeleien",
+      "Kategorie": "Körper",
+      "Probe": [
+        [
+          "MU",
+          "CH",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Umfasst Jahrmarkts- und Unterhaltungskunststücke wie Jonglieren, Bauchreden, Feuerkunst und Taschenspielereien.",
+      "EffektiveBehinderung": "BE×2",
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Bauchreden",
+        "Feuerkunst",
+        "Jonglieren",
+        "Possenreißen",
+        "Taschenspielereien"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Klettern",
+      "Kategorie": "Körper",
+      "Probe": [
+        [
+          "MU",
+          "GE",
+          "KK"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Wird für schwierige Auf- und Abstiege an Mauern, Felsen, Seilen oder anderen anspruchsvollen Kletterstellen eingesetzt.",
+      "EffektiveBehinderung": "BE×2",
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Bergsteigen",
+        "Eisklettern",
+        "Freiklettern",
+        "Seilklettern"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Körperbeherrschung",
+      "Kategorie": "Körper",
+      "Probe": [
+        [
+          "MU",
+          "IN",
+          "GE"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Beschreibt Balance, Reflexe und die Kontrolle des eigenen Körpers bei Stürzen, Ausweichbewegungen und plötzlich schwierigen Situationen.",
+      "EffektiveBehinderung": "BE×2",
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Fallen",
+        "Sprünge",
+        "Standfestigkeit"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Reiten",
+      "Kategorie": "Körper",
+      "Probe": [
+        [
+          "CH",
+          "GE",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Regelt das gezielte Lenken eines Reittiers und anspruchsvolle Manöver wie Galopp, Sprünge oder Ritte durch schwieriges Gelände.",
+      "EffektiveBehinderung": "BE−2",
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Pferd/Esel/Muli",
+        "Kamel",
+        "Strauß",
+        "Reitechse",
+        "Flugechse",
+        "Hippogriff",
+        "goblinisches Reit-Wildschwein"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Spezialisierungen werden grundsätzlich nach Tierart gewählt; die Liste enthält typische Beispiele.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Schleichen",
+      "Kategorie": "Körper",
+      "Probe": [
+        [
+          "MU",
+          "IN",
+          "GE"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Erlaubt es, sich möglichst geräuschlos zu bewegen und dabei Boden, Kleidung und mögliche Geräuschquellen zu berücksichtigen.",
+      "EffektiveBehinderung": "BE",
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [
+        "Kann vergleichend gegen Sinnenschärfe eingesetzt werden; verdeckte Proben sind sinnvoll."
+      ],
+      "Spezialisierungen": [
+        "Eis/Schnee",
+        "Gebäude",
+        "Geröll",
+        "Straßen",
+        "Wald/Dschungel"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Schwimmen",
+      "Kategorie": "Körper",
+      "Probe": [
+        [
+          "GE",
+          "KO",
+          "KK"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Deckt Schwimmen, Tauchen und körperlich fordernde Aktionen im Wasser ab, besonders bei Strömung, Last oder schlechter Ausrüstung.",
+      "EffektiveBehinderung": "BE×2",
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [
+        "Schwierigkeit hängt stark von Strömung, Belastung und Ausrüstung ab."
+      ],
+      "Spezialisierungen": [
+        "Langstreckenschwimmen",
+        "Schnellschwimmen",
+        "Tauchen",
+        "Unterwasserkampf"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Selbstbeherrschung",
+      "Kategorie": "Körper",
+      "Probe": [
+        [
+          "MU",
+          "KO",
+          "KK"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Steht für das Aushalten von Schmerzen und Belastungen sowie für die Fähigkeit, spontane körperliche oder emotionale Reaktionen zu unterdrücken.",
+      "EffektiveBehinderung": "–",
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Erschöpfung Ignorieren",
+        "Schmerz Unterdrücken",
+        "Störungen Ignorieren",
+        "Wunden Ignorieren"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": "Bei den vier genannten Spezialisierungen kann der Held bestimmte Belastungsmodifikatoren gezielt ignorieren; die dafür nötige Selbstbeherrschungs-Probe wird entsprechend erschwert.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Sich Verstecken",
+      "Kategorie": "Körper",
+      "Probe": [
+        [
+          "MU",
+          "IN",
+          "GE"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Hilft dabei, schnell geeignete Deckung zu erkennen und sich so zu positionieren, dass man möglichst schwer entdeckt wird.",
+      "EffektiveBehinderung": "BE−2",
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [
+        "Kann vergleichend gegen Sinnenschärfe eingesetzt werden."
+      ],
+      "Spezialisierungen": [
+        "Gebäude",
+        "Gebirge",
+        "Grasland",
+        "Eis/Schnee",
+        "Stadt",
+        "Wald/Dschungel",
+        "Wüste"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Singen",
+      "Kategorie": "Körper",
+      "Probe": [
+        [
+          "IN",
+          "CH",
+          "CH"
+        ],
+        [
+          "IN",
+          "CH",
+          "KO"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Beschreibt kontrollierten Gesang von einfachen Liedern bis zu anspruchsvollem Vortrag; für besonders kraftvolle Gesangsformen kann KO wichtiger werden.",
+      "EffektiveBehinderung": "BE−3",
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Balladenvortrag",
+        "Chorgesang",
+        "Mehrstimmigkeit",
+        "Operngesang"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Sinnenschärfe",
+      "Kategorie": "Körper",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "IN"
+        ],
+        [
+          "KL",
+          "IN",
+          "FF"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Wird eingesetzt, um schwer erkennbare Geräusche, Gerüche, Sichtdetails oder andere feine Sinneseindrücke wahrzunehmen; beim Tasten kann FF beteiligt sein.",
+      "EffektiveBehinderung": "situationsabhängig bis BE",
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [
+        "Für Tasten gilt üblicherweise KL/IN/FF, sonst meist KL/IN/IN."
+      ],
+      "Spezialisierungen": [
+        "Hören",
+        "Riechen/Schmecken",
+        "Sehen",
+        "Tasten"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Skifahren",
+      "Kategorie": "Körper",
+      "Probe": [
+        [
+          "GE",
+          "GE",
+          "KO"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Beherrschung der aventurischen Skitechnik für die Fortbewegung über Schnee und Eis, besonders auf längeren Strecken und schwierigem Gelände.",
+      "EffektiveBehinderung": "BE−2",
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [],
+      "SpezialisierungenMoeglich": false,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Stimmen Imitieren",
+      "Kategorie": "Körper",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "CH"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Erlaubt das gezielte Nachahmen fremder Stimmen, Sprechweisen und ähnlicher Lautäußerungen.",
+      "EffektiveBehinderung": "BE−4",
+      "Voraussetzung": "Sinnenschärfe 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Haustiere",
+        "Jagdwild",
+        "Menschliche Stimmen",
+        "Raubtiere",
+        "Vögel"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Tanzen",
+      "Kategorie": "Körper",
+      "Probe": [
+        [
+          "CH",
+          "GE",
+          "GE"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Umfasst rhythmische und ausdrucksstarke Bewegung, vom einfachen Gesellschaftstanz bis zu anspruchsvollen choreografierten Tänzen.",
+      "EffektiveBehinderung": "BE×2",
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Ausdruckstänze",
+        "Formationstänze",
+        "Höfische Tänze",
+        "Kulttänze",
+        "Meditationstänze"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {
+        "Höfische Tänze": "Etikette 6+",
+        "Kulttänze": "Götter/Kulte 6+"
+      }
+    },
+    {
+      "Name": "Taschendiebstahl",
+      "Kategorie": "Körper",
+      "Probe": [
+        [
+          "MU",
+          "IN",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Dient dazu, unbemerkt Gegenstände aus Taschen oder vom Körper einer Person zu nehmen oder dort zu platzieren.",
+      "EffektiveBehinderung": "BE×2",
+      "Voraussetzung": "für TaW über 10: Menschenkenntnis 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [],
+      "SpezialisierungenMoeglich": false,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Zechen",
+      "Kategorie": "Körper",
+      "Probe": [
+        [
+          "IN",
+          "KO",
+          "KK"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Beschreibt Trinkfestigkeit und den Umgang mit größeren Mengen Alkohol, einschließlich des Einschätzens der eigenen Belastbarkeit.",
+      "EffektiveBehinderung": "–",
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [],
+      "SpezialisierungenMoeglich": false,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Betören",
+      "Kategorie": "Gesellschaft",
+      "Probe": [
+        [
+          "IN",
+          "CH",
+          "CH"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Wird eingesetzt, um eine andere Person durch persönlichen Charme, Flirt oder erotische Ausstrahlung für sich einzunehmen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "Menschenkenntnis 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "nach Kultur"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Spezialisierung nach Kultur.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Etikette",
+      "Kategorie": "Gesellschaft",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "CH"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Kenntnis gesellschaftlicher Umgangsformen, Rangordnungen, höfischer Regeln und angemessenen Verhaltens in formellen Situationen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "nach Kultur"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Spezialisierung nach Kultur.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Gassenwissen",
+      "Kategorie": "Gesellschaft",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "CH"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Hilft, sich im städtischen Straßenleben zurechtzufinden, passende Kontakte aufzuspüren und Informationen aus Milieus und Unterwelt zu erhalten.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Beschatten",
+        "Hehlerei",
+        "Kontakte",
+        "Ortseinschätzung"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Lehren",
+      "Kategorie": "Gesellschaft",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "CH"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Beschreibt die Fähigkeit, Wissen oder praktische Fertigkeiten verständlich, strukturiert und an den Lernenden angepasst zu vermitteln.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "für TaW über 10: Menschenkenntnis 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Kampftalente",
+        "Körperliche Talente",
+        "Gesellschaftliche Talente",
+        "Natur-Talente",
+        "Wissenstalente",
+        "Handwerkstalente",
+        "Sprachen und Schriften"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Menschenkenntnis",
+      "Kategorie": "Gesellschaft",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "CH"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Dient dazu, Stimmung, Glaubwürdigkeit, Absichten und Verhalten einer Person einzuschätzen, ohne automatisch sichere Gewissheit zu liefern.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [
+        "Wird häufig verdeckt gewürfelt; ein Fehlschlag kann zu einer falschen Einschätzung führen."
+      ],
+      "Spezialisierungen": [
+        "nach Kultur"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Spezialisierung nach Kultur.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Schauspielerei",
+      "Kategorie": "Gesellschaft",
+      "Probe": [
+        [
+          "MU",
+          "KL",
+          "CH"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Bezeichnet die handwerkliche Seite des Schauspielens: Rollenarbeit, Bühnenpräsenz, Mimik, deutliche Sprache und kontrollierte Darstellung.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "für TaW über 10: Etikette, Sich Verkleiden, Singen, Überreden und Überzeugen jeweils 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Komödie",
+        "Posse",
+        "Tragödie"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Schriftlicher Ausdruck",
+      "Kategorie": "Gesellschaft",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "IN"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Regelt, wie klar, überzeugend oder stilistisch passend ein Held Gedanken in schriftlicher Form vermittelt.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "Lesen/Schreiben der verwendeten Schrift 6",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Schreiber",
+        "Schriftsteller"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Sich Verkleiden",
+      "Kategorie": "Gesellschaft",
+      "Probe": [
+        [
+          "MU",
+          "CH",
+          "GE"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Dient dazu, das eigene Erscheinungsbild mit Kleidung, Schminke, Haltung und passenden Details glaubhaft zu verändern.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "anderer Stand",
+        "anderes Geschlecht",
+        "andere Rasse",
+        "fremde Kultur"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Überreden",
+      "Kategorie": "Gesellschaft",
+      "Probe": [
+        [
+          "MU",
+          "IN",
+          "CH"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Wird für kurzfristiges Beeinflussen durch Bluff, Druck, Ablenkung, Ausreden oder geschicktes Zureden verwendet.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "für TaW über 10: Menschenkenntnis 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Aufwiegeln",
+        "Betteln",
+        "Einschüchtern",
+        "Feilschen",
+        "Lügen"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": "Die genannten Spezialisierungen sind zugleich typische Anwendungsgebiete des Talents. Aufwiegeln ist erforderlich, wenn mehr als vier Personen gleichzeitig beeinflusst werden sollen.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Überzeugen",
+      "Kategorie": "Gesellschaft",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "CH"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Dient dazu, eine Person mit nachvollziehbaren Argumenten und glaubwürdiger Darstellung dauerhaft von einer Position oder Handlung zu überzeugen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "Menschenkenntnis 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Öffentliche Rede (Demagogie, Plädoyer, Predigt)",
+        "Einzelgespräch (Verhör, Bekehrung)",
+        "Diskussions-Rhetorik",
+        "schriftliche Rhetorik"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Fährtensuchen",
+      "Kategorie": "Natur",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "IN"
+        ],
+        [
+          "KL",
+          "IN",
+          "KO"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Erlaubt das Finden, Verfolgen und Deuten von Spuren sowie Rückschlüsse auf Art, Richtung und Verhalten des Verursachers.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "für TaW über 10: Sinnenschärfe 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Eis/Schnee",
+        "Gebirge",
+        "Grasland",
+        "Stadt",
+        "Sumpf",
+        "Unterirdisch",
+        "Wald/Dschungel",
+        "Wüste"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Fallenstellen",
+      "Kategorie": "Natur",
+      "Probe": [
+        [
+          "KL",
+          "FF",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Umfasst das Planen, Bauen und Platzieren von Jagd- und Wildnisfallen passend zu Gelände und gewünschter Beute.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "für TaW über 10: Wildnisleben 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Gruben",
+        "Schlingen",
+        "Speere"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Fesseln/Entfesseln",
+      "Kategorie": "Natur",
+      "Probe": [
+        [
+          "FF",
+          "GE",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Regelt sichere Knoten und Fesselungen ebenso wie das Befreien aus Seilen, Stricken oder vergleichbaren Bindungen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Entfesseln",
+        "Fesseln",
+        "Knotenkunde",
+        "Taue Spleißen",
+        "Netze Knüpfen"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Fischen/Angeln",
+      "Kategorie": "Natur",
+      "Probe": [
+        [
+          "IN",
+          "FF",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Deckt verschiedene Methoden des Fischfangs ab und hilft bei der Wahl geeigneter Stellen, Köder und Fangtechniken.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Flüsse/Bäche",
+        "Hochseeangeln",
+        "Seen/Sumpf/Brackwasser",
+        "Strand/Riff",
+        "Seefischerei"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Orientierung",
+      "Kategorie": "Natur",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "IN"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Hilft, Richtung und Standort zu bestimmen, Wege wiederzufinden und sich in unbekanntem Gelände nicht zu verirren.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Dschungel",
+        "Eis/Schnee",
+        "Gebirge",
+        "Grasland",
+        "Meer",
+        "Stadt",
+        "Unterirdisch",
+        "Wald",
+        "Wüste"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Wettervorhersage",
+      "Kategorie": "Natur",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "IN"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Erlaubt es, aus Wolken, Wind, Luftfeuchte und anderen natürlichen Anzeichen die wahrscheinliche Wetterentwicklung abzuschätzen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "nach Geländetyp/Region"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Spezialisierung nach Geländetyp oder Region.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Wildnisleben",
+      "Kategorie": "Natur",
+      "Probe": [
+        [
+          "IN",
+          "GE",
+          "KO"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Bündelt praktische Überlebensfertigkeiten außerhalb von Siedlungen, etwa Lagerplatzwahl, einfache Versorgung und das Einschätzen typischer Naturgefahren.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Dschungel",
+        "Eis/Schnee",
+        "Gebirge",
+        "Meer",
+        "Steppe",
+        "Sumpf",
+        "Wald",
+        "Wüste"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Anatomie",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "MU",
+          "KL",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Kenntnis des Körperaufbaus von Lebewesen und seiner funktionalen Zusammenhänge; besonders nützlich für medizinische Beurteilungen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "keine Totenangst",
+      "RegelhinweiseKurz": [
+        "Ab TaW 10 kann Anatomiekenntnis im waffenlosen Kampf zusätzlichen Schaden ermöglichen."
+      ],
+      "Spezialisierungen": [
+        "nach Spezies"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Spezialisierung nach Spezies.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Baukunst",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "KL",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Umfasst Planung, Statik und konstruktive Beurteilung größerer Gebäude und anderer anspruchsvoller Bauwerke.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "Lesen/Schreiben 4, Malen/Zeichnen 5, Rechnen 5",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Hochbau (Wohn- und Repräsentationsgebäude)",
+        "Tiefbau (Brücken, Kanäle, Straßen)",
+        "Wehranlagen"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Brett-/Kartenspiel",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "KL",
+          "IN"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Kenntnis verbreiteter Brett- und Kartenspiele sowie ihrer Regeln, Wahrscheinlichkeiten und strategischen Möglichkeiten.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "nach Spiel"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Spezialisierung auf ein einzelnes Spiel.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Geographie",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "KL",
+          "IN"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Wissen über Länder, Landschaften, Städte, Verkehrswege, Entfernungen und die räumlichen Zusammenhänge Aventuriens.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "nach Region"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Spezialisierung nach Region.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Geschichtswissen",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "KL",
+          "IN"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Kenntnis historischer Ereignisse, Personen, Reiche und zeitlicher Zusammenhänge sowie die Fähigkeit, Funde geschichtlich einzuordnen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "Lesen/Schreiben 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "nach Kultur",
+        "Bau- und Kunstgeschichte",
+        "Militärgeschichte",
+        "Religionsgeschichte",
+        "Wissenschaftsgeschichte"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Gesteinskunde",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Erlaubt das Bestimmen und Bewerten von Gesteinen, Mineralien und Edelsteinen sowie das Einschätzen ihrer Eigenschaften.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Baugestein",
+        "Edelmetalle",
+        "Edelsteine"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Götter/Kulte",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "KL",
+          "IN"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Wissen über Religionen, Gottheiten, kirchliche Strukturen, Riten, Glaubensvorstellungen und verbreitete Kulte.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "nach Glaubensausrichtung"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Spezialisierung nach Glaubensausrichtung.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Heraldik",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "KL",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Kenntnis von Wappen, heraldischen Zeichen, Adelsfamilien und den Regeln, nach denen solche Symbole aufgebaut und verwendet werden.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "nach Staat"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Spezialisierung nach Staat.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Hüttenkunde",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "KO"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Behandelt das Gewinnen, Verhütten und Aufbereiten von Erzen und Metallen sowie die Eigenschaften entsprechender Rohstoffe.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Edelmetalle",
+        "Eisen/Stahl",
+        "Kupfer/Bronze/Messing",
+        "Zinn",
+        "Magische Metalle",
+        "weitere Metalle/Erze"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Spezialisierung nach Metall oder Erz.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Kriegskunst",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "MU",
+          "KL",
+          "CH"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Umfasst militärische Planung, Taktik, Strategie, Truppenführung, Versorgung und die Beurteilung größerer Gefechtssituationen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Logistik",
+        "Militärgeschichte",
+        "Monstren",
+        "Seegefechte",
+        "Strategie",
+        "Taktik",
+        "Drachen und deren Bekämpfung (zwergisch)"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Kryptographie",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "KL",
+          "IN"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Dient zum Entwickeln, Erkennen und Entschlüsseln von Geheimschriften, Codes und verschlüsselten Nachrichten.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "Lesen/Schreiben 6, Rechnen 6, Sprachenkunde 4, Malen/Zeichnen 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [],
+      "SpezialisierungenMoeglich": false,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Magiekunde",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "KL",
+          "IN"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Theoretisches Wissen über Zauberei, magische Traditionen, übernatürliche Wesen, Artefakte und andere arkane Phänomene.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "für TaW über 10: Lesen/Schreiben 6",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Artefaktherstellung",
+        "Dämonologie",
+        "Elementarismus",
+        "Magiehistorie",
+        "Magietheorie",
+        "Magische Analyse",
+        "Sphärologie",
+        "Zauberpraxis",
+        "Zauberwerkstatt"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": "Zauberpraxis betrifft besonders das Erkennen praktischer Zauberhandlungen. Magische Analyse, Zauberwerkstatt und Artefaktherstellung setzen praktisch zumindest rudimentären Zugang zu Magie voraus.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Mechanik",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "KL",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Kenntnis mechanischer Prinzipien und des Aufbaus komplexer Vorrichtungen wie Hebelwerke, Getriebe, Fallen oder Maschinen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "für TaW über 10: Lesen/Schreiben, Malen/Zeichnen und Rechnen jeweils 6",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Belagerungswaffen",
+        "Kräne/Hebewerke/Mahlwerke",
+        "Materialkunde",
+        "Pumpen und Wasserkraft",
+        "Windkraft"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Pflanzenkunde",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Erlaubt das Erkennen von Pflanzen und das Einschätzen ihrer Lebensräume, Eigenschaften, Gefahren und möglichen Verwendungen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Dschungel",
+        "Gebirge",
+        "Grasland",
+        "Meer",
+        "Steppe",
+        "Sumpf",
+        "Tundra",
+        "Wald",
+        "Wüste"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Spezialisierung nach Gelände.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Philosophie",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "KL",
+          "IN"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Kenntnis philosophischer Schulen und Begriffe sowie die Fähigkeit, abstrakte Fragen systematisch zu untersuchen und Argumente einzuordnen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [],
+      "SpezialisierungenMoeglich": false,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Rechnen",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "KL",
+          "IN"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Umfasst Rechenverfahren von alltäglicher Arithmetik und Buchführung bis zu anspruchsvolleren mathematischen Fragestellungen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Arithmetik",
+        "Buchführung",
+        "Geometrie"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Rechtskunde",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "KL",
+          "IN"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Kenntnis unterschiedlicher Rechtsordnungen, Gerichtsverfahren und Regeln aus Staats-, Straf-, Kirchen- oder Gildenrecht.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [
+        "Kenntnisse sind stark von Region und Kultur abhängig; passende Kulturkunde ist relevant."
+      ],
+      "Spezialisierungen": [
+        "Gildenrecht",
+        "Kirchenrecht",
+        "Strafrecht",
+        "Staatsrecht",
+        "nach Staat"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Neben Rechtsgebieten ist eine Spezialisierung nach Staat möglich.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Sagen/Legenden",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "CH"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Wissen über überlieferte Geschichten, Mythen, Helden, Bräuche und volkstümliche Erzählungen verschiedener Kulturen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [
+        "Für fremde Kulturen kann fehlende Kulturkunde die Probe erschweren."
+      ],
+      "Spezialisierungen": [
+        "nach Kultur"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Spezialisierung nach Kultur.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Schätzen",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "IN"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Dient dazu, den materiellen Wert und die Qualität von Waren, Schmuck, Kunst- oder Handwerksgegenständen realistisch einzuschätzen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Antiquitäten",
+        "Materialwert",
+        "Schmuck",
+        "Handwerksgüter"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Sprachenkunde",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "KL",
+          "IN"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Beschäftigt sich mit Verwandtschaft, Entwicklung und Aufbau von Sprachen und Schriften und hilft beim Einordnen unbekannter Sprachformen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "nach Sprachfamilie"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Spezialisierung nach Sprachfamilie.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Staatskunst",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "CH"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Umfasst Verwaltung, Diplomatie, politische Strukturen, Staatsfinanzen und das Zusammenspiel von Herrschaft, Institutionen und Bevölkerung.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Diplomatie",
+        "Intrige",
+        "Verwaltung"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Sternkunde",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "KL",
+          "KL",
+          "IN"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Kenntnis des Sternenhimmels und seiner Bewegungen für Beobachtung, Zeitbestimmung, Navigation und astrologische Deutung.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "für TaW über 10: Lesen/Schreiben 6, Rechnen 6, Sinnenschärfe 6",
+      "RegelhinweiseKurz": [
+        "Umfasst neben Beobachtung auch Navigation, Zeitbestimmung und Astrologie."
+      ],
+      "Spezialisierungen": [
+        "Himmelskartographie",
+        "Horoskope",
+        "Navigation",
+        "Zeitbestimmung"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Tierkunde",
+      "Kategorie": "Wissen",
+      "Probe": [
+        [
+          "MU",
+          "KL",
+          "IN"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Erlaubt das Erkennen und Einschätzen von Tieren, ihrer Lebensweise, typischem Verhalten, Lebensraum und möglichen Gefahren.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Drachen",
+        "Jagdwild",
+        "Meeresgetier",
+        "Monstren",
+        "Nutztiere",
+        "Raubtiere",
+        "Schädlinge",
+        "Vielbeiner",
+        "Vögel",
+        "nach Region"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Neben Tiergruppen ist eine Spezialisierung nach Region möglich.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Abrichten",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "MU",
+          "IN",
+          "CH"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Dient dazu, Tiere gezielt an Menschen zu gewöhnen und ihnen Verhalten, Kommandos oder bestimmte Aufgaben anzutrainieren.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "für TaW über 10: Tierkunde 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Dompteur",
+        "Echsenbändiger",
+        "Falkner",
+        "Hundeführer",
+        "Zureiter"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Ackerbau",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "IN",
+          "FF",
+          "KO"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Umfasst Bodenbearbeitung, Aussaat, Pflege und Ernte von Nutzpflanzen sowie die Einschätzung landwirtschaftlicher Bedingungen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "nach angebauter Frucht",
+        "nach Klimazone",
+        "zwergische Pilzzucht"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Spezialisierungen können nach angebauter Frucht oder Klimazone gewählt werden.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Alchimie",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "MU",
+          "KL",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Regelt das Herstellen und Untersuchen alchimistischer Stoffe und Mixturen mit passenden Rezepturen, Geräten und Zutaten.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "Lesen/Schreiben 4, Rechnen 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Brandmittel",
+        "Gifte",
+        "Laborpraxis",
+        "Zauber-Elixiere",
+        "Farben/Lacke",
+        "Materialveredelung (Gläser, Porzellan, besondere Legierungen, Goldmacherei)",
+        "Theoretische Alchimie (Elementarismus und Sympathetik)"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Bergbau",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "IN",
+          "KO",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Behandelt das sichere Anlegen und Betreiben von Minen, das Fördern von Gestein und Erz sowie die Beurteilung von Stollen und Lagerstätten.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "für TaW über 10: Gesteinskunde 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Bergwerke",
+        "Kanalisation",
+        "natürliche Höhlen",
+        "Sappeur",
+        "unterirdische Städte"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Bogenbau",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Dient zur Herstellung, Anpassung und Reparatur von Bögen und verwandten Bauteilen unter Berücksichtigung geeigneter Materialien.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "Holzbearbeitung 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Armbrust",
+        "Bogen",
+        "Bolzen/Pfeile",
+        "Torsionswaffen"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Boote Fahren",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "GE",
+          "KO",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Regelt das Manövrieren kleiner Wasserfahrzeuge mit Rudern, Paddeln, Staken oder einfacher Besegelung.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Einmaster (Segeln)",
+        "Flöße (Staken)",
+        "Kanus/Kajaks (Paddeln)",
+        "Ruderboote (Rudern)",
+        "Eissegler"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Brauer",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "FF",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Umfasst das Brauen und Beurteilen von Bier und ähnlichen vergorenen Getränken einschließlich der Kontrolle des Herstellungsprozesses.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [],
+      "SpezialisierungenMoeglich": false,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Drucker",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "FF",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Beschreibt den handwerklichen Umgang mit Druckformen, Lettern, Farben und Pressen zur reproduzierbaren Herstellung von Texten und Bildern.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "Lesen/Schreiben 6, Mechanik 4, Malen/Zeichnen 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Buchdruck",
+        "Druckereitechnik",
+        "Pamphlete",
+        "Typographie"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Fahrzeug Lenken",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "IN",
+          "CH",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Dient zum sicheren Führen von Wagen, Kutschen, Schlitten und ähnlichen von Zugtieren bewegten Fahrzeugen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Lastkarren",
+        "Streitwagen",
+        "Zuggespanne",
+        "Hunde- und Dachsschlitten"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Falschspiel",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "MU",
+          "CH",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Umfasst das unbemerkte Manipulieren von Karten-, Würfel- und ähnlichen Glücksspielen sowie das Erkennen typischer Tricks.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "Menschenkenntnis 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Würfel",
+        "Karten"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Feinmechanik",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "FF",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Dient zur Herstellung und Reparatur filigraner Metallarbeiten und kleiner Mechanismen wie Gravuren, Uhrwerke, feine Schlösser oder Schmuckfassungen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "Malen/Zeichnen 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Gold- und Silberschmied",
+        "Gravieren",
+        "Schlösser",
+        "Siegelstöcke",
+        "Trickwaffen/Fallen",
+        "Uhrwerke"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Feuersteinbearbeitung",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "FF",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Erlaubt das kontrollierte Bearbeiten spröder Steine zu scharfen Klingen, Spitzen, Werkzeugen und einfachen steinernen Waffen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [],
+      "SpezialisierungenMoeglich": false,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Fleischer",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "FF",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Umfasst fachgerechtes Schlachten, Zerlegen und Haltbarmachen von Fleisch sowie die Beurteilung von Fleischqualität und verwertbaren Tierkörperteilen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [
+        "Ab TaW 10 kann gegen passend ähnliche Lebewesen zusätzlicher waffenloser Schaden möglich sein; nicht kumulativ mit Anatomie."
+      ],
+      "Spezialisierungen": [
+        "Fische",
+        "Geflügel",
+        "Reptilien",
+        "Säugetiere"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Gerber/Kürschner",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "FF",
+          "KO"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Dient zum Aufbereiten von Häuten und Fellen zu haltbarem Leder oder Pelz und zur Beurteilung entsprechender Rohmaterialien.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Gerber",
+        "Kürschner",
+        "Trophäen"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Glaskunst",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "FF",
+          "FF",
+          "KO"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Umfasst das Formen, Bearbeiten und Veredeln von Glas sowie die Einschätzung von Qualität und Wert gläserner Arbeiten.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Fensterscheiben",
+        "Glasbläserei",
+        "Linsenschleifen",
+        "Spiegel"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Grobschmied",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "FF",
+          "KO",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Regelt das Schmieden größerer Gebrauchsgegenstände aus Metall, darunter Werkzeuge, Beschläge und je nach Spezialisierung auch Waffen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Drahtzieher/Sarwirker",
+        "Hufschmied",
+        "Plättner",
+        "Schwarzschmied",
+        "Spengler",
+        "Waffenschmied"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Handel",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "CH"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Bündelt Marktkenntnis, Verhandlung, Preisbildung sowie den praktischen Umgang mit Einkauf, Verkauf und Warenströmen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "nach Region",
+        "nach Warengruppe"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Spezialisierung nach Region oder Warengruppe.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Hauswirtschaft",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "IN",
+          "CH",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Umfasst Organisation eines Haushalts oder Guts, Vorräte, Personal, Bewirtung und die Koordination alltäglicher Arbeiten und Dienstleistungen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Bewirtung/Feiern",
+        "Personal",
+        "Vorratshaltung"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Heilkunde Gift",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "MU",
+          "KL",
+          "IN"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Dient dazu, Vergiftungen zu erkennen, das Gift einzugrenzen und mit geeigneten Maßnahmen Behandlung und Nachsorge durchzuführen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [
+        "Behandlung kann aus Erkennen, eigentlicher Behandlung und Nachsorge bestehen."
+      ],
+      "Spezialisierungen": [
+        "alchimistische/Zaubergifte",
+        "mineralische Gifte",
+        "pflanzliche Gifte",
+        "tierische Gifte",
+        "Atemgifte",
+        "Einnahmegifte",
+        "Kontaktgifte",
+        "Waffengifte",
+        "Tierheilkunde"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Heilkunde Krankheiten",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "MU",
+          "KL",
+          "CH"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Umfasst Diagnose, Behandlung und Pflege bei Krankheiten sowie die Einschätzung ihres Verlaufs und geeigneter Gegenmaßnahmen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "nach Region",
+        "Tierheilkunde"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Spezialisierung nach Region oder auf Tierheilkunde.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Heilkunde Seele",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "IN",
+          "CH",
+          "CH"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Beschreibt das Erkennen und Behandeln seelischer Belastungen, Ängste und anderer psychischer Probleme durch Gespräch und Betreuung.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [],
+      "SpezialisierungenMoeglich": false,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Heilkunde Wunden",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "CH",
+          "FF"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Regelt Erste Hilfe und die Behandlung körperlicher Verletzungen wie Schnitte, Brüche, Verbrennungen und andere Wunden.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Brüche/Quetschungen",
+        "Innere Verletzungen",
+        "Schnitte",
+        "Tierheilkunde",
+        "Verbrennungen",
+        "Zahnleiden"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Holzbearbeitung",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "FF",
+          "KK"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Dient zur Herstellung, Anpassung und Reparatur kleinerer bis mittlerer Gegenstände aus Holz sowie vergleichbarer Schnitzarbeiten.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Beinschnitzerei",
+        "Holzkunde",
+        "Holzwaffen",
+        "Küfer/Wagner",
+        "Möbelschreinerei/Tischlerei",
+        "Schnitzen"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Instrumentenbauer",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Umfasst Herstellung, Reparatur und Beurteilung von Musikinstrumenten und verbindet dabei verschiedene Werkstoffe und präzise Handarbeit.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "Holzbearbeitung 4, Feinmechanik 4, Musizieren 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Blasinstrumente",
+        "Saiteninstrumente",
+        "Tasteninstrumente",
+        "Trommeln"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Kartographie",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "KL",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Dient zum Erstellen verlässlicher Karten und Pläne aus Beobachtungen und Vermessungen und unterstützt spätere Orientierung in erfasstem Gebiet.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "Malen/Zeichnen 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Gebäude",
+        "Höhlen/Tunnel",
+        "Küsten/Meere",
+        "Landschaften",
+        "Stadt"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Kochen",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "FF"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Umfasst die Zubereitung und Verarbeitung von Lebensmitteln zu schmackhaften, sicheren und je nach Können anspruchsvollen Speisen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Backen/Braten",
+        "Festmahle",
+        "Haltbarmachen",
+        "Marschversorgung",
+        "Tränke",
+        "Vorkoster"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Kristallzucht",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Beschreibt die kontrollierte Zucht und Bearbeitung geeigneter Kristalle unter Nutzung spezieller Kenntnisse über Wachstum und Materialeigenschaften.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [],
+      "SpezialisierungenMoeglich": false,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Lederarbeiten",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "FF",
+          "FF"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Dient zur Verarbeitung von bereits vorbereitetem Leder zu Kleidung, Taschen, Riemen und anderen Gebrauchsgegenständen sowie zu deren Reparatur.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Gurte/Riemen",
+        "Lederkleidung",
+        "Lederrüstungen",
+        "Sättel",
+        "Schuhwerk"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Malen/Zeichnen",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "FF"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Umfasst freies Zeichnen, Malerei und bildliche Darstellung von Motiven, Entwürfen oder Beobachtungen mit unterschiedlichen Techniken.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Architektur",
+        "Landschaften",
+        "Porträt",
+        "technische Skizze"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Maurer",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "FF",
+          "GE",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Regelt praktische Mauerarbeiten und das Errichten oder Reparieren von Konstruktionen aus Stein, Ziegel und Mörtel.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Steinbau",
+        "Steinguss",
+        "Ziegelbau"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Metallguss",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "FF",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Dient zum Schmelzen und Gießen von Metall in vorbereitete Formen sowie zur Beurteilung geeigneter Legierungen und Gussverfahren.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "Hüttenkunde 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Klangkörper",
+        "Rohre",
+        "Reliefplatten/Statuen"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Musizieren",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "IN",
+          "CH",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Beschreibt das Beherrschen von Musikinstrumenten und den musikalischen Vortrag von einfachen Stücken bis zu anspruchsvollen Darbietungen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Blechblasinstrumente",
+        "Flöten",
+        "Harfen",
+        "Kapellmeister/Dirigent",
+        "Lauten",
+        "Rhythmusinstrumente",
+        "Streichinstrumente",
+        "Tasteninstrumente"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Schlösser Knacken",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "IN",
+          "FF",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Dient zum Öffnen von Schlössern ohne passenden Schlüssel und kann auch beim Entschärfen bestimmter mechanischer Fallen eingesetzt werden.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [
+        "Kann neben Schlössern auch für bestimmte mechanische Fallen verwendet werden; ein Fehlschlag kann die Situation verschlechtern."
+      ],
+      "Spezialisierungen": [
+        "Fallen",
+        "Schlösser"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Schnaps Brennen",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Umfasst das Destillieren alkoholischer Getränke und die gezielte Herstellung verschiedener Brände mit geeigneter Brennausrüstung.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "alchimistische Destillation",
+        "Beeren-/Obstbrände",
+        "Kornbrände",
+        "Kräuterschnäpse",
+        "Lagerung"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Schneidern",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "FF",
+          "FF"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Dient zum Nähen, Flicken, Ändern und vollständigen Anfertigen von Kleidung und anderen textilen Erzeugnissen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Entwurf/Festgewänder",
+        "Flick-/Gebrauchsschneiderei",
+        "Maßschneidern",
+        "Tuchrüstungen"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Seefahrt",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "FF",
+          "GE",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Umfasst Bedienung und Instandhaltung größerer Schiffe, Takelage, Ladung, kleinere Reparaturen und je nach Spezialisierung auch Navigation und Führung.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Ruderschiff",
+        "Segelschiff",
+        "Steuermann"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": "Die Spezialisierung Steuermann ist für Navigation und Organisation eines größeren Schiffs besonders relevant.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Seiler",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "FF",
+          "FF",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Dient zur Herstellung, Reparatur und fachgerechten Verarbeitung von Tauen, Stricken und anderem Seilwerk.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [],
+      "SpezialisierungenMoeglich": false,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Steinmetz",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "FF",
+          "FF",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Umfasst das Bearbeiten von Naturstein für Bauwerke, Reliefs und Skulpturen sowie die praktische Beurteilung steinerner Konstruktionen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "Gesteinskunde 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Baugestein",
+        "Reliefs",
+        "Statuen"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Steinschneider/Juwelier",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "IN",
+          "FF",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Dient zum Schleifen, Polieren, Fassen und Bewerten von Edelsteinen, Kristallen und Schmucksteinen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "für TaW über 10: Gesteinskunde 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [],
+      "SpezialisierungenMoeglich": false,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Stellmacher",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "FF",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Umfasst Bau und Reparatur von Wagen, Kutschen und Schlitten und verbindet dafür Holz-, Leder- und Metallarbeiten.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "Holzbearbeitung, Lederarbeiten und Grobschmied jeweils 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Karren/Wagen",
+        "Schlitten",
+        "Streitwagen"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Stoffe Färben",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "FF",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Beschreibt das Herstellen und Anwenden haltbarer Farbstoffe für Stoffe und Leder sowie die Beurteilung von Färbungen und Farbrohstoffen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "alchimistische Farben",
+        "mineralische Farben",
+        "pflanzliche Farben",
+        "tierische Farben",
+        "nach Art des Stoffes",
+        "Stoffdruck"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Neben Farbquellen kann nach Stoffart oder auf Stoffdruck spezialisiert werden.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Tätowieren",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "IN",
+          "FF",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Dient zum dauerhaften Einbringen von Motiven in die Haut und verlangt Kenntnisse über Gestaltung, Haut, Farben und präzise Nadelarbeit.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "Malen/Zeichnen 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Naturalistische Darstellung",
+        "Ornamente",
+        "Zaubertätowierungen"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Töpfern",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "FF",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Umfasst das Formen und Brennen von Tonwaren, die Herstellung einfacher Ziegel sowie die Beurteilung von Ton, Keramik und entsprechenden Konstruktionen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Gefäße",
+        "Statuetten",
+        "Ziegelei"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Viehzucht",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Beschreibt Haltung, Fütterung, Auswahl und Zucht von Nutztieren sowie die Beurteilung ihrer Qualität und typischer gesundheitlicher Probleme.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Rind",
+        "Schaf/Ziege",
+        "Schwein",
+        "Pferd",
+        "Hund",
+        "weitere Tierarten"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Spezialisierung grundsätzlich nach Tierart.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Webkunst",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "FF",
+          "FF",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Dient zur Herstellung von Stoffen und textilen Flächen aus Garn mit Webstuhl oder verwandten Techniken wie Stricken, Knüpfen oder Klöppeln.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "nach Material",
+        "Häkeln",
+        "Klöppeln",
+        "Stricken",
+        "Teppichknüpfen",
+        "Weben"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": true,
+      "SpezialisierungsHinweis": "Spezialisierung nach Material oder Technik.",
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Winzer",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "FF",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Umfasst Weinbau, Kelterung, Reifung und Beurteilung von Wein sowie verwandter Frucht- und Schaumweine.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": null,
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Wein",
+        "Fruchtweine",
+        "Schaumweine",
+        "Weinkenner"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {}
+    },
+    {
+      "Name": "Zimmermann",
+      "Kategorie": "Handwerk",
+      "Probe": [
+        [
+          "KL",
+          "FF",
+          "KK"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Regelt größere Holzkonstruktionen wie Dächer, Treppen, Balken und Schiffsteile einschließlich ihrer Stabilität und fachgerechten Verbindungen.",
+      "EffektiveBehinderung": null,
+      "Voraussetzung": "für TaW über 10: Holzbearbeitung 4",
+      "RegelhinweiseKurz": [],
+      "Spezialisierungen": [
+        "Dachdecker",
+        "Holzkonstruktionen",
+        "Schiffszimmermann",
+        "Schiffbau"
+      ],
+      "SpezialisierungenMoeglich": true,
+      "SpezialisierungenOffen": false,
+      "SpezialisierungsHinweis": null,
+      "SpezialisierungsVoraussetzungen": {
+        "Schiffbau": "Lesen/Schreiben, Malen/Zeichnen, Rechnen und Seefahrt jeweils 4+"
+      }
+    }
+  ],
+  "SprachenUndSchriften": [
+    {
+      "Name": "Sprachen Kennen [Muttersprache]",
+      "Kategorie": "Sprachen/Schriften",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "CH"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Beschreibt, wie sicher der Held seine Muttersprache versteht und verwendet; die erreichbare Beherrschung hängt von der Sprachkomplexität ab.",
+      "Spezialisierungen": [],
+      "SpezialisierungenMoeglich": false,
+      "SpezialisierungsHinweis": null
+    },
+    {
+      "Name": "Sprachen Kennen [Fremdsprache]",
+      "Kategorie": "Sprachen/Schriften",
+      "Probe": [
+        [
+          "KL",
+          "IN",
+          "CH"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Steht für die erlernte Beherrschung einer einzelnen Fremdsprache und bestimmt, wie differenziert der Held sie verstehen und sprechen kann.",
+      "Spezialisierungen": [],
+      "SpezialisierungenMoeglich": false,
+      "SpezialisierungsHinweis": null
+    },
+    {
+      "Name": "Lesen/Schreiben [Schrift der Muttersprache]",
+      "Kategorie": "Sprachen/Schriften",
+      "Probe": [
+        [
+          "KL",
+          "KL",
+          "FF"
+        ]
+      ],
+      "Typ": "Basis",
+      "Kurzbeschreibung": "Beschreibt die Beherrschung des zur eigenen Sprach- und Kulturprägung gehörenden Schriftsystems.",
+      "Spezialisierungen": [],
+      "SpezialisierungenMoeglich": false,
+      "SpezialisierungsHinweis": null
+    },
+    {
+      "Name": "Lesen/Schreiben [Schrift]",
+      "Kategorie": "Sprachen/Schriften",
+      "Probe": [
+        [
+          "KL",
+          "KL",
+          "FF"
+        ]
+      ],
+      "Typ": "Spezial",
+      "Kurzbeschreibung": "Steht für das Lesen und Schreiben eines bestimmten Schriftsystems; jede Schrift wird als eigene Fertigkeit geführt.",
+      "Spezialisierungen": [],
+      "SpezialisierungenMoeglich": false,
+      "SpezialisierungsHinweis": null
+    }
+  ],
+  "Regelbasis_Talentspezialisierungen": {
+    "Effekt": "+2 effektiver TaW im gewählten Spezialgebiet",
+    "MindestTaW": {
+      "1": 7,
+      "2": 14,
+      "3": 21,
+      "4": 28
+    },
+    "DoppelteGleicheSpezialisierung": false,
+    "Hinweis": "Der Grund-TaW bleibt für Steigerung und allgemeine Anwendungen unverändert. Nur wenn die konkrete Anwendung in das Spezialgebiet fällt, zählt der um 2 erhöhte effektive TaW."
   }
-]
+}

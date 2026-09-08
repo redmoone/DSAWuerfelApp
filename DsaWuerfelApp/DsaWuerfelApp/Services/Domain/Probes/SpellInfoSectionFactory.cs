@@ -7,9 +7,24 @@ public sealed class SpellInfoSectionFactory(
     HeroSpellIndexBuilder heroSpellIndexBuilder,
     SpellOptionAvailabilityService spellOptionAvailabilityService)
 {
-    public IReadOnlyList<ProbeInfoSectionDto> Build(Hero hero, string spellName, SpellCatalogEntry spellEntry)
+    public IReadOnlyList<ProbeInfoSectionDto> Build(Hero? hero, string spellName, SpellCatalogEntry spellEntry)
     {
         var sections = new List<ProbeInfoSectionDto>(spellEntry.InfoSections);
+        AddRuleSections(sections, spellEntry.RuleSections);
+
+        if (hero is null)
+        {
+            AddInfoSectionIfPresent(
+                sections,
+                "Modifikationen",
+                BuildOptionSectionText(spellEntry.Modifications));
+            AddInfoSectionIfPresent(
+                sections,
+                "Varianten",
+                BuildOptionSectionText(spellEntry.Variants));
+            return sections;
+        }
+
         var knownSpells = heroSpellIndexBuilder.Build(hero);
         if (!TryFindEntry(knownSpells, spellName, out var matchedSpellName, out var spell))
         {
@@ -17,13 +32,13 @@ public sealed class SpellInfoSectionFactory(
         }
 
         var heroSpellcastingContext = HeroSpellcastingContext.Create(hero);
-        var availableModifications = spellOptionAvailabilityService.FilterAvailableOptions(
+        var availableModifications = spellOptionAvailabilityService.FilterOptionsForInformation(
             matchedSpellName,
             spell,
             knownSpells,
             heroSpellcastingContext,
             spellEntry.Modifications);
-        var availableVariants = spellOptionAvailabilityService.FilterAvailableOptions(
+        var availableVariants = spellOptionAvailabilityService.FilterOptionsForInformation(
             matchedSpellName,
             spell,
             knownSpells,
@@ -46,13 +61,32 @@ public sealed class SpellInfoSectionFactory(
     private static string BuildOptionText(SpellOptionEntry option)
     {
         var label = string.IsNullOrWhiteSpace(option.DisplayLabel) ? option.Name : option.DisplayLabel;
-        if (string.IsNullOrWhiteSpace(option.DisplayText) ||
-            string.Equals(option.DisplayText, label, StringComparison.Ordinal))
+        var manualText = option.IsSelectionEnabled
+            ? string.Empty
+            : "Manuelle Prüfung erforderlich; automatische Auswahl/Berechnung ist noch nicht hinterlegt.";
+        var details = new[] { manualText, option.DisplayText }
+            .Where(text => !string.IsNullOrWhiteSpace(text))
+            .ToArray();
+        if (details.Length == 0 ||
+            details.Length == 1 && string.Equals(details[0], label, StringComparison.Ordinal))
         {
             return label;
         }
 
-        return $"{label}{Environment.NewLine}{option.DisplayText}";
+        return $"{label}{Environment.NewLine}{string.Join(Environment.NewLine, details)}";
+    }
+
+    private static void AddRuleSections(
+        ICollection<ProbeInfoSectionDto> sections,
+        IReadOnlyList<SpellInfoRuleSection> ruleSections)
+    {
+        foreach (var ruleSection in ruleSections)
+        {
+            AddInfoSectionIfPresent(
+                sections,
+                ruleSection.Label,
+                string.Join($"{Environment.NewLine}{Environment.NewLine}", ruleSection.Entries));
+        }
     }
 
     private static void AddInfoSectionIfPresent(ICollection<ProbeInfoSectionDto> sections, string label, string? value)

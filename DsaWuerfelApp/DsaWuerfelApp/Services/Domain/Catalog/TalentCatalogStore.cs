@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 using DsaWuerfelApp.Shared;
 
@@ -9,15 +8,17 @@ public sealed class TalentCatalogStore(IHostEnvironment environment)
 {
     private const string CatalogFileName = "talente_mit_spezialisierungen.json";
 
-    private readonly Lazy<IReadOnlyDictionary<string, TalentCatalogEntry>> _entriesByCanonical =
-        new(() => LoadEntries(ResolveCatalogPath(environment)));
+    private readonly Lazy<TalentCatalogSnapshot> _snapshot =
+        new(() => LoadSnapshot(ResolveCatalogPath(environment)));
 
-    public IEnumerable<TalentCatalogEntry> Entries => _entriesByCanonical.Value.Values;
+    public IEnumerable<TalentCatalogEntry> Entries => _snapshot.Value.Entries.Values;
+
+    public TalentSpecializationRules SpecializationRules => _snapshot.Value.SpecializationRules;
 
     public bool TryGetEntry(string talentName, out TalentCatalogEntry entry)
     {
         return TalentCatalogText.TryFindBestNameMatch(
-            _entriesByCanonical.Value.Values,
+            _snapshot.Value.Entries.Values,
             static existingEntry => existingEntry.Name,
             talentName,
             out entry!);
@@ -27,104 +28,239 @@ public sealed class TalentCatalogStore(IHostEnvironment environment)
     {
         var candidatePaths = new[]
         {
-            Path.Combine(environment.ContentRootPath, "Data", CatalogFileName), Path.GetFullPath(Path.Combine(
-                environment.ContentRootPath,
-                "..",
-                "DsaWuerfelApp.Client",
-                "wwwroot",
-                "data",
-                CatalogFileName)),
+            Path.Combine(environment.ContentRootPath, "Data", CatalogFileName),
             Path.Combine(AppContext.BaseDirectory, "Data", CatalogFileName)
         };
 
-        return candidatePaths.FirstOrDefault(File.Exists) ?? candidatePaths[0];
+        return candidatePaths.FirstOrDefault(File.Exists) ??
+               throw new FileNotFoundException(
+                   $"Der Talentkatalog '{CatalogFileName}' wurde nicht gefunden. Erwartete Pfade: " +
+                   string.Join("; ", candidatePaths),
+                   candidatePaths[0]);
     }
 
-    private static IReadOnlyDictionary<string, TalentCatalogEntry> LoadEntries(string path)
+    private static TalentCatalogSnapshot LoadSnapshot(string path)
     {
-        if (!File.Exists(path))
-        {
-            return new Dictionary<string, TalentCatalogEntry>(StringComparer.Ordinal);
-        }
-
         try
         {
             using var stream = File.OpenRead(path);
-            var items = JsonSerializer.Deserialize<List<TalentCatalogItem>>(stream) ?? [];
+            using var document = JsonDocument.Parse(stream);
+            var items = CatalogJsonValue.ReadArray(document.RootElement, "Talente")
+                .Concat(CatalogJsonValue.ReadArray(document.RootElement, "SprachenUndSchriften"))
+                .ToArray();
+            if (items.Length == 0)
+            {
+                throw new InvalidDataException(
+                    $"Der Talentkatalog '{path}' enthält keine Talenteinträge.");
+            }
 
-            return items
+            var entries = items
                 .Select(MapItem)
                 .Where(entry => !string.IsNullOrWhiteSpace(entry.Name))
                 .GroupBy(entry => TalentCatalogText.CanonicalizeName(entry.Name), StringComparer.Ordinal)
                 .Where(group => !string.IsNullOrWhiteSpace(group.Key))
-                .ToDictionary(
-                    group => group.Key,
-                    group => group.First(),
-                    StringComparer.Ordinal);
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+
+            return new TalentCatalogSnapshot(
+                entries,
+                MapSpecializationRules(document.RootElement));
         }
-        catch
+        catch (JsonException exception)
         {
-            return new Dictionary<string, TalentCatalogEntry>(StringComparer.Ordinal);
+            throw new InvalidDataException(
+                $"Der Talentkatalog '{path}' ist kein gültiges JSON im erwarteten Wurzelformat.",
+                exception);
         }
     }
 
-    private static TalentCatalogEntry MapItem(TalentCatalogItem item)
+    private static TalentCatalogEntry MapItem(JsonElement item)
     {
+        var probes = CatalogJsonValue.ReadArray(item, "Probe")
+            .Select(probe => probe.ValueKind == JsonValueKind.Array
+                ? string.Join("/", probe.EnumerateArray().Select(CatalogJsonValue.ReadText))
+                : CatalogJsonValue.ReadText(probe))
+            .Select(TalentCatalogText.NormalizeProbe)
+            .Where(probe => !string.IsNullOrWhiteSpace(probe))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        var ruleHints = CatalogJsonValue.ReadArray(item, "RegelhinweiseKurz")
+            .Select(CatalogJsonValue.ReadText)
+            .Where(text => !string.IsNullOrWhiteSpace(text))
+            .ToArray();
+        var specializations = CatalogJsonValue.ReadArray(item, "Spezialisierungen")
+            .Select(CatalogJsonValue.ReadText)
+            .Where(text => !string.IsNullOrWhiteSpace(text))
+            .ToArray();
+        var specializationPrerequisites = ReadOptionalValue(item, "SpezialisierungsVoraussetzungen");
+        var specializationHint = CatalogJsonValue.ReadText(item, "SpezialisierungsHinweis");
+        var specializationText = BuildSpecializationText(
+            specializations,
+            CatalogJsonValue.ReadBool(item, "SpezialisierungenOffen") ?? false,
+            specializationHint,
+            specializationPrerequisites ?? string.Empty);
+
         return new TalentCatalogEntry(
-            TalentCatalogText.NormalizeCatalogText(item.Name),
-            TalentCatalogText.NormalizeProbe(item.Eigenschaften),
+            CatalogJsonValue.ReadText(item, "Name"),
+            probes.Length == 1 ? probes[0] : string.Empty,
+            probes,
             string.Equals(
-                TalentCatalogText.NormalizeCatalogText(item.Typ),
+                CatalogJsonValue.ReadText(item, "Typ"),
                 "Basis",
                 StringComparison.OrdinalIgnoreCase),
-            TalentCatalogText.ParseAlternatives(item.Ersatz),
-            BuildInfoSections(item));
+            CatalogJsonValue.ReadText(item, "Kategorie"),
+            CatalogJsonValue.ReadText(item, "Kurzbeschreibung"),
+            CatalogJsonValue.ReadText(item, "EffektiveBehinderung"),
+            CatalogJsonValue.ReadText(item, "Voraussetzung"),
+            ruleHints,
+            specializations,
+            CatalogJsonValue.ReadBool(item, "SpezialisierungenMoeglich") ?? false,
+            CatalogJsonValue.ReadBool(item, "SpezialisierungenOffen") ?? false,
+            specializationHint,
+            specializationPrerequisites,
+            BuildInfoSections(item, probes, specializationText));
     }
 
-    private static ProbeInfoSectionDto[] BuildInfoSections(TalentCatalogItem item)
+    private static TalentSpecializationRules MapSpecializationRules(JsonElement root)
     {
-        var sections = new List<ProbeInfoSectionDto>(capacity: 5);
-        AddInfoSection(sections, "Zweck", item.Purpose);
-        AddInfoSection(sections, "Kernregel", item.CoreRule);
-        AddInfoSection(sections, "Misslingen", item.Failure);
-        AddInfoSection(sections, "Modifikatoren", item.Modifiers);
-        AddInfoSection(sections, "Optional", item.OptionalNotes);
+        if (!CatalogJsonValue.TryGetProperty(
+                root,
+                "Regelbasis_Talentspezialisierungen",
+                out var ruleValue) ||
+            ruleValue.ValueKind != JsonValueKind.Object)
+        {
+            return TalentSpecializationRules.Empty;
+        }
+
+        var thresholds = new Dictionary<int, int>();
+        if (CatalogJsonValue.TryGetProperty(ruleValue, "MindestTaW", out var thresholdValue) &&
+            thresholdValue.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in thresholdValue.EnumerateObject())
+            {
+                if (int.TryParse(property.Name, out var specializationNumber) &&
+                    CatalogJsonValue.ReadInt(property.Value) is { } minimumTalentValue)
+                {
+                    thresholds[specializationNumber] = minimumTalentValue;
+                }
+            }
+        }
+
+        return new TalentSpecializationRules(
+            CatalogJsonValue.ReadText(ruleValue, "Effekt"),
+            thresholds,
+            CatalogJsonValue.ReadBool(ruleValue, "DoppelteGleicheSpezialisierung") ?? false,
+            CatalogJsonValue.ReadText(ruleValue, "Hinweis"));
+    }
+
+    private static ProbeInfoSectionDto[] BuildInfoSections(
+        JsonElement item,
+        IReadOnlyList<string> probes,
+        string specializationText)
+    {
+        var sections = new List<ProbeInfoSectionDto>(capacity: 8);
+        AddInfoSection(sections, "Beschreibung", CatalogJsonValue.ReadText(item, "Kurzbeschreibung"));
+        AddInfoSection(sections, "Kategorie", CatalogJsonValue.ReadText(item, "Kategorie"));
+        AddInfoSection(sections, "Probe", string.Join(" oder ", probes));
+        AddInfoSection(sections, "Effektive Behinderung", CatalogJsonValue.ReadText(item, "EffektiveBehinderung"));
+        AddInfoSection(sections, "Voraussetzung", CatalogJsonValue.ReadText(item, "Voraussetzung"));
+        AddInfoSection(
+            sections,
+            "Regelhinweise",
+            string.Join(Environment.NewLine, CatalogJsonValue.ReadArray(item, "RegelhinweiseKurz")
+                .Select(CatalogJsonValue.ReadText)
+                .Where(text => !string.IsNullOrWhiteSpace(text))));
+        AddInfoSection(sections, "Spezialisierungen", specializationText);
         return sections.ToArray();
     }
 
-    private static void AddInfoSection(ICollection<ProbeInfoSectionDto> sections, string label, string? value)
+    private static string BuildSpecializationText(
+        IReadOnlyList<string> specializations,
+        bool isOpen,
+        string hint,
+        string prerequisites)
     {
-        var normalizedValue = TalentCatalogText.NormalizeCatalogText(value);
-        if (string.IsNullOrWhiteSpace(normalizedValue))
+        var parts = new List<string>();
+        if (specializations.Count > 0)
         {
-            return;
+            parts.Add(string.Join(", ", specializations));
         }
 
-        sections.Add(new ProbeInfoSectionDto(label, normalizedValue));
+        if (isOpen)
+        {
+            parts.Add("Liste offen");
+        }
+
+        if (!string.IsNullOrWhiteSpace(hint))
+        {
+            parts.Add(hint);
+        }
+
+        if (!string.IsNullOrWhiteSpace(prerequisites))
+        {
+            parts.Add($"Voraussetzungen: {prerequisites}");
+        }
+
+        return string.Join(Environment.NewLine, parts);
     }
 
-    private sealed class TalentCatalogItem
+    private static string? ReadOptionalValue(JsonElement item, string propertyName)
     {
-        public string Name { get; set; } = string.Empty;
-        public string Eigenschaften { get; set; } = string.Empty;
-        public string Typ { get; set; } = string.Empty;
-        public string Ersatz { get; set; } = string.Empty;
+        if (!CatalogJsonValue.TryGetProperty(item, propertyName, out var value) ||
+            value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return null;
+        }
 
-        [JsonPropertyName("Zweck")] public string Purpose { get; set; } = string.Empty;
-
-        [JsonPropertyName("Kernregel")] public string CoreRule { get; set; } = string.Empty;
-
-        [JsonPropertyName("Misslingen")] public string Failure { get; set; } = string.Empty;
-
-        [JsonPropertyName("Modifikatoren")] public string Modifiers { get; set; } = string.Empty;
-
-        [JsonPropertyName("Optional")] public string OptionalNotes { get; set; } = string.Empty;
+        var text = CatalogJsonValue.FormatValue(value);
+        return string.IsNullOrWhiteSpace(text) ? null : text;
     }
+
+    private static void AddInfoSection(
+        ICollection<ProbeInfoSectionDto> sections,
+        string label,
+        string? value)
+    {
+        var normalizedValue = CatalogJsonValue.NormalizeDisplayText(value);
+        if (!string.IsNullOrWhiteSpace(normalizedValue))
+        {
+            sections.Add(new ProbeInfoSectionDto(label, normalizedValue));
+        }
+    }
+
+    private sealed record TalentCatalogSnapshot(
+        IReadOnlyDictionary<string, TalentCatalogEntry> Entries,
+        TalentSpecializationRules SpecializationRules);
 }
 
 public sealed record TalentCatalogEntry(
     string Name,
     string Probe,
+    IReadOnlyList<string> ProbeAlternatives,
     bool IsBasisTalent,
-    IReadOnlyList<string> AlternativeNames,
-    IReadOnlyList<ProbeInfoSectionDto> InfoSections);
+    string Category,
+    string ShortDescription,
+    string EffectiveEncumbrance,
+    string Prerequisite,
+    IReadOnlyList<string> RuleHints,
+    IReadOnlyList<string> Specializations,
+    bool SpecializationsPossible,
+    bool SpecializationsOpen,
+    string SpecializationHint,
+    string? SpecializationPrerequisites,
+    IReadOnlyList<ProbeInfoSectionDto> InfoSections)
+{
+    public IReadOnlyList<string> AlternativeNames { get; } = Array.Empty<string>();
+}
+
+public sealed record TalentSpecializationRules(
+    string Effect,
+    IReadOnlyDictionary<int, int> MinimumTalentValues,
+    bool DuplicateSpecializationAllowed,
+    string Note)
+{
+    public static TalentSpecializationRules Empty { get; } = new(
+        string.Empty,
+        new Dictionary<int, int>(),
+        false,
+        string.Empty);
+}

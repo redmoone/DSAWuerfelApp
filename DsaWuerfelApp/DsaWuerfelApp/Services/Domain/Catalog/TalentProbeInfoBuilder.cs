@@ -54,9 +54,12 @@ internal static class TalentProbeInfoBuilder
         IReadOnlyList<string> probeAttributes,
         int effectiveModifier)
     {
-        if (!CanCalculateSuccessChance(hero, probeAttributes))
+        if (resolvedProbe.UsesCatalogValue ||
+            !CanCalculateSuccessChance(hero, probeAttributes))
         {
-            return $"Für {resolvedProbe.Name} konnte keine Erfolgschance berechnet werden.";
+            return resolvedProbe.UsesCatalogValue
+                ? $"Für {resolvedProbe.Name} liegt nur der Katalogeintrag vor; ein konkreter Heldenwert fehlt."
+                : $"Für {resolvedProbe.Name} konnte keine Erfolgschance berechnet werden.";
         }
 
         var attributeValues = probeAttributes
@@ -78,6 +81,15 @@ internal static class TalentProbeInfoBuilder
         BadTraitDto? badTrait)
     {
         var supplementalText = $"{BuildSelectedOptionText(resolvedProbe)}{BuildBadTraitText(badTrait)}".TrimStart();
+
+        if (resolvedProbe.UsesCatalogValue)
+        {
+            var catalogText =
+                $"{resolvedProbe.Name} ist als Katalogeintrag verfügbar. Für eine Erfolgschance und einen Wurf wird ein konkreter Helden- oder NPC-Wert benötigt.";
+            return string.IsNullOrWhiteSpace(supplementalText)
+                ? catalogText
+                : $"{catalogText} {supplementalText}";
+        }
 
         if (!CanCalculateSuccessChance(hero, probeAttributes))
         {

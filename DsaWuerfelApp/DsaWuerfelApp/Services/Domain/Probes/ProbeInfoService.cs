@@ -36,10 +36,29 @@ public sealed class ProbeInfoService(
                 modifier);
         }
 
+        try
+        {
+            var catalogProbe = probeResolutionService.ResolveProbeOrCatalog(
+                hero,
+                probeValue,
+                spellOptionValues ?? []);
+            var infoHero = hero ?? new Hero();
+            return TalentProbeInfoBuilder.BuildResolvedProbeInfo(
+                infoHero,
+                catalogProbe,
+                badTrait,
+                ResolveInfoSections(hero, catalogProbe),
+                null,
+                modifier);
+        }
+        catch (InvalidOperationException)
+        {
+        }
+
         return TalentProbeInfoBuilder.BuildFallbackInfo(probeValue, badTrait);
     }
 
-    private IReadOnlyList<ProbeInfoSectionDto> ResolveInfoSections(Hero hero, ResolvedProbeData resolvedProbe)
+    private IReadOnlyList<ProbeInfoSectionDto> ResolveInfoSections(Hero? hero, ResolvedProbeData resolvedProbe)
     {
         return resolvedProbe.Kind switch
         {
