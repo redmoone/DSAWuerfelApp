@@ -11,6 +11,7 @@ namespace DsaWuerfelApp.Hubs;
 [Authorize]
 public class GameHub(
     SessionService sessionService,
+    HeroContextReader heroContextReader,
     DiceWorkflowService diceWorkflowService,
     GameSessionRollPipeline gameSessionRollPipeline)
     : Hub
@@ -179,7 +180,12 @@ public class GameHub(
 
         try
         {
-            affectedUserIds = sessionService.UpdatePlayerHero(sessionId, userId, heroId, heroName);
+            var hero = heroId.HasValue ? await heroContextReader.LoadRequiredAsync(heroId.Value, userId, Context.ConnectionAborted) : null;
+            affectedUserIds = sessionService.UpdatePlayerHero(sessionId, userId, hero?.Id, hero?.Name);
+        }
+        catch (RequestRejectedException exception)
+        {
+            throw new HubException(exception.Message);
         }
         catch (InvalidOperationException exception)
         {

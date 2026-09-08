@@ -27,11 +27,11 @@ public sealed class RollMasterTalentHandler(
 
         var results = new List<MasterTalentRollTargetResultDto>(request.Targets.Length);
 
-        foreach (var target in request.Targets)
+        var resolved = await heroContextReader.ResolveMasterTargetsAsync(request.SessionId, userId, request.Targets, cancellationToken);
+        foreach (var (target, hero) in resolved)
         {
             try
             {
-                var hero = await heroContextReader.LoadRequiredAsync(target.HeroId, userId, cancellationToken);
                 if (!probeResolutionService.TryResolveMasterProbe(
                         hero,
                         request.TalentKey,

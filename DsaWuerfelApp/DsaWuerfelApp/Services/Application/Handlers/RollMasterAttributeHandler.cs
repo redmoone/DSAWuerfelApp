@@ -2,7 +2,7 @@ using DsaWuerfelApp.Shared;
 
 namespace DsaWuerfelApp.Services;
 
-public sealed class RollMasterAttributeHandler(RollAttributeHandler rollAttributeHandler)
+public sealed class RollMasterAttributeHandler(HeroContextReader heroContextReader, AttributeProbeService attributeProbeService, BadTraitResolver badTraitResolver)
 {
     public async Task<MasterAttributeRollTargetResultDto[]> HandleAsync(
         MasterAttributeRollRequestDto request,
@@ -23,21 +23,16 @@ public sealed class RollMasterAttributeHandler(RollAttributeHandler rollAttribut
 
         var results = new List<MasterAttributeRollTargetResultDto>(request.Targets.Length);
 
-        foreach (var target in request.Targets)
+        var resolved = await heroContextReader.ResolveMasterTargetsAsync(request.SessionId, userId, request.Targets, cancellationToken);
+        foreach (var (target, hero) in resolved)
         {
             try
             {
-                var result = await rollAttributeHandler.HandleAsync(
-                    new AttributeRollRequestDto(
-                        null,
-                        target.HeroId,
-                        request.Attributes,
-                        request.Modifier,
-                        request.BadTraitName,
-                        false),
-                    userId,
-                    target.PlayerName,
-                    cancellationToken);
+                var attributes = AttributeSelection.Create(request.Attributes);
+                var badTrait = badTraitResolver.ResolveOptional(hero, request.BadTraitName);
+                var result = attributeProbeService.RollAttributeProbe(new ResolvedAttributeRollRequest(
+                    attributes, attributes.ResolveValues(hero.Eigenschaften), request.Modifier,
+                    badTrait?.Name, badTrait?.AttributeModifier ?? 0, null, null), target.PlayerName);
 
                 results.Add(new MasterAttributeRollTargetResultDto(
                     target.UserId,

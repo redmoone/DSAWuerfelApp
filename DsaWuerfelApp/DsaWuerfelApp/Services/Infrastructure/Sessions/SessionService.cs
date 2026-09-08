@@ -37,15 +37,19 @@ public class SessionService(SessionRecordStore recordStore, SessionRuntimeState 
         lock (_syncRoot)
         {
             EnsureLoaded();
-            var session = runtimeState.GetMemberSession(sessionId, masterUserId);
-            if (!string.Equals(session.MasterUserId, masterUserId, StringComparison.Ordinal))
+            if (string.IsNullOrWhiteSpace(sessionId))
+                throw new RequestRejectedException(RequestRejectionReason.Validation, "Bitte eine Sitzung auswählen.");
+            if (!runtimeState.TryGetSession(sessionId, out var session))
+                throw new RequestRejectedException(RequestRejectionReason.NotFound, "Sitzung nicht gefunden.");
+            if (!session.Players.Any(player => player.UserId == masterUserId) ||
+                !string.Equals(session.MasterUserId, masterUserId, StringComparison.Ordinal))
             {
-                throw new InvalidOperationException("Nur der Meister darf Helden anderer Spieler lesen.");
+                throw new RequestRejectedException(RequestRejectionReason.Forbidden, "Nur der Meister dieser Sitzung darf ihre Helden lesen.");
             }
 
             return session.Players
                 .Where(player => player.ActiveHeroId.HasValue)
-                .Select(player => new SessionHeroTarget(player.UserId, player.ActiveHeroId!.Value))
+                .Select(player => new SessionHeroTarget(player.UserId, player.ActiveHeroId!.Value, player.Name))
                 .ToArray();
         }
     }
@@ -327,4 +331,4 @@ public sealed record LeaveSessionResult(
     IReadOnlyList<string> AffectedUserIds,
     IReadOnlyList<string> DetachedConnectionIds);
 
-public sealed record SessionHeroTarget(string UserId, Guid HeroId);
+public sealed record SessionHeroTarget(string UserId, Guid HeroId, string PlayerName);

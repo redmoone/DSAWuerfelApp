@@ -14,7 +14,7 @@ public sealed class DiceWorkflowService(
 {
     public Task<DicePageContextDto> GetContextAsync(Guid? heroId, string? sessionId, string userId, CancellationToken cancellationToken = default)
     {
-        return getDicePageContextHandler.HandleAsync(heroId, userId, cancellationToken);
+        return getDicePageContextHandler.HandleAsync(heroId, sessionId, userId, cancellationToken);
     }
 
     public Task<DicePageContextDto> GetCatalogContextAsync(CancellationToken cancellationToken = default)

@@ -18,7 +18,7 @@ public sealed class GetProbeInfoHandler(
             throw new ArgumentException("Bitte zuerst eine Probe auswählen.", nameof(request));
         }
 
-        var hero = await heroContextReader.LoadOptionalAsync(request.HeroId, userId, cancellationToken);
+        var hero = await heroContextReader.LoadContextAsync(request.HeroId, request.SessionId, userId, cancellationToken);
         return probeInfoService.BuildProbeInfo(
             hero,
             request.ProbeValue,
