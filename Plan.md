@@ -779,7 +779,7 @@ Plan- und Abnahmeeintrag erst nach tatsächlicher Browserprüfung ergänzen. Kei
 
 ## Datenbasis und Zauberinfo – Planentwurf vom 08.09.2026
 
-Status: **ZT-02 umgesetzt; ZT-03 und ZT-04 bleiben offen.**
+Status: **ZT-03 umgesetzt; ZT-04 bleibt offen.**
 
 ### Verbindliche Grundlage
 
@@ -863,14 +863,31 @@ Prüfung:
 - `dotnet test DsaWuerfelApp.sln --no-build --no-restore` erfolgreich, 81/81.
 - Repräsentativer HTTP-Test für Abvenenum prüft den Unterfall `Verlängern`, den echten Modifikator `-3`, den unveränderten ZfW und die ZfP*-Ausgabe. Ein zusätzlicher Servicetest prüft die Trennung von Probenmodifikator, Roh-ZfP* und verfügbaren ZfP*.
 
-#### ZT-03 – Talentinformationen und passende Spezialisierungen
+#### ZT-03 - Talentinformationen und passende Spezialisierungen
 
 - Neue Kurzbeschreibungen, BE-Angaben, Voraussetzungen und Regelhinweise in die bestehende Info integrieren. Mehrere Probenkombinationen erhalten; keine willkürliche Wahl der ersten Kombination.
 - Erlernte Spezialisierungen mit Charakterdaten abgleichen und nur bei ausdrücklich passender Anwendung +2 effektiven TaW ansetzen. Grund-TaW unverändert lassen; Ergebnis und Anzeige konsistent halten.
 - Katalogmöglichkeiten von tatsächlich erlernten Spezialisierungen unterscheiden. Offene Kategorien offen lassen; unbekannte importierte Namen nicht automatisch als ungültig löschen.
 - Schwellen 7/14/21/28 und das Verbot identischer Mehrfachwahl bei der Auswertung berücksichtigen. Eine Erwerbs-, Änderungs- oder Heldenverwaltungsfunktion gehört nicht zu diesem Vorhaben.
 
-#### ZT-04 – Ergebnisbezogene Zauberhinweise im Zauberpaket
+#### ZT-03 - Ergebnis / Abnahme
+
+Umgesetzt:
+
+- Talentinfos verwenden die vorhandenen Kurzbeschreibungen, Behinderungsangaben, Voraussetzungen, Regelhinweise und Spezialisierungsdaten.
+- Talente mit mehreren Probe-Kombinationen bleiben im Katalog sichtbar und verlangen eine ausdrücklich gewählte Kombination. Es wird keine erste Kombination automatisch gewählt.
+- Die gewählte Talentprobe wird serverseitig gegen die Katalogdaten geprüft und für Info, Einzelwurf und Meisterpfad verwendet.
+- Erlernte Spezialisierungen werden gegen die importierten Heldendaten geprüft. Der Katalog liefert keine Spezialisierung; der vom Client mitgesendete Modifikator wird ignoriert.
+- Die Mindest-TaW 7/14/21/28 werden anhand der Reihenfolge der unterschiedlichen importierten Spezialisierungen geprüft. Doppelte Einträge werden nicht als zusätzliche Spezialisierung gezählt; offene bzw. unbekannte importierte Namen bleiben erhalten.
+- Der Grund-TaW bleibt unverändert. Eine gültige Spezialisierung wird als -2 Probenmodifikator verarbeitet und als +2 effektiver TaW angezeigt.
+
+Prüfung:
+
+- `dotnet test DsaWuerfelApp.sln --no-restore --logger "console;verbosity=minimal"` erfolgreich, 84/84.
+- HTTP-Smoke-Tests prüfen Talentinfos, alternative Talentproben sowie TaW-Schwelle, Roh-TaW und effektiven TaW einer Spezialisierung.
+- Build ohne Warnungen und Fehler erfolgreich.
+
+#### ZT-04 - Ergebnisbezogene Zauberhinweise im Zauberpaket
 
 - Erst nach erfolgreicher Probe die tatsächlichen ZfP* auf relevante Schwellen und eindeutig unterstützte Wirkungsformeln anwenden. Variantenbezogene Regeln nur bei gewählter Variante berücksichtigen.
 - Folgeproben getrennt von der Zauberprobe anbieten bzw. anzeigen; nicht automatisch für Opfer oder Beobachter würfeln.
