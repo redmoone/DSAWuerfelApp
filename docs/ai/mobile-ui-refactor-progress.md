@@ -266,3 +266,24 @@ Validation:
 Notes:
 - The combat shell can grow and scroll its local sidebar content at low heights; the search list is bounded locally and remains keyboard/touch usable.
 - Combat page deep styles now preserve the shared 44px pill action targets, and long titles/action text wrap inside their panels.
+
+## P8
+Status: PARTIAL
+Changed:
+- DsaWuerfelApp/DsaWuerfelApp.Tests/Browser/responsive-ui.cjs
+
+Validation:
+- dotnet build DsaWuerfelApp.sln -c Release -v minimal: PASS (0 warnings, 0 errors)
+- dotnet test DsaWuerfelApp.sln -c Release --no-restore -v normal: FAIL (83/84; existing baseline spell-option test)
+- ClientStateTests: PASS (12/12)
+- dotnet publish ... -v minimal: PASS
+- app-workflows.cjs: PASS
+- dice-lifecycle.cjs: PASS
+- responsive-ui.cjs: PASS (12 viewports, 4 routes)
+- browser script syntax checks: PASS
+- git diff --check: PASS
+
+Notes:
+- Responsive checks now wait for the route layout to settle before measuring; assertions and product behavior checks are unchanged.
+- P7b remains partial for valid importer fixture/native picker and device proof (CN-4/CN-5).
+- Final release remains withheld under the P8 STOP rule because the full suite has an existing baseline failure and mandatory device/browser acceptance is unavailable.

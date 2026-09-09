@@ -34,6 +34,30 @@ async function waitFor(test, label) {
   throw Error(label);
 }
 
+async function waitForStableLayout(page, rootSelector) {
+  let previous = null;
+  let stableSamples = 0;
+  for (let i = 0; i < 25; i++) {
+    const current = await page.locator(rootSelector).evaluate(root => {
+      const rect = root.getBoundingClientRect();
+      const round = value => Math.round(value * 100) / 100;
+      return {
+        x: round(rect.x),
+        y: round(rect.y),
+        width: round(rect.width),
+        height: round(rect.height),
+        documentHeight: round(document.documentElement.scrollHeight)
+      };
+    });
+    if (current.width > 0 && previous && JSON.stringify(current) === JSON.stringify(previous)) stableSamples++;
+    else stableSamples = 0;
+    if (stableSamples >= 3) return;
+    previous = current;
+    await page.waitForTimeout(100);
+  }
+  throw Error(`${rootSelector} layout did not settle`);
+}
+
 async function assertNoHorizontalOverflow(page, label) {
   const geometry = await page.evaluate(() => ({
     clientWidth: document.documentElement.clientWidth,
@@ -138,8 +162,10 @@ async function saveBaselineScreenshot(page, screenshotDirectory, routeName, side
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.goto(origin + route.path);
       await page.locator(route.root).waitFor();
+      await waitForStableLayout(page, route.root);
       for (const sidebarState of ['collapsed', 'expanded']) {
         await setDesktopSidebar(page, sidebarState === 'expanded');
+        await waitForStableLayout(page, route.root);
         await check(`desktop ${route.name} ${sidebarState} overflow`, () => assertNoHorizontalOverflow(page, `desktop ${route.name} ${sidebarState}`));
         await check(`desktop ${route.name} ${sidebarState} control`, () => assertReachableControl(page, route.control, `desktop ${route.name} ${sidebarState}`));
         await saveBaselineScreenshot(page, screenshotDirectory, route.name, sidebarState);
@@ -151,6 +177,7 @@ async function saveBaselineScreenshot(page, screenshotDirectory, routeName, side
         await page.setViewportSize({ width: viewport.width, height: viewport.height });
         await page.goto(origin + route.path);
         await page.locator(route.root).waitFor();
+        await waitForStableLayout(page, route.root);
         await check(`${viewport.name} ${route.name} overflow`, () => assertNoHorizontalOverflow(page, `${viewport.name} ${route.name}`));
         await check(`${viewport.name} ${route.name} control`, () => assertReachableControl(page, route.control, `${viewport.name} ${route.name}`));
         if (route.name === 'lobby' && viewport.width < 641) {
