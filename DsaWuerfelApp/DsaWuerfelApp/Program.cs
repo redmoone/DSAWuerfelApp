@@ -14,6 +14,11 @@ using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = new FileExtensionContentTypeProvider { Mappings = { [".glb"] = "model/gltf-binary" } };
+var useHttps = builder.Configuration.GetValue("Web:UseHttps", false);
+if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ASPNETCORE_URLS")))
+{
+    builder.WebHost.UseUrls("http://0.0.0.0:5000");
+}
 var authSessionLifetimeDays = Math.Max(1, builder.Configuration.GetValue<int?>("AuthSession:LifetimeDays") ?? 180);
 var javaMicroserviceBaseUrl = builder.Configuration["JavaMicroservice:BaseUrl"] ?? "http://localhost:8080";
 var javaMicroserviceTimeoutSeconds = builder.Configuration.GetValue<int?>("JavaMicroservice:TimeoutSeconds") ?? 30;
@@ -48,8 +53,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddAuthorization();
 builder.Services.AddOptions<MagicLinkAuthOptions>()
     .Bind(builder.Configuration.GetSection(MagicLinkAuthOptions.SectionName))
-    .Validate(options => options.HasValidPublicBaseUrl(builder.Environment.IsDevelopment()),
-        "MagicLinkAuth:PublicBaseUrl ist erforderlich: absolute HTTPS-Adresse ohne UserInfo, Query oder Fragment (HTTP nur in Development).")
+    .Validate(options => options.HasValidPublicBaseUrl(builder.Environment.IsDevelopment() || !useHttps),
+        "MagicLinkAuth:PublicBaseUrl ist erforderlich: absolute HTTP(S)-Adresse ohne UserInfo, Query oder Fragment.")
     .ValidateOnStart();
 builder.Services.AddHttpClient<IMagicLinkEmailSender, ResendMagicLinkEmailSender>(client =>
 {
@@ -155,14 +160,12 @@ using (var scope = app.Services.CreateScope())
     await heroReimportService.UpgradeStoredHeroesAsync();
 }
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() && builder.Configuration.GetValue("WebAssemblyDebugging:Enabled", false))
 {
-    if (builder.Configuration.GetValue("WebAssemblyDebugging:Enabled", false))
-    {
-        app.UseWebAssemblyDebugging();
-    }
+    app.UseWebAssemblyDebugging();
 }
-else
+
+if (useHttps)
 {
     app.UseHsts();
     app.UseHttpsRedirection();

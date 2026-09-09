@@ -26,4 +26,9 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
+            sqlite_native="/var/www/dsawuerfelapp/runtimes/linux-x64/native/libe_sqlite3.so"
+            sudo test -f /usr/lib/x86_64-linux-gnu/libsqlite3.so.0
+            sudo rm -f "$sqlite_native"
+            sudo ln -s /usr/lib/x86_64-linux-gnu/libsqlite3.so.0 "$sqlite_native"
+            sudo systemctl daemon-reload
             sudo systemctl restart dsawuerfelapp.service
