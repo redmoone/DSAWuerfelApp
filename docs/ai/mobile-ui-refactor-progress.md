@@ -247,3 +247,22 @@ Validation:
 Notes:
 - Narrow container/card tracks and selected-file names now fit and wrap within the host; existing InputFile and dropzone code was unchanged because no concrete interaction defect was reproduced.
 - No valid importer fixture or native file-picker device run is available (CN-4/CN-5); valid-content upload and device drop behavior remain open validation items.
+
+## P7c
+Status: COMPLETE
+Changed:
+- DsaWuerfelApp/DsaWuerfelApp.Client/Pages/Kampf.razor.css
+
+Validation:
+- dotnet build DsaWuerfelApp.sln -c Release -v minimal: PASS
+- dotnet publish ... -v minimal: PASS
+- combat search, initiative/history, low-height layout and both desktop sidebar states: PASS
+- shared attribute/modifier target geometry at compact and desktop widths: PASS
+- app-workflows.cjs: PASS
+- dice-lifecycle.cjs: PASS
+- ClientStateTests: PASS (12/12)
+- git diff --check: PASS
+
+Notes:
+- The combat shell can grow and scroll its local sidebar content at low heights; the search list is bounded locally and remains keyboard/touch usable.
+- Combat page deep styles now preserve the shared 44px pill action targets, and long titles/action text wrap inside their panels.
