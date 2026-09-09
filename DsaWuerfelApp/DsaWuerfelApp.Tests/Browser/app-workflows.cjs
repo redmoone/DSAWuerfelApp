@@ -27,6 +27,8 @@ const {createAppFixture} = require('./browser-fixture.cjs');
   await player.locator('.die-selector').filter({has:player.getByText('6',{exact:true})}).click();
   await player.getByRole('button',{name:'W\u00fcrfeln',exact:true}).click();
   await waitFor(async()=>(await details()).history.length===1,'normal roll missing');
+  await player.locator('[data-testid="history-panel"]').getByText('FREIER WURF',{exact:true}).waitFor();
+  await master.locator('.master-selection-details summary').click();
   await master.getByRole('button',{name:'Alle',exact:true}).click();
   await master.waitForFunction(()=>!document.querySelector('.text-pill-input').disabled);
   await master.getByRole('button',{name:'Eigenschaft',exact:true}).click();

@@ -1,51 +1,75 @@
-﻿<div class="chat-panel">
-    <div class="chat-history-container">
-        @if (Entries.Count == 0)
-        {
-            <MudText Typo="Typo.body2" Class="text-muted text-center my-4">Noch keine Würfe in dieser Session.</MudText>
-        }
-        
-        <div class="d-flex flex-column">
+@using DsaWuerfelApp.Shared
+
+<div class="roll-history" role="region" aria-label="Wurfhistorie">
+    @if (Entries.Count == 0)
+    {
+        <p class="roll-history-empty">Noch keine Würfe in dieser Session.</p>
+    }
+    else
+    {
+        <div class="roll-history-list">
             @foreach (var log in Entries)
             {
-                <div class="chat-message">
-                    <div class="d-flex align-baseline gap-2 mb-1">
-                        <span class="chat-author">@log.PlayerName</span>
-                        <span class="chat-time">@log.Timestamp.ToLocalTime().ToString("HH:mm")</span>
-                    </div>
-                    
-                    <div class="d-flex align-center flex-wrap gap-1">
-                        @for (int i = 0; i < log.Rolls.Length; i++)
-                        {
-                            var r = log.Rolls[i];
-                            <div class="history-die-container">
-                                <div class="die-shape history-die shape-d@(r.Sides)">
-                                    <span class="die-text">@r.Value</span>
-                                </div>
-                            </div>
+                <article class="history-entry @GetEntryClass(log)">
+                    <header class="history-entry-header">
+                        <div class="history-entry-title">
+                            <span class="history-status @GetStatusClass(log)">@GetStatusText(log)</span>
+                            <span class="history-player">@log.PlayerName</span>
+                            <span class="history-display-name">@GetDisplayName(log)</span>
+                        </div>
+                        <time class="history-time">@log.Timestamp.ToLocalTime().ToString("HH:mm")</time>
+                    </header>
 
-                            @if (i < log.Rolls.Length - 1)
+                    @if (log.Context is { } context && context.Checks.Length > 0)
+                    {
+                        <div class="history-checks" role="list" aria-label="Einzelwürfe">
+                            @foreach (var check in context.Checks)
                             {
-                                <span class="math-symbol">+</span>
+                                <span class="history-check @GetCheckClass(check.State)"
+                                      role="listitem"
+                                      aria-label="@GetCheckAriaLabel(check)">
+                                    <span class="history-check-value">@check.Name @check.Roll/@check.TargetValue</span>
+                                    <span class="history-check-difference">
+                                        @(check.Difference > 0 ? $"-{check.Difference}" : "0")
+                                    </span>
+                                    <span class="history-check-state">@GetCheckStateText(check.State)</span>
+                                </span>
+                            }
+                        </div>
+                    }
+
+                    <div class="history-equation" aria-label="@GetEquationAriaLabel(log)">
+                        @for (var index = 0; index < log.Rolls.Length; index++)
+                        {
+                            var roll = log.Rolls[index];
+                            <span class="history-die-container">
+                                <span class="die-shape history-die shape-d@(roll.Sides)">
+                                    <span class="die-text">@roll.Value</span>
+                                </span>
+                            </span>
+
+                            @if (index < log.Rolls.Length - 1)
+                            {
+                                <span class="history-math-symbol">+</span>
                             }
                         }
-                        
+
                         @if (log.Modifier > 0)
                         {
-                            <span class="math-symbol">+</span>
-                            <span class="modifier-value">@log.Modifier</span>
+                            <span class="history-math-symbol">+</span>
+                            <span class="history-modifier">@log.Modifier</span>
                         }
                         else if (log.Modifier < 0)
                         {
-                            <span class="math-symbol">-</span>
-                            <span class="modifier-value">@(Math.Abs(log.Modifier))</span>
+                            <span class="history-math-symbol">-</span>
+                            <span class="history-modifier">@Math.Abs(log.Modifier)</span>
                         }
-                        
-                        <span class="math-symbol mx-2">=</span>
-                        <span class="chat-total">@log.TotalSum</span>
+
+                        <span class="history-math-symbol">=</span>
+                        <span class="history-total">@log.TotalSum</span>
                     </div>
-                </div>
+                </article>
             }
         </div>
-    </div>
+    }
 </div>

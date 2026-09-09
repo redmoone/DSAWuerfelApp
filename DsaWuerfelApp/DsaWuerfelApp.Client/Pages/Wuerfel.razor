@@ -35,197 +35,195 @@
         </button>
     </nav>
 
-    <div class="top-section @(IsSessionMaster ? "master-top-section" : string.Empty)">
-        <div class="history-area" title="Historie der bisherigen Würfe">
-            <RollHistory Entries="View.History"/>
-        </div>
-
-        @if (IsSessionMaster)
-        {
-            <div class="action-block master-selection-panel">
-                <h3 class="block-title">Auswahl</h3>
-                <div class="action-block-body master-selection-body">
-                    <div class="master-selection-actions">
-                        <button class="master-selection-button"
-                                type="button"
-                                @onclick="SelectAllMasterTargetsAsync"
-                                disabled="@(AvailableMasterTargets.Count == 0 || IsAllMasterTargetsSelected)">
-                            Alle
-                        </button>
-                        <button class="master-selection-button muted"
-                                type="button"
-                                @onclick="ClearMasterTargetsAsync"
-                                disabled="@(_selectedMasterTargetUserIds.Count == 0)">
-                            Einzelwurf
-                        </button>
-                    </div>
-
-                    @if (AvailableMasterTargets.Count == 0)
-                    {
-                        <p class="master-selection-empty">Noch kein Spieler mit aktivem Helden in der Session.</p>
-                    }
-                    else
-                    {
-                        <div class="master-target-grid">
-                            @foreach (var target in AvailableMasterTargets)
-                            {
-                                <button class="master-target-chip @(IsMasterTargetSelected(target.UserId) ? "active" : string.Empty)"
-                                        type="button"
-                                        @onclick="() => ToggleMasterTargetAsync(target.UserId)">
-                                    <span class="master-target-name">@target.Name</span>
-                                    @if (!string.IsNullOrWhiteSpace(target.ActiveHeroName))
-                                    {
-                                        <span class="master-target-hero">@target.ActiveHeroName</span>
-                                    }
-                                </button>
-                            }
-                        </div>
-                    }
+    <div class="roll-workspace">
+        <section class="roll-setup-panel" aria-labelledby="roll-setup-title">
+            <div class="roll-setup-header">
+                <div>
+                    <h1 id="roll-setup-title">Wurf vorbereiten</h1>
+                    <p>Modus wählen, Werte prüfen und den Wurf abschließen.</p>
                 </div>
             </div>
-        }
 
-        <div class="action-block additional-info-block">
-            <h3 class="block-title">Würfel-Feedback</h3>
-            <div class="action-block-body">
-                <WuerfelInformationPanel ProbeInfo="@View.ProbeInfo"
-                                         ShowProbeInfoDetails="@View.IsProbeInfoExpanded"
-                                         CloseRequested="ToggleProbeInfoAsync"/>
+            @if (IsSessionMaster)
+            {
+                <details class="master-selection-details">
+                    <summary>
+                        <span>Meisterziele</span>
+                        <span class="master-selection-summary">@MasterTargetSummary</span>
+                    </summary>
+                    <div class="master-selection-content">
+                        <div class="master-selection-actions">
+                            <button class="master-selection-button"
+                                    type="button"
+                                    @onclick="SelectAllMasterTargetsAsync"
+                                    disabled="@(AvailableMasterTargets.Count == 0 || IsAllMasterTargetsSelected)">
+                                Alle
+                            </button>
+                            <button class="master-selection-button muted"
+                                    type="button"
+                                    @onclick="ClearMasterTargetsAsync"
+                                    disabled="@(_selectedMasterTargetUserIds.Count == 0)">
+                                Einzelwurf
+                            </button>
+                        </div>
+
+                        @if (AvailableMasterTargets.Count == 0)
+                        {
+                            <p class="master-selection-empty">Noch kein Spieler mit aktivem Helden in der Session.</p>
+                        }
+                        else
+                        {
+                            <div class="master-target-grid">
+                                @foreach (var target in AvailableMasterTargets)
+                                {
+                                    <button class="master-target-chip @(IsMasterTargetSelected(target.UserId) ? "active" : string.Empty)"
+                                            type="button"
+                                            @onclick="() => ToggleMasterTargetAsync(target.UserId)">
+                                        <span class="master-target-name">@target.Name</span>
+                                        @if (!string.IsNullOrWhiteSpace(target.ActiveHeroName))
+                                        {
+                                            <span class="master-target-hero">@target.ActiveHeroName</span>
+                                        }
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </div>
+                </details>
+            }
+
+            <div class="roll-setup-content">
+                @if (VisibleArea == WuerfelArea.ProbeSearch)
+                {
+                    <section class="setup-section probe-setup-section" aria-labelledby="probe-setup-title">
+                        <h2 id="probe-setup-title" class="setup-section-title">Talent oder Zauber</h2>
+                        <WuerfelProbePanel AvailableProben="View.AvailableProbes"
+                                           UseFallbackCatalog="@(!View.IsMasterMode)"
+                                           Placeholder="@View.ProbePlaceholder"
+                                           SelectedProbe="@(View.SelectedProbeValue ?? string.Empty)"
+                                           ProbeInfo="View.ProbeInfo"
+                                           SelectedProbeChanged="HandleSelectedProbeChangedAsync"
+                                           SpellOptionToggleRequested="HandleSpellOptionToggleAsync"
+                                           InfoRequested="ToggleProbeInfoAsync"
+                                           CanShowInfo="@(!string.IsNullOrWhiteSpace(View.SelectedProbeValue))"
+                                           IsInfoExpanded="View.IsProbeInfoExpanded"
+                                           ShowDebugForcedRolls="View.ShowDebugForcedRolls"
+                                           ForcedRollsText="@View.ForcedRollsText"
+                                           ForcedRollsTextChanged="HandleForcedRollsChanged"
+                                           PresetRequested="HandleForcedRollPreset"
+                                           ClearForcedRollsRequested="ClearForcedRolls"
+                                           IsBusy="View.IsBusy"/>
+                        <WuerfelInformationPanel ProbeInfo="@View.ProbeInfo"
+                                                 ShowProbeInfoDetails="@View.IsProbeInfoExpanded"
+                                                 CloseRequested="ToggleProbeInfoAsync"/>
+                    </section>
+
+                    <section class="setup-section optional-bad-trait-section" aria-labelledby="probe-bad-trait-title">
+                        <h2 id="probe-bad-trait-title" class="setup-section-title">Schlechte Eigenschaft</h2>
+                        <SchlechteEigenschaftPanel HasActiveHero="@(View.HasActiveHero || View.IsMasterMode)"
+                                                   IsAggregatedSelection="View.IsMultiMasterMode"
+                                                   SchlechteEigenschaften="View.BadTraits"
+                                                   BadTraitOwners="View.BadTraitOwners"
+                                                   SelectedName="@View.SelectedBadTraitName"
+                                                   SelectedNameChanged="HandleSelectedBadTraitChanged"
+                                                   OnDirectRollRequested="ExecuteBadTraitRollAsync"
+                                                   IsBusy="View.IsBusy"/>
+                    </section>
+                }
+                else if (VisibleArea == WuerfelArea.Attributes)
+                {
+                    <section class="setup-section attribute-setup-section" aria-labelledby="attribute-setup-title">
+                        <h2 id="attribute-setup-title" class="setup-section-title">Eigenschaftsprobe</h2>
+                        <AttributePanel AttributeValues="View.AttributeValues"
+                                        SelectedAttributes="View.SelectedAttributes"
+                                        OnAttributeAdded="AddAttributeAsync"
+                                        OnAttributeRemoved="RemoveAttributeAsync"/>
+                    </section>
+
+                    <section class="setup-section optional-bad-trait-section" aria-labelledby="attribute-bad-trait-title">
+                        <h2 id="attribute-bad-trait-title" class="setup-section-title">Schlechte Eigenschaft</h2>
+                        <SchlechteEigenschaftPanel HasActiveHero="@(View.HasActiveHero || View.IsMasterMode)"
+                                                   IsAggregatedSelection="View.IsMultiMasterMode"
+                                                   SchlechteEigenschaften="View.BadTraits"
+                                                   BadTraitOwners="View.BadTraitOwners"
+                                                   SelectedName="@View.SelectedBadTraitName"
+                                                   SelectedNameChanged="HandleSelectedBadTraitChanged"
+                                                   OnDirectRollRequested="ExecuteBadTraitRollAsync"
+                                                   IsBusy="View.IsBusy"/>
+                    </section>
+                }
+                else if (VisibleArea == WuerfelArea.BadTrait)
+                {
+                    <section class="setup-section bad-trait-setup-section" aria-labelledby="bad-trait-setup-title">
+                        <h2 id="bad-trait-setup-title" class="setup-section-title">Schlechte Eigenschaft prüfen</h2>
+                        <SchlechteEigenschaftPanel HasActiveHero="@(View.HasActiveHero || View.IsMasterMode)"
+                                                   IsAggregatedSelection="View.IsMultiMasterMode"
+                                                   SchlechteEigenschaften="View.BadTraits"
+                                                   BadTraitOwners="View.BadTraitOwners"
+                                                   SelectedName="@View.SelectedBadTraitName"
+                                                   SelectedNameChanged="HandleSelectedBadTraitChanged"
+                                                   OnDirectRollRequested="ExecuteBadTraitRollAsync"
+                                                   IsBusy="View.IsBusy"/>
+                    </section>
+                }
+                else if (VisibleArea == WuerfelArea.FreeRoll)
+                {
+                    <section class="setup-section free-roll-setup-section" aria-labelledby="free-roll-setup-title">
+                        <h2 id="free-roll-setup-title" class="setup-section-title">Freier Wurf</h2>
+                        <div title="Manuelle Auswahl der Würfel">
+                            <DiceControls AvailableSides="_availableSides" OnAddDie="AddDieAsync"/>
+                        </div>
+                    </section>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(View.ErrorMessage))
+                {
+                    <MudAlert Severity="Severity.Error" Class="roll-error">@View.ErrorMessage</MudAlert>
+                }
+
+                @if (VisibleArea != WuerfelArea.BadTrait)
+                {
+                    <WuerfelActionBar RollText="@View.RollText"
+                                      RollTextChanged="HandleRollTextChanged"
+                                      Modifier="@View.Modifier"
+                                      DisplayModifier="@View.EffectiveModifier"
+                                      ModifierChanged="HandleModifierChanged"
+                                      IsHiddenRoll="@View.IsHiddenRoll"
+                                      ToggleHiddenRollRequested="ToggleHiddenRoll"
+                                      ResetRequested="ResetAsync"
+                                      RollRequested="ExecuteRollAsync"
+                                      CanRoll="View.CanRoll"
+                                      IsBusy="View.IsBusy"/>
+                }
+            </div>
+        </section>
+
+        <section class="roll-feedback-column" aria-label="Wurfergebnis und Historie">
+            <section class="current-roll-card">
                 <WuerfelCurrentRollPanel FreeRollResult="View.LastFreeRoll"
                                          TalentResult="View.LastTalentRoll"
                                          AttributeResult="View.LastAttributeRoll"
                                          BadTraitResult="View.LastBadTraitRoll"
                                          MasterTalentResults="View.LastMasterTalentRolls"
                                          MasterAttributeResults="View.LastMasterAttributeRolls"/>
-            </div>
-        </div>
 
-        <div class="middle-section">
-            @if (!string.IsNullOrWhiteSpace(View.ErrorMessage))
-            {
-                <MudAlert Severity="Severity.Error" Class="roll-error">@View.ErrorMessage</MudAlert>
-            }
-
-            @if (VisibleArea != WuerfelArea.BadTrait)
-            {
-                <WuerfelActionBar RollText="@View.RollText"
-                                  RollTextChanged="HandleRollTextChanged"
-                                  Modifier="@View.Modifier"
-                                  DisplayModifier="@View.EffectiveModifier"
-                                  ModifierChanged="HandleModifierChanged"
-                                  IsHiddenRoll="View.IsHiddenRoll"
-                                  ToggleHiddenRollRequested="ToggleHiddenRoll"
-                                  ResetRequested="ResetAsync"
-                                  RollRequested="ExecuteRollAsync"
-                                  CanRoll="View.CanRoll"
-                                  IsBusy="View.IsBusy"/>
-            }
-
-            <div class="dice-3d-box" title="3D Ansicht der gefallenen Würfel">
-                <DiceViewport SelectedDice="View.SelectedDiceSides"
-                              ResultDiceSides="View.AnimatedDiceSides"
-                              ResultDiceValues="View.AnimatedDiceValues"
-                              PreviewVersion="View.PreviewVersion"
-                              ResultVersion="View.ResultVersion"
-                              OnDiceRemoved="HandleDiceRemovedAsync"/>
-            </div>
-        </div>
-    </div>
-
-    <div class="action-blocks-container">
-        @if (VisibleArea == WuerfelArea.ProbeSearch)
-        {
-            <div class="action-block probe-action-block">
-                <h3 class="block-title">Probensuche</h3>
-                <div class="action-block-body probe-action-block-body">
-                    <WuerfelProbePanel AvailableProben="View.AvailableProbes"
-                                       UseFallbackCatalog="@(!View.IsMasterMode)"
-                                       Placeholder="@View.ProbePlaceholder"
-                                       SelectedProbe="@(View.SelectedProbeValue ?? string.Empty)"
-                                       ProbeInfo="View.ProbeInfo"
-                                       SelectedProbeChanged="HandleSelectedProbeChangedAsync"
-                                       SpellOptionToggleRequested="HandleSpellOptionToggleAsync"
-                                       InfoRequested="ToggleProbeInfoAsync"
-                                       CanShowInfo="@(!string.IsNullOrWhiteSpace(View.SelectedProbeValue))"
-                                       IsInfoExpanded="@View.IsProbeInfoExpanded"
-                                       ShowDebugForcedRolls="View.ShowDebugForcedRolls"
-                                       ForcedRollsText="@View.ForcedRollsText"
-                                       ForcedRollsTextChanged="HandleForcedRollsChanged"
-                                       PresetRequested="HandleForcedRollPreset"
-                                       ClearForcedRollsRequested="ClearForcedRolls"
-                                       IsBusy="View.IsBusy"/>
+                <div class="dice-3d-box @(View.AnimatedDiceSides.Count > 0 ? "has-result" : View.SelectedDiceSides.Count > 0 ? "has-selection" : "is-empty")"
+                     title="3D Ansicht der gefallenen Würfel">
+                    <DiceViewport SelectedDice="View.SelectedDiceSides"
+                                  ResultDiceSides="View.AnimatedDiceSides"
+                                  ResultDiceValues="View.AnimatedDiceValues"
+                                  PreviewVersion="View.PreviewVersion"
+                                  ResultVersion="View.ResultVersion"
+                                  OnDiceRemoved="HandleDiceRemovedAsync"/>
                 </div>
-            </div>
+            </section>
 
-            <div class="action-block">
-                <h3 class="block-title">Schlechte Eigenschaften</h3>
-                <div class="action-block-body action-block-scroll">
-                    <SchlechteEigenschaftPanel HasActiveHero="@(View.HasActiveHero || View.IsMasterMode)"
-                                               IsAggregatedSelection="View.IsMultiMasterMode"
-                                               SchlechteEigenschaften="View.BadTraits"
-                                               BadTraitOwners="View.BadTraitOwners"
-                                               SelectedName="@View.SelectedBadTraitName"
-                                               SelectedNameChanged="HandleSelectedBadTraitChanged"
-                                               OnDirectRollRequested="ExecuteBadTraitRollAsync"
-                                               IsBusy="View.IsBusy"/>
+            <section class="history-panel" data-testid="history-panel" aria-labelledby="history-title">
+                <div class="history-panel-heading">
+                    <h2 id="history-title">Historie · @View.History.Count Würfe</h2>
                 </div>
-            </div>
-        }
-
-        @if (VisibleArea == WuerfelArea.Attributes)
-        {
-            <div class="action-block attribute-action-block">
-                <h3 class="block-title">Eigenschaftsproben</h3>
-                <div class="action-block-body attribute-action-block-body">
-                    <AttributePanel AttributeValues="View.AttributeValues"
-                                    SelectedAttributes="View.SelectedAttributes"
-                                    OnAttributeAdded="AddAttributeAsync"
-                                    OnAttributeRemoved="RemoveAttributeAsync"/>
-                </div>
-            </div>
-
-            <div class="action-block">
-                <h3 class="block-title">Schlechte Eigenschaften</h3>
-                <div class="action-block-body action-block-scroll">
-                    <SchlechteEigenschaftPanel HasActiveHero="@(View.HasActiveHero || View.IsMasterMode)"
-                                               IsAggregatedSelection="View.IsMultiMasterMode"
-                                               SchlechteEigenschaften="View.BadTraits"
-                                               BadTraitOwners="View.BadTraitOwners"
-                                               SelectedName="@View.SelectedBadTraitName"
-                                               SelectedNameChanged="HandleSelectedBadTraitChanged"
-                                               OnDirectRollRequested="ExecuteBadTraitRollAsync"
-                                               IsBusy="View.IsBusy"/>
-                </div>
-            </div>
-        }
-
-        @if (VisibleArea == WuerfelArea.BadTrait)
-        {
-            <div class="action-block bad-trait-action-block">
-                <h3 class="block-title">Schlechte Eigenschaft</h3>
-                <div class="action-block-body action-block-scroll">
-                    <SchlechteEigenschaftPanel HasActiveHero="@(View.HasActiveHero || View.IsMasterMode)"
-                                               IsAggregatedSelection="View.IsMultiMasterMode"
-                                               SchlechteEigenschaften="View.BadTraits"
-                                               BadTraitOwners="View.BadTraitOwners"
-                                               SelectedName="@View.SelectedBadTraitName"
-                                               SelectedNameChanged="HandleSelectedBadTraitChanged"
-                                               OnDirectRollRequested="ExecuteBadTraitRollAsync"
-                                               IsBusy="View.IsBusy"/>
-                </div>
-            </div>
-        }
-
-        @if (VisibleArea == WuerfelArea.FreeRoll)
-        {
-            <div class="action-block free-roll-action-block">
-                <h3 class="block-title">Freier Wurf</h3>
-                <div class="action-block-body action-block-scroll">
-                    <div title="Manuelle Auswahl der Würfel">
-                        <DiceControls AvailableSides="_availableSides" OnAddDie="AddDieAsync"/>
-                    </div>
-                </div>
-            </div>
-        }
+                <RollHistory Entries="View.History"/>
+            </section>
+        </section>
     </div>
 </div>

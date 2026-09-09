@@ -1,63 +1,58 @@
 .results-bar {
-    container: results-bar / inline-size;
-    width: 100%;
-    height: auto;
-    box-sizing: border-box;
-    min-height: 175px;
-    min-width: 0;
-    background-color: rgba(165, 165, 165, 0.85);
-    border: 2px solid var(--dsa-gold);
-    border-radius: 8px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    container: roll-actions / inline-size;
     display: flex;
     flex-direction: column;
-    justify-content: space-evenly;
-    padding: 16px 24px;
-    gap: 16px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    border-radius: 10px;
+    background: rgba(9, 25, 48, 0.76);
 }
 
 .results-title {
     margin: 0;
-    font-size: 1.25rem;
+    color: var(--dsa-gold);
+    font-size: 0.9rem;
     font-weight: 700;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--dsa-white);
-    text-align: center;
-    border-bottom: 2px solid var(--dsa-gold);
-    padding-bottom: 8px;
-    width: 100%;
 }
 
 .global-actions-bar {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    width: 100%;
+    gap: 12px;
     min-width: 0;
-    flex-wrap: wrap;
-    gap: 16px;
 }
 
-.left-actions {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    min-width: 0;
-    flex-wrap: wrap;
-}
-
+.left-actions,
 .right-actions {
     display: flex;
     align-items: center;
     min-width: 0;
+    gap: 10px;
+}
+
+.left-actions {
+    flex-wrap: wrap;
+}
+
+.right-actions {
+    justify-content: flex-end;
 }
 
 .hidden-roll-hint {
     position: relative;
     display: inline-flex;
-    flex: 0 0 auto;
+    flex: 0 0 48px;
     align-items: center;
     justify-content: center;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     cursor: help;
 }
@@ -97,76 +92,48 @@
     transform: translateY(0);
 }
 
-@media (min-width: 901px) {
-    .global-actions-bar {
-        flex: 1;
-        flex-wrap: nowrap;
-        gap: 12px;
-        min-width: 0;
-    }
-
-    .left-actions {
-        flex: 1 1 auto;
-        flex-wrap: nowrap;
-        gap: 10px;
-        min-width: 0;
-    }
-
-    .right-actions {
-        flex: 0 0 auto;
-    }
-
-    ::deep .text-pill {
-        flex: 1 1 160px;
-        min-width: 160px;
-        max-width: none;
-    }
-
-    ::deep .modifier-pill {
-        min-width: 124px;
-    }
-}
-
 .dsa-btn {
-    background-color: var(--dsa-blue);
-    color: var(--dsa-gold);
+    min-width: 132px;
+    min-height: 48px;
+    padding: 10px 22px;
     border: 2px solid var(--dsa-gold);
     border-radius: 8px;
-    min-width: 132px;
-    padding: 10px 24px;
-    font-size: 1.1rem;
-    font-weight: bold;
+    background-color: var(--dsa-blue);
+    color: var(--dsa-gold);
     cursor: pointer;
+    font-size: 1rem;
+    font-weight: 700;
     text-transform: uppercase;
     white-space: nowrap;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    transition: all 0.2s ease-in-out;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.dsa-btn:hover:not(:disabled) {
+.dsa-btn:hover:not(:disabled),
+.dsa-btn:focus-visible:not(:disabled) {
     background-color: var(--dsa-gold);
     color: var(--dsa-blue);
     box-shadow: 0 0 10px var(--dsa-gold-glow);
 }
 
 .dsa-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
     border-color: #888;
     color: #ccc;
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .dsa-btn-icon {
-    background-color: var(--pill-bg);
-    border: 2px solid var(--dsa-gold);
-    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 48px;
     height: 48px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    border: 2px solid var(--dsa-gold);
+    border-radius: 50%;
+    background-color: var(--pill-bg);
     cursor: pointer;
-    transition: all 0.2s ease-in-out;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .dsa-btn-icon:hover:not(:disabled) {
@@ -179,10 +146,6 @@
     cursor: not-allowed;
 }
 
-.dsa-btn-icon.active {
-    background-color: var(--dsa-gold);
-}
-
 .btn-icon {
     width: 24px;
     height: 24px;
@@ -193,84 +156,50 @@
     filter: none;
 }
 
-@media (max-width: 1250px) {
-    .results-bar {
-        height: auto;
-        min-height: 212px;
-        justify-content: flex-start;
+@media (min-width: 901px) {
+    ::deep .text-pill {
+        flex: 1 1 150px;
+        min-width: 120px;
     }
 
-    .global-actions-bar {
-        flex-wrap: nowrap;
-        align-items: flex-start;
-        min-width: 0;
-    }
-
-    .left-actions {
-        flex: 1 1 auto;
-        flex-wrap: wrap;
-        min-width: 0;
-    }
-
-    .right-actions {
-        flex: 0 0 auto;
+    ::deep .modifier-pill {
+        flex: 0 1 170px;
+        min-width: 120px;
     }
 }
 
-@container results-bar (max-width: 560px) {
-    .results-bar {
-        min-height: 0;
-    }
-
+@container roll-actions (max-width: 680px) {
     .global-actions-bar {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
+        grid-template-columns: minmax(0, 1fr);
     }
 
-    .left-actions {
+    .right-actions,
+    .right-actions .dsa-btn {
         width: 100%;
-        flex: 0 0 auto;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
+    }
+
+    .right-actions {
+        justify-content: stretch;
     }
 
     ::deep .text-pill {
         flex: 1 1 100%;
         width: 100%;
         min-width: 0;
-        max-width: none;
     }
 
     ::deep .modifier-pill {
-        flex: 0 1 194px;
-        width: 194px;
-        max-width: 100%;
+        flex: 1 1 170px;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 420px) {
+    .results-bar {
+        padding: 10px;
     }
 
-    .hidden-roll-hint {
-        flex: 0 0 48px;
-        width: 48px;
-        height: 48px;
-    }
-
-    .hidden-roll-hint::after {
-        right: auto;
-        left: 0;
-        max-width: 100%;
-    }
-
-    ::deep .reset-roll-button {
-        flex: 0 0 48px;
-    }
-
-    .right-actions {
-        width: 100%;
-        flex: 0 0 auto;
-    }
-
-    .right-actions .dsa-btn {
-        width: 100%;
+    .left-actions {
+        gap: 8px;
     }
 }

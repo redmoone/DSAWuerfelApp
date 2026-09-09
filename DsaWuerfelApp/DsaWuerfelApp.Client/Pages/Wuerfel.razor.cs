@@ -68,6 +68,13 @@ public partial class Wuerfel : IDisposable
         AvailableMasterTargets.Count > 0 &&
         AvailableMasterTargets.All(target => _selectedMasterTargetUserIds.Contains(target.UserId));
 
+    private string MasterTargetSummary => _selectedMasterTargetUserIds.Count switch
+    {
+        0 => "Einzelwurf",
+        1 => "1 Ziel",
+        var count => $"{count} Ziele"
+    };
+
     public void Dispose()
     {
         State.Changed -= HandleStateChanged;

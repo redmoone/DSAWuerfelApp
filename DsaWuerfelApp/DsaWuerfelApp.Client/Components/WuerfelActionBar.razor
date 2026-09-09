@@ -1,5 +1,5 @@
 <div class="results-bar">
-    <h3 class="results-title">Ergebnisse und Würfeln</h3>
+    <h3 class="results-title">Wurf abschließen</h3>
 
     <div class="global-actions-bar">
         <div class="left-actions">
@@ -36,7 +36,12 @@
         </div>
 
         <div class="right-actions">
-            <button class="dsa-btn" @onclick="RollRequested" disabled="@(!CanRoll || IsBusy)">
+            <button type="button"
+                    class="dsa-btn"
+                    title="Wurf ausführen"
+                    aria-label="Würfeln"
+                    @onclick="RollRequested"
+                    disabled="@(!CanRoll || IsBusy)">
                 Würfeln
             </button>
         </div>
