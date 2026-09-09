@@ -208,3 +208,23 @@ Validation:
 Notes:
 - Renderer/camera resizing remains in the existing render loop; the same loop and the existing window handler share an instance-local positive-width layout cache.
 - Zero-sized hosts leave the last valid layout width intact and refresh layout when shown again; dispose still clears the cache with the existing animation/listener cleanup.
+
+## P7a
+Status: COMPLETE
+Changed:
+- DsaWuerfelApp/DsaWuerfelApp.Client/Pages/Lobby.razor.css
+
+Validation:
+- dotnet build DsaWuerfelApp.sln -c Release -v minimal: PASS
+- dotnet publish ... -v minimal: PASS
+- anonymous lobby and invalid-auth feedback at 320px: PASS
+- authenticated long-name create flow and board geometry: PASS
+- invalid join feedback and geometry: PASS
+- app-workflows.cjs: PASS
+- dice-lifecycle.cjs: PASS
+- ClientStateTests: PASS (12/12)
+- git diff --check: PASS
+
+Notes:
+- Existing 1080px/760px breakpoints remain; narrow grid tracks, panel min-widths and compact board placeholder heights now fit the available host width.
+- SessionTree remains the shared owner of session content and actions; no lobby-specific session markup or callbacks changed.

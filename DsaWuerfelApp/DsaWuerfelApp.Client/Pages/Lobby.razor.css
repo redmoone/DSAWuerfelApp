@@ -30,6 +30,8 @@
 
 .lobby-overview {
     grid-area: overview;
+    min-width: 0;
+    box-sizing: border-box;
     padding: 1.6rem 1.75rem;
     display: flex;
     flex-direction: column;
@@ -172,7 +174,9 @@
 
 .session-workbench,
 .session-board {
+    min-width: 0;
     min-height: 0;
+    box-sizing: border-box;
     padding: 1.35rem;
     display: flex;
     flex-direction: column;
@@ -543,6 +547,7 @@
 
 @media (max-width: 760px) {
     .lobby-shell {
+        grid-template-columns: minmax(0, 1fr);
         padding: 1rem;
         gap: 1rem;
     }
@@ -551,6 +556,17 @@
     .session-workbench,
     .session-board {
         padding: 1.1rem;
+    }
+
+    .overview-header,
+    .control-stack,
+    .subpanel-card,
+    .mode-panel {
+        min-width: 0;
+    }
+
+    .hero-title {
+        overflow-wrap: anywhere;
     }
 
     .overview-stats,
@@ -572,6 +588,12 @@
     .session-btn,
     .secondary-btn {
         width: 100%;
+        min-width: 0;
         align-self: stretch;
+    }
+
+    .board-body,
+    .board-placeholder {
+        min-height: 0;
     }
 }
