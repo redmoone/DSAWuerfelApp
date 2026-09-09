@@ -217,19 +217,6 @@
     }
 }
 
-@media (max-width: 640px) {
-    .results-bar {
-        flex: 1 1 auto;
-        height: auto;
-        min-width: 0;
-        min-height: 212px;
-    }
-
-    .right-actions {
-        width: auto;
-    }
-}
-
 @container results-bar (max-width: 560px) {
     .global-actions-bar {
         flex-wrap: wrap;
@@ -238,6 +225,17 @@
     .left-actions {
         flex: 1 1 100%;
         flex-wrap: wrap;
+    }
+
+    .hidden-roll-hint {
+        flex: 1 1 100%;
+        justify-content: flex-start;
+    }
+
+    .hidden-roll-hint::after {
+        right: auto;
+        left: 0;
+        max-width: 100%;
     }
 
     .right-actions {

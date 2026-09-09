@@ -101,3 +101,23 @@ Validation:
 Notes:
 - Attribute add/remove now has separate semantic buttons; OnClick priority, right-click decrease and one-callback behavior remain intact.
 - Dice controls are semantic buttons; modifier targets meet the shared 44px target and pill contents fit their narrow hosts.
+
+## P4b
+Status: COMPLETE
+Changed:
+- DsaWuerfelApp/DsaWuerfelApp.Client/Components/WuerfelActionBar.razor.css
+- DsaWuerfelApp/DsaWuerfelApp.Client/Pages/Wuerfel.razor.css
+
+Validation:
+- dotnet build DsaWuerfelApp.sln -c Release -v minimal: PASS
+- dotnet publish ... -v minimal: PASS
+- action-bar host widths around the 560px container query: PASS
+- tooltip focus/width and prepared-state resize/sidebar check: PASS
+- app-workflows.cjs: PASS
+- dice-lifecycle.cjs: PASS
+- ClientStateTests: PASS (12/12)
+- git diff --check: PASS
+
+Notes:
+- Action-bar wrap ownership is consolidated in the component; measured page-level duplicate rules were removed after confirming the rendered component carries only its component scope.
+- Narrow-host tooltip width is bounded by the action row while the disabled hidden-roll behavior remains unchanged.
