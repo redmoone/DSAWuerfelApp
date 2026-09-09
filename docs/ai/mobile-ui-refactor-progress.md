@@ -228,3 +228,22 @@ Validation:
 Notes:
 - Existing 1080px/760px breakpoints remain; narrow grid tracks, panel min-widths and compact board placeholder heights now fit the available host width.
 - SessionTree remains the shared owner of session content and actions; no lobby-specific session markup or callbacks changed.
+
+## P7b
+Status: PARTIAL
+Changed:
+- DsaWuerfelApp/DsaWuerfelApp.Client/Pages/HeldenVerwaltung.razor.css
+
+Validation:
+- dotnet build DsaWuerfelApp.sln -c Release -v minimal: PASS
+- dotnet publish ... -v minimal: PASS
+- hero-management geometry at 320px through desktop widths: PASS
+- long filename selection and invalid-extension validation: PASS
+- app-workflows.cjs hero synchronization: PASS
+- dice-lifecycle.cjs: PASS
+- ClientStateTests: PASS (12/12)
+- git diff --check: PASS
+
+Notes:
+- Narrow container/card tracks and selected-file names now fit and wrap within the host; existing InputFile and dropzone code was unchanged because no concrete interaction defect was reproduced.
+- No valid importer fixture or native file-picker device run is available (CN-4/CN-5); valid-content upload and device drop behavior remain open validation items.
