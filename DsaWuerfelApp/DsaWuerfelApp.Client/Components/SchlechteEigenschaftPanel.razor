@@ -1,3 +1,4 @@
+<div class="bad-trait-panel @(Compact ? "compact" : string.Empty)">
 @if (!CanDisplayTraits)
 {
     <p class="additional-info-empty">Wähle zuerst einen aktiven Helden.</p>
@@ -71,9 +72,12 @@ else
                 <span>Eigenschaftsproben: @FormatModifier(selectedEigenschaft.AttributeModifier)</span>
             </div>
 
-            <button class="dsa-btn" @onclick="HandleDirectRollRequested" disabled="@IsBusy">
-                W20 auf @selectedEigenschaft.Name
-            </button>
+            @if (AllowDirectRoll && !IsAggregatedSelection)
+            {
+                <button type="button" class="dsa-btn" @onclick="HandleDirectRollRequested" disabled="@IsBusy">
+                    W20 auf @selectedEigenschaft.Name
+                </button>
+            }
         }
     }
     else
@@ -81,7 +85,10 @@ else
         <p class="additional-info-empty">
             @(IsAggregatedSelection
                 ? "Wähle eine schlechte Eigenschaft, um die betroffenen Spieler und ihre Werte zu sehen."
-                : "Wähle eine relevante schlechte Eigenschaft, um ihre Erschwernis zu aktivieren oder direkt darauf zu würfeln.")
+                : Compact
+                    ? "Wähle eine relevante schlechte Eigenschaft, um ihre Erschwernis zu aktivieren."
+                    : "Wähle eine relevante schlechte Eigenschaft, um ihre Erschwernis zu aktivieren oder direkt darauf zu würfeln.")
         </p>
     }
 }
+</div>

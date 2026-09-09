@@ -59,6 +59,14 @@ async function createAppFixture(publishDirectory, { userCount = 3 } = {}) {
 
   const seedUsers = async () => {
     db = new DatabaseSync(path.join(temp, 'heroes.db'));
+    const badTraits = JSON.stringify({ Aberglaube: 10 });
+    const spells = JSON.stringify({
+      Abvenenum: {
+        Wert: 10,
+        Probe: 'KL/KL/FF',
+        Specializations: []
+      }
+    });
     for (let i = 0; i < userCount; i++) {
       const authId = randomUUID().toUpperCase();
       const id = authId.replaceAll('-', '').toLowerCase();
@@ -72,7 +80,7 @@ async function createAppFixture(publishDirectory, { userCount = 3 } = {}) {
       db.prepare('INSERT INTO MagicLinkTokens(Id,Email,TokenHash,RedirectPath,RequestedAtUtc,ExpiresAtUtc) VALUES(?,?,?,?,?,?)')
         .run(randomUUID().toUpperCase(), email, createHash('sha256').update(token).digest('hex').toUpperCase(), '/', now, expires);
       db.prepare('INSERT INTO Heroes(Id,OwnerUserId,IsActive,Name,Geschlecht,"Alter",Eigenschaften,SchlechteEigenschaften,Talente,Zauber,ImportVersion) VALUES(?,?,1,?,?,?,?,?,?,?,3)')
-        .run(heroId, id, `Held${i}`, '', 20, JSON.stringify({ MU: 12, KL: 12, IN: 12, CH: 12, FF: 12, GE: 12, KO: 12, KK: 12 }), '{}', '{}', '{}');
+        .run(heroId, id, `Held${i}`, '', 20, JSON.stringify({ MU: 12, KL: 12, IN: 12, CH: 12, FF: 12, GE: 12, KO: 12, KK: 12 }), badTraits, '{}', spells);
       users.push({ id, heroId, token, email });
     }
     db.close();

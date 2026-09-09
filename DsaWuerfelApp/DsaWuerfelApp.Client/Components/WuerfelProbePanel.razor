@@ -19,31 +19,45 @@
 {
     <div class="spell-selection-panel" title="Zauberoptionen">
         <div class="spell-selection-header">
-            <span class="spell-selection-title">Zauberoptionen</span>
+            <div class="spell-selection-heading">
+                <span class="spell-selection-title">Zauberoptionen</span>
+                <span class="spell-selection-global-count">@GetGlobalSelectionSummary(spellSelection)</span>
+            </div>
             @if (!string.IsNullOrWhiteSpace(spellSelection.SimultaneousModificationNote))
             {
-                <span class="spell-selection-note">@spellSelection.SimultaneousModificationNote</span>
+                <p class="spell-selection-note">@spellSelection.SimultaneousModificationNote</p>
             }
         </div>
 
-        @foreach (var group in spellSelection.Groups)
+        @for (var groupIndex = 0; groupIndex < spellSelection.Groups.Length; groupIndex++)
         {
+            var group = spellSelection.Groups[groupIndex];
             <details class="spell-selection-group" open="@HasSelectedOption(group)">
                 <summary class="spell-selection-group-summary">
                     <span class="spell-selection-group-label">@group.Label</span>
                     <span class="spell-selection-count">@GetGroupSummary(group)</span>
                 </summary>
                 <div class="spell-selection-buttons">
-                    @foreach (var option in group.Options)
+                    @for (var optionIndex = 0; optionIndex < group.Options.Length; optionIndex++)
                     {
+                        var option = group.Options[optionIndex];
+                        var maximumHintId = GetMaximumHintId(groupIndex, optionIndex);
+                        var maximumDisabled = IsMaximumDisabled(spellSelection, option);
                         <div class="spell-selection-option">
                             <button type="button"
                                     class="spell-selection-button @(option.IsSelected ? "active" : string.Empty)"
                                     disabled="@option.IsDisabled"
+                                    aria-describedby="@(maximumDisabled ? maximumHintId : null)"
                                     title="@option.Description"
                                     @onclick='() => SpellOptionToggleRequested.InvokeAsync(option.Value)'>
                                 @option.Label
                             </button>
+                            @if (maximumDisabled)
+                            {
+                                <span id="@maximumHintId" class="spell-option-disabled-hint">
+                                    Maximum von @spellSelection.MaximumSelectableOptions erreicht
+                                </span>
+                            }
                             @if (!string.IsNullOrWhiteSpace(option.Description))
                             {
                                 <details class="spell-option-details">

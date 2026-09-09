@@ -1,3 +1,14 @@
+.bad-trait-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 12px;
+}
+
+.bad-trait-panel.compact {
+    gap: 8px;
+}
+
 .additional-info-empty {
     margin: 0;
     padding: 14px 16px;
@@ -8,6 +19,7 @@
 }
 
 .dsa-btn {
+    min-height: 44px;
     background-color: var(--dsa-blue);
     color: var(--dsa-gold);
     border: 2px solid var(--dsa-gold);
@@ -40,12 +52,17 @@
     gap: 10px;
 }
 
+.bad-trait-panel.compact .bad-trait-list {
+    gap: 6px;
+}
+
 .bad-trait-chip {
     display: inline-flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
     min-width: 140px;
+    min-height: 44px;
     padding: 10px 14px;
     border-radius: 999px;
     border: 1px solid rgba(212, 175, 55, 0.4);
@@ -53,6 +70,20 @@
     color: var(--dsa-white);
     cursor: pointer;
     transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.bad-trait-panel.compact .bad-trait-chip {
+    min-width: min(140px, 100%);
+    padding: 8px 10px;
+}
+
+.bad-trait-panel.compact .bad-trait-summary {
+    gap: 6px;
+}
+
+.bad-trait-panel.compact .bad-trait-summary span {
+    padding: 5px 9px;
+    font-size: 0.82rem;
 }
 
 .bad-trait-chip.aggregated {
@@ -140,4 +171,10 @@
 
 .bad-trait-hint {
     padding: 12px 14px;
+}
+
+@media (max-width: 640px) {
+    .bad-trait-panel:not(.compact) .dsa-btn {
+        width: 100%;
+    }
 }

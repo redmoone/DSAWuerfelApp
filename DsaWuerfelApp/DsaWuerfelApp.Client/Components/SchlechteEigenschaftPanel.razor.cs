@@ -11,12 +11,15 @@ public partial class SchlechteEigenschaftPanel
     [Parameter] public bool IsAggregatedSelection { get; set; }
     [Parameter] public IReadOnlyList<BadTraitDto> SchlechteEigenschaften { get; set; } = Array.Empty<BadTraitDto>();
 
-    [Parameter] public IReadOnlyDictionary<string, IReadOnlyList<BadTraitOwnerInfo>> BadTraitOwners { get; set; } =
+    [Parameter]
+    public IReadOnlyDictionary<string, IReadOnlyList<BadTraitOwnerInfo>> BadTraitOwners { get; set; } =
         new Dictionary<string, IReadOnlyList<BadTraitOwnerInfo>>(StringComparer.Ordinal);
 
     [Parameter] public string? SelectedName { get; set; }
     [Parameter] public EventCallback<string?> SelectedNameChanged { get; set; }
     [Parameter] public EventCallback OnDirectRollRequested { get; set; }
+    [Parameter] public bool AllowDirectRoll { get; set; } = true;
+    [Parameter] public bool Compact { get; set; }
     [Parameter] public bool IsBusy { get; set; }
 
     private bool CanDisplayTraits => HasActiveHero || IsAggregatedSelection;

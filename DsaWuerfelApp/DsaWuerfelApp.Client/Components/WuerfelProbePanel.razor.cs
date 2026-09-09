@@ -38,7 +38,27 @@ public partial class WuerfelProbePanel
     private static string GetGroupSummary(SpellOptionGroupDto group)
     {
         var selectedCount = group.Options.Count(option => option.IsSelected);
-        return $"{selectedCount}/{group.Options.Length} ausgewählt";
+        return $"{selectedCount} von {group.Options.Length} in dieser Gruppe";
+    }
+
+    private static string GetGlobalSelectionSummary(SpellSelectionPanelDto selection)
+    {
+        return selection.MaximumSelectableOptions is { } maximum
+            ? $"{selection.SelectedOptionCount} / {maximum} gleichzeitig"
+            : $"{selection.SelectedOptionCount} gleichzeitig";
+    }
+
+    private static bool IsMaximumDisabled(SpellSelectionPanelDto selection, SpellOptionButtonDto option)
+    {
+        return option.IsDisabled &&
+               !option.IsSelected &&
+               selection.MaximumSelectableOptions is { } maximum &&
+               selection.SelectedOptionCount >= maximum;
+    }
+
+    private static string GetMaximumHintId(int groupIndex, int optionIndex)
+    {
+        return $"spell-option-maximum-{groupIndex}-{optionIndex}";
     }
 
     private string BuildInfoButtonStyle()
