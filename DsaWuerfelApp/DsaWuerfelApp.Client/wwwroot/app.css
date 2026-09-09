@@ -79,3 +79,29 @@
     --pill-bg: rgba(28, 46, 74, 0.85); 
     --ui-touch-target: 44px;
 }
+
+.dsa-scroll-region {
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(212, 175, 55, 0.78) rgba(7, 17, 29, 0.72);
+}
+
+.dsa-scroll-region::-webkit-scrollbar {
+    width: 10px;
+}
+
+.dsa-scroll-region::-webkit-scrollbar-track {
+    margin: 4px 0;
+    border-radius: 999px;
+    background: rgba(7, 17, 29, 0.72);
+}
+
+.dsa-scroll-region::-webkit-scrollbar-thumb {
+    border: 2px solid rgba(7, 17, 29, 0.72);
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(244, 212, 107, 0.95), rgba(212, 175, 55, 0.82));
+}
+
+.dsa-scroll-region::-webkit-scrollbar-thumb:hover {
+    background: var(--dsa-gold);
+}

@@ -13,7 +13,7 @@
 
     @if (_isDropdownOpen && FilteredProben.Any())
     {
-        <div class="search-dropdown">
+        <div class="search-dropdown dsa-scroll-region">
             @foreach (var probe in FilteredProben)
             {
                 <div class="dropdown-item @(probe.IsSelectable ? string.Empty : "inactive")">
@@ -58,7 +58,7 @@
     }
     else if (_isDropdownOpen && !UseFallbackCatalog && !FilteredProben.Any())
     {
-        <div class="search-dropdown">
+        <div class="search-dropdown dsa-scroll-region">
             <div class="dropdown-item inactive">
                 <div class="dropdown-item-content">
                     <span class="dropdown-item-note">Keine gemeinsamen Proben für diese Auswahl gefunden.</span>

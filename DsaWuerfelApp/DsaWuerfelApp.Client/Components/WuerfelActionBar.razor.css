@@ -218,18 +218,41 @@
 }
 
 @container results-bar (max-width: 560px) {
+    .results-bar {
+        min-height: 0;
+    }
+
     .global-actions-bar {
-        flex-wrap: wrap;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
     }
 
     .left-actions {
-        flex: 1 1 100%;
+        width: 100%;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: 8px;
         flex-wrap: wrap;
     }
 
-    .hidden-roll-hint {
+    ::deep .text-pill {
         flex: 1 1 100%;
-        justify-content: flex-start;
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+    }
+
+    ::deep .modifier-pill {
+        flex: 0 1 194px;
+        width: 194px;
+        max-width: 100%;
+    }
+
+    .hidden-roll-hint {
+        flex: 0 0 48px;
+        width: 48px;
+        height: 48px;
     }
 
     .hidden-roll-hint::after {
@@ -238,8 +261,16 @@
         max-width: 100%;
     }
 
+    ::deep .reset-roll-button {
+        flex: 0 0 48px;
+    }
+
     .right-actions {
-        flex: 0 0 100%;
-        justify-content: flex-end;
+        width: 100%;
+        flex: 0 0 auto;
+    }
+
+    .right-actions .dsa-btn {
+        width: 100%;
     }
 }

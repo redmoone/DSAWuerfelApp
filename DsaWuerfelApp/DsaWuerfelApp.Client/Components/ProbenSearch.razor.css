@@ -64,13 +64,13 @@
     background-color: var(--dsa-blue);
     border: 2px solid var(--dsa-gold);
     border-radius: 10px;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     z-index: 100;
     min-width: 0;
     box-sizing: border-box;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-    max-height: calc(5 * 40px);
-    overflow-y: auto;
+    max-height: 280px;
 }
 
 .dropdown-item {

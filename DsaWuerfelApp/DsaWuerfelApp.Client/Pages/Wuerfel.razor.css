@@ -242,6 +242,18 @@
     padding-right: 4px;
 }
 
+.attribute-action-block-body {
+    overflow: visible;
+}
+
+.probe-action-block {
+    overflow: visible;
+}
+
+.probe-action-block-body {
+    overflow: visible;
+}
+
 .additional-info-block {
     min-height: 0;
 }
