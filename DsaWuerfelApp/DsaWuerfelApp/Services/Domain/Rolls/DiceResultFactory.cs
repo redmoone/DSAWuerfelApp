@@ -21,8 +21,14 @@ internal static class DiceResultFactory
     }
 
     public static RollHistoryEntryDto CreateHistoryEntry(string playerName, DateTime timestamp,
-        RollEquationDto equation)
+        RollEquationDto equation, RollHistoryContextDto? context = null)
     {
-        return new RollHistoryEntryDto(playerName, timestamp, equation.Rolls, equation.Modifier, equation.Total);
+        return new RollHistoryEntryDto(
+            playerName,
+            timestamp,
+            equation.Rolls,
+            equation.Modifier,
+            equation.Total,
+            context);
     }
 }

@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 using DsaWuerfelApp.Core.Mappers;
 using DsaWuerfelApp.Hubs;
 using DsaWuerfelApp.Persistence;
@@ -7,10 +9,9 @@ using DsaWuerfelApp.Services.Auth;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Diagnostics;
-using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 var provider = new FileExtensionContentTypeProvider { Mappings = { [".glb"] = "model/gltf-binary" } };
@@ -368,9 +369,30 @@ static void EnsureSessionSchema(HeroDbContext dbContext)
             TimestampUtc TEXT NOT NULL,
             RollsJson TEXT NOT NULL,
             Modifier INTEGER NOT NULL,
-            TotalSum INTEGER NOT NULL
+            TotalSum INTEGER NOT NULL,
+            ContextJson TEXT NULL
         );
         """);
+
+    using var connection = dbContext.Database.GetDbConnection();
+    connection.Open();
+
+    using var command = connection.CreateCommand();
+    command.CommandText = "PRAGMA table_info('SessionRollHistory');";
+
+    using var reader = command.ExecuteReader();
+    var existingColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    while (reader.Read())
+    {
+        existingColumns.Add(reader.GetString(1));
+    }
+
+    reader.Close();
+    if (!existingColumns.Contains("ContextJson"))
+    {
+        dbContext.Database.ExecuteSqlRaw(
+            "ALTER TABLE SessionRollHistory ADD COLUMN ContextJson TEXT NULL;");
+    }
 
     dbContext.Database.ExecuteSqlRaw(
         """

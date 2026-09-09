@@ -31,4 +31,5 @@ public sealed class SessionRollHistoryRecord
     public string RollsJson { get; set; } = "[]";
     public int Modifier { get; set; }
     public int TotalSum { get; set; }
+    public string? ContextJson { get; set; }
 }

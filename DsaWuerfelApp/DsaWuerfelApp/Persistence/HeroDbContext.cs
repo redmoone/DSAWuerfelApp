@@ -128,6 +128,7 @@ public class HeroDbContext : DbContext
             entity.HasKey(history => history.Id);
             entity.Property(history => history.PlayerName).HasMaxLength(120);
             entity.Property(history => history.RollsJson).HasColumnType("TEXT");
+            entity.Property(history => history.ContextJson).HasColumnType("TEXT");
             entity.HasIndex(history => new { history.SessionId, history.TimestampUtc });
         });
     }

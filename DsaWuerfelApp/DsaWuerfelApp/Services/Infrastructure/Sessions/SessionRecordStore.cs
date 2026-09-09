@@ -183,7 +183,10 @@ public sealed class SessionRecordStore(IServiceScopeFactory scopeFactory)
             TimestampUtc = historyEntry.Timestamp,
             RollsJson = JsonSerializer.Serialize(historyEntry.Rolls, JsonOptions),
             Modifier = historyEntry.Modifier,
-            TotalSum = historyEntry.TotalSum
+            TotalSum = historyEntry.TotalSum,
+            ContextJson = historyEntry.Context is null
+                ? null
+                : JsonSerializer.Serialize(historyEntry.Context, JsonOptions)
         });
         dbContext.SaveChanges();
 
@@ -279,7 +282,29 @@ public sealed class SessionRecordStore(IServiceScopeFactory scopeFactory)
             record.TimestampUtc,
             JsonSerializer.Deserialize<DiceRollDto[]>(record.RollsJson, JsonOptions) ?? Array.Empty<DiceRollDto>(),
             record.Modifier,
-            record.TotalSum);
+            record.TotalSum,
+            DeserializeContext(record.ContextJson));
+    }
+
+    private static RollHistoryContextDto? DeserializeContext(string? contextJson)
+    {
+        if (string.IsNullOrWhiteSpace(contextJson))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<RollHistoryContextDto>(contextJson, JsonOptions);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+        catch (NotSupportedException)
+        {
+            return null;
+        }
     }
 }
 

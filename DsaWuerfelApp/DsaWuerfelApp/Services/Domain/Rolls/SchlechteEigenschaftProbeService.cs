@@ -24,7 +24,20 @@ public sealed class SchlechteEigenschaftProbeService(DiceService diceService)
         var roll = CreateRoll(request.ForcedRolls);
         var probeMisslungen = roll.Value <= request.EigenschaftWert;
         var equation = DiceResultFactory.CreateEquation([roll], 0);
-        var historyEntry = DiceResultFactory.CreateHistoryEntry(playerName, timestamp, equation);
+        var historyContext = new RollHistoryContextDto(
+            RollHistoryKind.BadTrait,
+            request.EigenschaftName,
+            probeMisslungen ? RollHistoryOutcome.Failure : RollHistoryOutcome.Success,
+            null,
+            [new RollHistoryCheckDto(
+                request.EigenschaftName,
+                roll.Value,
+                request.EigenschaftWert,
+                Math.Max(roll.Value - request.EigenschaftWert, 0),
+                probeMisslungen
+                    ? RollHistoryCheckState.WithinTarget
+                    : RollHistoryCheckState.Failed)]);
+        var historyEntry = DiceResultFactory.CreateHistoryEntry(playerName, timestamp, equation, historyContext);
 
         return new BadTraitRollResultDto(
             playerName,

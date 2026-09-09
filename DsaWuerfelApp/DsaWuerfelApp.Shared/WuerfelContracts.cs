@@ -11,12 +11,52 @@ public sealed record RollEquationDto(
     int Sum,
     int Total);
 
+public enum RollHistoryKind
+{
+    Free,
+    Talent,
+    Spell,
+    Attribute,
+    BadTrait
+}
+
+public enum RollHistoryOutcome
+{
+    None,
+    Success,
+    Failure,
+    CriticalSuccess,
+    Fumble
+}
+
+public enum RollHistoryCheckState
+{
+    WithinTarget,
+    Compensated,
+    Failed
+}
+
+public sealed record RollHistoryCheckDto(
+    string Name,
+    int Roll,
+    int TargetValue,
+    int Difference,
+    RollHistoryCheckState State);
+
+public sealed record RollHistoryContextDto(
+    RollHistoryKind Kind,
+    string DisplayName,
+    RollHistoryOutcome Outcome,
+    int? RemainingPoints,
+    RollHistoryCheckDto[] Checks);
+
 public sealed record RollHistoryEntryDto(
     string PlayerName,
     DateTime Timestamp,
     DiceRollDto[] Rolls,
     int Modifier,
-    int TotalSum);
+    int TotalSum,
+    RollHistoryContextDto? Context = null);
 
 public sealed record ProbeSearchAlternativeDto(string Label, string Value);
 

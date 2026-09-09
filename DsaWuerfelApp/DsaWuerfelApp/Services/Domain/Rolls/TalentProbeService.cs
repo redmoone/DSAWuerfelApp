@@ -53,7 +53,30 @@ public sealed class TalentProbeService(DiceService diceService)
             evaluatedProbe);
         var probeSuccess = TalentProbeEvaluator.IsSuccess(evaluatedProbe);
         var equation = DiceResultFactory.CreateEquation(rolledDice, 0);
-        var historyEntry = DiceResultFactory.CreateHistoryEntry(playerName, timestamp, equation);
+        var historyContext = new RollHistoryContextDto(
+            request.SpellContext is null ? RollHistoryKind.Talent : RollHistoryKind.Spell,
+            request.TalentName,
+            evaluatedProbe.Status switch
+            {
+                TalentProbeStatus.Bestanden => RollHistoryOutcome.Success,
+                TalentProbeStatus.NichtBestanden => RollHistoryOutcome.Failure,
+                TalentProbeStatus.GluecklicherWurf => RollHistoryOutcome.CriticalSuccess,
+                TalentProbeStatus.Patzer => RollHistoryOutcome.Fumble,
+                _ => RollHistoryOutcome.Failure
+            },
+            evaluatedProbe.Rest,
+            details.Select(detail => new RollHistoryCheckDto(
+                    detail.Attribute,
+                    detail.Roll,
+                    detail.TargetValue,
+                    detail.Difference,
+                    detail.Difference == 0
+                        ? RollHistoryCheckState.WithinTarget
+                        : detail.Success
+                            ? RollHistoryCheckState.Compensated
+                            : RollHistoryCheckState.Failed))
+                .ToArray());
+        var historyEntry = DiceResultFactory.CreateHistoryEntry(playerName, timestamp, equation, historyContext);
 
         var result = new TalentRollResultDto(
             playerName,

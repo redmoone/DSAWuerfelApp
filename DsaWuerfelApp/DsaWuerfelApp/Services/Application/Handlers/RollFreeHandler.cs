@@ -28,7 +28,16 @@ public sealed class RollFreeHandler(DiceService diceService)
 
         var timestamp = DateTime.UtcNow;
         var equation = DiceResultFactory.CreateEquation(rolls, request.Modifier);
-        var historyEntry = DiceResultFactory.CreateHistoryEntry(playerName, timestamp, equation);
+        var historyEntry = DiceResultFactory.CreateHistoryEntry(
+            playerName,
+            timestamp,
+            equation,
+            new RollHistoryContextDto(
+                RollHistoryKind.Free,
+                "Freier Wurf",
+                RollHistoryOutcome.None,
+                null,
+                []));
 
         return new FreeRollResultDto(playerName, timestamp, equation, historyEntry);
     }

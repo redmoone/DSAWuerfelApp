@@ -31,8 +31,22 @@ public sealed class AttributeProbeService(DiceService diceService)
         var details = BuildDetails(attributeNames, request.AttributeValues, rolls, effectiveModifier);
         var successCount = details.Count(detail => detail.Success);
         var equation = DiceResultFactory.CreateEquation(rolls, 0);
-        var historyEntry = DiceResultFactory.CreateHistoryEntry(playerName, timestamp, equation);
         var probeLabel = string.IsNullOrWhiteSpace(request.ProbeLabel) ? request.Attributes.Label : request.ProbeLabel;
+        var historyContext = new RollHistoryContextDto(
+            RollHistoryKind.Attribute,
+            probeLabel,
+            successCount == details.Length ? RollHistoryOutcome.Success : RollHistoryOutcome.Failure,
+            null,
+            details.Select(detail => new RollHistoryCheckDto(
+                    detail.Attribute,
+                    detail.Roll,
+                    detail.TargetValue,
+                    detail.Difference,
+                    detail.Success
+                        ? RollHistoryCheckState.WithinTarget
+                        : RollHistoryCheckState.Failed))
+                .ToArray());
+        var historyEntry = DiceResultFactory.CreateHistoryEntry(playerName, timestamp, equation, historyContext);
 
         return new AttributeRollResultDto(
             playerName,

@@ -1,10 +1,13 @@
 using System.Net;
 using System.Net.Http.Json;
 
+using DsaWuerfelApp.Persistence;
+using DsaWuerfelApp.Services;
 using DsaWuerfelApp.Shared;
 using DsaWuerfelApp.Shared.Models;
-using DsaWuerfelApp.Persistence;
 using DsaWuerfelApp.Tests.Infrastructure;
+
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DsaWuerfelApp.Tests;
@@ -231,5 +234,128 @@ public sealed class TestApplicationSmokeTests : IClassFixture<TestApplicationFac
         Assert.Equal(13, result.EffectiveTalentValue);
         Assert.Equal(13, result.SpellDetails.RawZfp);
         Assert.Equal(13, result.SpellDetails.AvailableZfp);
+    }
+
+    [Fact]
+    public async Task Existing_history_schema_gets_context_column_idempotently()
+    {
+        using var database = new TestDatabase();
+        using (var initialFactory = new TestApplicationFactory(database))
+        using (var initialClient = initialFactory.CreateClient())
+        {
+            using var response = await initialClient.GetAsync("/api/dice/catalog-context");
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        }
+
+        using (var connection = new SqliteConnection(database.ConnectionString))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText =
+                """
+                INSERT INTO SessionRollHistory
+                    (SessionId, PlayerName, TimestampUtc, RollsJson, Modifier, TotalSum)
+                VALUES ('legacy-session', 'Altspieler', '2026-01-01T12:00:00Z',
+                    '[{"sides":6,"value":4}]', 3, 7);
+                ALTER TABLE SessionRollHistory DROP COLUMN ContextJson;
+                """;
+            command.ExecuteNonQuery();
+        }
+
+        using (var factory = new TestApplicationFactory(database))
+        using (var client = factory.CreateClient())
+        {
+            using var response = await client.GetAsync("/api/dice/catalog-context");
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        }
+
+        using (var factory = new TestApplicationFactory(database))
+        using (var client = factory.CreateClient())
+        {
+            using var response = await client.GetAsync("/api/dice/catalog-context");
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        }
+
+        using var verificationConnection = new SqliteConnection(database.ConnectionString);
+        verificationConnection.Open();
+        using var verificationCommand = verificationConnection.CreateCommand();
+        verificationCommand.CommandText = "PRAGMA table_info('SessionRollHistory');";
+        using var reader = verificationCommand.ExecuteReader();
+        var columns = new List<string>();
+        while (reader.Read())
+        {
+            columns.Add(reader.GetString(1));
+        }
+
+        Assert.Contains("ContextJson", columns);
+        Assert.Equal(1, columns.Count(column => column == "ContextJson"));
+    }
+
+    [Fact]
+    public void Structured_history_context_survives_store_round_trip_and_old_rows_keep_raw_fields()
+    {
+        var sessionId = $"history-{Guid.NewGuid():N}";
+        var timestamp = DateTime.UtcNow;
+        var context = new RollHistoryContextDto(
+            RollHistoryKind.Talent,
+            "Klettern",
+            RollHistoryOutcome.Success,
+            4,
+            [new RollHistoryCheckDto("MU", 12, 10, 2, RollHistoryCheckState.Compensated)]);
+        var entry = new RollHistoryEntryDto(
+            "Tester",
+            timestamp,
+            [new DiceRollDto(20, 12), new DiceRollDto(20, 10)],
+            -2,
+            20,
+            context);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var store = scope.ServiceProvider.GetRequiredService<SessionRecordStore>();
+            store.AppendHistoryEntry(sessionId, entry);
+        }
+
+        RollHistoryEntryDto structuredEntry;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var store = scope.ServiceProvider.GetRequiredService<SessionRecordStore>();
+            structuredEntry = Assert.Single(store.LoadHistory(sessionId));
+        }
+
+        var loadedContext = Assert.IsType<RollHistoryContextDto>(structuredEntry.Context);
+        Assert.Equal(context.Kind, loadedContext.Kind);
+        Assert.Equal(context.DisplayName, loadedContext.DisplayName);
+        Assert.Equal(context.Outcome, loadedContext.Outcome);
+        Assert.Equal(context.RemainingPoints, loadedContext.RemainingPoints);
+        Assert.Equal(context.Checks, loadedContext.Checks);
+
+        var oldSessionId = $"old-history-{Guid.NewGuid():N}";
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<HeroDbContext>();
+            db.SessionRollHistoryRecords.Add(new SessionRollHistoryRecord
+            {
+                SessionId = oldSessionId,
+                PlayerName = "Altspieler",
+                TimestampUtc = timestamp.AddMinutes(-1),
+                RollsJson = "[{\"sides\":6,\"value\":4}]",
+                Modifier = 3,
+                TotalSum = 7,
+                ContextJson = null
+            });
+            db.SaveChanges();
+        }
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var store = scope.ServiceProvider.GetRequiredService<SessionRecordStore>();
+            var oldEntry = Assert.Single(store.LoadHistory(oldSessionId));
+            Assert.Null(oldEntry.Context);
+            Assert.Equal("Altspieler", oldEntry.PlayerName);
+            Assert.Equal(new DiceRollDto(6, 4), Assert.Single(oldEntry.Rolls));
+            Assert.Equal(3, oldEntry.Modifier);
+            Assert.Equal(7, oldEntry.TotalSum);
+        }
     }
 }
