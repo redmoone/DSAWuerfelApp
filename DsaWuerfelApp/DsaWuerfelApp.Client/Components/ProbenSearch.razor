@@ -1,15 +1,17 @@
-<div class="search-wrapper"
+<div class="search-control"
      @onfocusin="HandleFocusIn"
      @onfocusout="HandleFocusOut">
-    <img src="icons/search.svg" class="search-icon" alt=""/>
-    <input type="text"
-           class="search-input"
-           @ref="_searchInput"
-           placeholder="@Placeholder"
-           @bind="SearchTerm"
-           @bind:event="oninput"
-           @onclick="HandleInputClick"
-           @onfocus="HandleInputFocus"/>
+    <div class="search-wrapper">
+        <img src="icons/search.svg" class="search-icon" alt=""/>
+        <input type="text"
+               class="search-input"
+               @ref="_searchInput"
+               placeholder="@Placeholder"
+               @bind="SearchTerm"
+               @bind:event="oninput"
+               @onclick="HandleInputClick"
+               @onfocus="HandleInputFocus"/>
+    </div>
 
     @if (_isDropdownOpen && FilteredProben.Any())
     {
