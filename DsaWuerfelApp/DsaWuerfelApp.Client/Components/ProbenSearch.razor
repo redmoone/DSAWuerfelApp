@@ -1,23 +1,36 @@
-<div class="search-wrapper">
+<div class="search-wrapper"
+     @onfocusin="HandleFocusIn"
+     @onfocusout="HandleFocusOut">
     <img src="icons/search.svg" class="search-icon" alt=""/>
     <input type="text"
            class="search-input"
+           @ref="_searchInput"
            placeholder="@Placeholder"
            @bind="SearchTerm"
            @bind:event="oninput"
            @onclick="HandleInputClick"
-           @onfocus="() => _isDropdownOpen = true"
-           @onblur="HandleBlur"/>
+           @onfocus="HandleInputFocus"/>
 
     @if (_isDropdownOpen && FilteredProben.Any())
     {
         <div class="search-dropdown">
             @foreach (var probe in FilteredProben)
             {
-                <div class="dropdown-item @(probe.IsSelectable ? string.Empty : "inactive")"
-                     @onclick="() => HandleEntryClick(probe)">
+                <div class="dropdown-item @(probe.IsSelectable ? string.Empty : "inactive")">
                     <div class="dropdown-item-content">
-                        <span class="dropdown-item-label">@probe.DisplayLabel</span>
+                        @if (probe.IsSelectable && !string.IsNullOrWhiteSpace(probe.Value))
+                        {
+                            <button type="button"
+                                    class="dropdown-item-main"
+                                    @onfocus="HandleResultFocus"
+                                    @onclick="() => HandleEntryClick(probe)">
+                                @probe.DisplayLabel
+                            </button>
+                        }
+                        else
+                        {
+                            <span class="dropdown-item-label">@probe.DisplayLabel</span>
+                        }
 
                         @if (probe.Alternatives.Length > 0)
                         {
@@ -27,6 +40,7 @@
                                     <button type="button"
                                             class="dropdown-alternative"
                                             @onclick:stopPropagation="true"
+                                            @onfocus="HandleResultFocus"
                                             @onclick="() => SelectProbe(alternative.Value)">
                                         @alternative.Label
                                     </button>

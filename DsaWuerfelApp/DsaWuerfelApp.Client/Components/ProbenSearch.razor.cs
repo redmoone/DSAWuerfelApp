@@ -1,6 +1,7 @@
 using DsaWuerfelApp.Shared;
 
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 
 namespace DsaWuerfelApp.Client.Components;
 
@@ -10,6 +11,11 @@ public partial class ProbenSearch
 
     private bool _isDropdownOpen;
     private string _lastSelectedProbe = string.Empty;
+    private ElementReference _searchInput;
+    private bool _hasFocus;
+    private bool _isResultButtonFocused;
+    private bool _suppressNextInputFocusOpen;
+    private long _focusGeneration;
 
     [Parameter] public IReadOnlyList<ProbeSearchEntryDto>? AvailableProben { get; set; }
     [Parameter] public bool UseFallbackCatalog { get; set; } = true;
@@ -82,11 +88,27 @@ public partial class ProbenSearch
 
     private Task SelectProbe(string probe)
     {
+        var returnFocusToInput = _isResultButtonFocused;
+
         SelectedProbe = probe;
         SearchTerm = ResolveDisplayLabel(probe);
         _lastSelectedProbe = probe;
         _isDropdownOpen = false;
-        return SelectedProbeChanged.InvokeAsync(probe);
+        _isResultButtonFocused = false;
+        return SelectProbeAndRestoreFocusAsync(probe, returnFocusToInput);
+    }
+
+    private async Task SelectProbeAndRestoreFocusAsync(string probe, bool returnFocusToInput)
+    {
+        await SelectedProbeChanged.InvokeAsync(probe);
+
+        if (!returnFocusToInput)
+        {
+            return;
+        }
+
+        _suppressNextInputFocusOpen = true;
+        await _searchInput.FocusAsync();
     }
 
     private Task HandleEntryClick(ProbeSearchEntryDto probe)
@@ -120,9 +142,47 @@ public partial class ProbenSearch
         await SelectedProbeChanged.InvokeAsync(string.Empty);
     }
 
+    private void HandleInputFocus(FocusEventArgs args)
+    {
+        _isResultButtonFocused = false;
+
+        if (_suppressNextInputFocusOpen)
+        {
+            _suppressNextInputFocusOpen = false;
+            _isDropdownOpen = false;
+            return;
+        }
+
+        _isDropdownOpen = true;
+    }
+
+    private void HandleResultFocus(FocusEventArgs args)
+    {
+        _isResultButtonFocused = true;
+    }
+
+    private void HandleFocusIn(FocusEventArgs args)
+    {
+        _hasFocus = true;
+        _focusGeneration++;
+    }
+
+    private Task HandleFocusOut(FocusEventArgs args)
+    {
+        _hasFocus = false;
+        return HandleBlur();
+    }
+
     private async Task HandleBlur()
     {
+        var generation = ++_focusGeneration;
         await Task.Delay(150);
+
+        if (_hasFocus || generation != _focusGeneration)
+        {
+            return;
+        }
+
         _isDropdownOpen = false;
     }
 

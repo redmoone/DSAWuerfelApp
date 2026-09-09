@@ -121,3 +121,27 @@ Validation:
 Notes:
 - Action-bar wrap ownership is consolidated in the component; measured page-level duplicate rules were removed after confirming the rendered component carries only its component scope.
 - Narrow-host tooltip width is bounded by the action row while the disabled hidden-roll behavior remains unchanged.
+
+## P4c
+Status: COMPLETE
+Changed:
+- DsaWuerfelApp/DsaWuerfelApp.Client/Components/ProbenSearch.razor
+- DsaWuerfelApp/DsaWuerfelApp.Client/Components/ProbenSearch.razor.cs
+- DsaWuerfelApp/DsaWuerfelApp.Client/Components/ProbenSearch.razor.css
+
+Validation:
+- dotnet build DsaWuerfelApp.sln -c Release -v minimal: PASS
+- dotnet publish ... -v minimal: PASS
+- compact search flow and 320px geometry: PASS
+- keyboard Tab/Shift+Tab with pauses over 150 ms: PASS
+- main selection, input clearing, focus return and focus-leave close: PASS
+- info-button interaction: PASS
+- app-workflows.cjs: PASS
+- dice-lifecycle.cjs: PASS
+- ClientStateTests: PASS (12/12)
+- git diff --check: PASS
+
+Notes:
+- Selectable result labels are sibling semantic buttons to the existing alternative buttons; inactive groups remain noninteractive text.
+- Local focus generation keeps the dropdown open across delayed focus transitions and prevents stale blur closes after selection.
+- The browser fixture has no special talent/spell alternative dataset; that alternative-specific proof remains a CN-4 validation item.

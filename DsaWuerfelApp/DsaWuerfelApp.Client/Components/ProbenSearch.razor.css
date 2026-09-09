@@ -10,6 +10,7 @@
 .search-wrapper {
     position: relative;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     background-color: var(--pill-bg);
     border: 3px solid var(--dsa-gold);
@@ -17,11 +18,16 @@
     padding: 4px 15px;
     box-shadow: 0 0 10px var(--dsa-gold-glow);
     flex-basis: 100%;
+    width: 100%;
+    min-width: 0;
     max-width: 100%;
-    height: 45px;
+    min-height: 45px;
+    height: auto;
+    box-sizing: border-box;
 }
 
 .search-icon {
+    flex: 0 0 auto;
     width: 20px;
     height: 20px;
     filter: brightness(0) invert(1);
@@ -29,11 +35,13 @@
 }
 
 .search-input {
+    flex: 1 1 auto;
+    min-width: 0;
     background: transparent;
     border: none;
     color: var(--dsa-white);
     outline: none;
-    width: 100%;
+    width: auto;
     margin-left: 10px;
     font-size: 1rem;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -41,6 +49,11 @@
 
 .search-input::placeholder {
     color: rgba(245, 245, 245, 0.5);
+}
+
+.search-input:focus-visible {
+    outline: 2px solid var(--dsa-white);
+    outline-offset: 2px;
 }
 
 .search-dropdown {
@@ -53,6 +66,8 @@
     border-radius: 10px;
     overflow: hidden;
     z-index: 100;
+    min-width: 0;
+    box-sizing: border-box;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
     max-height: calc(5 * 40px);
     overflow-y: auto;
@@ -65,8 +80,8 @@
     padding: 10px 15px;
     box-sizing: border-box;
     color: var(--dsa-white);
-    cursor: pointer;
     user-select: none;
+    min-width: 0;
 }
 
 .dropdown-item:hover {
@@ -87,10 +102,35 @@
     flex-direction: column;
     gap: 8px;
     width: 100%;
+    min-width: 0;
 }
 
 .dropdown-item-label {
     line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.dropdown-item-main {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    min-height: var(--ui-touch-target);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    line-height: 1.35;
+    text-align: left;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+}
+
+.dropdown-item-main:focus-visible,
+.dropdown-alternative:focus-visible {
+    outline: 2px solid var(--dsa-white);
+    outline-offset: 2px;
 }
 
 .dropdown-item-alternatives {
@@ -106,8 +146,12 @@
     color: var(--dsa-white);
     cursor: pointer;
     font: inherit;
+    min-width: 0;
+    min-height: var(--ui-touch-target);
+    box-sizing: border-box;
     padding: 6px 10px;
     text-align: left;
+    overflow-wrap: anywhere;
 }
 
 .dropdown-alternative:hover {
@@ -175,4 +219,13 @@
     width: 20px;
     height: 20px;
     filter: brightness(0) invert(1);
+}
+
+@media (max-width: 640px) {
+    .search-dropdown {
+        position: static;
+        flex: 1 1 100%;
+        width: 100%;
+        margin-top: 5px;
+    }
 }
