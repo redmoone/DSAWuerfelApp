@@ -145,3 +145,23 @@ Notes:
 - Selectable result labels are sibling semantic buttons to the existing alternative buttons; inactive groups remain noninteractive text.
 - Local focus generation keeps the dropdown open across delayed focus transitions and prevents stale blur closes after selection.
 - The browser fixture has no special talent/spell alternative dataset; that alternative-specific proof remains a CN-4 validation item.
+
+## P5a
+Status: COMPLETE
+Changed:
+- DsaWuerfelApp/DsaWuerfelApp.Client/Pages/Wuerfel.razor.css
+
+Validation:
+- dotnet build DsaWuerfelApp.sln -c Release -v minimal: PASS
+- dotnet publish ... -v minimal: PASS
+- normal/master grid geometry from 320px through 1920px: PASS
+- prepared master attribute and normal probe state across resize/sidebar states: PASS
+- responsive-ui.cjs: dice-grid overflow fixed; remaining lobby/control reachability failures documented below
+- app-workflows.cjs: PASS
+- dice-lifecycle.cjs: PASS
+- ClientStateTests: PASS (12/12)
+- git diff --check: PASS
+
+Notes:
+- The measured 320px action-grid minimum was capped to the available container width; desktop multi-column grids remain active where their measured space permits.
+- No new container threshold or DOM hierarchy was introduced. The responsive harness still reports the pre-existing phone-320 lobby overflow and low-height control reachability cases, which belong to later page/validation work.
