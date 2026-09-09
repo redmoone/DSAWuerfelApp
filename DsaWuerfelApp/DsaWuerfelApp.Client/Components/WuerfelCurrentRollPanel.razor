@@ -1,0 +1,201 @@
+@using DsaWuerfelApp.Shared
+
+<section class="current-roll-panel" data-testid="current-roll-panel" aria-labelledby="current-roll-title">
+    <div class="current-roll-heading">
+        <h3 id="current-roll-title">Aktueller Wurf</h3>
+    </div>
+
+    @if (MasterTalentResults.Count > 0)
+    {
+        <section class="current-roll-section" data-roll-kind="master-talent">
+            <h4 class="current-roll-section-title">Meister-Sammelwurf</h4>
+            <div class="master-roll-list">
+                @foreach (var item in MasterTalentResults)
+                {
+                    <div class="master-roll-item @GetMasterTalentItemClass(item)">
+                        <div class="master-roll-header">
+                            <span class="master-roll-target">@FormatMasterTarget(item.PlayerName, item.HeroName)</span>
+                            <span class="master-roll-status">@GetMasterTalentStatusText(item)</span>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(item.ErrorMessage))
+                        {
+                            <p class="master-roll-text">@item.ErrorMessage</p>
+                        }
+                        else if (item.RequirementResult?.Requirement is not null)
+                        {
+                            <p class="master-roll-text">
+                                @item.RequirementResult.Requirement.Probe · Benoetigt @item.RequirementResult.Requirement.RequiredTalentValue · Wuerfe
+                                @string.Join(", ", item.RequirementResult.Rolls.Select(roll => roll.Value))
+                            </p>
+                        }
+                        else if (item.Result is not null)
+                        {
+                            <p class="master-roll-text">
+                                @item.Result.TalentName · Rest @item.Result.Rest · Wuerfe
+                                @string.Join(", ", item.Result.Rolls.Select(roll => roll.Value))
+                            </p>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+    }
+    else if (MasterAttributeResults.Count > 0)
+    {
+        <section class="current-roll-section" data-roll-kind="master-attribute">
+            <h4 class="current-roll-section-title">Meister-Eigenschaftswurf</h4>
+            <div class="master-roll-list">
+                @foreach (var item in MasterAttributeResults)
+                {
+                    <div class="master-roll-item @GetMasterAttributeItemClass(item)">
+                        <div class="master-roll-header">
+                            <span class="master-roll-target">@FormatMasterTarget(item.PlayerName, item.HeroName)</span>
+                            <span class="master-roll-status">@GetMasterAttributeStatusText(item)</span>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(item.ErrorMessage))
+                        {
+                            <p class="master-roll-text">@item.ErrorMessage</p>
+                        }
+                        else if (item.Result is not null)
+                        {
+                            <p class="master-roll-text">
+                                @item.Result.Probe · @item.Result.SuccessCount/@item.Result.Details.Length bestanden · Wuerfe
+                                @string.Join(", ", item.Result.Rolls.Select(roll => roll.Value))
+                            </p>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+    }
+    else if (TalentResult is not null)
+    {
+        <article class="probe-evaluation @GetProbeEvaluationClass(TalentResult)" data-roll-kind="@(TalentResult.SpellDetails is null ? "talent" : "spell")">
+            <div class="probe-evaluation-header">
+                <span class="probe-evaluation-name">@TalentResult.TalentName</span>
+                <span class="probe-evaluation-status" data-testid="current-roll-status">@GetProbeStatusText(TalentResult)</span>
+            </div>
+
+            <div class="probe-evaluation-rolls">
+                @foreach (var detail in TalentResult.Details)
+                {
+                    <div class="probe-roll-chip @GetProbeRollChipClass(TalentResult, detail)">
+                        <span class="probe-roll-attribute">@detail.Attribute</span>
+                        <span class="probe-roll-values">@detail.Roll / @detail.TargetValue</span>
+                        <span class="probe-roll-rest">Diff: @detail.Difference · Rest: @detail.RemainingRest</span>
+                    </div>
+                }
+            </div>
+
+            <details class="roll-details" open>
+                <summary>Berechnung und Details</summary>
+                <div class="probe-evaluation-meta">
+                    <span>Probe: @TalentResult.Probe</span>
+                    <span>Wert: @TalentResult.TalentValue</span>
+                    <span>Basis-Mod.: @FormatModifier(TalentResult.BasisModifier)</span>
+                    @if (TalentResult.SpellDetails is { } spellDetails)
+                    {
+                        <span>Zauber automatisch: @FormatModifier(spellDetails.AutomaticModifier)</span>
+                        <span>Vorab-ZfP: @spellDetails.PreRollZfp · verfuegbar: @spellDetails.AvailableZfp</span>
+                        @if (spellDetails.ManualModifierRequired)
+                        {
+                            <span>Manuelle Ergaenzung erforderlich</span>
+                        }
+                    }
+                    @if (TalentResult.SpecializationModifier != 0 &&
+                         !string.IsNullOrWhiteSpace(TalentResult.SpecializationName))
+                    {
+                        <span>Spez.: @TalentResult.SpecializationName (@FormatModifier(TalentResult.SpecializationModifier))</span>
+                    }
+                    @if (TalentResult.SchlechteEigenschaftModifier > 0 &&
+                         !string.IsNullOrWhiteSpace(TalentResult.SchlechteEigenschaftName))
+                    {
+                        <span>@TalentResult.SchlechteEigenschaftName: @FormatModifier(TalentResult.SchlechteEigenschaftModifier)</span>
+                    }
+                    <span>Effektiv: @TalentResult.EffectiveTalentValue</span>
+                    <span>Rest: @TalentResult.Rest</span>
+                </div>
+            </details>
+        </article>
+    }
+    else if (AttributeResult is not null)
+    {
+        <article class="probe-evaluation attribute-evaluation @(AttributeResult.Success ? "success" : "failure")" data-roll-kind="attribute">
+            <div class="probe-evaluation-header">
+                <span class="probe-evaluation-name">@AttributeResult.Probe</span>
+                <span class="probe-evaluation-status" data-testid="current-roll-status">@GetAttributeStatusText(AttributeResult)</span>
+            </div>
+
+            <div class="probe-evaluation-rolls">
+                @foreach (var detail in AttributeResult.Details)
+                {
+                    <div class="probe-roll-chip @GetAttributeRollChipClass(detail)">
+                        <span class="probe-roll-attribute">@detail.Attribute</span>
+                        <span class="probe-roll-values">@detail.Roll / @detail.TargetValue</span>
+                        <span class="probe-roll-rest">@(detail.Success ? "Ziel eingehalten" : $"Ueberschritten um {detail.Difference}")</span>
+                    </div>
+                }
+            </div>
+
+            <details class="roll-details" open>
+                <summary>Berechnung und Details</summary>
+                <div class="probe-evaluation-meta">
+                    <span>Mod.: @FormatModifier(AttributeResult.EffectiveModifier)</span>
+                    @if (AttributeResult.SchlechteEigenschaftModifier > 0 &&
+                         !string.IsNullOrWhiteSpace(AttributeResult.SchlechteEigenschaftName))
+                    {
+                        <span>@AttributeResult.SchlechteEigenschaftName: @FormatModifier(AttributeResult.SchlechteEigenschaftModifier)</span>
+                    }
+                    <span>Bestanden: @AttributeResult.SuccessCount/@AttributeResult.Details.Length</span>
+                    @if (AttributeResult.Requirement is { } requirement)
+                    {
+                        <span>@requirement.Probe · Benoetigter Probenwert: @requirement.RequiredTalentValue</span>
+                        <span>Ausgleich: @requirement.RequiredCompensation</span>
+                    }
+                </div>
+
+                @if (AttributeResult.Requirement is { } requirementWithDetails)
+                {
+                    <div class="probe-evaluation-rolls requirement-rolls">
+                        @foreach (var detail in requirementWithDetails.Details)
+                        {
+                            <div class="probe-roll-chip @GetAttributeRequirementChipClass(detail)">
+                                <span class="probe-roll-attribute">@detail.Attribute</span>
+                                <span class="probe-roll-values">@detail.Roll / @detail.BaseValue</span>
+                                <span class="probe-roll-rest">Benoetigter Ausgleich: @detail.Difference</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </details>
+        </article>
+    }
+    else if (BadTraitResult is not null)
+    {
+        <article class="probe-evaluation @GetBadTraitEvaluationClass(BadTraitResult)" data-roll-kind="bad-trait">
+            <div class="probe-evaluation-header">
+                <span class="probe-evaluation-name">@BadTraitResult.EigenschaftName</span>
+                <span class="probe-evaluation-status" data-testid="current-roll-status">@GetBadTraitStatusText(BadTraitResult)</span>
+            </div>
+            <div class="probe-evaluation-meta">
+                <span>Wert: @BadTraitResult.EigenschaftWert</span>
+                <span>Wurf: @BadTraitResult.Roll.Value</span>
+                <span>Abstand: @BadTraitResult.Margin</span>
+            </div>
+        </article>
+    }
+    else if (FreeRollResult is not null)
+    {
+        <article class="free-roll-evaluation" data-roll-kind="free">
+            <div class="free-roll-header">
+                <span class="free-roll-player">@FreeRollResult.PlayerName · @FreeRollResult.Timestamp.ToLocalTime().ToString("HH:mm")</span>
+                <span class="free-roll-label">Freier Wurf</span>
+            </div>
+            <RollEquation Result="FreeRollResult.Equation" />
+        </article>
+    }
+    else
+    {
+        <p class="current-roll-empty">Noch kein Ergebnis. Bereite einen Wurf vor und fuehre ihn aus.</p>
+    }
+</section>

@@ -54,10 +54,12 @@
         }
 
         <div class="action-block additional-info-block">
-            <h3 class="block-title">Zusätzliche Informationen</h3>
+            <h3 class="block-title">Würfel-Feedback</h3>
             <div class="action-block-body">
                 <WuerfelInformationPanel ProbeInfo="@View.ProbeInfo"
                                          ShowProbeInfoDetails="@View.IsProbeInfoExpanded"
+                                         CloseRequested="ToggleProbeInfoAsync"/>
+                <WuerfelCurrentRollPanel FreeRollResult="View.LastFreeRoll"
                                          TalentResult="View.LastTalentRoll"
                                          AttributeResult="View.LastAttributeRoll"
                                          BadTraitResult="View.LastBadTraitRoll"

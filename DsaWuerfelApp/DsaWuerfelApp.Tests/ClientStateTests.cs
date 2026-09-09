@@ -221,4 +221,32 @@ public class ClientStateTests
         await (Task)typeof(SessionState).GetMethod("HandleSessionsChangedAsync", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(session, null)!;
         Assert.Equal("a", storage.Written);
     }
+
+    [Fact]
+    public void ApplyFreeRollResult_stores_the_complete_result()
+    {
+        var equation = new RollEquationDto(
+            [new DiceRollGroupDto(6, 1)],
+            2,
+            [new DiceRollDto(6, 4)],
+            4,
+            6);
+        var history = new RollHistoryEntryDto(
+            "Spieler",
+            DateTime.UtcNow,
+            equation.Rolls,
+            equation.Modifier,
+            equation.Total);
+        var result = new FreeRollResultDto("Spieler", history.Timestamp, equation, history);
+        var state = new WuerfelState();
+
+        state.ApplyFreeRollResult(result);
+
+        Assert.Same(result, state.Current.LastFreeRoll);
+        Assert.Equal(equation.Total, state.Current.LastFreeRoll?.Equation.Total);
+        Assert.Equal(history, state.Current.History.Single());
+        Assert.Null(state.Current.LastTalentRoll);
+        Assert.Null(state.Current.LastAttributeRoll);
+        Assert.Null(state.Current.LastBadTraitRoll);
+    }
 }
