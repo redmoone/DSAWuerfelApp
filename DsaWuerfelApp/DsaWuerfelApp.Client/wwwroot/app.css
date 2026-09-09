@@ -77,4 +77,5 @@
     --dsa-gold-glow: rgba(212, 175, 55, 0.3);
     --dsa-white: #f5f5f5;        
     --pill-bg: rgba(28, 46, 74, 0.85); 
+    --ui-touch-target: 44px;
 }
