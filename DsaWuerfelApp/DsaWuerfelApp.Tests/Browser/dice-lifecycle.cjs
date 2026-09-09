@@ -47,6 +47,99 @@ const threeRoot = path.resolve(path.dirname(require.resolve('three')), '..');
         check(released.size === resources.size, 'GPU resource not released');
         check(c.isConnected, 'JS removed component canvas'); c.remove();
       }
+      const cameraUpdates = [];
+      const originalUpdateProjectionMatrix = THREE.PerspectiveCamera.prototype.updateProjectionMatrix;
+      THREE.PerspectiveCamera.prototype.updateProjectionMatrix = function(...args) {
+        cameraUpdates.push({ aspect: this.aspect, y: this.position.y });
+        return originalUpdateProjectionMatrix.apply(this, args);
+      };
+      const snapshotDice = scene => meshes(scene).sort((a, b) => a.userData.diceIndex - b.userData.diceIndex).map(mesh => ({
+        x: mesh.position.x,
+        y: mesh.position.y,
+        z: mesh.position.z,
+        scale: mesh.scale.x,
+        rotation: { x: mesh.rotation.x, y: mesh.rotation.y, z: mesh.rotation.z }
+      }));
+      const snapshotsEqual = (left, right) => left.length === right.length && left.every((die, index) => {
+        const other = right[index];
+        return ['x', 'y', 'z', 'scale'].every(key => Math.abs(die[key] - other[key]) < 0.0001);
+      });
+      const waitFrames = async count => {
+        for (let i = 0; i < count; i++) await new Promise(resolve => requestAnimationFrame(resolve));
+      };
+
+      const layoutCanvas = canvas();
+      layoutCanvas.style.width = '960px';
+      layoutCanvas.style.height = '300px';
+      const layoutDice = createDiceScene();
+      await layoutDice.init(layoutCanvas);
+      layoutDice.updateDice([6, 6, 6, 6, 6, 6]);
+      await waitFrames(2);
+      const layoutScene = scenes.at(-1);
+      const wideSnapshot = snapshotDice(layoutScene);
+      const wideBuffer = { width: layoutCanvas.width, height: layoutCanvas.height };
+      check(wideSnapshot.length === 6, 'wide layout missing dice');
+      check(new Set(wideSnapshot.map(die => die.z)).size === 1, 'wide layout did not fit one row');
+
+      const cameraUpdatesBeforeWidthChange = cameraUpdates.length;
+      layoutCanvas.style.width = '360px';
+      await waitFrames(4);
+      const narrowSnapshot = snapshotDice(layoutScene);
+      check(layoutCanvas.width < wideBuffer.width, 'renderer buffer did not follow host width');
+      check(cameraUpdates.length > cameraUpdatesBeforeWidthChange, 'camera did not follow host width');
+      check(new Set(narrowSnapshot.map(die => die.z)).size === 2, 'narrow layout did not recompute rows');
+      check(narrowSnapshot.some((die, index) => Math.abs(die.scale - wideSnapshot[index].scale) > 0.0001), 'narrow layout scale did not change');
+
+      const positionSetCounts = new Map();
+      for (const die of meshes(layoutScene)) {
+        const originalSet = die.position.set.bind(die.position);
+        let count = 0;
+        die.position.set = (...args) => { count++; return originalSet(...args); };
+        positionSetCounts.set(die, () => count);
+      }
+      const stableSnapshot = snapshotDice(layoutScene);
+      await waitFrames(6);
+      check(snapshotsEqual(stableSnapshot, snapshotDice(layoutScene)), 'constant width changed die layout');
+      check([...positionSetCounts.values()].every(getCount => getCount() === 0), 'constant width continuously recalculated layout');
+
+      const cameraUpdatesBeforeHeightChange = cameraUpdates.length;
+      const bufferBeforeHeightChange = layoutCanvas.width;
+      layoutCanvas.style.height = '500px';
+      await waitFrames(4);
+      check(layoutCanvas.width === bufferBeforeHeightChange, 'height change altered canvas width buffer');
+      check(layoutCanvas.height > wideBuffer.height, 'renderer buffer did not follow host height');
+      check(snapshotsEqual(stableSnapshot, snapshotDice(layoutScene)), 'height change recalculated die layout');
+      check(cameraUpdates.length > cameraUpdatesBeforeHeightChange, 'camera did not follow host height');
+
+      layoutDice.updateDice([20, 6, 6, 6, 6, 6]);
+      await waitFrames(2);
+      const sameWidthUpdate = snapshotDice(layoutScene);
+      check(sameWidthUpdate.length === 6, 'same-width update lost dice');
+      check(new Set(sameWidthUpdate.map(die => die.z)).size === 2, 'same-width update skipped layout');
+      layoutDice.rollDice([1, 2, 3, 4, 5, 6]);
+      const beforeRoll = snapshotDice(layoutScene);
+      await waitFrames(4);
+      const duringRoll = snapshotDice(layoutScene);
+      check(duringRoll.some((die, index) => Math.abs(die.rotation.x - beforeRoll[index].rotation.x) > 0.0001 || Math.abs(die.rotation.y - beforeRoll[index].rotation.y) > 0.0001 || Math.abs(die.rotation.z - beforeRoll[index].rotation.z) > 0.0001), 'roll animation did not run after resize');
+      await new Promise(resolve => setTimeout(resolve, 1100));
+      layoutDice.dispose(); layoutCanvas.remove(); cleanup();
+
+      const hiddenCanvas = canvas();
+      hiddenCanvas.style.width = '0px';
+      hiddenCanvas.style.height = '0px';
+      const hiddenDice = createDiceScene();
+      await hiddenDice.init(hiddenCanvas);
+      hiddenDice.updateDice([6, 20]);
+      await waitFrames(2);
+      hiddenCanvas.style.width = '360px';
+      hiddenCanvas.style.height = '300px';
+      await waitFrames(4);
+      const hiddenSnapshot = snapshotDice(scenes.at(-1));
+      check(hiddenSnapshot.length === 2, 'hidden scene did not restore dice');
+      check(hiddenSnapshot.some(die => Math.abs(die.x) > 0.0001), 'hidden scene retained zero-width layout');
+      hiddenDice.dispose(); hiddenCanvas.remove(); cleanup();
+      THREE.PerspectiveCamera.prototype.updateProjectionMatrix = originalUpdateProjectionMatrix;
+
       const c1=canvas(), c2=canvas(), a=createDiceScene(), b=createDiceScene();
       await a.init(c1); const firstScene=scenes.at(-1); await b.init(c2); const secondScene=scenes.at(-1);
       a.updateDice([6]); b.updateDice([20,20]); a.dispose();

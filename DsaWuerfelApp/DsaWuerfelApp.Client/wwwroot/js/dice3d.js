@@ -17,6 +17,8 @@ let ready = false;
 let pendingDice = null;
 let pendingRoll = null;
 let modelRoot = null;
+let lastLayoutWidth = null;
+let layoutNeedsUpdate = true;
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -76,10 +78,11 @@ async function init(canvas) {
     canvas.addEventListener('click', handleCanvasClick);
 
     resizeScene(canvas, renderer, camera);
+    updateLayoutForWidth(canvas.clientWidth);
 
     resizeHandler = () => {
         resizeScene(canvas, renderer, camera);
-        recalculatePositions(canvas.clientWidth);
+        updateLayoutForWidth(canvas.clientWidth);
     };
     window.addEventListener("resize", resizeHandler);
 
@@ -120,6 +123,7 @@ function animate(canvas) {
     if (disposed) return;
     animationFrameId = requestAnimationFrame(() => animate(canvas));
     resizeScene(canvas, renderer, camera);
+    updateLayoutForWidth(canvas.clientWidth);
     renderer.render(scene, camera);
 }
 
@@ -161,6 +165,8 @@ function getPosition(index, total, layout) {
 }
 
 function recalculatePositions(canvasWidth) {
+    if (!Number.isFinite(canvasWidth) || canvasWidth <= 0) return;
+
     const totalDice = activeDice.length;
     if (totalDice === 0) return;
 
@@ -171,6 +177,15 @@ function recalculatePositions(canvasWidth) {
         mesh.position.set(pos.x, pos.y, pos.z);
         mesh.scale.setScalar(DICE_SCALE * layout.scaleFactor);
     });
+}
+
+function updateLayoutForWidth(canvasWidth, force = false) {
+    if (!Number.isFinite(canvasWidth) || canvasWidth <= 0) return;
+    if (!force && !layoutNeedsUpdate && lastLayoutWidth === canvasWidth) return;
+
+    recalculatePositions(canvasWidth);
+    lastLayoutWidth = canvasWidth;
+    layoutNeedsUpdate = false;
 }
 
 function addEdgeOverlay(root) {
@@ -227,7 +242,12 @@ function updateDice(sidesArray) {
     });
 
     if (renderer && renderer.domElement) {
-        recalculatePositions(renderer.domElement.clientWidth);
+        const width = renderer.domElement.clientWidth;
+        if (width > 0) {
+            updateLayoutForWidth(width, true);
+        } else {
+            layoutNeedsUpdate = true;
+        }
     }
 }
 
@@ -291,6 +311,8 @@ function dispose() {
     renderer?.dispose();
     renderer = scene = camera = modelRoot = dotNetRef = canvasElement = null;
     pendingDice = pendingRoll = null;
+    lastLayoutWidth = null;
+    layoutNeedsUpdate = true;
 }
 
 function releaseResources(roots) {

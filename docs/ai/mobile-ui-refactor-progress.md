@@ -189,3 +189,22 @@ Notes:
 - The outer history host no longer scrolls; the component history container owns vertical history scrolling.
 - Compact history and information hosts use bounded/natural content sizing while the desktop utility panel keeps its existing scroll behavior.
 - The fixture has no special talent/spell alternative or master-result dataset; those scenarios remain CN-4 validation items.
+
+## P6
+Status: COMPLETE
+Changed:
+- DsaWuerfelApp/DsaWuerfelApp.Client/wwwroot/js/dice3d.js
+- DsaWuerfelApp/DsaWuerfelApp.Client/wwwroot/js/dice-scene.js
+- DsaWuerfelApp/DsaWuerfelApp.Tests/Browser/dice-lifecycle.cjs
+
+Validation:
+- dice-lifecycle.cjs with host-width/height changes, six-die row/scale thresholds, stable-width, same-width update, roll and hidden-host checks: PASS
+- dotnet build DsaWuerfelApp.sln -c Release -v minimal: PASS
+- dotnet publish ... -v minimal: PASS
+- app-workflows.cjs with navigation/sidebar lifecycle: PASS
+- ClientStateTests: PASS (12/12)
+- git diff --check: PASS
+
+Notes:
+- Renderer/camera resizing remains in the existing render loop; the same loop and the existing window handler share an instance-local positive-width layout cache.
+- Zero-sized hosts leave the last valid layout width intact and refresh layout when shown again; dispose still clears the cache with the existing animation/listener cleanup.

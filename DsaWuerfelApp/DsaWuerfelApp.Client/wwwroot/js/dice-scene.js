@@ -59,6 +59,8 @@ export function resizeScene(canvas, renderer, camera) {
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
 
+    if (w <= 0 || h <= 0) return;
+
     const pixelRatio = renderer.getPixelRatio();
     const targetW = Math.floor(w * pixelRatio);
     const targetH = Math.floor(h * pixelRatio);
