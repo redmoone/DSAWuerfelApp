@@ -17,6 +17,10 @@ public partial class Wuerfel : IDisposable
 
     private WuerfelViewState View => State.Current;
 
+    private WuerfelArea VisibleArea => View.ActiveArea == WuerfelArea.None
+        ? WuerfelArea.ProbeSearch
+        : View.ActiveArea;
+
     private SessionPlayerDto? CurrentSessionPlayer
     {
         get
@@ -84,6 +88,11 @@ public partial class Wuerfel : IDisposable
     private Task AddDieAsync(int sides)
     {
         return Facade.AddDieAsync(sides);
+    }
+
+    private Task ActivateAreaAsync(WuerfelArea area)
+    {
+        return Facade.ActivateAreaAsync(area);
     }
 
     private Task HandleDiceRemovedAsync(int index)

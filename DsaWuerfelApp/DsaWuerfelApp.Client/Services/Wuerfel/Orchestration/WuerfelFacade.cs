@@ -52,6 +52,12 @@ public sealed class WuerfelFacade(
         await contextService.LoadContextAsync(targets, isMasterModeEnabled);
     }
 
+    public Task ActivateAreaAsync(WuerfelArea area)
+    {
+        selectionService.ActivateArea(area);
+        return Task.CompletedTask;
+    }
+
     public Task AddDieAsync(int sides)
     {
         selectionService.AddDie(sides);

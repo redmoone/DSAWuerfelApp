@@ -394,6 +394,7 @@ public enum WuerfelArea
     None,
     Attributes,
     ProbeSearch,
+    BadTrait,
     FreeRoll
 }
 

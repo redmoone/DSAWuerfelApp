@@ -2,6 +2,16 @@ namespace DsaWuerfelApp.Client.Services;
 
 public sealed class WuerfelSelectionService(WuerfelState state)
 {
+    public void ActivateArea(WuerfelArea area)
+    {
+        if (area is not (WuerfelArea.Attributes or WuerfelArea.ProbeSearch or WuerfelArea.BadTrait or WuerfelArea.FreeRoll))
+        {
+            return;
+        }
+
+        state.SwitchArea(area);
+    }
+
     public void AddDie(int sides)
     {
         state.SwitchArea(WuerfelArea.FreeRoll);

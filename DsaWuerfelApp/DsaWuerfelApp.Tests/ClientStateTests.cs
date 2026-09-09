@@ -249,4 +249,35 @@ public class ClientStateTests
         Assert.Null(state.Current.LastAttributeRoll);
         Assert.Null(state.Current.LastBadTraitRoll);
     }
+
+    [Theory]
+    [InlineData(WuerfelArea.ProbeSearch)]
+    [InlineData(WuerfelArea.Attributes)]
+    [InlineData(WuerfelArea.FreeRoll)]
+    public void Switching_to_bad_trait_clears_incompatible_roll_selection(WuerfelArea sourceArea)
+    {
+        var state = new WuerfelState();
+        state.SwitchArea(sourceArea);
+
+        switch (sourceArea)
+        {
+            case WuerfelArea.ProbeSearch:
+                state.SetSelectedProbe("Klettern (MU/GE/KK)");
+                break;
+            case WuerfelArea.Attributes:
+                state.SetSelectedAttributes(["MU"], [20]);
+                break;
+            case WuerfelArea.FreeRoll:
+                state.SetSelectedDice([6]);
+                break;
+        }
+
+        state.SwitchArea(WuerfelArea.BadTrait);
+
+        Assert.Equal(WuerfelArea.BadTrait, state.Current.ActiveArea);
+        Assert.Empty(state.Current.SelectedAttributes);
+        Assert.Empty(state.Current.SelectedDiceSides);
+        Assert.Null(state.Current.SelectedProbeValue);
+        Assert.Empty(state.Current.SelectedSpellOptionValues);
+    }
 }
