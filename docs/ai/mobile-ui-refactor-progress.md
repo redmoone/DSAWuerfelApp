@@ -274,7 +274,7 @@ Changed:
 
 Validation:
 - dotnet build DsaWuerfelApp.sln -c Release -v minimal: PASS (0 warnings, 0 errors)
-- dotnet test DsaWuerfelApp.sln -c Release --no-restore -v normal: FAIL (83/84; existing baseline spell-option test)
+- dotnet test DsaWuerfelApp.sln -c Release --no-restore -v normal: FAIL (83/84; existing `TestApplicationSmokeTests.Spell_option_modifier_is_resolved_from_catalog_and_keeps_original_zfw`, expected 13, actual varied 9/4)
 - ClientStateTests: PASS (12/12)
 - dotnet publish ... -v minimal: PASS
 - app-workflows.cjs: PASS
