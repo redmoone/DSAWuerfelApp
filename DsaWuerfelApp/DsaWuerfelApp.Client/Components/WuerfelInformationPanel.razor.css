@@ -1,6 +1,7 @@
 .additional-info-content {
     flex: 1;
     min-height: 0;
+    min-width: 0;
     overflow-y: auto;
     scrollbar-gutter: stable;
     scrollbar-width: thin;
@@ -33,6 +34,7 @@
 .additional-info-panel {
     display: flex;
     flex-direction: column;
+    min-width: 0;
     gap: 8px;
     padding: 9px 10px;
     border-radius: 8px;
@@ -52,6 +54,7 @@
     margin: 0;
     line-height: 1.4;
     color: rgba(255, 248, 220, 0.9);
+    overflow-wrap: anywhere;
 }
 
 .probe-info-sections {
@@ -212,6 +215,10 @@
 }
 
 @media (max-width: 640px) {
+    .additional-info-content {
+        overflow: visible;
+    }
+
     .probe-info-primary-field,
     .probe-info-compact-field {
         grid-template-columns: 1fr;
@@ -226,11 +233,13 @@
     background: rgba(9, 25, 48, 0.22);
     color: rgba(255, 248, 220, 0.72);
     line-height: 1.5;
+    overflow-wrap: anywhere;
 }
 
 .probe-evaluation {
     display: flex;
     flex-direction: column;
+    min-width: 0;
     gap: 12px;
     padding: 16px;
     border-radius: 8px;
@@ -276,12 +285,15 @@
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
+    min-width: 0;
 }
 
 .probe-evaluation-name {
+    min-width: 0;
     font-size: 1.05rem;
     font-weight: 700;
     color: var(--dsa-gold);
+    overflow-wrap: anywhere;
 }
 
 .probe-evaluation-status {
@@ -294,18 +306,22 @@
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+    min-width: 0;
     font-size: 0.9rem;
 }
 
 .probe-evaluation-meta span {
+    min-width: 0;
     padding: 4px 10px;
     border-radius: 999px;
     background-color: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(212, 175, 55, 0.35);
+    overflow-wrap: anywhere;
 }
 
 .probe-evaluation-rolls {
     display: grid;
+    min-width: 0;
     grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
     gap: 10px;
 }
@@ -313,6 +329,7 @@
 .probe-roll-chip {
     display: flex;
     flex-direction: column;
+    min-width: 0;
     gap: 4px;
     padding: 10px 12px;
     border-radius: 8px;
@@ -372,12 +389,14 @@
 .master-roll-list {
     display: flex;
     flex-direction: column;
+    min-width: 0;
     gap: 10px;
 }
 
 .master-roll-item {
     display: flex;
     flex-direction: column;
+    min-width: 0;
     gap: 6px;
     padding: 10px 12px;
     border-radius: 8px;
@@ -399,11 +418,14 @@
     gap: 10px;
     align-items: center;
     flex-wrap: wrap;
+    min-width: 0;
 }
 
 .master-roll-target {
+    min-width: 0;
     font-weight: 700;
     color: var(--dsa-gold);
+    overflow-wrap: anywhere;
 }
 
 .master-roll-status {
@@ -416,4 +438,5 @@
     margin: 0;
     line-height: 1.45;
     color: rgba(255, 248, 220, 0.88);
+    overflow-wrap: anywhere;
 }

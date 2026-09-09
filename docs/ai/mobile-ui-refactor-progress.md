@@ -165,3 +165,27 @@ Validation:
 Notes:
 - The measured 320px action-grid minimum was capped to the available container width; desktop multi-column grids remain active where their measured space permits.
 - No new container threshold or DOM hierarchy was introduced. The responsive harness still reports the pre-existing phone-320 lobby overflow and low-height control reachability cases, which belong to later page/validation work.
+
+## P5b
+Status: COMPLETE
+Changed:
+- DsaWuerfelApp/DsaWuerfelApp.Client/Pages/Wuerfel.razor.css
+- DsaWuerfelApp/DsaWuerfelApp.Client/Components/RollHistory.razor.css
+- DsaWuerfelApp/DsaWuerfelApp.Client/Components/WuerfelInformationPanel.razor.css
+
+Validation:
+- dotnet build DsaWuerfelApp.sln -c Release -v minimal: PASS
+- dotnet publish ... -v minimal: PASS
+- 20-entry history and information panel across compact, landscape and desktop heights: PASS
+- single history scroll owner and explicit Würfeln/history scroll reachability: PASS
+- long-text wrapping rules and document overflow checks: PASS
+- responsive-ui.cjs: 7 existing lobby/low-height control reachability failures; no P5b history overflow failure
+- app-workflows.cjs: PASS
+- dice-lifecycle.cjs: PASS
+- ClientStateTests: PASS (12/12)
+- git diff --check: PASS
+
+Notes:
+- The outer history host no longer scrolls; the component history container owns vertical history scrolling.
+- Compact history and information hosts use bounded/natural content sizing while the desktop utility panel keeps its existing scroll behavior.
+- The fixture has no special talent/spell alternative or master-result dataset; those scenarios remain CN-4 validation items.
