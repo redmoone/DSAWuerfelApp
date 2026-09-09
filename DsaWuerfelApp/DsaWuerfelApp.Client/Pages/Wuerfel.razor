@@ -8,28 +8,28 @@
         <button type="button"
                 class="roll-mode-button @(VisibleArea == WuerfelArea.ProbeSearch ? "active" : string.Empty)"
                 data-testid="mode-probe"
-                aria-pressed="@(VisibleArea == WuerfelArea.ProbeSearch)"
+                aria-pressed="@(VisibleArea == WuerfelArea.ProbeSearch ? "true" : "false")"
                 @onclick="() => ActivateAreaAsync(WuerfelArea.ProbeSearch)">
             Talent / Zauber
         </button>
         <button type="button"
                 class="roll-mode-button @(VisibleArea == WuerfelArea.Attributes ? "active" : string.Empty)"
                 data-testid="mode-attribute"
-                aria-pressed="@(VisibleArea == WuerfelArea.Attributes)"
+                aria-pressed="@(VisibleArea == WuerfelArea.Attributes ? "true" : "false")"
                 @onclick="() => ActivateAreaAsync(WuerfelArea.Attributes)">
             Eigenschaft
         </button>
         <button type="button"
                 class="roll-mode-button @(VisibleArea == WuerfelArea.BadTrait ? "active" : string.Empty)"
                 data-testid="mode-bad-trait"
-                aria-pressed="@(VisibleArea == WuerfelArea.BadTrait)"
+                aria-pressed="@(VisibleArea == WuerfelArea.BadTrait ? "true" : "false")"
                 @onclick="() => ActivateAreaAsync(WuerfelArea.BadTrait)">
             Schlechte Eigenschaft
         </button>
         <button type="button"
                 class="roll-mode-button @(VisibleArea == WuerfelArea.FreeRoll ? "active" : string.Empty)"
                 data-testid="mode-free-roll"
-                aria-pressed="@(VisibleArea == WuerfelArea.FreeRoll)"
+                aria-pressed="@(VisibleArea == WuerfelArea.FreeRoll ? "true" : "false")"
                 @onclick="() => ActivateAreaAsync(WuerfelArea.FreeRoll)">
             Freier Wurf
         </button>

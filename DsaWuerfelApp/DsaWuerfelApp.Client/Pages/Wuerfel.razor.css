@@ -323,9 +323,11 @@
 
 .history-panel {
     display: flex;
-    flex: 1 1 320px;
+    flex: 0 0 440px;
     flex-direction: column;
-    min-height: 300px;
+    height: 440px;
+    min-height: 0;
+    max-height: 440px;
     padding: 12px 14px;
     border: 1px solid rgba(212, 175, 55, 0.42);
 }
@@ -369,6 +371,12 @@
         grid-template-columns: minmax(0, 1fr);
     }
 
+    .history-panel {
+        flex-basis: 360px;
+        height: 360px;
+        max-height: 360px;
+    }
+
     .roll-feedback-column {
         order: 2;
     }
@@ -394,7 +402,10 @@
     }
 
     .history-panel {
-        min-height: 230px;
+        flex-basis: 340px;
+        height: 340px;
+        min-height: 0;
+        max-height: 340px;
         padding: 10px 12px;
     }
 

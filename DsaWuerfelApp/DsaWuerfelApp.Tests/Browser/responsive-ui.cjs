@@ -81,6 +81,140 @@ async function assertReachableControl(page, selector, label) {
   assert.ok(geometry.top >= -1 && geometry.bottom <= page.viewportSize().height + 1, `${label}: control is not reachable ${JSON.stringify(geometry)}`);
 }
 
+const diceModes = [
+  { button: 'mode-probe', panel: '.probe-setup-section' },
+  { button: 'mode-attribute', panel: '.attribute-setup-section' },
+  { button: 'mode-bad-trait', panel: '.bad-trait-setup-section' },
+  { button: 'mode-free-roll', panel: '.free-roll-setup-section' }
+];
+
+async function assertDiceMode(page, mode, label) {
+  const modeButton = page.locator(`[data-testid="${mode.button}"]`);
+  await modeButton.click();
+  await page.waitForTimeout(40);
+
+  const activeModes = page.locator('.roll-mode-button.active');
+  assert.equal(await activeModes.count(), 1, `${label}: expected exactly one active mode`);
+  assert.equal(await activeModes.first().getAttribute('data-testid'), mode.button, `${label}: active mode mismatch`);
+  assert.equal((await modeButton.getAttribute('aria-pressed')).toLowerCase(), 'true', `${label}: aria-pressed is not true`);
+
+  const visiblePanels = await Promise.all(
+    diceModes.map(({ panel }) => page.locator(`${panel}:visible`).count())
+  );
+  assert.equal(visiblePanels.reduce((sum, count) => sum + count, 0), 1, `${label}: more than one full mode panel is visible`);
+  assert.equal(visiblePanels[diceModes.indexOf(mode)], 1, `${label}: selected mode panel is not visible`);
+
+  const buttonHeight = await modeButton.evaluate(element => element.getBoundingClientRect().height);
+  assert.ok(buttonHeight >= 43, `${label}: mode button is shorter than 44px (${buttonHeight})`);
+
+  if (mode.button === 'mode-bad-trait') {
+    const trait = page.locator('.bad-trait-panel:not(.compact) .bad-trait-chip').first();
+    await trait.waitFor({ state: 'visible' });
+    await trait.click();
+    await assertReachableControl(page, '.bad-trait-panel:not(.compact) .dsa-btn', `${label} primary action`);
+  } else {
+    await assertReachableControl(page, '.results-bar button.dsa-btn', `${label} primary action`);
+  }
+
+  await assertNoHorizontalOverflow(page, label);
+}
+
+async function assertDiceLayout(page, label) {
+  const layout = await page.evaluate(() => {
+    const readRect = selector => {
+      const element = document.querySelector(selector);
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      return { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right, width: rect.width, height: rect.height };
+    };
+    return {
+      setup: readRect('.roll-setup-panel'),
+      feedback: readRect('.roll-feedback-column'),
+      current: readRect('.current-roll-card'),
+      history: readRect('.history-panel')
+    };
+  });
+  assert.ok(layout.setup && layout.feedback && layout.current && layout.history, `${label}: workbench geometry is incomplete`);
+  if (page.viewportSize().width >= 901) {
+    assert.ok(Math.abs(layout.setup.top - layout.feedback.top) <= 2, `${label}: setup and feedback are not side by side`);
+    assert.ok(layout.feedback.left >= layout.setup.right - 1, `${label}: feedback column overlaps setup`);
+  } else {
+    assert.ok(layout.feedback.top >= layout.setup.bottom - 1, `${label}: feedback does not follow setup`);
+  }
+  assert.ok(layout.history.top >= layout.current.bottom - 1, `${label}: history does not follow current roll`);
+}
+
+async function assertHistoryViewport(page, label) {
+  await page.locator('.history-panel').waitFor({ state: 'visible' });
+  await waitFor(async () => await page.locator('.history-entry').count() >= 6, `${label}: history entries did not load`);
+  const history = await page.locator('.roll-history-list').evaluate(list => {
+    const listRect = list.getBoundingClientRect();
+    const entries = [...list.querySelectorAll('.history-entry')].map(entry => {
+      const rect = entry.getBoundingClientRect();
+      return { top: rect.top, bottom: rect.bottom };
+    });
+    const panel = list.closest('.history-panel');
+    const scrollOwners = [panel, ...panel.querySelectorAll('*')].filter(element => {
+      const style = getComputedStyle(element);
+      return /(auto|scroll)/.test(style.overflowY) && element.scrollHeight > element.clientHeight + 1;
+    });
+    return {
+      listTop: listRect.top,
+      listBottom: listRect.bottom,
+      clientHeight: list.clientHeight,
+      scrollHeight: list.scrollHeight,
+      entries,
+      scrollOwnerCount: scrollOwners.length
+    };
+  });
+  assert.ok(history.clientHeight > 0, `${label}: history list has no visible height`);
+  assert.ok(history.scrollHeight > history.clientHeight, `${label}: history list is not scrollable`);
+  const visibleEntries = history.entries.filter(entry => entry.top >= history.listTop - 1 && entry.bottom <= history.listBottom + 1).length;
+  const minimumVisibleEntries = page.viewportSize().width <= 900 ? 3 : 5;
+  assert.ok(visibleEntries >= minimumVisibleEntries, `${label}: only ${visibleEntries} history entries are visible`);
+  assert.equal(history.scrollOwnerCount, 1, `${label}: history has more than one active scroll owner`);
+
+  const historyList = page.locator('.roll-history-list');
+  await historyList.evaluate(list => { list.scrollTop = list.scrollHeight; });
+  await page.waitForTimeout(20);
+  const lastEntry = historyList.locator('.history-entry').last();
+  const lastVisible = await lastEntry.evaluate((entry, list) => {
+    const entryRect = entry.getBoundingClientRect();
+    const listRect = list.getBoundingClientRect();
+    return entryRect.bottom <= listRect.bottom + 1 && entryRect.top >= listRect.top - 1;
+  }, await historyList.elementHandle());
+  assert.ok(lastVisible, `${label}: oldest history entry cannot be reached in its scroll area`);
+  await historyList.evaluate(list => { list.scrollTop = 0; });
+}
+
+async function assertProbeInfoPresentation(page, label) {
+  await page.locator('[data-testid="mode-probe"]').click();
+  const search = page.locator('.search-input');
+  await search.fill('Abvenenum');
+  await page.getByRole('button', { name: /Abvenenum/ }).click();
+  await page.locator('.probe-info-summary').waitFor({ state: 'visible' });
+  await page.locator('.probe-info-button').click();
+  const details = page.locator('.probe-info-details');
+  await details.waitFor({ state: 'visible' });
+  const presentation = await details.evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return { position: style.position, left: rect.left, right: rect.right, bottom: rect.bottom, width: rect.width };
+  });
+  if (page.viewportSize().width <= 640) {
+    assert.equal(presentation.position, 'fixed', `${label}: mobile info sheet is not fixed`);
+    assert.ok(presentation.left <= 1 && presentation.width >= page.viewportSize().width - 1, `${label}: info sheet is not full width`);
+    assert.ok(presentation.bottom >= page.viewportSize().height - 1, `${label}: info sheet is not anchored at the bottom`);
+  } else {
+    assert.equal(presentation.position, 'fixed', `${label}: desktop info panel is not fixed`);
+    assert.ok(presentation.left > page.viewportSize().width / 2, `${label}: desktop info panel is not on the right`);
+    assert.ok(presentation.right <= page.viewportSize().width + 1, `${label}: desktop info panel is clipped`);
+  }
+  await page.getByRole('button', { name: 'Probeninformationen schliessen', exact: true }).click();
+  await details.waitFor({ state: 'hidden' });
+  await assertNoHorizontalOverflow(page, `${label} after close`);
+}
+
 async function assertMobileMenu(page, label) {
   const menuButton = page.getByRole('button', { name: 'Menü', exact: true });
   await menuButton.waitFor({ state: 'visible', timeout: 1000 });
@@ -146,6 +280,17 @@ async function saveBaselineScreenshot(page, screenshotDirectory, routeName, side
       return detail.players.length === 3 && detail.players.every(player => player.activeHeroId);
     }, 'responsive fixture hero sync missing');
 
+    const seedPage = pages[1];
+    const historyStart = (await details()).history.length;
+    await seedPage.getByRole('button', { name: 'Freier Wurf', exact: true }).click();
+    const sixSidedDie = seedPage.locator('.die-selector').filter({ has: seedPage.getByText('6', { exact: true }) }).first();
+    for (let index = 0; index < 6; index++) {
+      const action = seedPage.locator('.results-bar button.dsa-btn');
+      if (await action.isDisabled()) await sixSidedDie.click();
+      await action.click();
+      await waitFor(async () => (await details()).history.length === historyStart + index + 1, `responsive history seed ${index + 1} missing`);
+    }
+
     const failures = [];
     const check = async (label, action) => {
       try {
@@ -180,6 +325,18 @@ async function saveBaselineScreenshot(page, screenshotDirectory, routeName, side
         await waitForStableLayout(page, route.root);
         await check(`${viewport.name} ${route.name} overflow`, () => assertNoHorizontalOverflow(page, `${viewport.name} ${route.name}`));
         await check(`${viewport.name} ${route.name} control`, () => assertReachableControl(page, route.control, `${viewport.name} ${route.name}`));
+        if (route.name === 'dice') {
+          await check(`${viewport.name} dice modes`, async () => {
+            for (const mode of diceModes) {
+              await assertDiceMode(page, mode, `${viewport.name} ${mode.button}`);
+            }
+            await assertDiceLayout(page, `${viewport.name} dice layout`);
+            await assertHistoryViewport(page, `${viewport.name} dice history`);
+          });
+          if (viewport.name === 'desktop-1440' || viewport.name === 'phone-390') {
+            await check(`${viewport.name} probe info`, () => assertProbeInfoPresentation(page, `${viewport.name} probe info`));
+          }
+        }
         if (route.name === 'lobby' && viewport.width < 641) {
           await check(`${viewport.name} mobile navigation`, () => assertMobileMenu(page, viewport.name));
         }
