@@ -59,3 +59,21 @@ Validation:
 Notes:
 - One NavMenu/SessionTree instance remains mounted; mobile content is flow-based and desktop content can scroll at low height.
 - Session ID comparison closes on actual session changes/logout while same-session refreshes leave the menu state alone.
+
+## P3
+Status: COMPLETE
+Changed:
+- DsaWuerfelApp/DsaWuerfelApp.Client/Components/SessionTree.razor.css
+
+Validation:
+- dotnet build DsaWuerfelApp.sln -c Release -v minimal: PASS
+- dotnet publish ... -v minimal: PASS
+- long-name/session actions in Lobby and mobile NavMenu: PASS
+- rename, copy, delete-cancel and shared SessionTree geometry: PASS
+- app-workflows.cjs: PASS
+- ClientStateTests: PASS (12/12)
+- git diff --check: PASS
+
+Notes:
+- Header actions wrap through one component container query; management and visibility parameters remain unchanged.
+- Compact/coarse-pointer icon actions use the shared 44px target.
