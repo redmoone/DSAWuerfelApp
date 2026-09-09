@@ -32,4 +32,11 @@ public partial class AttributePill : ComponentBase
             ? OnDecrease.InvokeAsync(ShortName)
             : Task.CompletedTask;
     }
+
+    private Task HandleDecreaseClick(MouseEventArgs e)
+    {
+        return OnDecrease.HasDelegate
+            ? OnDecrease.InvokeAsync(ShortName)
+            : Task.CompletedTask;
+    }
 }

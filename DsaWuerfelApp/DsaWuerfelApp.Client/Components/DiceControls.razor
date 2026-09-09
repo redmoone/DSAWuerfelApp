@@ -1,10 +1,10 @@
 ﻿<div class="d-flex justify-center flex-wrap gap-7 align-center">
     @foreach (var s in AvailableSides)
     {
-        <div class="die-selector" @onclick="() => OnAddDie.InvokeAsync(s)">
+        <button type="button" class="die-selector" @onclick="() => OnAddDie.InvokeAsync(s)">
             <div class="die-shape @GetShapeClass(s)">
                 <span class="die-text">@s</span>
             </div>
-        </div>
+        </button>
     }
 </div>

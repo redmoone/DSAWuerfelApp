@@ -77,3 +77,27 @@ Validation:
 Notes:
 - Header actions wrap through one component container query; management and visibility parameters remain unchanged.
 - Compact/coarse-pointer icon actions use the shared 44px target.
+
+## P4a
+Status: COMPLETE
+Changed:
+- DsaWuerfelApp/DsaWuerfelApp.Client/Components/AttributePill.razor
+- DsaWuerfelApp/DsaWuerfelApp.Client/Components/AttributePill.razor.cs
+- DsaWuerfelApp/DsaWuerfelApp.Client/Components/AttributePill.razor.css
+- DsaWuerfelApp/DsaWuerfelApp.Client/Components/ModifierPill.razor.css
+- DsaWuerfelApp/DsaWuerfelApp.Client/Components/TextPill.razor.css
+- DsaWuerfelApp/DsaWuerfelApp.Client/Components/DiceControls.razor
+- DsaWuerfelApp/DsaWuerfelApp.Client/Components/DiceControls.razor.css
+
+Validation:
+- dotnet build DsaWuerfelApp.sln -c Release -v minimal: PASS
+- dotnet publish ... -v minimal: PASS
+- P4a browser interaction/geometry check at 320px: PASS
+- app-workflows.cjs: PASS
+- dice-lifecycle.cjs: PASS
+- ClientStateTests: PASS (12/12)
+- git diff --check: PASS
+
+Notes:
+- Attribute add/remove now has separate semantic buttons; OnClick priority, right-click decrease and one-callback behavior remain intact.
+- Dice controls are semantic buttons; modifier targets meet the shared 44px target and pill contents fit their narrow hosts.

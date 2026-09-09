@@ -1,15 +1,27 @@
-<div class="attribute-pill @((SelectionCount > 0 || IsSelected) ? "active" : "")"
-     @onclick="HandleClick"
-     @oncontextmenu="HandleRightClick"
-     @oncontextmenu:preventDefault="true">
-    <div class="attribute-icon-container">
-        <img src="icons/@IconPath" alt="@ShortName" class="attribute-icon" />
-        <span class="attribute-label">@ShortName</span>
-    </div>
-    <div class="attribute-value">@Value</div>
+<div class="attribute-pill @((SelectionCount > 0 || IsSelected) ? "active" : "")">
+    <button type="button"
+            class="attribute-pill-main"
+            aria-label="@(OnClick.HasDelegate ? $"{ShortName} auswählen" : $"{ShortName} hinzufügen")"
+            @onclick="HandleClick"
+            @oncontextmenu="HandleRightClick"
+            @oncontextmenu:preventDefault="true">
+        <div class="attribute-icon-container">
+            <img src="icons/@IconPath" alt="@ShortName" class="attribute-icon" />
+            <span class="attribute-label">@ShortName</span>
+        </div>
+        <div class="attribute-value">@Value</div>
+    </button>
 
     @if (SelectionCount > 0)
     {
         <div class="selection-badge">@(SelectionCount)x</div>
+    }
+
+    @if (OnDecrease.HasDelegate && SelectionCount > 0)
+    {
+        <button type="button"
+                class="attribute-pill-decrease"
+                aria-label="Eine @ShortName-Auswahl entfernen"
+                @onclick="HandleDecreaseClick">−</button>
     }
 </div>

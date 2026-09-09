@@ -4,6 +4,10 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding: 4px 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
     filter:
             drop-shadow(2px 0px 0px var(--dsa-gold))
             drop-shadow(-2px 0px 0px var(--dsa-gold))
@@ -46,10 +50,6 @@
 
 .die-text {
     font-size: 30px !important;
-}
-
-.die-selector {
-    padding-block: 4px;
 }
 
 .die-text {

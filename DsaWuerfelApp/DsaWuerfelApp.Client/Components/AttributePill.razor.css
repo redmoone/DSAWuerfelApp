@@ -1,7 +1,6 @@
 ﻿.attribute-pill {
     display: inline-flex;
     user-select: none;
-    cursor: pointer;
     align-items: center;
     background-color: var(--pill-bg);
     border: 3px solid var(--dsa-gold);
@@ -14,6 +13,44 @@
     gap: 10px;
     position: relative;
     transition: background-color 0.2s, color 0.2s;
+}
+
+.attribute-pill-main {
+    display: inline-flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: inherit;
+    cursor: pointer;
+}
+
+.attribute-pill-main:focus-visible,
+.attribute-pill-decrease:focus-visible {
+    outline: 2px solid var(--dsa-white);
+    outline-offset: 2px;
+}
+
+.attribute-pill-decrease {
+    flex: 0 0 var(--ui-touch-target);
+    align-self: stretch;
+    min-width: var(--ui-touch-target);
+    min-height: var(--ui-touch-target);
+    margin: -4px -15px -4px 0;
+    padding: 0;
+    border: 0;
+    border-left: 1px solid rgba(212, 175, 55, 0.55);
+    background: transparent;
+    color: inherit;
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1;
+    cursor: pointer;
 }
 
 .attribute-icon-container {
