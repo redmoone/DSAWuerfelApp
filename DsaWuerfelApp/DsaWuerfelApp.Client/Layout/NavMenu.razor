@@ -2,6 +2,7 @@
 @inject AuthState AuthState
 @inject SessionState SessionState
 @inject SessionHeroSyncService SessionHeroSyncService
+@inject NavigationManager NavigationManager
 @using DsaWuerfelApp.Client.Components
 @using DsaWuerfelApp.Client.Services
 @implements IDisposable
@@ -9,75 +10,92 @@
 <div class="nav-shell">
     <input id="nav-expanded" type="checkbox" title="Navigation umschalten" class="nav-toggle"/>
 
-    <div class="nav-panel">
+    <div class="nav-panel" @onkeydown="HandleMenuKeyDown">
         <div class="nav-header">
             <label for="nav-expanded" class="nav-expand-button" aria-label="Navigation umschalten">
                 <span></span>
                 <span></span>
                 <span></span>
             </label>
+            <button type="button"
+                    class="mobile-menu-button"
+                    @ref="_mobileMenuButton"
+                    @onclick="ToggleMobileMenu"
+                    aria-label="Menü"
+                    aria-expanded="@(_isMobileMenuOpen ? "true" : "false")"
+                    aria-controls="nav-content">
+                Menü
+            </button>
         </div>
 
-        <nav class="nav-links">
-            @if (AuthState.Current.IsAuthenticated && AuthState.Current.User is not null)
-            {
-                <div class="account-pill" title="@AuthState.Current.User.Email"
-                     aria-label="@AuthState.Current.User.Email">
-                    <img src="icons/avatar.svg" class="nav-icon account-icon" alt=""/>
-                    <span class="account-email">@AuthState.Current.User.Email</span>
-                </div>
-            }
+        <div id="nav-content" class="nav-content @(_isMobileMenuOpen ? "is-open" : string.Empty)">
+            <nav class="nav-links">
+                @if (AuthState.Current.IsAuthenticated && AuthState.Current.User is not null)
+                {
+                    <div class="account-pill" title="@AuthState.Current.User.Email"
+                         aria-label="@AuthState.Current.User.Email">
+                        <img src="icons/avatar.svg" class="nav-icon account-icon" alt=""/>
+                        <span class="account-email">@AuthState.Current.User.Email</span>
+                    </div>
+                }
 
-            @if (AuthState.Current.IsAuthenticated && !string.IsNullOrWhiteSpace(ActiveHeroName))
-            {
-                <NavLink class="nav-link active-hero-pill" href="helden-verwaltung"
-                         ActiveClass="active-hero-pill-active"
-                         title="@ActiveHeroName">
-                    <img src="icons/DasSchwarzeAuge.svg" class="nav-icon" alt=""/>
-                    <span class="nav-text active-hero-name">@ActiveHeroName</span>
+                @if (AuthState.Current.IsAuthenticated && !string.IsNullOrWhiteSpace(ActiveHeroName))
+                {
+                    <NavLink class="nav-link active-hero-pill" href="helden-verwaltung"
+                             ActiveClass="active-hero-pill-active"
+                             title="@ActiveHeroName"
+                             @onclick="CloseMobileMenu">
+                        <img src="icons/DasSchwarzeAuge.svg" class="nav-icon" alt=""/>
+                        <span class="nav-text active-hero-name">@ActiveHeroName</span>
+                    </NavLink>
+                }
+
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All" @onclick="CloseMobileMenu">
+                    <img src="icons/third-party.svg" class="nav-icon" alt=""/>
+                    <span class="nav-text">Gamesessions</span>
                 </NavLink>
-            }
 
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <img src="icons/third-party.svg" class="nav-icon" alt=""/>
-                <span class="nav-text">Gamesessions</span>
-            </NavLink>
+                @if (AuthState.Current.IsAuthenticated)
+                {
+                    <NavLink class="nav-link" href="wuerfel" @onclick="CloseMobileMenu">
+                        <img src="icons/dice.svg" class="nav-icon" alt=""/>
+                        <span class="nav-text">Würfeln</span>
+                    </NavLink>
+
+                    <NavLink class="nav-link" href="kampf" @onclick="CloseMobileMenu">
+                        <img src="icons/sword.svg" class="nav-icon" alt=""/>
+                        <span class="nav-text">Kampf</span>
+                    </NavLink>
+
+                    <NavLink class="nav-link" href="helden-verwaltung" @onclick="CloseMobileMenu">
+                        <img src="icons/file.svg" class="nav-icon" alt=""/>
+                        <span class="nav-text">Heldenverwaltung</span>
+                    </NavLink>
+                }
+            </nav>
 
             @if (AuthState.Current.IsAuthenticated)
             {
-                <NavLink class="nav-link" href="wuerfel">
-                    <img src="icons/dice.svg" class="nav-icon" alt=""/>
-                    <span class="nav-text">Würfeln</span>
-                </NavLink>
-
-                <NavLink class="nav-link" href="kampf">
-                    <img src="icons/sword.svg" class="nav-icon" alt=""/>
-                    <span class="nav-text">Kampf</span>
-                </NavLink>
-
-                <NavLink class="nav-link" href="helden-verwaltung">
-                    <img src="icons/file.svg" class="nav-icon" alt=""/>
-                    <span class="nav-text">Heldenverwaltung</span>
-                </NavLink>
+                <section class="session-panel">
+                    <h3 class="session-panel-title">Sessions</h3>
+                    <SessionTree Sessions="SessionState.Sessions"
+                                 ActiveSessionId="@SessionState.ActiveSessionId"
+                                 EmptyText="Noch keine sichtbaren Sessions. Erstelle eine Runde oder tritt einer bei."
+                                 ShowJoinCode="false"
+                                 ShowManagement="false"
+                                 ShowPlayerEditing="false"/>
+                </section>
             }
-        </nav>
-
-        @if (AuthState.Current.IsAuthenticated)
-        {
-            <section class="session-panel">
-                <h3 class="session-panel-title">Sessions</h3>
-                <SessionTree Sessions="SessionState.Sessions"
-                             ActiveSessionId="@SessionState.ActiveSessionId"
-                             EmptyText="Noch keine sichtbaren Sessions. Erstelle eine Runde oder tritt einer bei."
-                             ShowJoinCode="false"
-                             ShowManagement="false"
-                             ShowPlayerEditing="false"/>
-            </section>
-        }
+        </div>
     </div>
 </div>
 
 @code {
+    private ElementReference _mobileMenuButton;
+    private bool _isMobileMenuOpen;
+    private string? _lastActiveSessionId;
+    private bool _hasObservedActiveSession;
+
     private string? ActiveHeroName => ActiveHeroState.CurrentHero?.Name;
 
     protected override async Task OnInitializedAsync()
@@ -85,6 +103,9 @@
         ActiveHeroState.Changed += HandleStateChanged;
         AuthState.Changed += HandleStateChanged;
         SessionState.Changed += HandleStateChanged;
+        NavigationManager.LocationChanged += HandleLocationChanged;
+        _lastActiveSessionId = SessionState.ActiveSessionId;
+        _hasObservedActiveSession = true;
 
         await AuthState.EnsureLoadedAsync();
         await ActiveHeroState.EnsureLoadedAsync();
@@ -97,11 +118,50 @@
         ActiveHeroState.Changed -= HandleStateChanged;
         AuthState.Changed -= HandleStateChanged;
         SessionState.Changed -= HandleStateChanged;
+        NavigationManager.LocationChanged -= HandleLocationChanged;
         SessionHeroSyncService.Detach();
     }
 
     private void HandleStateChanged()
     {
+        var currentActiveSessionId = SessionState.ActiveSessionId;
+        var activeSessionChanged = _hasObservedActiveSession &&
+            !string.Equals(_lastActiveSessionId, currentActiveSessionId, StringComparison.Ordinal);
+        _lastActiveSessionId = currentActiveSessionId;
+
+        if (!AuthState.Current.IsAuthenticated || activeSessionChanged)
+        {
+            CloseMobileMenu();
+        }
+
         _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs args)
+    {
+        CloseMobileMenu();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void ToggleMobileMenu()
+    {
+        _isMobileMenuOpen = !_isMobileMenuOpen;
+    }
+
+    private void CloseMobileMenu()
+    {
+        _isMobileMenuOpen = false;
+    }
+
+    private async Task HandleMenuKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key != "Escape" || !_isMobileMenuOpen)
+        {
+            return;
+        }
+
+        _isMobileMenuOpen = false;
+        await InvokeAsync(StateHasChanged);
+        await _mobileMenuButton.FocusAsync();
     }
 }

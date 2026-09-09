@@ -1,5 +1,7 @@
 .nav-shell {
     height: 100%;
+    min-width: 0;
+    min-height: 0;
 }
 
 .nav-toggle {
@@ -17,6 +19,8 @@
     flex-direction: column;
     gap: var(--nav-item-gap);
     min-height: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     padding: 1rem 0.75rem;
     background: linear-gradient(180deg, rgba(28, 46, 74, 0.96), rgba(15, 21, 33, 0.98));
     border-right: 2px solid var(--dsa-gold);
@@ -31,6 +35,15 @@
     height: var(--nav-item-size);
     min-height: var(--nav-item-size);
     flex: 0 0 var(--nav-item-size);
+}
+
+.nav-content {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: var(--nav-item-gap);
+    min-width: 0;
+    min-height: 0;
 }
 
 .nav-expand-button {
@@ -51,6 +64,28 @@
     cursor: pointer;
     user-select: none;
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.mobile-menu-button {
+    box-sizing: border-box;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: var(--ui-touch-target);
+    padding: 0.6rem 1rem;
+    border: 2px solid var(--dsa-gold);
+    border-radius: 999px;
+    background-color: var(--pill-bg);
+    color: var(--dsa-white);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.mobile-menu-button:focus-visible {
+    outline: 2px solid var(--dsa-white);
+    outline-offset: 3px;
 }
 
 .nav-expand-button:hover {
@@ -109,6 +144,8 @@
     display: flex;
     flex-direction: column;
     gap: var(--nav-item-gap);
+    width: 100%;
+    min-width: 0;
 }
 
 .session-panel {
@@ -116,6 +153,7 @@
     flex-direction: column;
     gap: 0.75rem;
     min-height: 0;
+    min-width: 0;
     margin-top: 0.35rem;
 }
 
@@ -186,12 +224,61 @@
 @media (max-width: 640px) {
     .nav-panel {
         min-height: auto;
+        height: auto;
+    }
+
+    .nav-expand-button {
+        display: none;
+    }
+
+    .mobile-menu-button {
+        display: inline-flex;
+    }
+
+    .nav-content {
+        display: none;
+        flex: 0 0 auto;
+        width: 100%;
+        overflow: visible;
+    }
+
+    .nav-content.is-open {
+        display: flex;
+    }
+
+    .nav-links {
+        align-items: stretch;
+    }
+
+    .nav-panel ::deep .nav-link,
+    .account-pill {
+        justify-content: flex-start;
+        width: 100%;
+        min-height: var(--nav-item-size);
+    }
+
+    .nav-panel ::deep .nav-link.active-hero-pill {
+        display: flex;
+    }
+
+    .account-email,
+    .nav-text {
+        display: inline;
+    }
+    .session-panel {
+        display: flex;
     }
 }
 
 @media (min-width: 641px) {
     .nav-panel {
+        height: 100%;
+        min-height: 0;
         padding: 1rem 0.85rem;
+    }
+
+    .nav-content {
+        overflow-y: auto;
     }
 
     .nav-links {
@@ -252,11 +339,5 @@
 
     .nav-toggle:checked ~ .nav-panel .nav-header {
         justify-content: flex-end;
-    }
-}
-
-@media (max-width: 640px) {
-    .session-panel {
-        display: flex;
     }
 }

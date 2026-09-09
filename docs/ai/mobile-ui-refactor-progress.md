@@ -40,3 +40,22 @@ Validation:
 Notes:
 - Shell children now shrink with box sizing/min-width rules; no global overflow clipping was added.
 - Full responsive matrix remains red only in later phase areas (mobile menu and child layouts).
+
+## P2
+Status: COMPLETE
+Changed:
+- DsaWuerfelApp/DsaWuerfelApp.Client/Layout/NavMenu.razor
+- DsaWuerfelApp/DsaWuerfelApp.Client/Layout/NavMenu.razor.css
+- DsaWuerfelApp/DsaWuerfelApp.Client/Layout/MainLayout.razor.css
+
+Validation:
+- dotnet build DsaWuerfelApp.sln -c Release -v minimal: PASS
+- dotnet publish ... -v minimal: PASS
+- app-workflows.cjs: PASS
+- ClientStateTests: PASS (12/12)
+- responsive-ui.cjs: P2 menu toggle/close/focus checks PASS; remaining failures are later page-layout baselines
+- browser scripts syntax and git diff --check: PASS
+
+Notes:
+- One NavMenu/SessionTree instance remains mounted; mobile content is flow-based and desktop content can scroll at low height.
+- Session ID comparison closes on actual session changes/logout while same-session refreshes leave the menu state alone.
