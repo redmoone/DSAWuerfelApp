@@ -123,6 +123,8 @@
     overflow-y: auto;
     overflow-x: hidden;
     padding: 14px 16px 18px;
+    scrollbar-color: rgba(212, 175, 55, 0.7) rgba(7, 17, 29, 0.7);
+    scrollbar-gutter: stable;
 }
 
 .probe-info-sections {
@@ -160,6 +162,13 @@
 .probe-info-primary-title::-webkit-details-marker,
 .probe-info-section-label::-webkit-details-marker {
     display: none;
+}
+
+.probe-info-primary-title:focus-visible,
+.probe-info-section-label:focus-visible,
+.probe-info-close:focus-visible {
+    outline: 2px solid var(--dsa-gold);
+    outline-offset: 3px;
 }
 
 .probe-info-primary-title::after,

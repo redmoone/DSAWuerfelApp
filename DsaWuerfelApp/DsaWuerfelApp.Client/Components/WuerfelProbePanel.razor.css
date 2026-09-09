@@ -144,6 +144,12 @@
     background-color: rgba(212, 175, 55, 0.2);
 }
 
+.spell-selection-button:focus-visible,
+.spell-option-details summary:focus-visible {
+    outline: 2px solid var(--dsa-gold);
+    outline-offset: 2px;
+}
+
 .spell-selection-button.active {
     background-color: rgba(212, 175, 55, 0.28);
     border-color: rgba(212, 175, 55, 0.75);

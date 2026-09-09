@@ -226,6 +226,11 @@
     transform: translateY(-1px);
 }
 
+.master-target-chip:focus-visible {
+    outline: 2px solid var(--dsa-gold);
+    outline-offset: 2px;
+}
+
 .master-selection-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;

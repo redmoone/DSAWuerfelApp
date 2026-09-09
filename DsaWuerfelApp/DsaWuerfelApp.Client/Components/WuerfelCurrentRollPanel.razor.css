@@ -87,10 +87,42 @@
 
 .probe-evaluation-status,
 .master-roll-status {
+    flex: 0 0 auto;
+    max-width: 100%;
+    padding: 5px 8px;
+    border: 1px solid rgba(255, 248, 220, 0.28);
+    border-radius: 999px;
+    color: rgba(255, 248, 220, 0.9);
     font-size: 0.85rem;
     font-weight: 700;
     text-transform: uppercase;
     overflow-wrap: anywhere;
+}
+
+.probe-evaluation.success .probe-evaluation-status,
+.attribute-evaluation.success .probe-evaluation-status {
+    border-color: rgba(154, 238, 185, 0.62);
+    background: rgba(28, 92, 65, 0.58);
+    color: #dcffe8;
+}
+
+.probe-evaluation.failure .probe-evaluation-status,
+.attribute-evaluation.failure .probe-evaluation-status {
+    border-color: rgba(255, 153, 143, 0.68);
+    background: rgba(102, 34, 29, 0.58);
+    color: #ffe0db;
+}
+
+.probe-evaluation.glueck .probe-evaluation-status {
+    border-color: rgba(255, 232, 166, 0.76);
+    background: rgba(111, 79, 11, 0.64);
+    color: #fff0bc;
+}
+
+.probe-evaluation.patzer .probe-evaluation-status {
+    border-color: rgba(255, 248, 220, 0.55);
+    background: rgba(0, 0, 0, 0.38);
+    color: #fff8dc;
 }
 
 .probe-evaluation-meta {
@@ -169,11 +201,19 @@
 }
 
 .roll-details > summary {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
     cursor: pointer;
     color: var(--dsa-gold);
     font-size: 0.8rem;
     font-weight: 700;
     text-transform: uppercase;
+}
+
+.roll-details > summary:focus-visible {
+    outline: 2px solid var(--dsa-gold);
+    outline-offset: 3px;
 }
 
 .master-roll-list {

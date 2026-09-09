@@ -336,6 +336,9 @@ async function saveBaselineScreenshot(page, screenshotDirectory, routeName, side
           if (viewport.name === 'desktop-1440' || viewport.name === 'phone-390') {
             await check(`${viewport.name} probe info`, () => assertProbeInfoPresentation(page, `${viewport.name} probe info`));
           }
+          if (screenshotDirectory && viewport.name === 'phone-390') {
+            await page.screenshot({ path: path.join(screenshotDirectory, 'dice-phone-390.png'), animations: 'disabled', fullPage: true });
+          }
         }
         if (route.name === 'lobby' && viewport.width < 641) {
           await check(`${viewport.name} mobile navigation`, () => assertMobileMenu(page, viewport.name));

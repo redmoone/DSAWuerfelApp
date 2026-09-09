@@ -101,7 +101,9 @@
 
     private static IEnumerable<ProbeInfoSectionDto> GetCompactProbeInfoSections(ProbeInfoResultDto probeInfo)
     {
-        return probeInfo.Sections.Take(3);
+        return probeInfo.Sections
+            .Where(section => section.Label is "Probe" or "Zauberdauer" or "Kosten")
+            .Take(3);
     }
 
     private static bool HasPrimaryProbeInfoSections(ProbeInfoResultDto probeInfo)
