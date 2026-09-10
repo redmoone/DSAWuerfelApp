@@ -99,6 +99,19 @@ const { createAppFixture } = require('./browser-fixture.cjs');
     await waitFor(async () => (await details()).players.some(item => item.name === 'Remote-Refreshname'), 'remote refresh rename missing');
     await waitFor(async () => await player.locator('#session-player-name').inputValue() === playerDraft, 'lobby player draft was overwritten by refresh');
 
+    await player.close();
+    await waitFor(async () => {
+      const offlinePlayer = (await details()).players.find(item => item.name === 'Refreshname');
+      return offlinePlayer?.activeHeroId && offlinePlayer.isOnline === false;
+    }, 'offline player lost active hero');
+    await master.goto(`${origin}/wuerfel`);
+    const masterTargets = master.locator('.master-selection-details');
+    await masterTargets.waitFor();
+    await masterTargets.locator('summary').click();
+    const offlineTarget = masterTargets.getByRole('button', { name: /^Refreshname / });
+    await offlineTarget.waitFor({ state: 'visible' });
+    assert.equal(await offlineTarget.count(), 1, 'offline player is missing from master targets');
+
     await master.goto(origin);
     await master.getByRole('button', { name: 'Erstellen', exact: true }).click();
     const sessionsBeforeDoubleSubmit = await master.evaluate(async () => await (await fetch('/api/sessions/mine')).json());

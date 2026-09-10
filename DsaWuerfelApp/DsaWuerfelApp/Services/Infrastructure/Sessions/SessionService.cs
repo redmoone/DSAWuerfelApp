@@ -47,6 +47,7 @@ public class SessionService(SessionRecordStore recordStore, SessionRuntimeState 
                 throw new RequestRejectedException(RequestRejectionReason.Forbidden, "Nur der Meister dieser Sitzung darf ihre Helden lesen.");
             }
 
+            HydrateMissingActiveHeroes(session);
             return session.Players
                 .Where(player => player.ActiveHeroId.HasValue)
                 .Select(player => new SessionHeroTarget(player.UserId, player.ActiveHeroId!.Value, player.Name))
@@ -99,6 +100,7 @@ public class SessionService(SessionRecordStore recordStore, SessionRuntimeState 
             EnsureLoaded();
 
             var session = runtimeState.GetMemberSession(sessionId, userId);
+            HydrateMissingActiveHeroes(session);
             return runtimeState.BuildSessionDetails(session, recordStore.LoadHistory(sessionId));
         }
     }
@@ -266,6 +268,27 @@ public class SessionService(SessionRecordStore recordStore, SessionRuntimeState 
         }
 
         runtimeState.Initialize(recordStore.LoadSessions());
+    }
+
+    private void HydrateMissingActiveHeroes(GameSession session)
+    {
+        var playersWithoutActiveHero = session.Players
+            .Where(player => !player.ActiveHeroId.HasValue)
+            .ToArray();
+        if (playersWithoutActiveHero.Length == 0)
+        {
+            return;
+        }
+
+        var activeHeroes = recordStore.LoadActiveHeroIdentities(
+            playersWithoutActiveHero.Select(player => player.UserId));
+        foreach (var player in playersWithoutActiveHero)
+        {
+            if (activeHeroes.TryGetValue(player.UserId, out var hero))
+            {
+                runtimeState.UpdatePlayerHero(session, player.UserId, hero.HeroId, hero.HeroName);
+            }
+        }
     }
 
     private string GenerateUniqueJoinCode()

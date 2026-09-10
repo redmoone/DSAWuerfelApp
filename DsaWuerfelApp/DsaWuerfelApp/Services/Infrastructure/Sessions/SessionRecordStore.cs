@@ -77,6 +77,32 @@ public sealed class SessionRecordStore(IServiceScopeFactory scopeFactory)
         return true;
     }
 
+    public IReadOnlyDictionary<string, (Guid HeroId, string HeroName)> LoadActiveHeroIdentities(
+        IEnumerable<string> userIds)
+    {
+        var distinctUserIds = userIds
+            .Where(userId => !string.IsNullOrWhiteSpace(userId))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        if (distinctUserIds.Length == 0)
+        {
+            return new Dictionary<string, (Guid HeroId, string HeroName)>(StringComparer.Ordinal);
+        }
+
+        using var scope = scopeFactory.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<HeroDbContext>();
+
+        return dbContext.Heroes
+            .AsNoTracking()
+            .Where(hero => hero.IsActive && distinctUserIds.Contains(hero.OwnerUserId))
+            .Select(hero => new { hero.OwnerUserId, hero.Id, hero.Name })
+            .ToArray()
+            .ToDictionary(
+                hero => hero.OwnerUserId,
+                hero => (HeroId: hero.Id, HeroName: hero.Name),
+                StringComparer.Ordinal);
+    }
+
     public RollHistoryEntryDto[] LoadHistory(string sessionId)
     {
         using var scope = scopeFactory.CreateScope();

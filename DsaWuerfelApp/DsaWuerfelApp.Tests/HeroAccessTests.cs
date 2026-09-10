@@ -67,6 +67,38 @@ public class HeroAccessTests
     }
 
     [Fact]
+    public async Task Master_can_roll_for_an_offline_player_with_a_persisted_active_hero()
+    {
+        using var factory = new TestApplicationFactory();
+        using var client = factory.CreateClient();
+        var hero = await Seed(factory, "offline-player", active: true);
+        var sessions = factory.Services.GetRequiredService<SessionService>();
+        var session = sessions.CreateSession("master", "Meister", null);
+        sessions.AddPlayer(session.SessionId, new PlayerInfo { UserId = "offline-player", Name = "Offline-Spieler" });
+        client.DefaultRequestHeaders.Add("X-Test-User-Id", "master");
+
+        var details = await client.GetFromJsonAsync<SessionDetailsDto>($"/api/sessions/{session.SessionId}");
+        var player = Assert.Single(details!.Players, current => current.UserId == "offline-player");
+        Assert.False(player.IsOnline);
+        Assert.Equal(hero.Id, player.ActiveHeroId);
+        Assert.Equal(hero.Name, player.ActiveHeroName);
+
+        var request = new MasterAttributeRollRequestDto(
+            session.SessionId,
+            [new("offline-player", "forged", hero.Id, "forged")],
+            ["MU"],
+            0,
+            null);
+        var response = await client.PostAsJsonAsync("/api/dice/master-attribute-roll", request);
+        response.EnsureSuccessStatusCode();
+
+        var result = Assert.Single((await response.Content.ReadFromJsonAsync<MasterAttributeRollTargetResultDto[]>())!);
+        Assert.Equal("Offline-Spieler", result.PlayerName);
+        Assert.Equal(hero.Name, result.HeroName);
+        Assert.NotNull(result.Result);
+    }
+
+    [Fact]
     public async Task Hub_validates_owner_and_ignores_supplied_hero_name()
     {
         using var factory = new TestApplicationFactory();
@@ -118,11 +150,11 @@ public class HeroAccessTests
         Assert.Equal(status, (int)response.StatusCode);
     }
 
-    private static async Task<Hero> Seed(TestApplicationFactory factory, string owner = "owner")
+    private static async Task<Hero> Seed(TestApplicationFactory factory, string owner = "owner", bool active = false)
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<HeroDbContext>();
-        var hero = new Hero { Id = Guid.NewGuid(), OwnerUserId = owner, Name = "Testheld", Eigenschaften = new() { ["MU"] = 12 } };
+        var hero = new Hero { Id = Guid.NewGuid(), OwnerUserId = owner, IsActive = active, Name = "Testheld", Eigenschaften = new() { ["MU"] = 12 } };
         db.Heroes.Add(hero);
         await db.SaveChangesAsync();
         return hero;
