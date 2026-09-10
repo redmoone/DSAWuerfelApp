@@ -1,5 +1,5 @@
 .wuerfel-page-container {
-    --wuerfel-frame-color: rgba(212, 175, 55, 0.55);
+    --wuerfel-frame-color: var(--dsa-gold);
     --wuerfel-panel-background: rgba(9, 25, 48, 0.88);
     box-sizing: border-box;
     display: flex;
@@ -40,7 +40,7 @@
     min-height: 44px;
     padding: 8px 10px;
     border: 1px solid var(--wuerfel-frame-color);
-    border-radius: 7px;
+    border-radius: 999px;
     background: rgba(255, 255, 255, 0.05);
     color: var(--dsa-white);
     cursor: pointer;
@@ -52,13 +52,13 @@
 }
 
 .roll-mode-button:hover,
-.roll-mode-button:focus-visible,
-.roll-mode-button.active {
+.roll-mode-button:focus-visible {
     border-color: var(--wuerfel-frame-color);
     background: rgba(212, 175, 55, 0.18);
 }
 
 .roll-mode-button.active {
+    background: rgba(212, 175, 55, 0.18);
     color: #ffe7a6;
     box-shadow: none;
 }
@@ -334,7 +334,7 @@
     min-height: 0;
     max-height: 440px;
     padding: 12px 14px;
-    border: 1px solid rgba(212, 175, 55, 0.42);
+    border: 1px solid var(--wuerfel-frame-color);
 }
 
 .history-panel-heading {
@@ -387,6 +387,21 @@
 
 .roll-setup-panel ::deep .probe-info-button {
     border: 1px solid var(--wuerfel-frame-color) !important;
+}
+
+.roll-setup-panel ::deep .dsa-btn {
+    border-radius: 999px !important;
+}
+
+.roll-setup-panel ::deep .bad-trait-chip-meta {
+    border: 0 !important;
+    background: transparent !important;
+    color: var(--dsa-gold);
+    padding: 2px 0;
+}
+
+.roll-setup-panel ::deep .spell-selection-button {
+    border-radius: 999px !important;
 }
 
 .roll-setup-panel ::deep .forced-rolls-input:focus {

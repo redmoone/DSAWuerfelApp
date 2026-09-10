@@ -23,7 +23,7 @@
     box-sizing: border-box;
     padding: 1rem 0.75rem;
     background: linear-gradient(180deg, rgba(28, 46, 74, 0.96), rgba(15, 21, 33, 0.98));
-    border-right: 2px solid var(--dsa-gold);
+    border-right: 1px solid var(--dsa-gold);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
@@ -59,11 +59,11 @@
     padding: 0;
     line-height: 0;
     border-radius: 999px;
-    border: 2px solid var(--dsa-gold);
+    border: 1px solid var(--dsa-gold);
     background-color: var(--pill-bg);
     cursor: pointer;
     user-select: none;
-    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
 .mobile-menu-button {
@@ -74,7 +74,7 @@
     width: 100%;
     min-height: var(--ui-touch-target);
     padding: 0.6rem 1rem;
-    border: 2px solid var(--dsa-gold);
+    border: 1px solid var(--dsa-gold);
     border-radius: 999px;
     background-color: var(--pill-bg);
     color: var(--dsa-white);
@@ -90,7 +90,6 @@
 
 .nav-expand-button:hover {
     background-color: rgba(212, 175, 55, 0.2);
-    box-shadow: 0 0 10px var(--dsa-gold-glow);
 }
 
 .nav-expand-button span {
@@ -116,10 +115,10 @@
     min-height: 3.25rem;
     padding: 0.6rem;
     border-radius: 999px;
-    border: 2px solid var(--dsa-gold);
+    border: 1px solid var(--dsa-gold);
     background-color: var(--pill-bg);
     color: var(--dsa-white);
-    box-shadow: 0 0 10px rgba(212, 175, 55, 0.12);
+    box-shadow: none;
 }
 
 .account-email {
@@ -175,12 +174,12 @@
     min-height: var(--nav-item-size);
     padding: 0.6rem;
     border-radius: 999px;
-    border: 2px solid var(--dsa-gold);
+    border: 1px solid var(--dsa-gold);
     background-color: var(--pill-bg);
     color: var(--dsa-white) !important;
     text-decoration: none;
-    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    box-shadow: 0 0 10px rgba(212, 175, 55, 0.12);
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+    box-shadow: none;
 }
 
 .nav-panel ::deep .nav-link:hover {
@@ -192,7 +191,6 @@
 .nav-panel ::deep .nav-link.active {
     background-color: var(--dsa-gold);
     border-color: var(--dsa-gold);
-    box-shadow: 0 0 12px rgba(212, 175, 55, 0.28);
     color: var(--dsa-blue) !important;
 }
 
