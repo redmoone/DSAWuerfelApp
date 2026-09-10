@@ -54,11 +54,34 @@ Sie liegen außerhalb dieses UI-Auftrags und werden nicht abgeschwächt oder üb
 ### Loot / Commit
 
 - Geänderte Datei: `docs/ai/management-ui-refactor-progress.md`
-- Commit: wird nach dem lokalen Commit im nächsten Raidabschnitt oder im Abschlussbericht ergänzt.
+- Commit: `05fa236`
 
 ## M1 – Boss: Goldene Navigation
 
-Status: AUSSTEHEND
+Status: TEILWEISE
+
+Änderungen:
+
+- `DsaWuerfelApp/DsaWuerfelApp.Client/wwwroot/app.css`: sechs gemeinsame Verwaltungs-/Navigations-Tokens ergänzt; vorhandene Dice-Tokens unverändert gelassen.
+- `DsaWuerfelApp/DsaWuerfelApp.Client/Layout/NavMenu.razor.css`: dunkle Panel-Fläche ohne Schatten, Goldrahmen, Gold-Hover, sichtbare Gold-Fokusumrisse und weiße aktive Links/Icons umgesetzt. Sidebar-Breiten und 640/641px-Vertrag unverändert.
+
+### Besiegte Mobs
+
+- Desktop-/Mobile-Navigationsmarkup blieb unverändert; die bestehende eine NavMenu-/SessionTree-Instanz wurde weiterverwendet.
+- Aktive Links behalten die Goldfläche, während Text und Icons weiß bleiben. Die frühere blaue aktive Icon-/Textregel ist entfernt.
+- `dotnet build DsaWuerfelApp.sln -c Release -v minimal`: PASS, 0 Warnungen, 0 Fehler.
+- `dotnet test DsaWuerfelApp/DsaWuerfelApp.Tests/DsaWuerfelApp.Tests.csproj -c Release --no-restore --filter FullyQualifiedName~ClientStateTests`: PASS, 18/18.
+- Frischer Release-Publish nach temporärem M1-Pfad: PASS.
+- `node DsaWuerfelApp/DsaWuerfelApp.Tests/Browser/responsive-ui.cjs <M1-Publish>`: vier Routen wurden durchlaufen; Ergebnis BASELINE ROT mit denselben vier History-Prüfungen wie M0 (Tablet/Desktop nur vier sichtbare Einträge).
+
+### Offene Mobs
+
+- Eine vollständig grüne Responsive-Matrix ist wegen des vorbestehenden History-Fehlers nicht erreicht.
+- Die breitere Desktop-/Mobileabnahme der Verwaltungsseiten folgt mit den jeweiligen Markupänderungen in M2 bis M5.
+
+### Loot / Commit
+
+- Commit: wird nach dem lokalen M1-Commit im nächsten Raidabschnitt oder im Abschlussbericht ergänzt.
 
 ## M2 – Boss: SessionTree und seine Wächter
 

@@ -78,6 +78,12 @@
     --dsa-white: #f5f5f5;        
     --pill-bg: rgba(28, 46, 74, 0.85); 
     --ui-touch-target: 44px;
+    --dsa-page-background: #07111d;
+    --dsa-panel-background: rgba(9, 25, 48, 0.88);
+    --dsa-hover-background: rgba(212, 175, 55, 0.17);
+    --dsa-text-muted: rgba(255, 248, 220, 0.78);
+    --dsa-border-width: 1px;
+    --dsa-panel-radius: 10px;
 }
 
 .dsa-scroll-region {
