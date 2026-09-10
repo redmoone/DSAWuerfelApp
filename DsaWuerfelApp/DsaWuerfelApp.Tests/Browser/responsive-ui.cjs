@@ -131,10 +131,14 @@ async function assertDiceLayout(page, label) {
       setup: readRect('.roll-setup-panel'),
       feedback: readRect('.roll-feedback-column'),
       dice: readRect('.dice-3d-box'),
-      history: readRect('.history-panel')
+      history: readRect('.history-panel'),
+      currentRollCardCount: document.querySelectorAll('.current-roll-card').length,
+      diceCanvasCount: document.querySelectorAll('.dice-3d-box canvas').length
     };
   });
   assert.ok(layout.setup && layout.feedback && layout.dice && layout.history, `${label}: workbench geometry is incomplete`);
+  assert.equal(layout.currentRollCardCount, 0, `${label}: permanent current-roll card is still rendered`);
+  assert.equal(layout.diceCanvasCount, 1, `${label}: expected exactly one 3D dice canvas`);
   assert.ok(layout.dice.height >= 120 && layout.dice.height <= 140, `${label}: compact dice area is ${layout.dice.height}px tall`);
   if (page.viewportSize().width >= 901) {
     assert.ok(Math.abs(layout.setup.top - layout.feedback.top) <= 2, `${label}: setup and feedback are not side by side`);
