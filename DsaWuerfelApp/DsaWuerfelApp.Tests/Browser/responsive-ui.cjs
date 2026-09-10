@@ -135,6 +135,7 @@ async function assertDiceLayout(page, label) {
     };
   });
   assert.ok(layout.setup && layout.feedback && layout.dice && layout.history, `${label}: workbench geometry is incomplete`);
+  assert.ok(layout.dice.height >= 120 && layout.dice.height <= 140, `${label}: compact dice area is ${layout.dice.height}px tall`);
   if (page.viewportSize().width >= 901) {
     assert.ok(Math.abs(layout.setup.top - layout.feedback.top) <= 2, `${label}: setup and feedback are not side by side`);
     assert.ok(layout.feedback.left >= layout.setup.right - 1, `${label}: feedback column overlaps setup`);
