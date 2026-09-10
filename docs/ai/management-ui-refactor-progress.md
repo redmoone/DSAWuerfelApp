@@ -81,11 +81,38 @@ Status: TEILWEISE
 
 ### Loot / Commit
 
-- Commit: wird nach dem lokalen M1-Commit im nächsten Raidabschnitt oder im Abschlussbericht ergänzt.
+- Commit: `f563f95`
 
 ## M2 – Boss: SessionTree und seine Wächter
 
-Status: AUSSTEHEND
+Status: GEPRÜFT
+
+Änderungen:
+
+- `DsaWuerfelApp/DsaWuerfelApp.Client/Components/SessionTree.razor`: Einträge werden nach Session-ID gekeyt, erhalten eindeutige Details-/Editor-IDs, sichtbare Spieler-/Online-Zahlen, `Öffnen`/`Weiterwürfeln`, Details-Toggle, Mitgliederstatus und getrennte Verwaltungsbereiche. Join-Code und Sessionaktionen liegen im aufgeklappten Body.
+- `DsaWuerfelApp/DsaWuerfelApp.Client/Components/SessionTree.razor.cs`: einmaliges Autoexpand pro aktiver Session, Busy-Guard, lokale Feedback- und Bestätigungszustände, Ziel-/Rechteprüfung vor Aktionen, editierte Entwürfe bei gleichem Sessionupdate erhalten, direkte Navigation für die aktive Session und Clipboard-Fehler ohne Browserdialog.
+- `DsaWuerfelApp/DsaWuerfelApp.Client/Components/SessionTree.razor.css`: dunkle Panels, 1px-Goldrahmen, kompakte Wrapping-Regeln, sichtbare Status-/Fehlertexte, 44px-Aktionsziele sowie Fokus ohne Schatten/Glow/Translation.
+- `DsaWuerfelApp/DsaWuerfelApp.Tests/Browser/app-workflows.cjs`: Session-Strip-Selektor auf den Sessioneintrag und Verlassen auf die Inline-Bestätigung umgestellt.
+- `DsaWuerfelApp/DsaWuerfelApp.Tests/Browser/management-ui.cjs`: neuer isolierter Playwright-Workflow für SessionTree-Interaktionen.
+
+### Besiegte Mobs
+
+- `dotnet build DsaWuerfelApp.sln -c Release -v minimal`: PASS, 0 Warnungen, 0 Fehler.
+- `dotnet test DsaWuerfelApp/DsaWuerfelApp.Tests/DsaWuerfelApp.Tests.csproj -c Release --no-restore --filter FullyQualifiedName~ClientStateTests`: PASS, 18/18.
+- `dotnet publish DsaWuerfelApp/DsaWuerfelApp/DsaWuerfelApp.csproj -c Release --output <temporärer M2-Pfad> -v minimal`: PASS.
+- `node --check` für `app-workflows.cjs` und `management-ui.cjs`: PASS.
+- `node management-ui.cjs <M2-Publish>`: PASS; aktiver Sessioneintrag, einmaliges Autoexpand, manuelles Zuklappen trotz Fremdupdate, Session-/Spielerumbenennung sowie Abbruch von Löschen/Verlassen geprüft.
+- `node app-workflows.cjs <M2-Publish>`: BASELINE ROT an derselben offenen Würfel-Detailfläche wie M0; SessionTree-spezifische Schritte wurden bis dahin nicht erreicht.
+- `git diff --check`: PASS.
+
+### Offene Mobs
+
+- Die vollständige Würfel-/Workflowabnahme bleibt wegen des bekannten, vorbestehenden Playwright-Timeouts offen.
+- Die neue Managementprüfung deckt die lokalen SessionTree-Szenarien ab; Fehlerfälle mit realem Server-Rechteverlust während eines laufenden Requests bleiben eine spätere integrierte Abnahme.
+
+### Loot / Commit
+
+- Commit: wird nach dem lokalen M2-Commit im nächsten Raidabschnitt oder im Abschlussbericht ergänzt.
 
 ## M3 – Boss: Die Lobby ohne Labyrinth
 
