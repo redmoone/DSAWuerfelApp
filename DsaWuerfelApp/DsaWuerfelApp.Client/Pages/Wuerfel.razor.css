@@ -444,7 +444,7 @@
 .roll-setup-panel ::deep .spell-selection-buttons {
     display: flex !important;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 6px;
 }
 
