@@ -17,7 +17,17 @@
                             <span class="history-player">@log.PlayerName</span>
                             <span class="history-display-name">@GetDisplayName(log)</span>
                         </div>
-                        <time class="history-time">@log.Timestamp.ToLocalTime().ToString("HH:mm")</time>
+                        <div class="history-entry-actions">
+                            <time class="history-time">@log.Timestamp.ToLocalTime().ToString("HH:mm")</time>
+                            <button type="button"
+                                    class="history-info-button"
+                                    data-history-entry-id="@GetHistoryEntryId(log)"
+                                    aria-label="Details zu @GetDisplayName(log) öffnen"
+                                    title="Ergebnisdetails öffnen"
+                                    @onclick="() => EntrySelected.InvokeAsync(log)">
+                                i
+                            </button>
+                        </div>
                     </header>
 
                     @if (log.Context is { } context && context.Checks.Length > 0)

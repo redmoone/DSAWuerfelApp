@@ -1,6 +1,90 @@
 @using DsaWuerfelApp.Shared
 
-<section class="current-roll-panel" data-testid="current-roll-panel" aria-labelledby="current-roll-title">
+<section class="current-roll-panel"
+         data-testid="current-roll-panel"
+         aria-label="@(HistoryEntry is null ? "Aktueller Wurf" : "Historische Ergebnisdetails")">
+    @if (HistoryEntry is { } historyEntry)
+    {
+        <article class="probe-evaluation historical-roll-details @GetHistoryEvaluationClass(historyEntry)"
+                 data-roll-kind="@GetHistoryRollKind(historyEntry)">
+            <div class="probe-evaluation-header">
+                <span class="probe-evaluation-name">@GetHistoryDisplayName(historyEntry)</span>
+                <span class="probe-evaluation-status">@GetHistoryStatusText(historyEntry)</span>
+            </div>
+
+            <div class="historical-roll-meta">
+                <span>@historyEntry.PlayerName</span>
+                @if (historyEntry.Context?.Snapshot?.HeroName is { Length: > 0 } heroName)
+                {
+                    <span>Held: @heroName</span>
+                }
+                <time>@historyEntry.Timestamp.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</time>
+            </div>
+
+            @if (historyEntry.Context is { } historyContext && historyContext.Checks.Length > 0)
+            {
+                <div class="probe-evaluation-rolls historical-roll-checks">
+                    @foreach (var check in historyContext.Checks)
+                    {
+                        <div class="probe-roll-chip @GetHistoryCheckChipClass(check.State)">
+                            <span class="probe-roll-attribute">@check.Name</span>
+                            <span class="probe-roll-values">Wurf @check.Roll / Ziel @check.TargetValue</span>
+                            <span class="probe-roll-rest">@GetHistoryCheckDetailText(check)</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            <details class="roll-details historical-roll-calculation" open>
+                <summary>Berechnung und Details</summary>
+                @if (historyEntry.Context is { } context)
+                {
+                    @if (context.Snapshot is { } snapshot)
+                    {
+                        <div class="probe-evaluation-meta">
+                            @foreach (var detail in GetHistorySnapshotDetails(context, snapshot))
+                            {
+                                <span>@detail</span>
+                            }
+                        </div>
+
+                        @if (snapshot.RequirementChecks.Length > 0)
+                        {
+                            <div class="probe-evaluation-rolls requirement-rolls">
+                                @foreach (var requirementCheck in snapshot.RequirementChecks)
+                                {
+                                    <div class="probe-roll-chip @GetRequirementChipClass(requirementCheck)">
+                                        <span class="probe-roll-attribute">@requirementCheck.Name</span>
+                                        <span class="probe-roll-values">Wurf @requirementCheck.Roll / Basis @requirementCheck.BaseValue</span>
+                                        <span class="probe-roll-rest">Ausgleich: @requirementCheck.Difference</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="historical-roll-missing">
+                            Für diesen älteren Eintrag liegen nur die gespeicherten Würfe und Checks vor.
+                        </p>
+                    }
+                }
+                else
+                {
+                    <p class="historical-roll-missing">
+                        Für diesen älteren Eintrag liegen keine strukturierten Ergebnisdetails vor.
+                    </p>
+                }
+
+                <div class="historical-roll-equation">
+                    <span class="historical-roll-equation-label">Rohwurfgleichung</span>
+                    <RollEquation Result="@BuildHistoryEquation(historyEntry)"/>
+                </div>
+            </details>
+        </article>
+    }
+    else
+    {
     <div class="current-roll-heading">
         <h3 id="current-roll-title">Aktueller Wurf</h3>
     </div>
@@ -197,5 +281,6 @@
     else
     {
         <p class="current-roll-empty">Noch kein Ergebnis. Bereite einen Wurf vor und fuehre ihn aus.</p>
+    }
     }
 </section>

@@ -132,6 +132,18 @@ public partial class Wuerfel : IDisposable
         return Facade.ToggleProbeInfoDetailsAsync();
     }
 
+    private Task HandleHistoryEntrySelected(RollHistoryEntryDto entry)
+    {
+        State.OpenHistoryEntry(entry);
+        return Task.CompletedTask;
+    }
+
+    private Task CloseDetailsAsync()
+    {
+        State.CloseDetails();
+        return Task.CompletedTask;
+    }
+
     private Task HandleSelectedBadTraitChanged(string? selectedBadTraitName)
     {
         return Facade.SetSelectedBadTraitAsync(selectedBadTraitName);

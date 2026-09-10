@@ -7,6 +7,12 @@ namespace DsaWuerfelApp.Client.Components;
 public partial class RollHistory
 {
     [Parameter] public IReadOnlyList<RollHistoryEntryDto> Entries { get; set; } = Array.Empty<RollHistoryEntryDto>();
+    [Parameter] public EventCallback<RollHistoryEntryDto> EntrySelected { get; set; }
+
+    private static string GetHistoryEntryId(RollHistoryEntryDto entry)
+    {
+        return entry.Timestamp.Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    }
 
     private static string GetEntryClass(RollHistoryEntryDto entry)
     {

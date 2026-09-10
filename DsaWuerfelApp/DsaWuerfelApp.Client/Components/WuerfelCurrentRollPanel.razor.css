@@ -64,6 +64,28 @@
     background: linear-gradient(135deg, rgba(120, 88, 14, 0.95), rgba(62, 44, 10, 0.9));
 }
 
+.historical-roll-details {
+    gap: 10px;
+}
+
+.historical-roll-meta {
+    display: flex;
+    flex-wrap: wrap;
+    min-width: 0;
+    gap: 6px 10px;
+    color: rgba(255, 248, 220, 0.76);
+    font-size: 0.8rem;
+}
+
+.historical-roll-meta span,
+.historical-roll-meta time {
+    overflow-wrap: anywhere;
+}
+
+.historical-roll-meta time {
+    color: rgba(255, 248, 220, 0.58);
+}
+
 .probe-evaluation-header,
 .free-roll-header,
 .master-roll-header {
@@ -168,6 +190,12 @@
     box-shadow: inset 0 0 0 1px rgba(255, 120, 120, 0.35);
 }
 
+.probe-roll-chip.compensated {
+    border-color: rgba(255, 219, 103, 0.72);
+    background: rgba(111, 79, 11, 0.48);
+    box-shadow: inset 0 0 0 1px rgba(255, 219, 103, 0.2);
+}
+
 .probe-roll-chip.patzer {
     background: linear-gradient(135deg, rgba(14, 14, 14, 0.92), rgba(34, 34, 34, 0.88));
 }
@@ -214,6 +242,42 @@
 .roll-details > summary:focus-visible {
     outline: 2px solid var(--dsa-gold);
     outline-offset: 3px;
+}
+
+.historical-roll-calculation {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.historical-roll-equation {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 5px;
+    padding-top: 4px;
+}
+
+.historical-roll-equation-label {
+    color: rgba(255, 248, 220, 0.7);
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.historical-roll-equation ::deep .roll-equation-pill {
+    align-self: flex-start;
+}
+
+.historical-roll-missing {
+    margin: 0;
+    padding: 8px 10px;
+    border: 1px solid rgba(255, 248, 220, 0.18);
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 248, 220, 0.66);
+    font-size: 0.8rem;
+    line-height: 1.4;
 }
 
 .master-roll-list {

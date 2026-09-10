@@ -42,6 +42,7 @@ public sealed class WuerfelState
             ForcedRollsText = string.Empty,
             ProbeInfo = null,
             IsProbeInfoExpanded = false,
+            SelectedHistoryEntry = null,
             ErrorMessage = null,
             ActiveArea = WuerfelArea.None,
             LastTalentRoll = null,
@@ -169,6 +170,7 @@ public sealed class WuerfelState
             preserveSpellOptions ? Current.SelectedSpellOptionValues : Array.Empty<string>(),
             ProbeInfo = null,
             IsProbeInfoExpanded = false,
+            SelectedHistoryEntry = null,
             ErrorMessage = null,
             ActiveArea = normalizedSelectedProbeValue is null && Current.ActiveArea == WuerfelArea.ProbeSearch
                 ? WuerfelArea.None
@@ -224,17 +226,37 @@ public sealed class WuerfelState
 
     public void ClearProbeInfo()
     {
-        Update(Current with { ProbeInfo = null, IsProbeInfoExpanded = false });
+        Update(Current with { ProbeInfo = null, IsProbeInfoExpanded = false, SelectedHistoryEntry = null });
     }
 
     public void ToggleProbeInfoDetails()
     {
-        Update(Current with { IsProbeInfoExpanded = !Current.IsProbeInfoExpanded });
+        Update(Current with
+        {
+            IsProbeInfoExpanded = !Current.IsProbeInfoExpanded,
+            SelectedHistoryEntry = null
+        });
+    }
+
+    public void OpenHistoryEntry(RollHistoryEntryDto entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        Update(Current with { SelectedHistoryEntry = entry, IsProbeInfoExpanded = true });
+    }
+
+    public void CloseDetails()
+    {
+        Update(Current with { SelectedHistoryEntry = null, IsProbeInfoExpanded = false });
     }
 
     public void SetHistory(IReadOnlyList<RollHistoryEntryDto> history)
     {
-        Update(Current with { History = history.ToArray() });
+        Update(Current with
+        {
+            History = history.ToArray(),
+            SelectedHistoryEntry = null,
+            IsProbeInfoExpanded = false
+        });
     }
 
     public void ApplyFreeRollResult(FreeRollResultDto result)
@@ -367,6 +389,7 @@ public sealed class WuerfelState
             ForcedRollsText = string.Empty,
             ProbeInfo = clearSelectedProbe ? null : state.ProbeInfo,
             IsProbeInfoExpanded = clearSelectedProbe ? false : state.IsProbeInfoExpanded,
+            SelectedHistoryEntry = clearSelectedProbe ? null : state.SelectedHistoryEntry,
             ErrorMessage = null,
             LastTalentRoll = null,
             LastAttributeRoll = null,
@@ -456,6 +479,7 @@ public sealed record WuerfelViewState
     public bool IsBusy { get; init; }
     public string? ErrorMessage { get; init; }
     public bool IsProbeInfoExpanded { get; init; }
+    public RollHistoryEntryDto? SelectedHistoryEntry { get; init; }
     public WuerfelArea ActiveArea { get; init; }
     public TalentRollResultDto? LastTalentRoll { get; init; }
     public AttributeRollResultDto? LastAttributeRoll { get; init; }

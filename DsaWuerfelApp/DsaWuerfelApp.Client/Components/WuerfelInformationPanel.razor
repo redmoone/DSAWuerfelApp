@@ -1,4 +1,8 @@
 @using DsaWuerfelApp.Shared
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@implements IAsyncDisposable
 
 @if (ProbeInfo is not null && HasProbeInfoContent(ProbeInfo))
 {
@@ -31,52 +35,64 @@
     </section>
 }
 
-@if (ShowProbeInfoDetails && HasProbeInfoDetails(ProbeInfo))
+@if (ShowProbeInfoDetails && (SelectedHistoryEntry is not null || HasProbeInfoDetails(ProbeInfo)))
 {
-    <aside class="probe-info-details" aria-label="Vollstaendige Probeninformationen">
+    <aside class="probe-info-details"
+           role="dialog"
+           aria-modal="true"
+           aria-label="@(SelectedHistoryEntry is null ? "Vollstaendige Probeninformationen" : "Vollstaendige Ergebnisdetails")"
+           @onkeydown="HandleOverlayKeyDown">
         <div class="probe-info-details-header">
-            <h3>@GetDetailsTitle(ProbeInfo!)</h3>
+            <h3>@(SelectedHistoryEntry is null ? GetDetailsTitle(ProbeInfo!) : "Ergebnisdetails")</h3>
             <button type="button"
                     class="probe-info-close"
-                    aria-label="Probeninformationen schliessen"
-                    @onclick="CloseRequested">
+                    @ref="_closeButton"
+                    aria-label="@GetCloseLabel()"
+                    @onclick="HandleCloseRequested">
                 Schliessen
             </button>
         </div>
 
         <div class="probe-info-details-content">
-            @if (!string.IsNullOrWhiteSpace(ProbeInfo!.DetailsText))
+            @if (SelectedHistoryEntry is { } historyEntry)
             {
-                <p class="probe-info-details-text">@ProbeInfo.DetailsText</p>
+                <WuerfelCurrentRollPanel HistoryEntry="historyEntry"/>
             }
-
-            @if (ProbeInfo.Sections.Length > 0)
+            else if (ProbeInfo is { } probeInfo)
             {
-                @if (HasPrimaryProbeInfoSections(ProbeInfo))
+                @if (!string.IsNullOrWhiteSpace(probeInfo.DetailsText))
                 {
-                    <details class="probe-info-primary" open>
-                        <summary class="probe-info-primary-title">Grundinformationen</summary>
-                        <div class="probe-info-primary-fields">
-                            @foreach (var section in GetPrimaryProbeInfoSections(ProbeInfo))
-                            {
-                                <div class="probe-info-primary-field">
-                                    <span class="probe-info-primary-label">@(section.Label)</span>
-                                    <p class="probe-info-primary-text">@(section.Text)</p>
-                                </div>
-                            }
-                        </div>
-                    </details>
+                    <p class="probe-info-details-text">@probeInfo.DetailsText</p>
                 }
 
-                <div class="probe-info-sections">
-                    @foreach (var section in GetAdditionalProbeInfoSections(ProbeInfo))
+                @if (probeInfo.Sections.Length > 0)
+                {
+                    @if (HasPrimaryProbeInfoSections(probeInfo))
                     {
-                        <details class="probe-info-section">
-                            <summary class="probe-info-section-label">@(section.Label)</summary>
-                            <p class="probe-info-section-text">@(section.Text)</p>
+                        <details class="probe-info-primary" open>
+                            <summary class="probe-info-primary-title">Grundinformationen</summary>
+                            <div class="probe-info-primary-fields">
+                                @foreach (var section in GetPrimaryProbeInfoSections(probeInfo))
+                                {
+                                    <div class="probe-info-primary-field">
+                                        <span class="probe-info-primary-label">@(section.Label)</span>
+                                        <p class="probe-info-primary-text">@(section.Text)</p>
+                                    </div>
+                                }
+                            </div>
                         </details>
                     }
-                </div>
+
+                    <div class="probe-info-sections">
+                        @foreach (var section in GetAdditionalProbeInfoSections(probeInfo))
+                        {
+                            <details class="probe-info-section">
+                                <summary class="probe-info-section-label">@(section.Label)</summary>
+                                <p class="probe-info-section-text">@(section.Text)</p>
+                            </details>
+                        }
+                    </div>
+                }
             }
         </div>
     </aside>
@@ -84,8 +100,78 @@
 
 @code {
     [Parameter] public ProbeInfoResultDto? ProbeInfo { get; set; }
+    [Parameter] public RollHistoryEntryDto? SelectedHistoryEntry { get; set; }
     [Parameter] public bool ShowProbeInfoDetails { get; set; }
     [Parameter] public EventCallback CloseRequested { get; set; }
+
+    private ElementReference _closeButton;
+    private IJSObjectReference? _focusModule;
+    private string? _focusedOverlayKey;
+
+    private string? CurrentOverlayKey =>
+        ShowProbeInfoDetails && (SelectedHistoryEntry is not null || HasProbeInfoDetails(ProbeInfo))
+            ? SelectedHistoryEntry is { } entry ? GetHistoryEntryId(entry) : "probe-info"
+            : null;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var overlayKey = CurrentOverlayKey;
+        if (overlayKey is null)
+        {
+            _focusedOverlayKey = null;
+            return;
+        }
+
+        if (string.Equals(_focusedOverlayKey, overlayKey, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _focusedOverlayKey = overlayKey;
+        await _closeButton.FocusAsync();
+    }
+
+    private async Task HandleOverlayKeyDown(KeyboardEventArgs args)
+    {
+        if (string.Equals(args.Key, "Escape", StringComparison.Ordinal))
+        {
+            await HandleCloseRequested();
+        }
+    }
+
+    private async Task HandleCloseRequested()
+    {
+        var historyEntryId = SelectedHistoryEntry is { } entry ? GetHistoryEntryId(entry) : null;
+        await CloseRequested.InvokeAsync();
+
+        if (historyEntryId is null)
+        {
+            return;
+        }
+
+        _focusModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/focus-history.js");
+        await _focusModule.InvokeVoidAsync("focusHistoryEntry", historyEntryId);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_focusModule is not null)
+        {
+            await _focusModule.DisposeAsync();
+        }
+    }
+
+    private static string GetHistoryEntryId(RollHistoryEntryDto entry)
+    {
+        return entry.Timestamp.Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private string GetCloseLabel()
+    {
+        return SelectedHistoryEntry is null
+            ? "Probeninformationen schliessen"
+            : "Ergebnisdetails schliessen";
+    }
 
     private static bool HasProbeInfoContent(ProbeInfoResultDto probeInfo)
     {

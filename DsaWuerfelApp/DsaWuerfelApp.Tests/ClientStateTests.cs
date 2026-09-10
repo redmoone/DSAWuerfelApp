@@ -311,6 +311,38 @@ public class ClientStateTests
         Assert.Empty(state.Current.LastMasterAttributeRolls);
     }
 
+    [Fact]
+    public void Selected_history_entry_survives_new_rolls_and_closes_on_history_reload()
+    {
+        var selectedEntry = new RollHistoryEntryDto(
+            "Spieler",
+            DateTime.UtcNow.AddMinutes(-1),
+            [new DiceRollDto(20, 8)],
+            0,
+            8,
+            new RollHistoryContextDto(RollHistoryKind.Free, "Freier Wurf", RollHistoryOutcome.None, null, []));
+        var nextEquation = new RollEquationDto(
+            [new DiceRollGroupDto(6, 1)],
+            0,
+            [new DiceRollDto(6, 4)],
+            4,
+            4);
+        var nextEntry = new RollHistoryEntryDto("Spieler", DateTime.UtcNow, nextEquation.Rolls, 0, 4);
+        var state = new WuerfelState();
+
+        state.SetHistory([selectedEntry]);
+        state.OpenHistoryEntry(selectedEntry);
+        state.ApplyFreeRollResult(new FreeRollResultDto("Spieler", nextEntry.Timestamp, nextEquation, nextEntry));
+
+        Assert.Same(selectedEntry, state.Current.SelectedHistoryEntry);
+        Assert.Equal(nextEntry, state.Current.History[0]);
+
+        state.SetHistory([selectedEntry, nextEntry]);
+
+        Assert.Null(state.Current.SelectedHistoryEntry);
+        Assert.False(state.Current.IsProbeInfoExpanded);
+    }
+
     [Theory]
     [InlineData(WuerfelArea.ProbeSearch)]
     [InlineData(WuerfelArea.Attributes)]

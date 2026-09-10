@@ -113,9 +113,6 @@
                                            PresetRequested="HandleForcedRollPreset"
                                            ClearForcedRollsRequested="ClearForcedRolls"
                                            IsBusy="View.IsBusy"/>
-                        <WuerfelInformationPanel ProbeInfo="@View.ProbeInfo"
-                                                 ShowProbeInfoDetails="@View.IsProbeInfoExpanded"
-                                                 CloseRequested="ToggleProbeInfoAsync"/>
                     </section>
 
                     <section class="setup-section optional-bad-trait-section" aria-labelledby="probe-bad-trait-title">
@@ -200,17 +197,13 @@
                                       IsBusy="View.IsBusy"/>
                 }
             </div>
+            <WuerfelInformationPanel ProbeInfo="@View.ProbeInfo"
+                                     SelectedHistoryEntry="@View.SelectedHistoryEntry"
+                                     ShowProbeInfoDetails="@View.IsProbeInfoExpanded"
+                                     CloseRequested="CloseDetailsAsync"/>
         </section>
 
         <section class="roll-feedback-column" aria-label="Wurfergebnis und Historie">
-            <section class="current-roll-card">
-                <WuerfelCurrentRollPanel FreeRollResult="View.LastFreeRoll"
-                                         TalentResult="View.LastTalentRoll"
-                                         AttributeResult="View.LastAttributeRoll"
-                                         BadTraitResult="View.LastBadTraitRoll"
-                                         MasterTalentResults="View.LastMasterTalentRolls"
-                                         MasterAttributeResults="View.LastMasterAttributeRolls"/>
-
                 <div class="dice-3d-box @(View.AnimatedDiceSides.Count > 0 ? "has-result" : View.SelectedDiceSides.Count > 0 ? "has-selection" : "is-empty")"
                      title="3D Ansicht der gefallenen Würfel">
                     <DiceViewport SelectedDice="View.SelectedDiceSides"
@@ -220,13 +213,11 @@
                                   ResultVersion="View.ResultVersion"
                                   OnDiceRemoved="HandleDiceRemovedAsync"/>
                 </div>
-            </section>
-
             <section class="history-panel" data-testid="history-panel" aria-labelledby="history-title">
                 <div class="history-panel-heading">
                     <h2 id="history-title">Historie · @View.History.Count Würfe</h2>
                 </div>
-                <RollHistory Entries="View.History"/>
+                <RollHistory Entries="View.History" EntrySelected="HandleHistoryEntrySelected"/>
             </section>
         </section>
     </div>

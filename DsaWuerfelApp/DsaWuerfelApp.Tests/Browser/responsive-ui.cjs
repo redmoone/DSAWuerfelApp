@@ -130,18 +130,18 @@ async function assertDiceLayout(page, label) {
     return {
       setup: readRect('.roll-setup-panel'),
       feedback: readRect('.roll-feedback-column'),
-      current: readRect('.current-roll-card'),
+      dice: readRect('.dice-3d-box'),
       history: readRect('.history-panel')
     };
   });
-  assert.ok(layout.setup && layout.feedback && layout.current && layout.history, `${label}: workbench geometry is incomplete`);
+  assert.ok(layout.setup && layout.feedback && layout.dice && layout.history, `${label}: workbench geometry is incomplete`);
   if (page.viewportSize().width >= 901) {
     assert.ok(Math.abs(layout.setup.top - layout.feedback.top) <= 2, `${label}: setup and feedback are not side by side`);
     assert.ok(layout.feedback.left >= layout.setup.right - 1, `${label}: feedback column overlaps setup`);
   } else {
     assert.ok(layout.feedback.top >= layout.setup.bottom - 1, `${label}: feedback does not follow setup`);
   }
-  assert.ok(layout.history.top >= layout.current.bottom - 1, `${label}: history does not follow current roll`);
+  assert.ok(layout.history.top >= layout.dice.bottom - 1, `${label}: history does not follow the dice area`);
 }
 
 async function assertHistoryViewport(page, label) {
