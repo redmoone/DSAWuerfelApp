@@ -410,9 +410,10 @@
     border: 0 !important;
     background: transparent !important;
     color: inherit;
-    font-size: 0.8rem;
+    font-size: 0.95rem;
+    font-weight: 700;
     line-height: 1.2;
-    padding: 2px 0;
+    padding: 2px 6px;
 }
 
 .roll-setup-panel ::deep .bad-trait-summary {
@@ -430,6 +431,26 @@
 
 .roll-setup-panel ::deep .spell-selection-button {
     border-radius: 999px !important;
+    width: auto !important;
+    min-width: 0;
+    min-height: 36px;
+    max-width: 100%;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.roll-setup-panel ::deep .spell-selection-buttons {
+    display: flex !important;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+}
+
+.roll-setup-panel ::deep .spell-selection-option {
+    flex: 0 1 auto;
+    min-width: 0;
 }
 
 .roll-setup-panel ::deep .forced-rolls-input:focus {
