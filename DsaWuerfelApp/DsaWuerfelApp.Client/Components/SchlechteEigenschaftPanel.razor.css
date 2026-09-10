@@ -22,21 +22,20 @@
     min-height: 44px;
     background-color: var(--dsa-blue);
     color: var(--dsa-gold);
-    border: 2px solid var(--dsa-gold);
+    border: 1px solid var(--dsa-gold);
     border-radius: 8px;
     padding: 10px 24px;
     font-size: 1.1rem;
     font-weight: bold;
     cursor: pointer;
     text-transform: uppercase;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    transition: all 0.2s ease-in-out;
+    box-shadow: none;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 
 .dsa-btn:hover:not(:disabled) {
     background-color: var(--dsa-gold);
     color: var(--dsa-blue);
-    box-shadow: 0 0 10px var(--dsa-gold-glow);
 }
 
 .dsa-btn:disabled {
@@ -127,7 +126,7 @@
 .bad-trait-chip.active {
     background-color: rgba(212, 175, 55, 0.22);
     border-color: rgba(255, 219, 103, 0.85);
-    box-shadow: 0 0 0 1px rgba(255, 219, 103, 0.25);
+    box-shadow: none;
 }
 
 .bad-trait-summary {

@@ -108,11 +108,13 @@ async function assertDiceMode(page, mode, label) {
   assert.ok(buttonHeight >= 43, `${label}: mode button is shorter than 44px (${buttonHeight})`);
 
   if (mode.button === 'mode-bad-trait') {
+    assert.equal(await page.locator('.results-bar').count(), 0, `${label}: shared action bar should be hidden for bad traits`);
     const trait = page.locator('.bad-trait-panel:not(.compact) .bad-trait-chip').first();
     await trait.waitFor({ state: 'visible' });
     await trait.click();
     await assertReachableControl(page, '.bad-trait-panel:not(.compact) .dsa-btn', `${label} primary action`);
   } else {
+    assert.equal(await page.locator('.results-bar').count(), 1, `${label}: expected exactly one shared action bar`);
     await assertReachableControl(page, '.results-bar button.dsa-btn', `${label} primary action`);
   }
 
@@ -131,12 +133,15 @@ async function assertDiceLayout(page, label) {
       setup: readRect('.roll-setup-panel'),
       feedback: readRect('.roll-feedback-column'),
       dice: readRect('.dice-3d-box'),
+      actionBar: readRect('.results-bar'),
       history: readRect('.history-panel'),
+      actionBarCount: document.querySelectorAll('.results-bar').length,
       currentRollCardCount: document.querySelectorAll('.current-roll-card').length,
       diceCanvasCount: document.querySelectorAll('.dice-3d-box canvas').length
     };
   });
-  assert.ok(layout.setup && layout.feedback && layout.dice && layout.history, `${label}: workbench geometry is incomplete`);
+  assert.ok(layout.setup && layout.feedback && layout.dice && layout.actionBar && layout.history, `${label}: workbench geometry is incomplete`);
+  assert.equal(layout.actionBarCount, 1, `${label}: expected exactly one shared action bar`);
   assert.equal(layout.currentRollCardCount, 0, `${label}: permanent current-roll card is still rendered`);
   assert.equal(layout.diceCanvasCount, 1, `${label}: expected exactly one 3D dice canvas`);
   assert.ok(layout.dice.height >= 120 && layout.dice.height <= 140, `${label}: compact dice area is ${layout.dice.height}px tall`);
@@ -146,7 +151,8 @@ async function assertDiceLayout(page, label) {
   } else {
     assert.ok(layout.feedback.top >= layout.setup.bottom - 1, `${label}: feedback does not follow setup`);
   }
-  assert.ok(layout.history.top >= layout.dice.bottom - 1, `${label}: history does not follow the dice area`);
+  assert.ok(layout.actionBar.top >= layout.dice.bottom - 1, `${label}: action bar does not follow the dice area`);
+  assert.ok(layout.history.top >= layout.actionBar.bottom - 1, `${label}: history does not follow the action bar`);
 }
 
 async function assertHistoryViewport(page, label) {

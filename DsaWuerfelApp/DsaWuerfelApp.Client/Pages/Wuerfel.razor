@@ -182,6 +182,24 @@
                     <MudAlert Severity="Severity.Error" Class="roll-error">@View.ErrorMessage</MudAlert>
                 }
 
+            </div>
+            <WuerfelInformationPanel ProbeInfo="@View.ProbeInfo"
+                                     SelectedHistoryEntry="@View.SelectedHistoryEntry"
+                                     ShowProbeInfoDetails="@View.IsProbeInfoExpanded"
+                                     CloseRequested="CloseDetailsAsync"/>
+        </section>
+
+        <section class="roll-feedback-column" aria-label="Wurfergebnis und Historie">
+            <div class="roll-results-area">
+                <div class="dice-3d-box @(View.AnimatedDiceSides.Count > 0 ? "has-result" : View.SelectedDiceSides.Count > 0 ? "has-selection" : "is-empty")"
+                     title="3D Ansicht der gefallenen Würfel">
+                    <DiceViewport SelectedDice="View.SelectedDiceSides"
+                                  ResultDiceSides="View.AnimatedDiceSides"
+                                  ResultDiceValues="View.AnimatedDiceValues"
+                                  PreviewVersion="View.PreviewVersion"
+                                  ResultVersion="View.ResultVersion"
+                                  OnDiceRemoved="HandleDiceRemovedAsync"/>
+                </div>
                 @if (VisibleArea != WuerfelArea.BadTrait)
                 {
                     <WuerfelActionBar RollText="@View.RollText"
@@ -197,22 +215,6 @@
                                       IsBusy="View.IsBusy"/>
                 }
             </div>
-            <WuerfelInformationPanel ProbeInfo="@View.ProbeInfo"
-                                     SelectedHistoryEntry="@View.SelectedHistoryEntry"
-                                     ShowProbeInfoDetails="@View.IsProbeInfoExpanded"
-                                     CloseRequested="CloseDetailsAsync"/>
-        </section>
-
-        <section class="roll-feedback-column" aria-label="Wurfergebnis und Historie">
-                <div class="dice-3d-box @(View.AnimatedDiceSides.Count > 0 ? "has-result" : View.SelectedDiceSides.Count > 0 ? "has-selection" : "is-empty")"
-                     title="3D Ansicht der gefallenen Würfel">
-                    <DiceViewport SelectedDice="View.SelectedDiceSides"
-                                  ResultDiceSides="View.AnimatedDiceSides"
-                                  ResultDiceValues="View.AnimatedDiceValues"
-                                  PreviewVersion="View.PreviewVersion"
-                                  ResultVersion="View.ResultVersion"
-                                  OnDiceRemoved="HandleDiceRemovedAsync"/>
-                </div>
             <section class="history-panel" data-testid="history-panel" aria-labelledby="history-title">
                 <div class="history-panel-heading">
                     <h2 id="history-title">Historie · @View.History.Count Würfe</h2>

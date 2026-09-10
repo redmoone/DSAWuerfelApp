@@ -9,31 +9,33 @@
     background: transparent;
     color: inherit;
     filter:
-            drop-shadow(2px 0px 0px var(--dsa-gold))
-            drop-shadow(-2px 0px 0px var(--dsa-gold))
-            drop-shadow(0px 2px 0px var(--dsa-gold))
-            drop-shadow(0px -2px 0px var(--dsa-gold))
-            drop-shadow(0 6px 6px rgba(0, 0, 0, 0.4));
+            drop-shadow(1px 0px 0px var(--dsa-gold))
+            drop-shadow(-1px 0px 0px var(--dsa-gold))
+            drop-shadow(0px 1px 0px var(--dsa-gold))
+            drop-shadow(0px -1px 0px var(--dsa-gold));
 }
 
 .die-selector:active {
     transform: scale(0.9);
     filter:
-            drop-shadow(2px 0px 0px var(--dsa-gold))
-            drop-shadow(-2px 0px 0px var(--dsa-gold))
-            drop-shadow(0px 2px 0px var(--dsa-gold))
-            drop-shadow(0px -2px 0px var(--dsa-gold))
-            drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
+            drop-shadow(1px 0px 0px var(--dsa-gold))
+            drop-shadow(-1px 0px 0px var(--dsa-gold))
+            drop-shadow(0px 1px 0px var(--dsa-gold))
+            drop-shadow(0px -1px 0px var(--dsa-gold));
 }
 
 .die-selector:hover {
     filter:
-            drop-shadow(2px 0px 0px var(--dsa-gold))
-            drop-shadow(-2px 0px 0px var(--dsa-gold))
-            drop-shadow(0px 2px 0px var(--dsa-gold))
-            drop-shadow(0px -2px 0px var(--dsa-gold))
-            drop-shadow(0 0 12px var(--dsa-gold-glow))
+            drop-shadow(1px 0px 0px var(--dsa-gold))
+            drop-shadow(-1px 0px 0px var(--dsa-gold))
+            drop-shadow(0px 1px 0px var(--dsa-gold))
+            drop-shadow(0px -1px 0px var(--dsa-gold))
             brightness(1.15);
+}
+
+.die-selector:focus-visible {
+    outline: 2px solid var(--dsa-gold);
+    outline-offset: 3px;
 }
 
 .die-shape {
@@ -58,10 +60,10 @@
 
 .modifier-container {
     background-color: var(--pill-bg);
-    border: 3px solid var(--dsa-gold);
+    border: 1px solid var(--dsa-gold);
     border-radius: 50px;
     height: 45px;
-    box-shadow: 0 0 10px var(--dsa-gold-glow);
+    box-shadow: none;
 }
 
 .modifier-input {
@@ -87,7 +89,7 @@ input[type=number] {
 
 .dsa-btn {
     background-color: var(--pill-bg);
-    border: 3px solid var(--dsa-gold);
+    border: 1px solid var(--dsa-gold);
     color: var(--dsa-gold);
     border-radius: 50px;
     padding: 0 20px;
@@ -98,7 +100,7 @@ input[type=number] {
     text-transform: uppercase;
     transition: transform 0.1s, background-color 0.2s;
     user-select: none;
-    box-shadow: 0 0 10px var(--dsa-gold-glow);
+    box-shadow: none;
 }
 
 .dsa-btn:hover:not(:disabled) {
@@ -115,9 +117,14 @@ input[type=number] {
     box-shadow: none;
 }
 
+.dsa-btn:focus-visible {
+    outline: 2px solid var(--dsa-gold);
+    outline-offset: 3px;
+}
+
 .dsa-btn-icon {
     background-color: var(--pill-bg);
-    border: 3px solid var(--dsa-gold);
+    border: 1px solid var(--dsa-gold);
     border-radius: 50%;
     width: 45px;
     height: 45px;
@@ -125,8 +132,13 @@ input[type=number] {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 0 10px var(--dsa-gold-glow);
+    transition: background-color 0.2s, transform 0.1s;
+    box-shadow: none;
+}
+
+.dsa-btn-icon:focus-visible {
+    outline: 2px solid var(--dsa-gold);
+    outline-offset: 3px;
 }
 
 .dsa-btn-icon.active {

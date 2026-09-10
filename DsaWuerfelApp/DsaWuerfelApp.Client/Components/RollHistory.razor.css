@@ -88,7 +88,7 @@
     border-color: #ffe7a0;
     background: #d4af37;
     color: #07111d;
-    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.24), 0 3px 10px rgba(0, 0, 0, 0.28);
+    box-shadow: none;
 }
 
 .history-status.neutral,
