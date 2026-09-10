@@ -7,14 +7,15 @@
     box-sizing: border-box;
     gap: 12px;
     padding: 12px 14px;
-    border: 1px solid rgba(212, 175, 55, 0.35);
+    border: 1px solid var(--wuerfel-frame-color, rgba(212, 175, 55, 0.55));
     border-radius: 10px;
-    background: rgba(9, 25, 48, 0.76);
+    background: var(--wuerfel-panel-background, rgba(9, 25, 48, 0.88));
 }
 
 .results-bar ::deep .text-pill,
 .results-bar ::deep .modifier-pill {
     border-width: 1px !important;
+    border-color: var(--wuerfel-frame-color, rgba(212, 175, 55, 0.55)) !important;
     box-shadow: none !important;
 }
 
@@ -87,7 +88,7 @@
     width: max-content;
     max-width: min(18rem, calc(100vw - 2rem));
     padding: 0.5rem 0.75rem;
-    border: 1px solid var(--dsa-gold);
+    border: 1px solid var(--wuerfel-frame-color, rgba(212, 175, 55, 0.55));
     border-radius: 6px;
     background-color: var(--dsa-blue);
     color: var(--dsa-white);
@@ -113,7 +114,7 @@
     min-width: 132px;
     min-height: 48px;
     padding: 10px 22px;
-    border: 1px solid var(--dsa-gold);
+    border: 1px solid var(--wuerfel-frame-color, rgba(212, 175, 55, 0.55));
     border-radius: 8px;
     background-color: var(--dsa-blue);
     color: var(--dsa-gold);
@@ -158,7 +159,7 @@
     justify-content: center;
     width: 48px;
     height: 48px;
-    border: 1px solid var(--dsa-gold);
+    border: 1px solid var(--wuerfel-frame-color, rgba(212, 175, 55, 0.55));
     border-radius: 50%;
     background-color: var(--pill-bg);
     cursor: pointer;
@@ -192,7 +193,7 @@
 }
 
 .reset-roll-button {
-    border: 1px solid var(--dsa-gold) !important;
+    border: 1px solid var(--wuerfel-frame-color, rgba(212, 175, 55, 0.55)) !important;
     box-shadow: none !important;
 }
 

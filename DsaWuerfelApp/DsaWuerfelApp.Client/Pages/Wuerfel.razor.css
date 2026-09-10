@@ -1,4 +1,6 @@
 .wuerfel-page-container {
+    --wuerfel-frame-color: rgba(212, 175, 55, 0.55);
+    --wuerfel-panel-background: rgba(9, 25, 48, 0.88);
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -28,16 +30,16 @@
     gap: 6px;
     min-width: 0;
     padding: 6px;
-    border: 1px solid rgba(212, 175, 55, 0.4);
+    border: 1px solid var(--wuerfel-frame-color);
     border-radius: 10px;
-    background: rgba(9, 25, 48, 0.9);
+    background: var(--wuerfel-panel-background);
 }
 
 .roll-mode-button {
     min-width: 0;
     min-height: 44px;
     padding: 8px 10px;
-    border: 1px solid rgba(212, 175, 55, 0.35);
+    border: 1px solid var(--wuerfel-frame-color);
     border-radius: 7px;
     background: rgba(255, 255, 255, 0.05);
     color: var(--dsa-white);
@@ -52,7 +54,7 @@
 .roll-mode-button:hover,
 .roll-mode-button:focus-visible,
 .roll-mode-button.active {
-    border-color: var(--dsa-gold);
+    border-color: var(--wuerfel-frame-color);
     background: rgba(212, 175, 55, 0.18);
 }
 
@@ -73,11 +75,11 @@
 .history-panel {
     min-width: 0;
     border-radius: 10px;
-    background: rgba(9, 25, 48, 0.88);
+    background: var(--wuerfel-panel-background);
 }
 
 .roll-setup-panel {
-    border: 1px solid var(--dsa-gold);
+    border: 1px solid var(--wuerfel-frame-color);
     box-shadow: none;
 }
 
@@ -146,7 +148,7 @@
 
 .master-selection-details {
     min-width: 0;
-    border: 1px solid rgba(212, 175, 55, 0.3);
+    border: 1px solid var(--wuerfel-frame-color);
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.04);
 }
@@ -209,7 +211,7 @@
     min-height: 44px;
     width: 100%;
     padding: 8px 14px;
-    border: 1px solid rgba(212, 175, 55, 0.45);
+    border: 1px solid var(--wuerfel-frame-color);
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.08);
     color: var(--dsa-white);
@@ -256,7 +258,7 @@
     min-width: 0;
     gap: 4px;
     padding: 10px 12px;
-    border: 1px solid rgba(212, 175, 55, 0.28);
+    border: 1px solid var(--wuerfel-frame-color);
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.05);
     color: var(--dsa-white);
@@ -308,20 +310,20 @@
     width: 100%;
     height: 130px;
     min-width: 0;
-    border: 1px solid rgba(212, 175, 55, 0.42);
+    border: 1px solid var(--wuerfel-frame-color);
     border-radius: 8px;
-    background: rgba(9, 25, 48, 0.88);
+    background: var(--wuerfel-panel-background);
     overflow: hidden;
 }
 
 .dice-3d-box.is-empty {
     height: 130px;
-    border-color: rgba(212, 175, 55, 0.22);
-    background: rgba(9, 25, 48, 0.88);
+    border-color: var(--wuerfel-frame-color);
+    background: var(--wuerfel-panel-background);
 }
 
 .dice-3d-box.has-selection {
-    border-color: rgba(212, 175, 55, 0.55);
+    border-color: var(--wuerfel-frame-color);
 }
 
 .history-panel {
@@ -361,14 +363,30 @@
 .roll-setup-panel ::deep .search-wrapper,
 .roll-setup-panel ::deep .forced-rolls-input,
 .roll-setup-panel ::deep .probe-info-button,
+.roll-setup-panel ::deep .bad-trait-chip,
+.roll-setup-panel ::deep .bad-trait-chip-meta,
+.roll-setup-panel ::deep .bad-trait-summary span,
+.roll-setup-panel ::deep .spell-selection-panel,
+.roll-setup-panel ::deep .spell-selection-global-count,
+.roll-setup-panel ::deep .spell-selection-group,
+.roll-setup-panel ::deep .spell-selection-button,
+.roll-setup-panel ::deep .forced-rolls-panel,
+.roll-setup-panel ::deep .forced-rolls-button,
+.roll-setup-panel ::deep .probe-info-summary,
+.roll-setup-panel ::deep .probe-info-summary-field,
+.roll-setup-panel ::deep .probe-info-details,
+.roll-setup-panel ::deep .probe-info-close,
+.roll-setup-panel ::deep .probe-info-primary,
+.roll-setup-panel ::deep .probe-info-section,
 .roll-setup-panel ::deep .dsa-btn,
 .roll-setup-panel ::deep .dsa-btn-icon {
     border-width: 1px !important;
+    border-color: var(--wuerfel-frame-color) !important;
     box-shadow: none !important;
 }
 
 .roll-setup-panel ::deep .probe-info-button {
-    border: 1px solid var(--dsa-gold) !important;
+    border: 1px solid var(--wuerfel-frame-color) !important;
 }
 
 .roll-setup-panel ::deep .forced-rolls-input:focus {
