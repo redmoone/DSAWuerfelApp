@@ -62,7 +62,9 @@ public partial class RollHistory
         {
             RollHistoryOutcome.Success => context.Kind == RollHistoryKind.Spell
                 ? $"GELUNGEN · {context.RemainingPoints ?? 0} ZfP*"
-                : $"BESTANDEN · {context.RemainingPoints ?? 0} TaP*",
+                : context.Kind == RollHistoryKind.Talent
+                    ? $"BESTANDEN · {context.RemainingPoints ?? 0} TaP*"
+                    : "BESTANDEN",
             RollHistoryOutcome.Failure => "MISSLUNGEN",
             RollHistoryOutcome.CriticalSuccess => GetSpecialStatusText("GLÜCKLICHER WURF", context),
             RollHistoryOutcome.Fumble => GetSpecialStatusText("PATZER", context),
@@ -89,6 +91,23 @@ public partial class RollHistory
             : "Rohwurf";
     }
 
+    private static string? GetHeroName(RollHistoryEntryDto entry)
+    {
+        return string.IsNullOrWhiteSpace(entry.Context?.Snapshot?.HeroName)
+            ? null
+            : entry.Context.Snapshot.HeroName;
+    }
+
+    private static bool ShouldShowCompactEquation(RollHistoryEntryDto entry)
+    {
+        return entry.Context?.Kind is not (RollHistoryKind.Talent or RollHistoryKind.Spell);
+    }
+
+    private static string GetCompactDifferenceText(RollHistoryCheckDto check)
+    {
+        return check.Difference > 0 ? $"Überschreitung {check.Difference}" : "0";
+    }
+
     private static string GetCheckClass(RollHistoryCheckState state)
     {
         return state switch
@@ -111,7 +130,8 @@ public partial class RollHistory
 
     private static string GetCheckAriaLabel(RollHistoryCheckDto check)
     {
-        return $"{check.Name}: {check.Roll} von {check.TargetValue}, {GetCheckStateText(check.State)}";
+        var difference = check.Difference > 0 ? $", Überschreitung {check.Difference}" : string.Empty;
+        return $"{check.Name}: {check.Roll} von {check.TargetValue}{difference}, {GetCheckStateText(check.State)}";
     }
 
     private static string GetEquationAriaLabel(RollHistoryEntryDto entry)

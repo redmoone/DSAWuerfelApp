@@ -15,6 +15,10 @@
                         <div class="history-entry-title">
                             <span class="history-status @GetStatusClass(log)">@GetStatusText(log)</span>
                             <span class="history-player">@log.PlayerName</span>
+                            @if (GetHeroName(log) is { Length: > 0 } heroName)
+                            {
+                                <span class="history-hero-name">@heroName</span>
+                            }
                             <span class="history-display-name">@GetDisplayName(log)</span>
                         </div>
                         <div class="history-entry-actions">
@@ -36,11 +40,11 @@
                             @foreach (var check in context.Checks)
                             {
                                 <span class="history-check @GetCheckClass(check.State)"
-                                      role="listitem"
+                                    role="listitem"
                                       aria-label="@GetCheckAriaLabel(check)">
                                     <span class="history-check-value">@check.Name @check.Roll/@check.TargetValue</span>
                                     <span class="history-check-difference">
-                                        @(check.Difference > 0 ? $"-{check.Difference}" : "0")
+                                        @GetCompactDifferenceText(check)
                                     </span>
                                     <span class="history-check-state">@GetCheckStateText(check.State)</span>
                                 </span>
@@ -48,36 +52,39 @@
                         </div>
                     }
 
-                    <div class="history-equation" aria-label="@GetEquationAriaLabel(log)">
-                        @for (var index = 0; index < log.Rolls.Length; index++)
-                        {
-                            var roll = log.Rolls[index];
-                            <span class="history-die-container">
-                                <span class="die-shape history-die shape-d@(roll.Sides)">
-                                    <span class="die-text">@roll.Value</span>
+                    @if (ShouldShowCompactEquation(log))
+                    {
+                        <div class="history-equation" aria-label="@GetEquationAriaLabel(log)">
+                            @for (var index = 0; index < log.Rolls.Length; index++)
+                            {
+                                var roll = log.Rolls[index];
+                                <span class="history-die-container">
+                                    <span class="die-shape history-die shape-d@(roll.Sides)">
+                                        <span class="die-text">@roll.Value</span>
+                                    </span>
                                 </span>
-                            </span>
 
-                            @if (index < log.Rolls.Length - 1)
+                                @if (index < log.Rolls.Length - 1)
+                                {
+                                    <span class="history-math-symbol">+</span>
+                                }
+                            }
+
+                            @if (log.Modifier > 0)
                             {
                                 <span class="history-math-symbol">+</span>
+                                <span class="history-modifier">@log.Modifier</span>
                             }
-                        }
+                            else if (log.Modifier < 0)
+                            {
+                                <span class="history-math-symbol">-</span>
+                                <span class="history-modifier">@Math.Abs(log.Modifier)</span>
+                            }
 
-                        @if (log.Modifier > 0)
-                        {
-                            <span class="history-math-symbol">+</span>
-                            <span class="history-modifier">@log.Modifier</span>
-                        }
-                        else if (log.Modifier < 0)
-                        {
-                            <span class="history-math-symbol">-</span>
-                            <span class="history-modifier">@Math.Abs(log.Modifier)</span>
-                        }
-
-                        <span class="history-math-symbol">=</span>
-                        <span class="history-total">@log.TotalSum</span>
-                    </div>
+                            <span class="history-math-symbol">=</span>
+                            <span class="history-total">@log.TotalSum</span>
+                        </div>
+                    }
                 </article>
             }
         </div>
