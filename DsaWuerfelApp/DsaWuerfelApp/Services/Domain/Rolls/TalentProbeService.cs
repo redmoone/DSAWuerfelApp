@@ -53,6 +53,44 @@ public sealed class TalentProbeService(DiceService diceService)
             evaluatedProbe);
         var probeSuccess = TalentProbeEvaluator.IsSuccess(evaluatedProbe);
         var equation = DiceResultFactory.CreateEquation(rolledDice, 0);
+        var spellDetails = request.SpellContext is null
+            ? null
+            : new SpellProbeRollDetailsDto(
+                request.TalentValue,
+                request.AutomaticModifier,
+                request.BasisModifier,
+                request.PreRollZfp,
+                evaluatedProbe.Rest,
+                Math.Max(evaluatedProbe.Rest - request.PreRollZfp, 0),
+                request.SpellContext.ManualModifierRequired,
+                request.SpellContext.SelectedOptions);
+        var historySnapshot = new RollHistorySnapshotDto
+        {
+            Probe = request.Probe.Label,
+            TalentValue = request.TalentValue,
+            EffectiveTalentValue = evaluatedProbe.EffectiveTalentValue,
+            BasisModifier = request.BasisModifier,
+            EffectiveModifier = totalModifier,
+            SpecializationName = string.IsNullOrWhiteSpace(request.SpecializationName)
+                ? null
+                : request.SpecializationName.Trim(),
+            SpecializationModifier = request.SpecializationModifier,
+            SchlechteEigenschaftName = string.IsNullOrWhiteSpace(request.SchlechteEigenschaftName)
+                ? null
+                : request.SchlechteEigenschaftName.Trim(),
+            SchlechteEigenschaftModifier = request.SchlechteEigenschaftModifier,
+            Margin = evaluatedProbe.Status == TalentProbeStatus.NichtBestanden
+                ? Math.Abs(evaluatedProbe.Rest)
+                : 0,
+            OriginalZfw = spellDetails?.OriginalZfw,
+            AutomaticModifier = spellDetails?.AutomaticModifier,
+            ManualModifier = spellDetails?.ManualModifier,
+            PreRollZfp = spellDetails?.PreRollZfp,
+            RawZfp = spellDetails?.RawZfp,
+            AvailableZfp = spellDetails?.AvailableZfp,
+            ManualModifierRequired = spellDetails?.ManualModifierRequired,
+            SelectedOptions = spellDetails?.SelectedOptions ?? []
+        };
         var historyContext = new RollHistoryContextDto(
             request.SpellContext is null ? RollHistoryKind.Talent : RollHistoryKind.Spell,
             request.TalentName,
@@ -74,8 +112,10 @@ public sealed class TalentProbeService(DiceService diceService)
                         ? RollHistoryCheckState.WithinTarget
                         : detail.Success
                             ? RollHistoryCheckState.Compensated
-                            : RollHistoryCheckState.Failed))
-                .ToArray());
+                            : RollHistoryCheckState.Failed,
+                    detail.RemainingRest))
+                .ToArray(),
+            historySnapshot);
         var historyEntry = DiceResultFactory.CreateHistoryEntry(playerName, timestamp, equation, historyContext);
 
         var result = new TalentRollResultDto(
@@ -109,20 +149,9 @@ public sealed class TalentProbeService(DiceService diceService)
             equation,
             historyEntry);
 
-        if (request.SpellContext is not null)
+        if (spellDetails is not null)
         {
-            result = result with
-            {
-                SpellDetails = new SpellProbeRollDetailsDto(
-                    request.TalentValue,
-                    request.AutomaticModifier,
-                    request.BasisModifier,
-                    request.PreRollZfp,
-                    evaluatedProbe.Rest,
-                    Math.Max(evaluatedProbe.Rest - request.PreRollZfp, 0),
-                    request.SpellContext.ManualModifierRequired,
-                    request.SpellContext.SelectedOptions)
-            };
+            result = result with { SpellDetails = spellDetails };
         }
 
         return result;

@@ -301,7 +301,13 @@ public sealed class TestApplicationSmokeTests : IClassFixture<TestApplicationFac
             "Klettern",
             RollHistoryOutcome.Success,
             4,
-            [new RollHistoryCheckDto("MU", 12, 10, 2, RollHistoryCheckState.Compensated)]);
+            [new RollHistoryCheckDto("MU", 12, 10, 2, RollHistoryCheckState.Compensated, 2)],
+            new RollHistorySnapshotDto
+            {
+                Probe = "MU/GE/KK",
+                TalentValue = 4,
+                EffectiveModifier = -2
+            });
         var entry = new RollHistoryEntryDto(
             "Tester",
             timestamp,
@@ -329,6 +335,9 @@ public sealed class TestApplicationSmokeTests : IClassFixture<TestApplicationFac
         Assert.Equal(context.Outcome, loadedContext.Outcome);
         Assert.Equal(context.RemainingPoints, loadedContext.RemainingPoints);
         Assert.Equal(context.Checks, loadedContext.Checks);
+        Assert.Equal(context.Snapshot?.Probe, loadedContext.Snapshot?.Probe);
+        Assert.Equal(context.Snapshot?.TalentValue, loadedContext.Snapshot?.TalentValue);
+        Assert.Equal(context.Snapshot?.EffectiveModifier, loadedContext.Snapshot?.EffectiveModifier);
 
         var oldSessionId = $"old-history-{Guid.NewGuid():N}";
         using (var scope = _factory.Services.CreateScope())

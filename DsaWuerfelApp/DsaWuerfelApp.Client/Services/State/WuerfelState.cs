@@ -304,6 +304,18 @@ public sealed class WuerfelState
         IReadOnlyList<MasterTalentRollTargetResultDto> talentResults,
         IReadOnlyList<MasterAttributeRollTargetResultDto> attributeResults)
     {
+        var masterHistoryEntries = talentResults
+            .Select(result => result.Result is not null
+                ? EnrichMasterHistoryEntry(result.Result.HistoryEntry, result.HeroName)
+                : result.RequirementResult is not null
+                    ? EnrichMasterHistoryEntry(result.RequirementResult.HistoryEntry, result.HeroName)
+                    : null)
+            .Concat(attributeResults.Select(result => result.Result is null
+                ? null
+                : EnrichMasterHistoryEntry(result.Result.HistoryEntry, result.HeroName)))
+            .Where(entry => entry is not null)
+            .Select(entry => entry!)
+            .ToArray();
         var successfulRolls = equations
             .Where(equation => equation is not null)
             .SelectMany(equation => equation!.Rolls)
@@ -318,11 +330,27 @@ public sealed class WuerfelState
             LastFreeRoll = null,
             LastMasterTalentRolls = talentResults,
             LastMasterAttributeRolls = attributeResults,
+            History = masterHistoryEntries.Concat(Current.History).Take(100).ToArray(),
             AnimatedDiceSides = successfulRolls.Select(roll => roll.Sides).ToArray(),
             AnimatedDiceValues = successfulRolls.Select(roll => roll.Value).ToArray(),
             ResultVersion = Current.ResultVersion + 1,
             ErrorMessage = null
         });
+    }
+
+    private static RollHistoryEntryDto EnrichMasterHistoryEntry(RollHistoryEntryDto entry, string? heroName)
+    {
+        if (entry.Context is not { } context || string.IsNullOrWhiteSpace(heroName))
+        {
+            return entry;
+        }
+
+        var snapshot = (context.Snapshot ?? new RollHistorySnapshotDto()) with
+        {
+            HeroName = heroName
+        };
+
+        return entry with { Context = context with { Snapshot = snapshot } };
     }
 
     private static WuerfelViewState ClearRollArea(WuerfelViewState state, bool clearSelectedProbe)

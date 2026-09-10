@@ -32,6 +32,26 @@ public sealed class AttributeProbeService(DiceService diceService)
         var successCount = details.Count(detail => detail.Success);
         var equation = DiceResultFactory.CreateEquation(rolls, 0);
         var probeLabel = string.IsNullOrWhiteSpace(request.ProbeLabel) ? request.Attributes.Label : request.ProbeLabel;
+        var requirement = BuildRequirement(probeLabel, attributeNames, request, rolls, effectiveModifier);
+        var historySnapshot = new RollHistorySnapshotDto
+        {
+            Probe = probeLabel,
+            BasisModifier = request.BasisModifier,
+            EffectiveModifier = effectiveModifier,
+            SchlechteEigenschaftName = request.SchlechteEigenschaftName,
+            SchlechteEigenschaftModifier = request.SchlechteEigenschaftModifier,
+            SuccessCount = successCount,
+            FailureCount = details.Length - successCount,
+            RequiredTalentValue = requirement?.RequiredTalentValue,
+            RequiredCompensation = requirement?.RequiredCompensation,
+            RequirementChecks = requirement?.Details
+                .Select(detail => new RollHistoryRequirementCheckDto(
+                    detail.Attribute,
+                    detail.BaseValue,
+                    detail.Roll,
+                    detail.Difference))
+                .ToArray() ?? []
+        };
         var historyContext = new RollHistoryContextDto(
             RollHistoryKind.Attribute,
             probeLabel,
@@ -45,7 +65,8 @@ public sealed class AttributeProbeService(DiceService diceService)
                     detail.Success
                         ? RollHistoryCheckState.WithinTarget
                         : RollHistoryCheckState.Failed))
-                .ToArray());
+                .ToArray(),
+            historySnapshot);
         var historyEntry = DiceResultFactory.CreateHistoryEntry(playerName, timestamp, equation, historyContext);
 
         return new AttributeRollResultDto(
@@ -60,7 +81,7 @@ public sealed class AttributeProbeService(DiceService diceService)
             successCount,
             details.Length - successCount,
             details,
-            BuildRequirement(probeLabel, attributeNames, request, rolls, effectiveModifier),
+            requirement,
             rolls,
             equation,
             historyEntry);

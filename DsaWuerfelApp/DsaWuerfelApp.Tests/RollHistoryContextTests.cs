@@ -29,6 +29,8 @@ public sealed class RollHistoryContextTests
         Assert.Equal(RollHistoryOutcome.Success, context.Outcome);
         Assert.Equal(1, context.RemainingPoints);
         Assert.Equal(RollHistoryCheckState.Compensated, context.Checks[0].State);
+        Assert.Equal(3, context.Snapshot?.TalentValue);
+        Assert.Equal(1, context.Checks[0].RemainingPoints);
     }
 
     [Fact]
@@ -53,6 +55,7 @@ public sealed class RollHistoryContextTests
         var context = Assert.IsType<RollHistoryContextDto>(result.HistoryEntry.Context);
         Assert.Equal(RollHistoryOutcome.Failure, context.Outcome);
         Assert.Contains(context.Checks, check => check.State == RollHistoryCheckState.Failed);
+        Assert.Equal(4, context.Snapshot?.Margin);
     }
 
     [Fact]
@@ -79,6 +82,8 @@ public sealed class RollHistoryContextTests
         Assert.Equal(RollHistoryKind.Spell, context.Kind);
         Assert.Equal(RollHistoryOutcome.Success, context.Outcome);
         Assert.Equal(5, context.RemainingPoints);
+        Assert.Equal("Variante", Assert.Single(context.Snapshot!.SelectedOptions));
+        Assert.Equal(5, context.Snapshot.OriginalZfw);
     }
 
     [Fact]
@@ -103,6 +108,8 @@ public sealed class RollHistoryContextTests
         Assert.Equal(RollHistoryOutcome.Failure, context.Outcome);
         Assert.Equal(RollHistoryCheckState.Failed, context.Checks[0].State);
         Assert.Equal(1, context.Checks[0].Difference);
+        Assert.Equal(1, context.Snapshot?.FailureCount);
+        Assert.Null(context.Snapshot?.RequiredCompensation);
     }
 
     [Fact]
@@ -123,6 +130,8 @@ public sealed class RollHistoryContextTests
         Assert.Equal("Aberglaube", context.Checks[0].Name);
         Assert.Equal(15, context.Checks[0].Roll);
         Assert.Equal(10, context.Checks[0].TargetValue);
+        Assert.False(context.Snapshot?.EigenschaftSetztSichDurch);
+        Assert.Equal(10, context.Snapshot?.TargetValue);
     }
 
     [Fact]

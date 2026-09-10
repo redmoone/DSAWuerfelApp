@@ -250,6 +250,67 @@ public class ClientStateTests
         Assert.Null(state.Current.LastBadTraitRoll);
     }
 
+    [Fact]
+    public void ApplyMasterTalentRollResults_keeps_each_target_reachable_in_history()
+    {
+        var timestamp = DateTime.UtcNow;
+        var equation = new RollEquationDto(
+            [new DiceRollGroupDto(20, 3)],
+            0,
+            [new DiceRollDto(20, 4), new DiceRollDto(20, 7), new DiceRollDto(20, 12)],
+            23,
+            23);
+        var historyEntry = new RollHistoryEntryDto(
+            "Spieler",
+            timestamp,
+            equation.Rolls,
+            equation.Modifier,
+            equation.Total,
+            new RollHistoryContextDto(
+                RollHistoryKind.Talent,
+                "Klettern",
+                RollHistoryOutcome.Success,
+                2,
+                [new RollHistoryCheckDto("MU", 4, 10, 0, RollHistoryCheckState.WithinTarget)]));
+        var result = new TalentRollResultDto(
+            "Spieler",
+            timestamp,
+            "Klettern",
+            5,
+            "MU/GE/KK",
+            0,
+            0,
+            null,
+            0,
+            null,
+            0,
+            5,
+            equation.Rolls,
+            [new TalentRollDetailDto("MU", 10, 10, 4, 0, 5, true)],
+            TalentProbeStatus.Bestanden,
+            2,
+            true,
+            2,
+            equation,
+            historyEntry);
+        var target = new MasterTalentRollTargetResultDto(
+            "user",
+            "Spieler",
+            Guid.NewGuid(),
+            "Held",
+            result,
+            null,
+            null);
+        var state = new WuerfelState();
+
+        state.ApplyMasterTalentRollResults([target]);
+
+        var storedEntry = Assert.Single(state.Current.History);
+        Assert.Equal("Held", storedEntry.Context?.Snapshot?.HeroName);
+        Assert.Equal("Klettern", storedEntry.Context?.DisplayName);
+        Assert.Empty(state.Current.LastMasterAttributeRolls);
+    }
+
     [Theory]
     [InlineData(WuerfelArea.ProbeSearch)]
     [InlineData(WuerfelArea.Attributes)]

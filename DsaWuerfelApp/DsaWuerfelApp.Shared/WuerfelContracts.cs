@@ -41,14 +41,54 @@ public sealed record RollHistoryCheckDto(
     int Roll,
     int TargetValue,
     int Difference,
-    RollHistoryCheckState State);
+    RollHistoryCheckState State,
+    int? RemainingPoints = null);
+
+public sealed record RollHistoryRequirementCheckDto(
+    string Name,
+    int BaseValue,
+    int Roll,
+    int Difference);
+
+public sealed record RollHistorySnapshotDto
+{
+    public string? Probe { get; init; }
+    public string? HeroName { get; init; }
+    public int? TalentValue { get; init; }
+    public int? EffectiveTalentValue { get; init; }
+    public int? BasisModifier { get; init; }
+    public int? EffectiveModifier { get; init; }
+    public string? SpecializationName { get; init; }
+    public int? SpecializationModifier { get; init; }
+    public string? SchlechteEigenschaftName { get; init; }
+    public int? SchlechteEigenschaftModifier { get; init; }
+    public int? SuccessCount { get; init; }
+    public int? FailureCount { get; init; }
+    public int? Margin { get; init; }
+    public string? EigenschaftName { get; init; }
+    public int? EigenschaftWert { get; init; }
+    public int? TargetValue { get; init; }
+    public bool? EigenschaftSetztSichDurch { get; init; }
+    public int? RequiredTalentValue { get; init; }
+    public int? RequiredCompensation { get; init; }
+    public RollHistoryRequirementCheckDto[] RequirementChecks { get; init; } = [];
+    public int? OriginalZfw { get; init; }
+    public int? AutomaticModifier { get; init; }
+    public int? ManualModifier { get; init; }
+    public int? PreRollZfp { get; init; }
+    public int? RawZfp { get; init; }
+    public int? AvailableZfp { get; init; }
+    public bool? ManualModifierRequired { get; init; }
+    public string[] SelectedOptions { get; init; } = [];
+}
 
 public sealed record RollHistoryContextDto(
     RollHistoryKind Kind,
     string DisplayName,
     RollHistoryOutcome Outcome,
     int? RemainingPoints,
-    RollHistoryCheckDto[] Checks);
+    RollHistoryCheckDto[] Checks,
+    RollHistorySnapshotDto? Snapshot = null);
 
 public sealed record RollHistoryEntryDto(
     string PlayerName,
