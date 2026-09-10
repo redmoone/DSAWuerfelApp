@@ -174,9 +174,41 @@ Status: TEILWEISE
 - Native iOS-/Android-Dateiauswahl, physische Touchbedienung und Tastatur-/Dropnachweis auf echten Geräten fehlen.
 - Die vier bekannten Dice-History-Baselinefehler und der bestehende offene Detail-Timeout bleiben unverändert.
 
+### Loot / Commit
+
+- Commit: `4be149e`
+
 ## M5 – Endboss: Responsive und integrierte Abnahme
 
-Status: AUSSTEHEND
+Status: TEILWEISE
+
+Änderungen:
+
+- `DsaWuerfelApp/DsaWuerfelApp.Tests/Browser/management-ui.cjs`: Draftschutz, Doppelsubmit und gesperrter programmgesteuerter Drop bei verzögertem Upload als isolierte UI-Workflows ergänzt.
+- `DsaWuerfelApp/DsaWuerfelApp.Tests/Browser/responsive-ui.cjs`: Verwaltungsschwellen 899/900/901px, expandierte Sidebar, zweispaltige/einspaltige Geometrie, 44px-Ziele, Fokusreichweite, lange Session-/Dateinamen sowie offene Editoren/Bestätigungen geprüft.
+- `docs/ai/mobile-ui-refactor-context.md`: neuer datierter Abschlussstand nur für Lobby, SessionTree, Heldenverwaltung, Navigation und Validierung ergänzt; die alte Mobile-Historie blieb unverändert.
+
+### Besiegte Mobs
+
+- `dotnet build DsaWuerfelApp.sln -c Release -v minimal`: PASS, 0 Warnungen, 0 Fehler.
+- `dotnet test DsaWuerfelApp.sln -c Release --no-restore -v minimal`: BASELINE ROT. Zwei Läufe ergaben 93/99 bzw. 92/99 bestandene Tests; die wechselnden Fehler betreffen ausschließlich die bereits bekannten RollHistory-/Spell-Berechnungsfälle. Keine Assertion wurde abgeschwächt oder übersprungen.
+- Frischer Release-Publish nach `C:\Users\Bosko\AppData\Local\Temp\dsawuerfel-management-m5-92e565be3b934ee78e29b1ea82a08071`: PASS.
+- `node management-ui.cjs <M5-Publish>`: PASS; SessionTree, Draftschutz, Doppelsubmit, verzögerter Upload/Drop-Sperre, Heldenaktivierung, Bestätigungen und Importvalidierung geprüft.
+- `node responsive-ui.cjs <M5-Publish>`: BASELINE ROT mit genau vier bekannten Dice-History-Sichtbarkeitsfehlern bei Tablet/Desktop; die Management-Boundaries 899/900/901px und der frühere 320px-Helden-Overflow sind ohne neue Fehler durchlaufen.
+- `node app-workflows.cjs <M5-Publish>`: BASELINE ROT erst beim bekannten offenen Würfel-Detail-Timeout; Login, Sessionworkflow, Helden-Synchronisierung und Bad-Trait-Workflow bestanden davor.
+- `node dice-lifecycle.cjs`: PASS; 10 Navigationszyklen, 2 unabhängige Instanzen, keine offenen Frames/Listener.
+- `node --check` für alle geänderten Browser-/Dropzone-Skripte: PASS.
+- `git diff --check`: vor dem M5-Commit erneut auszuführen.
+
+### Offene Mobs
+
+- Ein echter erfolgreicher Parserimport mit anonymisierter gültiger HLD/XML/ZIP-Datei sowie native iOS-/Android-Dateiauswahl und physische Touchabnahme fehlen.
+- Die vollständige .NET-Suite und die Würfel-Workflow-/Responsive-Matrix bleiben wegen der vorbestehenden, teils zufällig wechselnden fachlichen Baselinefehler rot.
+- Der im Plan ausdrücklich dokumentierte White-on-Gold-Kontrast wurde nicht als WCAG-AA-konform bewertet.
+
+### Loot / Commit
+
+- Commit: wird nach dem Diff-Check ergänzt.
 
 ## Offene Abnahme nach M0
 

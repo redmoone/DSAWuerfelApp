@@ -538,3 +538,13 @@ State-Verbindungen:
 - CN-4: gültige anonymisierte Importdatei sowie spezielle Datensätze für Alternativproben, Zauberoptionen, Meisterziele und umfangreiche History fehlen für einzelne Szenarien.
 - CN-6 wird nur benötigt, falls die bestehende Reihenfolge bei sehr geringer Höhe nach der natürlichen Reflow-Anordnung nicht ausreicht.
 - Der Server läuft aktuell absichtlich über HTTP; eine spätere HTTPS-Aktivierung benötigt eine gültige Reverse-Proxy-/Zertifikatskonfiguration und eine bewusste Änderung von `Web:UseHttps`.
+
+## 17. Management-UI-Abschlussstand (2026-09-10)
+
+Die Verwaltungsseiten wurden nach dem bestehenden Würfelkontext weitergeführt; die Details und Commitzuordnung stehen in `docs/ai/management-ui-refactor-progress.md`.
+
+- Lobby: Kopf, Sessionsboard und Session-Workbench folgen direkt aufeinander. Join/Create nutzt je ein Submitformular mit Busy-Sperre; der Name für Beitreten/Erstellen bleibt bei unabhängigen Sessionupdates als Entwurf erhalten.
+- SessionTree: Die aktive Session wird einmalig geöffnet, manuelles Zuklappen bleibt bei Metadatenupdates erhalten. Öffnen/Weiterwürfeln, Mitglieder, Kopieren und Verwaltungsaktionen bleiben in derselben Komponente; destruktive Aktionen geben lokale Inline-Bestätigung und Rückmeldung.
+- Heldenverwaltung: Die Seite verwendet eine dunkle 1600px-Shell mit 3fr/2fr-Raster und Reflow bei 900px. Helden erscheinen als kompakte Zeilen mit ausschließlich fachlichem Aktivstatus. Import nutzt sichtbares/fokussierbares `InputFile`, HLD/XML/ZIP-Prüfung, 15-Dateien-/5-MiB-Grenzen, Busy-Sperre und Dropzone-Lifecycle ohne zweite Registrierung.
+- Navigation: Die vorhandene 640/641px-Shell und ihre Zustands-/Scrollverträge bleiben erhalten; Verwaltungsflächen verwenden die gemeinsamen dunklen Panel-/Goldwerte.
+- Validierung: Die isolierten Playwright-Checks prüfen SessionTree, Draft-/Doppelsubmit, verzögerten Upload mit gesperrtem Drop, Heldenaktionen sowie 320px bis 1920px und 899/900/901px. `dice-lifecycle.cjs` bleibt grün. Der echte Parserimport mit gültiger anonymisierter Datei und native iOS-/Android-/physische Touchabnahme fehlen weiterhin. Die bestehende Würfel-History-/Zauber-Testbaseline bleibt fachlich rot und ist im Raidlog getrennt ausgewiesen.

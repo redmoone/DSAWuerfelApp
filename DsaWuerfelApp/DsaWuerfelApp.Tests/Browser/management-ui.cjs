@@ -84,6 +84,30 @@ const { createAppFixture } = require('./browser-fixture.cjs');
     await new Promise(resolve => setTimeout(resolve, 150));
     assert.equal((await details()).players.length, playersBeforeLeaveCancel, 'leave cancel changed membership');
 
+    await player.goto(origin);
+    await player.locator('#session-workbench').waitFor({ state: 'visible' });
+    await player.locator('.lobby-page .session-node.active').waitFor({ state: 'visible' });
+    await player.waitForTimeout(300);
+    const playerDraft = 'Lobby-Entwurf bleibt erhalten';
+    await player.locator('#session-player-name').fill(playerDraft);
+    await leavingPlayer.goto(origin);
+    const refreshNode = leavingPlayer.locator('.lobby-page .session-node.active').first();
+    await refreshNode.waitFor();
+    await refreshNode.getByRole('button', { name: 'Deinen Namen in dieser Session ändern', exact: true }).click();
+    await refreshNode.getByPlaceholder('Spielername', { exact: true }).fill('Remote-Refreshname');
+    await refreshNode.getByRole('button', { name: 'Speichern', exact: true }).click();
+    await waitFor(async () => (await details()).players.some(item => item.name === 'Remote-Refreshname'), 'remote refresh rename missing');
+    await waitFor(async () => await player.locator('#session-player-name').inputValue() === playerDraft, 'lobby player draft was overwritten by refresh');
+
+    await master.goto(origin);
+    await master.getByRole('button', { name: 'Erstellen', exact: true }).click();
+    const sessionsBeforeDoubleSubmit = await master.evaluate(async () => await (await fetch('/api/sessions/mine')).json());
+    await master.getByPlaceholder('z.B. Borbarads Erben').fill('Doppelsubmit-Prüfrunde');
+    await master.getByRole('button', { name: 'Session Erstellen', exact: true }).dblclick();
+    await master.locator('.wuerfel-page-container').waitFor();
+    const sessionsAfterDoubleSubmit = await master.evaluate(async () => await (await fetch('/api/sessions/mine')).json());
+    assert.equal(sessionsAfterDoubleSubmit.length, sessionsBeforeDoubleSubmit.length + 1, 'double submit created more than one session');
+
     await master.goto(`${origin}/helden-verwaltung`);
     await master.locator('.helden-verwaltung-page').waitFor();
     const heroRows = master.locator('.hero-row');
@@ -122,6 +146,40 @@ const { createAppFixture } = require('./browser-fixture.cjs');
       buffer: Buffer.from('<hero />')
     })));
     await master.getByRole('alert').filter({ hasText: 'Maximal 15 Dateien' }).waitFor();
+
+    let releaseUpload = null;
+    let continueUpload;
+    const uploadPaused = new Promise(resolve => { continueUpload = resolve; });
+    await master.route('**/api/heroes/upload', async route => {
+      releaseUpload = () => continueUpload();
+      await uploadPaused;
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+    });
+    await heroInput.setInputFiles({
+      name: 'verzoegerter-import.xml',
+      mimeType: 'text/xml',
+      buffer: Buffer.from('<not-a-valid-hero />')
+    });
+    const importButton = master.getByRole('button', { name: 'Importieren', exact: true });
+    const importTask = importButton.click();
+    await waitFor(async () => await heroInput.isDisabled(), 'file input was not disabled during upload');
+    await waitFor(async () => releaseUpload !== null, 'mock upload request was not observed');
+    const selectedBeforeDrop = await master.locator('.selected-files li').allTextContents();
+    const dropState = await master.evaluate(() => {
+      const input = document.querySelector('#hero-files');
+      const dropZone = document.querySelector('.drop-zone');
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(new File(['<second />'], 'second.xml', { type: 'text/xml' }));
+      const event = new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer });
+      const before = input.files?.[0]?.name ?? null;
+      dropZone.dispatchEvent(event);
+      return { before, after: input.files?.[0]?.name ?? null };
+    });
+    assert.equal(dropState.before, selectedBeforeDrop[0]);
+    assert.equal(dropState.after, selectedBeforeDrop[0], 'dropzone changed selection during upload');
+    await releaseUpload();
+    await importTask;
+    await master.unroute('**/api/heroes/upload');
 
     const remainingHero = heroRow('Held0-1');
     await remainingHero.getByRole('button', { name: 'Entfernen', exact: true }).click();

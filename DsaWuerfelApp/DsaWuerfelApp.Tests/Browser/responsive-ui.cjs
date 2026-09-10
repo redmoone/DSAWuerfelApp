@@ -81,6 +81,111 @@ async function assertReachableControl(page, selector, label) {
   assert.ok(geometry.top >= -1 && geometry.bottom <= page.viewportSize().height + 1, `${label}: control is not reachable ${JSON.stringify(geometry)}`);
 }
 
+async function assertManagementLayout(page, routeName, label) {
+  const layout = await page.evaluate(route => {
+    const read = selector => {
+      const element = document.querySelector(selector);
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      return {
+        top: rect.top,
+        bottom: rect.bottom,
+        left: rect.left,
+        right: rect.right,
+        width: rect.width,
+        height: rect.height,
+        gridTemplateColumns: style.gridTemplateColumns,
+        borderTopWidth: style.borderTopWidth,
+        boxShadow: style.boxShadow
+      };
+    };
+    const selectors = route === 'lobby'
+      ? { shell: '.lobby-shell', list: '.session-board', form: '.session-workbench', panel: '.session-board', active: '.session-node.active' }
+      : { shell: '.helden-verwaltung-shell', list: '.hero-list-panel', form: '.hero-import-panel', panel: '.hero-list-panel', active: '.hero-status.active' };
+    return {
+      shell: read(selectors.shell),
+      list: read(selectors.list),
+      form: read(selectors.form),
+      panel: read(selectors.panel),
+      active: read(selectors.active),
+      viewportWidth: document.documentElement.clientWidth
+    };
+  }, routeName);
+
+  assert.ok(layout.shell && layout.list && layout.form, `${label}: management geometry is incomplete`);
+  assert.equal(layout.shell.boxShadow, 'none', `${label}: shell has a shadow`);
+  assert.equal(layout.list.borderTopWidth, '1px', `${label}: list panel border is not 1px`);
+  assert.equal(layout.form.borderTopWidth, '1px', `${label}: form panel border is not 1px`);
+  const columnCount = layout.shell.gridTemplateColumns.trim().split(/\s+/).length;
+
+  if (page.viewportSize().width <= 900) {
+    assert.ok(layout.form.top >= layout.list.bottom - 1, `${label}: form panel does not follow list panel`);
+    assert.equal(columnCount, 1, `${label}: expected one management column`);
+  } else {
+    assert.ok(Math.abs(layout.form.top - layout.list.top) <= 2, `${label}: management panels are not side by side`);
+    assert.ok(layout.form.left >= layout.list.right - 1, `${label}: management panels overlap`);
+    assert.equal(columnCount, 2, `${label}: expected two management columns`);
+  }
+
+  const controlSelector = routeName === 'lobby'
+    ? '.session-board button, .session-workbench button, .session-workbench input'
+    : '.hero-list-panel button, .hero-import-panel button, .hero-import-panel input, .hero-import-panel label';
+  const controls = await page.locator(controlSelector).evaluateAll(elements => elements.map(element => {
+    const rect = element.getBoundingClientRect();
+    return { height: rect.height, left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, tag: element.tagName };
+  }));
+  assert.ok(controls.length > 0, `${label}: no management controls rendered`);
+  for (const control of controls) {
+    assert.ok(control.height >= 43, `${label}: ${control.tag} control is shorter than 44px (${control.height})`);
+    assert.ok(control.left >= -1 && control.right <= page.viewportSize().width + 1, `${label}: control is clipped ${JSON.stringify(control)}`);
+  }
+
+  const focusTarget = routeName === 'lobby'
+    ? page.locator('.session-player-name, .mode-pill, .session-toggle').first()
+    : page.locator('#hero-files, .management-btn, .jump-link').first();
+  await focusTarget.focus();
+  const focused = await focusTarget.evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom };
+  });
+  assert.ok(focused.left >= -1 && focused.right <= page.viewportSize().width + 1 && focused.top >= -1 && focused.bottom <= page.viewportSize().height + 1, `${label}: focused control is clipped ${JSON.stringify(focused)}`);
+
+  if (routeName === 'lobby') {
+    const active = page.locator('.lobby-page .session-node.active').first();
+    await active.waitFor({ state: 'visible' });
+    const renameButton = active.getByRole('button', { name: 'Umbenennen', exact: true });
+    await renameButton.click();
+    const edit = active.locator('.session-edit-input');
+    await edit.fill('Eine sehr lange Sessionbezeichnung für den Umbruch an schmalen Arbeitsflächen');
+    await assertNoHorizontalOverflow(page, `${label} long session editor`);
+    await active.getByRole('button', { name: 'Abbrechen', exact: true }).click();
+    await edit.waitFor({ state: 'hidden' });
+
+    const deleteButton = active.getByRole('button', { name: 'Löschen', exact: true });
+    await deleteButton.click();
+    await active.locator('.session-confirmation').waitFor({ state: 'visible' });
+    await assertNoHorizontalOverflow(page, `${label} session confirmation`);
+    await active.locator('.session-confirmation').getByRole('button', { name: 'Abbrechen', exact: true }).click();
+  } else {
+    const fileInput = page.locator('#hero-files');
+    await fileInput.setInputFiles({
+      name: 'eine-sehr-lange-heldendatei-fuer-den-umbruchtest-mit-mehr-als-einhundertzeichen.xml',
+      mimeType: 'text/xml',
+      buffer: Buffer.from('<not-a-valid-hero />')
+    });
+    await page.getByText('eine-sehr-lange-heldendatei-fuer-den-umbruchtest-mit-mehr-als-einhundertzeichen.xml', { exact: true }).waitFor();
+    await assertNoHorizontalOverflow(page, `${label} long file name`);
+    await fileInput.setInputFiles([]);
+
+    const removeButton = page.getByRole('button', { name: 'Entfernen', exact: true }).first();
+    await removeButton.click();
+    await page.locator('.hero-confirmation').waitFor({ state: 'visible' });
+    await assertNoHorizontalOverflow(page, `${label} hero confirmation`);
+    await page.locator('.hero-confirmation').getByRole('button', { name: 'Abbrechen', exact: true }).click();
+  }
+}
+
 const diceModes = [
   { button: 'mode-probe', panel: '.probe-setup-section' },
   { button: 'mode-attribute', panel: '.attribute-setup-section' },
@@ -274,7 +379,7 @@ async function saveBaselineScreenshot(page, screenshotDirectory, routeName, side
     const session = {};
 
     await page.getByRole('button', { name: 'Erstellen', exact: true }).click();
-    await page.getByPlaceholder('z.B. Borbarads Erben').fill('Responsive Browserrunde');
+    await page.getByPlaceholder('z.B. Borbarads Erben').fill('Responsive Browserrunde mit langer Sessionbezeichnung');
     await page.getByRole('button', { name: 'Session Erstellen', exact: true }).click();
     await page.locator('.wuerfel-page-container').waitFor();
     const sessions = await page.evaluate(async () => await (await fetch('/api/sessions/mine')).json());
@@ -354,6 +459,24 @@ async function saveBaselineScreenshot(page, screenshotDirectory, routeName, side
         if (route.name === 'lobby' && viewport.width < 641) {
           await check(`${viewport.name} mobile navigation`, () => assertMobileMenu(page, viewport.name));
         }
+      }
+    }
+
+    for (const viewport of [
+      { name: 'boundary-899', width: 899, height: 700 },
+      { name: 'boundary-900', width: 900, height: 700 },
+      { name: 'boundary-901', width: 901, height: 700 }
+    ]) {
+      for (const route of [
+        { name: 'lobby', path: '/', root: '.lobby-page' },
+        { name: 'heroes', path: '/helden-verwaltung', root: '.helden-verwaltung-page' }
+      ]) {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height });
+        await page.goto(origin + route.path);
+        await page.locator(route.root).waitFor();
+        await setDesktopSidebar(page, true);
+        await waitForStableLayout(page, route.root);
+        await check(`${viewport.name} ${route.name} management`, () => assertManagementLayout(page, route.name, `${viewport.name} ${route.name}`));
       }
     }
 
