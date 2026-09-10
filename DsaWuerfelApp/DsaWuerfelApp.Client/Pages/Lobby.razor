@@ -3,285 +3,227 @@
 @attribute [AllowAnonymous]
 
 <div class="lobby-page">
-    <div class="lobby-shell">
-        <section class="lobby-overview panel-surface">
-            <div class="overview-header">
-                <div class="overview-copy">
-                    <p class="hero-eyebrow">Gamesessions</p>
-                    <h1 class="hero-title">DSA Würfelrunde</h1>
-                    <p class="hero-description">
-                        Verwalte deine Runden zentral, öffne bestehende Sessions direkt wieder und halte Gruppe,
-                        Join-Code und aktive Runde an einem Ort zusammen.
-                    </p>
-                </div>
-
-                <div class="overview-pills">
-                    <div class="info-pill">Magic Link</div>
-                    <div class="info-pill">Persistente Runden</div>
-                    <div class="info-pill">Live Spielerstatus</div>
-                </div>
+    <div class="lobby-shell @(IsAuthenticated ? "authenticated" : "anonymous")">
+        <header class="lobby-header">
+            <div class="lobby-heading">
+                <p class="hero-eyebrow">DSA Würfelrunde</p>
+                <h1>Gamesessions</h1>
             </div>
 
-            <div class="overview-stats">
-                <article class="overview-stat">
-                    <span class="stat-label">Konto</span>
-                    <strong class="stat-value">@(IsAuthenticated ? "Bereit" : "Nicht angemeldet")</strong>
-                    <span class="stat-meta">@(IsAuthenticated ? CurrentUser!.Email : "Login per Magic Link")</span>
-                </article>
-
-                <article class="overview-stat">
-                    <span class="stat-label">Verknüpfte Sessions</span>
-                    <strong class="stat-value">@SessionCount</strong>
-                    <span class="stat-meta">@(SessionCount == 1 ? "Eine Runde sichtbar" : "Runden in deinem Board")</span>
-                </article>
-
-                <article class="overview-stat">
-                    <span class="stat-label">Aktive Runde</span>
-                    <strong class="stat-value">@ActiveSessionTitle</strong>
-                    <span class="stat-meta">@ActiveSessionMeta</span>
-                </article>
-            </div>
-
-            @if (IsAuthenticated && ActiveSession is not null)
+            @if (IsAuthenticated && CurrentUser is not null)
             {
-                <div class="active-session-strip">
-                    <div class="active-session-copy">
-                        <span class="active-session-label">Aktiv geöffnet</span>
-                        <strong class="active-session-name">@ActiveSession.Name</strong>
-                        <span class="active-session-meta">@ActiveOnlineCount von @ActivePlayerCount Spielern online</span>
-                    </div>
-
+                <div class="lobby-account">
+                    <span class="lobby-account-email">@CurrentUser.Email</span>
                     <button type="button"
-                            class="session-btn"
-                            @onclick="GoToWuerfel">
-                        Zur Würfelseite
+                            class="session-btn secondary-btn"
+                            @onclick="Logout"
+                            disabled="@_isSigningOut"
+                            aria-busy="@(_isSigningOut ? "true" : "false")">
+                        @(_isSigningOut ? "Abmelden …" : "Abmelden")
                     </button>
                 </div>
             }
-        </section>
+        </header>
 
-        <section class="session-workbench panel-surface">
-            <div class="section-header">
-                <div>
-                    <h2 class="panel-title">Sessionsteuerung</h2>
-                    <p class="panel-subtitle">
-                        Konto, Name und Sessionmodus sind jetzt getrennt von deinem eigentlichen Rundenboard.
-                    </p>
-                </div>
-            </div>
+        @if (!AuthState.IsLoaded)
+        {
+            <section class="lobby-auth-panel panel-surface state-card" aria-live="polite">
+                <span class="section-kicker">Wird geladen</span>
+                <h2 class="panel-title">Gamesessions</h2>
+                <p class="panel-subtitle">Authentifizierung wird geladen …</p>
+            </section>
+        }
+        else if (!IsAuthenticated)
+        {
+            <section class="lobby-auth-panel panel-surface" aria-labelledby="auth-panel-title">
+                <span class="section-kicker">Zugang</span>
+                <h2 id="auth-panel-title" class="panel-title">Anmelden</h2>
+                <p class="panel-subtitle">Sende dir einen Magic Link, um deine Gamesessions zu öffnen.</p>
 
-            @if (!AuthState.IsLoaded)
-            {
-                <div class="subpanel-card state-card">
-                    <span class="section-kicker">Wird geladen</span>
-                    <p class="mode-text">Authentifizierung und Sessionstatus werden geladen...</p>
-                </div>
-            }
-            else if (!IsAuthenticated)
-            {
-                <div class="control-stack">
-                    <div class="subpanel-card intro-card">
-                        <span class="section-kicker">Schritt 1</span>
-                        <h3 class="subpanel-title">Per Magic Link anmelden</h3>
-                        <p class="mode-text">
-                            Nach dem Login werden deine bestehenden Runden geladen und du kannst sofort wieder
-                            beitreten oder neue Sessions erstellen.
-                        </p>
+                <form class="session-form auth-form"
+                      @onsubmit="RequestMagicLink"
+                      @onsubmit:preventDefault
+                      aria-busy="@(_isSendingMagicLink ? "true" : "false")">
+                    <label class="input-group" for="auth-email">
+                        <span class="input-label">E-Mail</span>
+                        <input id="auth-email"
+                               class="session-input"
+                               type="email"
+                               @bind="_email"
+                               @bind:event="oninput"
+                               maxlength="320"
+                               autocomplete="email"
+                               placeholder="name@beispiel.de"
+                               disabled="@_isSendingMagicLink"/>
+                    </label>
+
+                    <button type="submit"
+                            class="session-btn primary-btn"
+                            disabled="@IsMagicLinkRequestDisabled"
+                            aria-busy="@(_isSendingMagicLink ? "true" : "false")">
+                        @MagicLinkRequestButtonText
+                    </button>
+                </form>
+
+                @if (IsMagicLinkCooldownActive)
+                {
+                    <div class="magic-link-cooldown" role="status">@MagicLinkCooldownText</div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(_authMessage))
+                {
+                    <div class="session-success" role="status">@_authMessage</div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(_error))
+                {
+                    <div class="session-alert" role="alert">@_error</div>
+                }
+            </section>
+        }
+        else
+        {
+            <section id="session-board" class="session-board panel-surface" aria-labelledby="session-board-title">
+                <div class="section-header board-header">
+                    <div>
+                        <h2 id="session-board-title" class="panel-title">Meine Sessions (@SessionCount)</h2>
+                        <p class="panel-subtitle">Öffne eine Runde oder verwalte ihre Mitglieder und Aktionen in den Details.</p>
                     </div>
+                    <a class="jump-link" href="#session-workbench">Session beitreten/erstellen</a>
+                </div>
 
-                    <div class="subpanel-card">
-                        <label class="input-group">
-                            <span class="input-label">Email</span>
-                            <input class="session-input"
-                                   @bind="_email"
+                @if (!SessionState.IsLoaded)
+                {
+                    <div class="state-card" aria-live="polite">
+                        <span class="section-kicker">Wird geladen</span>
+                        <p class="mode-text">Deine Sessions werden geladen …</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="board-body">
+                        <SessionTree Sessions="SessionState.Sessions"
+                                     ActiveSessionId="@SessionState.ActiveSessionId"
+                                     EmptyText="Noch keine Sessions. Erstelle eine Session oder tritt einer bei."
+                                     ShowCopyButton="true"/>
+                    </div>
+                }
+            </section>
+
+            <section id="session-workbench"
+                     class="session-workbench panel-surface"
+                     aria-labelledby="session-workbench-title"
+                     aria-busy="@(_isSubmittingSession ? "true" : "false")">
+                <div class="section-header">
+                    <div>
+                        <h2 id="session-workbench-title" class="panel-title">Beitreten / Erstellen</h2>
+                        <p class="panel-subtitle">Der Name gilt für Beitreten und Erstellen. Bestehende Mitgliedschaften änderst du direkt in ihrer Session.</p>
+                    </div>
+                </div>
+
+                <div class="mode-toggle" role="group" aria-label="Sessionaktion">
+                    <button type="button"
+                            class="mode-pill @GetModeClass(SessionMode.Join)"
+                            aria-pressed="@(CurrentMode == SessionMode.Join ? "true" : "false")"
+                            @onclick="() => SetMode(SessionMode.Join)"
+                            disabled="@_isSubmittingSession">
+                        Beitreten
+                    </button>
+                    <button type="button"
+                            class="mode-pill @GetModeClass(SessionMode.Create)"
+                            aria-pressed="@(CurrentMode == SessionMode.Create ? "true" : "false")"
+                            @onclick="() => SetMode(SessionMode.Create)"
+                            disabled="@_isSubmittingSession">
+                        Erstellen
+                    </button>
+                </div>
+
+                <label class="input-group" for="session-player-name">
+                    <span class="input-label">Dein Name für diese Session</span>
+                    <input id="session-player-name"
+                           class="session-input"
+                           value="@_userName"
+                           @oninput="HandleUserNameInput"
+                           maxlength="40"
+                           autocomplete="nickname"
+                           placeholder="Spielername eingeben"
+                           disabled="@_isSubmittingSession"/>
+                </label>
+                <p class="field-hint">Dieser Name wird beim Beitreten oder Erstellen verwendet.</p>
+
+                @if (CurrentMode == SessionMode.Join)
+                {
+                    <form id="session-join-form"
+                          class="session-form mode-panel"
+                          @onsubmit="Join"
+                          @onsubmit:preventDefault
+                          aria-labelledby="session-join-title"
+                          aria-busy="@(_isSubmittingSession ? "true" : "false")">
+                        <div>
+                            <h3 id="session-join-title" class="mode-caption">Session beitreten</h3>
+                            <p class="mode-text">Gib den Join-Code deiner Gruppe ein.</p>
+                        </div>
+
+                        <label class="input-group" for="session-join-code">
+                            <span class="input-label">Session-Code</span>
+                            <input id="session-join-code"
+                                   class="session-input session-code-input"
+                                   @bind="_joinCode"
                                    @bind:event="oninput"
-                                   maxlength="320"
-                                   autocomplete="email"
-                                   placeholder="name@beispiel.de"/>
+                                   maxlength="8"
+                                   autocomplete="off"
+                                   spellcheck="false"
+                                   placeholder="z.B. X7K9"
+                                   disabled="@_isSubmittingSession"/>
                         </label>
 
-                        <button type="button"
-                                class="session-btn"
-                                @onclick="RequestMagicLink"
-                                disabled="@IsMagicLinkRequestDisabled">
-                            @MagicLinkRequestButtonText
+                        <button type="submit"
+                                class="session-btn primary-btn"
+                                disabled="@(!CanJoinSession)"
+                                aria-busy="@(_isSubmittingSession ? "true" : "false")">
+                            Sitzung Beitreten
                         </button>
-
-                        @if (IsMagicLinkCooldownActive)
-                        {
-                            <div class="magic-link-cooldown">@MagicLinkCooldownText</div>
-                        }
-
-                        @if (!string.IsNullOrWhiteSpace(_authMessage))
-                        {
-                            <div class="session-success">@_authMessage</div>
-                        }
-                    </div>
-                </div>
-            }
-            else
-            {
-                <div class="control-stack">
-                    <div class="subpanel-card">
-                        <div class="card-topline">
-                            <span class="section-kicker">Identität</span>
-                            <button type="button"
-                                    class="session-btn secondary-btn"
-                                    @onclick="Logout"
-                                    disabled="@_isSigningOut">
-                                @(_isSigningOut ? "Logout..." : "Logout")
-                            </button>
+                    </form>
+                }
+                else
+                {
+                    <form id="session-create-form"
+                          class="session-form mode-panel"
+                          @onsubmit="Create"
+                          @onsubmit:preventDefault
+                          aria-labelledby="session-create-title"
+                          aria-busy="@(_isSubmittingSession ? "true" : "false")">
+                        <div>
+                            <h3 id="session-create-title" class="mode-caption">Neue Session erstellen</h3>
+                            <p class="mode-text">Vergib optional einen Namen für deine neue Runde.</p>
                         </div>
 
-                        <div class="account-summary">
-                            <div class="account-block">
-                                <span class="account-label">Angemeldet als</span>
-                                <strong class="account-value">@CurrentUser!.Email</strong>
-                            </div>
-                            <div class="account-block">
-                                <span class="account-label">Spielername</span>
-                                <strong class="account-value">@ResolvedPlayerName</strong>
-                            </div>
-                        </div>
-
-                        <label class="input-group">
-                            <span class="input-label">Dein Name in der Session</span>
-                            <input class="session-input"
-                                   @bind="_userName"
+                        <label class="input-group" for="session-name">
+                            <span class="input-label">Session-Name</span>
+                            <input id="session-name"
+                                   class="session-input"
+                                   @bind="_sessionName"
                                    @bind:event="oninput"
-                                   maxlength="40"
-                                   autocomplete="nickname"
-                                   placeholder="Spielername eingeben"/>
+                                   maxlength="80"
+                                   autocomplete="off"
+                                   placeholder="z.B. Borbarads Erben"
+                                   disabled="@_isSubmittingSession"/>
                         </label>
-                    </div>
 
-                    <div class="subpanel-card">
-                        <div class="card-topline">
-                            <span class="section-kicker">Sessionmodus</span>
-                            <span class="mode-live">@(CurrentMode == SessionMode.Join ? "Beitritt" : "Neue Runde")</span>
-                        </div>
+                        <button type="submit"
+                                class="session-btn primary-btn"
+                                disabled="@(!CanCreateSession)"
+                                aria-busy="@(_isSubmittingSession ? "true" : "false")">
+                            Session Erstellen
+                        </button>
+                    </form>
+                }
 
-                        <div class="mode-toggle" role="tablist" aria-label="Session Modus">
-                            <button type="button"
-                                    class="mode-pill @GetModeClass(SessionMode.Join)"
-                                    @onclick="() => SetMode(SessionMode.Join)">
-                                Mit Code
-                            </button>
-                            <button type="button"
-                                    class="mode-pill @GetModeClass(SessionMode.Create)"
-                                    @onclick="() => SetMode(SessionMode.Create)">
-                                Erstellen
-                            </button>
-                        </div>
-
-                        @if (CurrentMode == SessionMode.Join)
-                        {
-                            <div class="mode-panel">
-                                <span class="mode-caption">Session beitreten</span>
-                                <p class="mode-text">
-                                    Gib den Join-Code deiner Gruppe ein. Die Session wird danach direkt als aktive Runde
-                                    geöffnet.
-                                </p>
-
-                                <label class="input-group">
-                                    <span class="input-label">Session Code</span>
-                                    <input class="session-input session-code-input"
-                                           @bind="_joinCode"
-                                           @bind:event="oninput"
-                                           maxlength="8"
-                                           autocomplete="off"
-                                           spellcheck="false"
-                                           placeholder="z.B. X7K9"/>
-                                </label>
-
-                                <button type="button"
-                                        class="session-btn"
-                                        @onclick="Join"
-                                        disabled="@(!CanJoinSession)">
-                                    Sitzung Beitreten
-                                </button>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="mode-panel">
-                                <span class="mode-caption">Neue Runde erstellen</span>
-                                <p class="mode-text">
-                                    Erstelle eine neue Runde und setze sie sofort als aktive Session für deinen Tisch.
-                                </p>
-
-                                <label class="input-group">
-                                    <span class="input-label">Session Name</span>
-                                    <input class="session-input"
-                                           @bind="_sessionName"
-                                           @bind:event="oninput"
-                                           maxlength="80"
-                                           autocomplete="off"
-                                           placeholder="z.B. Borbarads Erben"/>
-                                </label>
-
-                                <div class="create-callout">
-                                    <span class="callout-label">Join-Code</span>
-                                    <span class="callout-text">
-                                        Der Session-Code wird nach dem Erstellen direkt im Rundenboard mit Copy-Button angezeigt.
-                                    </span>
-                                </div>
-
-                                <button type="button"
-                                        class="session-btn"
-                                        @onclick="Create"
-                                        disabled="@(!CanCreateSession)">
-                                    Session Erstellen
-                                </button>
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
-
-            @if (!string.IsNullOrWhiteSpace(_error))
-            {
-                <div class="session-alert">@_error</div>
-            }
-        </section>
-
-        <section class="session-board panel-surface">
-            <div class="section-header board-header">
-                <div>
-                    <h2 class="panel-title">Rundenboard</h2>
-                    <p class="panel-subtitle">
-                        Hier liegen alle Runden, in denen du Mitglied bist, inklusive Spielern, Status und Session-Code.
-                    </p>
-                </div>
-
-                <div class="board-badge">@SessionCount @(SessionCount == 1 ? "Session" : "Sessions")</div>
-            </div>
-
-            @if (IsAuthenticated)
-            {
-                <div class="board-body">
-                    <SessionTree Sessions="SessionState.Sessions"
-                                 ActiveSessionId="@SessionState.ActiveSessionId"
-                                 EmptyText="Noch keine Session verknüpft. Erstelle eine Runde oder tritt einer bei."
-                                 ShowCopyButton="true"/>
-                </div>
-            }
-            else if (AuthState.IsLoaded)
-            {
-                <div class="board-placeholder">
-                    <span class="section-kicker">Noch gesperrt</span>
-                    <p class="mode-text">
-                        Nach dem Login erscheinen hier deine Sessions, aktive Runde und die Live-Spielerlisten.
-                    </p>
-                </div>
-            }
-            else
-            {
-                <div class="board-placeholder">
-                    <span class="section-kicker">Wird geladen</span>
-                    <p class="mode-text">Das Rundenboard wird vorbereitet...</p>
-                </div>
-            }
-        </section>
+                @if (!string.IsNullOrWhiteSpace(_error))
+                {
+                    <div class="session-alert" role="alert">@_error</div>
+                }
+            </section>
+        }
     </div>
 </div>

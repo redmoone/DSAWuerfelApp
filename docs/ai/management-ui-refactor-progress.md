@@ -112,11 +112,38 @@ Status: GEPRÜFT
 
 ### Loot / Commit
 
-- Commit: wird nach dem lokalen M2-Commit im nächsten Raidabschnitt oder im Abschlussbericht ergänzt.
+- Commit: `a087130`
 
 ## M3 – Boss: Die Lobby ohne Labyrinth
 
-Status: AUSSTEHEND
+Status: TEILWEISE
+
+Änderungen:
+
+- `DsaWuerfelApp/DsaWuerfelApp.Client/Pages/Lobby.razor`: Marketingübersicht, Statistikduplikate und aktiver Rundenstreifen entfernt. Kopf, Konto/Abmelden, `Meine Sessions (N)` und das gemeinsame Beitreten-/Erstellen-Panel bilden jetzt die direkte DOM-Reihenfolge. Auth bleibt im selben File; Join/Create verwenden je einen Submitpfad.
+- `DsaWuerfelApp/DsaWuerfelApp.Client/Pages/Lobby.razor.cs`: Submit-Guard für Join/Create, Magic-Link- und Logout-Guards, Nutzer-/Session-Kontext für Namensentwürfe, Dirty-Schutz und stale-response-Schutz ergänzt. Nicht mehr gerenderte Präsentationsproperties entfernt.
+- `DsaWuerfelApp/DsaWuerfelApp.Client/Pages/Lobby.razor.css`: dunkle Würfelpalette, 1600px-Shell, 3fr/2fr-Grid, Reflow bei 900px, kompakte anonyme Anmeldung, Fokusumrisse und natürliche Dokumenthöhe umgesetzt.
+- `DsaWuerfelApp/DsaWuerfelApp.Tests/Browser/browser-fixture.cjs`: Loginbereitschaft auf `Abmelden` synchronisiert.
+
+### Besiegte Mobs
+
+- `dotnet build DsaWuerfelApp.sln -c Release -v minimal`: PASS, 0 Warnungen, 0 Fehler.
+- `dotnet test DsaWuerfelApp/DsaWuerfelApp.Tests/DsaWuerfelApp.Tests.csproj -c Release --no-restore --filter FullyQualifiedName~ClientStateTests`: PASS, 18/18.
+- `dotnet publish DsaWuerfelApp/DsaWuerfelApp/DsaWuerfelApp.csproj -c Release --output <temporärer M3-Pfad> -v minimal`: PASS.
+- `node management-ui.cjs <M3-Publish>`: PASS; Session erstellen/beitreten, Lobby-Sessionliste, Sessiondetails und lokale Verwaltungsabläufe geprüft.
+- `node app-workflows.cjs <M3-Publish>`: BASELINE ROT erst beim bestehenden Würfel-Detail-Timeout; Login, Session erstellen, zwei Beitritte und drei Heldenzuordnungen bestanden davor.
+- `node responsive-ui.cjs <M3-Publish>`: BASELINE ROT mit unveränderten vier History-Sichtbarkeitsfehlern; keine zusätzlichen Lobby-/Horizontalscrollfehler.
+- `node --check` für geänderte Browser-Skripte: PASS.
+- `git diff --check`: PASS.
+
+### Offene Mobs
+
+- Die vollständige Workflow-/Responsiveabnahme bleibt bis zur Behandlung der vorbestehenden Dice-Baselinefehler offen.
+- Die neue 899/900/901px-Verwaltungsgeometrie und die gezielten Draft-/Doppelsubmit-Prüfungen werden in M5 weiter ausgebaut.
+
+### Loot / Commit
+
+- Commit: wird nach dem lokalen M3-Commit im nächsten Raidabschnitt oder im Abschlussbericht ergänzt.
 
 ## M4 – Boss: Heldenverwaltung und Importtor
 

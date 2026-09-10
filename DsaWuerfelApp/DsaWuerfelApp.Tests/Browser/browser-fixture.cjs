@@ -115,7 +115,7 @@ async function createAppFixture(publishDirectory, { userCount = 3 } = {}) {
       const page = pages[i];
       const user = users[i];
       await page.goto(`${origin}/auth/magic-link/verify?token=${user.token}`);
-      await page.getByRole('button', { name: 'Logout', exact: true }).waitFor().catch(async error => {
+      await page.getByRole('button', { name: 'Abmelden', exact: true }).waitFor().catch(async error => {
         console.log('body', await page.locator('body').innerText());
         console.log('errors', errors);
         throw error;

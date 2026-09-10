@@ -11,12 +11,18 @@ public partial class Lobby : IDisposable
     private string _email = "";
     private string _error = "";
     private bool _isSendingMagicLink;
+    private bool _isSubmittingSession;
     private bool _isSigningOut;
+    private bool _isUserNameDirty;
     private string _joinCode = "";
     private CancellationTokenSource? _magicLinkCooldownCancellation;
     private DateTimeOffset? _magicLinkCooldownEndsAtUtc;
     private string _sessionName = "";
     private string _userName = "";
+    private string? _lastAppliedActiveSessionId;
+    private string? _lastAppliedUserId;
+    private bool _hasAppliedUserContext;
+    private bool _disposed;
 
     [SupplyParameterFromQuery(Name = "auth")]
     private string? AuthStatus { get; set; }
@@ -33,12 +39,15 @@ public partial class Lobby : IDisposable
     private AuthUserDto? CurrentUser => AuthState.Current.User;
     private SessionDetailsDto? ActiveSession => SessionState.ActiveSession;
     private int SessionCount => SessionState.Sessions.Count;
-    private int ActivePlayerCount => ActiveSession?.Players.Length ?? 0;
-    private int ActiveOnlineCount => ActiveSession?.Players.Count(player => player.IsOnline) ?? 0;
     private string? ResolvedPlayerName => ResolvePlayerName();
     private string NormalizedJoinCode => _joinCode.Trim().ToUpperInvariant();
-    private bool CanJoinSession => !string.IsNullOrWhiteSpace(ResolvedPlayerName) && !string.IsNullOrWhiteSpace(NormalizedJoinCode);
-    private bool CanCreateSession => !string.IsNullOrWhiteSpace(ResolvedPlayerName);
+    private bool CanJoinSession => IsAuthenticated &&
+                                    !_isSubmittingSession &&
+                                    !string.IsNullOrWhiteSpace(ResolvedPlayerName) &&
+                                    !string.IsNullOrWhiteSpace(NormalizedJoinCode);
+    private bool CanCreateSession => IsAuthenticated &&
+                                     !_isSubmittingSession &&
+                                     !string.IsNullOrWhiteSpace(ResolvedPlayerName);
 
     private int MagicLinkCooldownSecondsRemaining => _magicLinkCooldownEndsAtUtc is null
         ? 0
@@ -63,14 +72,9 @@ public partial class Lobby : IDisposable
         : ActiveSession?.Players
             .FirstOrDefault(player => string.Equals(player.UserId, CurrentUser.Id, StringComparison.Ordinal))?.Name;
 
-    private string ActiveSessionTitle => ActiveSession?.Name ?? "Keine Runde offen";
-
-    private string ActiveSessionMeta => ActiveSession is null
-        ? "Wähle oder öffne eine Session im Board"
-        : $"{ActiveOnlineCount} von {ActivePlayerCount} Spielern online";
-
     public void Dispose()
     {
+        _disposed = true;
         StopMagicLinkCooldown();
         AuthState.Changed -= HandleAuthChanged;
         SessionState.Changed -= HandleSessionStateChanged;
@@ -89,28 +93,42 @@ public partial class Lobby : IDisposable
 
     private async Task Join()
     {
-        if (!await EnsureAuthenticatedAsync())
+        if (_isSubmittingSession)
         {
             return;
         }
 
+        _isSubmittingSession = true;
+        var requestUserId = CurrentUser?.Id;
         var playerName = ResolvePlayerName();
-        if (string.IsNullOrWhiteSpace(playerName))
-        {
-            _error = "Bitte Namen eingeben";
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(NormalizedJoinCode))
-        {
-            _error = "Bitte Session-Code eingeben";
-            return;
-        }
-
+        var joinCode = NormalizedJoinCode;
         _error = string.Empty;
+
         try
         {
-            var success = await SessionState.JoinSessionAsync(NormalizedJoinCode, playerName);
+            if (!await EnsureAuthenticatedAsync() || !IsCurrentSubmitContext(requestUserId))
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(playerName))
+            {
+                _error = "Bitte Namen eingeben";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(joinCode))
+            {
+                _error = "Bitte Session-Code eingeben";
+                return;
+            }
+
+            var success = await SessionState.JoinSessionAsync(joinCode, playerName);
+            if (!IsCurrentSubmitContext(requestUserId))
+            {
+                return;
+            }
+
             if (success)
             {
                 Nav.NavigateTo("/wuerfel");
@@ -122,48 +140,72 @@ public partial class Lobby : IDisposable
         }
         catch (InvalidOperationException exception)
         {
-            _error = exception.Message;
+            if (IsCurrentSubmitContext(requestUserId))
+            {
+                _error = exception.Message;
+            }
+        }
+        finally
+        {
+            _isSubmittingSession = false;
         }
     }
 
     private async Task Create()
     {
-        if (!await EnsureAuthenticatedAsync())
+        if (_isSubmittingSession)
         {
             return;
         }
 
+        _isSubmittingSession = true;
+        var requestUserId = CurrentUser?.Id;
         var playerName = ResolvePlayerName();
-        if (string.IsNullOrWhiteSpace(playerName))
-        {
-            _error = "Bitte Namen eingeben";
-            return;
-        }
-
-        _error = string.Empty;
         var sessionName = string.IsNullOrWhiteSpace(_sessionName) ? BuildDefaultSessionName() : _sessionName.Trim();
+        _error = string.Empty;
 
         try
         {
+            if (!await EnsureAuthenticatedAsync() || !IsCurrentSubmitContext(requestUserId))
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(playerName))
+            {
+                _error = "Bitte Namen eingeben";
+                return;
+            }
+
             await SessionState.CreateSessionAsync(playerName, sessionName);
-            Nav.NavigateTo("/wuerfel");
+            if (IsCurrentSubmitContext(requestUserId))
+            {
+                Nav.NavigateTo("/wuerfel");
+            }
         }
         catch (InvalidOperationException exception)
         {
-            _error = exception.Message;
+            if (IsCurrentSubmitContext(requestUserId))
+            {
+                _error = exception.Message;
+            }
+        }
+        finally
+        {
+            _isSubmittingSession = false;
         }
     }
 
     private async Task RequestMagicLink()
     {
-        if (string.IsNullOrWhiteSpace(_email))
+        if (_isSendingMagicLink || IsMagicLinkCooldownActive)
         {
-            _error = "Bitte Email eingeben";
             return;
         }
 
-        if (IsMagicLinkCooldownActive)
+        if (string.IsNullOrWhiteSpace(_email))
         {
+            _error = "Bitte Email eingeben";
             return;
         }
 
@@ -189,6 +231,11 @@ public partial class Lobby : IDisposable
 
     private async Task Logout()
     {
+        if (_isSigningOut)
+        {
+            return;
+        }
+
         _isSigningOut = true;
         _error = string.Empty;
         _authMessage = string.Empty;
@@ -199,8 +246,12 @@ public partial class Lobby : IDisposable
             await Game.DisconnectAsync();
             await AuthState.LogoutAsync();
             _userName = string.Empty;
+            _isUserNameDirty = false;
             _joinCode = string.Empty;
             _sessionName = string.Empty;
+            _lastAppliedUserId = null;
+            _lastAppliedActiveSessionId = null;
+            _hasAppliedUserContext = false;
             CurrentMode = SessionMode.Join;
         }
         finally
@@ -211,6 +262,11 @@ public partial class Lobby : IDisposable
 
     private void SetMode(SessionMode mode)
     {
+        if (_isSubmittingSession)
+        {
+            return;
+        }
+
         CurrentMode = mode;
         _error = string.Empty;
 
@@ -238,6 +294,11 @@ public partial class Lobby : IDisposable
 
     private async Task<bool> EnsureGameConnectionAsync()
     {
+        if (_disposed)
+        {
+            return false;
+        }
+
         if (IsAuthenticated)
         {
             try
@@ -258,19 +319,50 @@ public partial class Lobby : IDisposable
 
     private void ApplyAuthenticatedDefaults()
     {
-        if (!string.IsNullOrWhiteSpace(ActiveSessionPlayerName))
+        if (!IsAuthenticated || CurrentUser is null)
         {
-            _userName = ActiveSessionPlayerName;
+            _userName = string.Empty;
+            _isUserNameDirty = false;
+            _lastAppliedUserId = null;
+            _lastAppliedActiveSessionId = null;
+            _hasAppliedUserContext = false;
+            return;
         }
-        else if (string.IsNullOrWhiteSpace(_userName) && !string.IsNullOrWhiteSpace(CurrentUser?.DisplayName))
+
+        var userId = CurrentUser.Id;
+        var activeSessionId = SessionState.ActiveSessionId;
+        var userChanged = !_hasAppliedUserContext ||
+                          !string.Equals(_lastAppliedUserId, userId, StringComparison.Ordinal);
+        var sessionChanged = !_hasAppliedUserContext ||
+                             !string.Equals(_lastAppliedActiveSessionId, activeSessionId, StringComparison.Ordinal);
+
+        if (userChanged)
         {
-            _userName = CurrentUser.DisplayName;
+            _userName = string.Empty;
+            _isUserNameDirty = false;
+            _joinCode = string.Empty;
+            _sessionName = string.Empty;
+        }
+
+        if (!_isUserNameDirty && (userChanged || sessionChanged || string.IsNullOrWhiteSpace(_userName)))
+        {
+            _userName = ActiveSessionPlayerName ?? CurrentUser.DisplayName ?? CurrentUser.Email ?? string.Empty;
         }
 
         if (string.IsNullOrWhiteSpace(_sessionName) && !string.IsNullOrWhiteSpace(_userName))
         {
             _sessionName = BuildDefaultSessionName();
         }
+
+        _lastAppliedUserId = userId;
+        _lastAppliedActiveSessionId = activeSessionId;
+        _hasAppliedUserContext = true;
+    }
+
+    private void HandleUserNameInput(ChangeEventArgs args)
+    {
+        _userName = args.Value?.ToString() ?? string.Empty;
+        _isUserNameDirty = true;
     }
 
     private void ApplyAuthQueryFeedback()
@@ -283,28 +375,52 @@ public partial class Lobby : IDisposable
 
     private void HandleAuthChanged()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
         _ = InvokeAsync(async () =>
         {
+            if (_disposed)
+            {
+                return;
+            }
+
             ApplyAuthenticatedDefaults();
             await SessionState.RefreshAsync();
             await EnsureGameConnectionAsync();
-            StateHasChanged();
+            if (!_disposed)
+            {
+                StateHasChanged();
+            }
         });
     }
 
     private void HandleSessionStateChanged()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
         _ = InvokeAsync(() =>
         {
+            if (_disposed)
+            {
+                return;
+            }
+
             ApplyAuthenticatedDefaults();
             StateHasChanged();
         });
     }
 
-    private void GoToWuerfel()
-    {
-        Nav.NavigateTo("/wuerfel");
-    }
+    private bool IsCurrentSubmitContext(string? userId)
+        => !_disposed &&
+           IsAuthenticated &&
+           !string.IsNullOrWhiteSpace(userId) &&
+           string.Equals(userId, CurrentUser?.Id, StringComparison.Ordinal);
 
     private string BuildDefaultSessionName()
     {
