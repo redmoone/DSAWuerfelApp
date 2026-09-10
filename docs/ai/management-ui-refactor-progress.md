@@ -208,11 +208,41 @@ Status: TEILWEISE
 
 ### Loot / Commit
 
-- Commit: wird nach dem Diff-Check ergänzt.
+- Commit: `d8b31db`
+
+## Nachlauf - Boss: Meisterwurf fuer Offline-Helden
+
+Status: IMPLEMENTIERT
+
+Aenderungen:
+
+- `DsaWuerfelApp/DsaWuerfelApp/Services/Infrastructure/Sessions/SessionRecordStore.cs`: Aktive Helden werden bei Bedarf aus den bestehenden `Heroes.IsActive`-Daten gelesen.
+- `DsaWuerfelApp/DsaWuerfelApp/Services/Infrastructure/Sessions/SessionService.cs`: Fehlende Laufzeitzuordnungen werden vor Sessiondetails und Meisterzielpruefungen ergaenzt; `IsOnline` bleibt reine Praesenzinformation.
+- `DsaWuerfelApp/DsaWuerfelApp.Tests/HeroAccessTests.cs`: Ein Offline-Spieler ohne vorherige Heldensynchronisierung kann vom Meister per API gewuerfelt werden.
+- `DsaWuerfelApp/DsaWuerfelApp.Tests/Browser/management-ui.cjs`: Ein geschlossener Spieler bleibt als auswaehlbares Meisterziel sichtbar.
+
+### Besiegte Mobs
+
+- `dotnet build DsaWuerfelApp.sln -c Release --no-restore -v minimal`: PASS, 0 Warnungen, 0 Fehler.
+- `dotnet test DsaWuerfelApp/DsaWuerfelApp.Tests/DsaWuerfelApp.Tests.csproj -c Release --no-restore --filter FullyQualifiedName~HeroAccessTests -v minimal`: PASS, 13/13.
+- `dotnet test DsaWuerfelApp.sln -c Release --no-restore -v minimal`: BASELINE ROT, 93/100 bestanden, 7 bekannte RollHistory-/Spell-Faelle fehlgeschlagen; keine davon betrifft die Sessionaenderung.
+- Frischer Release-Publish nach `C:\Users\Bosko\AppData\Local\Temp\dsa-offline-master-20260910213418`: PASS.
+- `node --check DsaWuerfelApp/DsaWuerfelApp.Tests/Browser/management-ui.cjs`: PASS.
+- `node management-ui.cjs <Offline-Publish>`: PASS; Spieler wurde geschlossen, als offline erkannt und blieb im Meisterziel-Selector sichtbar.
+- `git diff --check`: PASS.
+
+### Offene Mobs
+
+- Die vollstaendige .NET-Suite bleibt wegen der vorbestehenden, wechselnden RollHistory-/Spell-Baselinefehler rot.
+- Kein physisches Mobilgeraet wurde fuer diesen serverseitigen Ablauf benoetigt oder geprueft.
+
+### Loot / Commit
+
+- Commit: `2444d3e`; kein Push fuer diesen Nachlauf.
 
 ## Offene Abnahme nach M0
 
 - Die vier bestehenden Browser-Baselinefehler und acht .NET-Baselinefehler sind vor Produktänderungen reproduziert.
 - Gültiger echter Heldenimport mit anonymisierter Datei fehlt.
 - Native iOS-/Android-Dateiauswahl und physische Touchprüfung fehlen.
-- Kein Push, PR oder Deployment ausgeführt.
+- Der JSON-Commit `ad73854` wurde auf `origin/master` gepusht; für den Offline-Meisterwurf erfolgen kein Push, PR oder Deployment.
