@@ -2,13 +2,15 @@
     <h3 class="results-title">Wurf abschließen</h3>
 
     <div class="global-actions-bar">
-        <div class="left-actions">
+        <div class="roll-text-row">
             <TextPill Value="@RollText"
                       ValueChanged="@RollTextChanged"
                       Placeholder="Würfeltext"
                       Label="TEXT"
                       Disabled="@IsBusy"/>
+        </div>
 
+        <div class="left-actions">
             <ModifierPill Value="@Modifier"
                           DisplayValue="@CurrentDisplayModifier"
                           ValueChanged="ModifierChanged"/>
@@ -33,17 +35,17 @@
                            title="Tisch leeren"
                            Class="rounded-circle reset-roll-button"
                            Style="width: 48px; height: 48px; background-color: var(--pill-bg); color: var(--dsa-white); border: 1px solid var(--dsa-gold);"/>
-        </div>
 
-        <div class="right-actions">
-            <button type="button"
-                    class="dsa-btn"
-                    title="Wurf ausführen"
-                    aria-label="Würfeln"
-                    @onclick="RollRequested"
-                    disabled="@(!CanRoll || IsBusy)">
-                Würfeln
-            </button>
+            <div class="right-actions">
+                <button type="button"
+                        class="dsa-btn"
+                        title="Wurf ausführen"
+                        aria-label="Würfeln"
+                        @onclick="RollRequested"
+                        disabled="@(!CanRoll || IsBusy)">
+                    Würfeln
+                </button>
+            </div>
         </div>
     </div>
 </div>

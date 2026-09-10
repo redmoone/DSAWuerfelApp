@@ -46,6 +46,18 @@
     min-width: 0;
 }
 
+.roll-text-row {
+    display: flex;
+    min-width: 0;
+    width: 100%;
+}
+
+.roll-text-row ::deep .text-pill {
+    flex: 1 1 auto !important;
+    width: 100%;
+    max-width: none;
+}
+
 .left-actions,
 .right-actions {
     display: flex;
@@ -56,18 +68,18 @@
 
 .left-actions {
     width: 100%;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
-.left-actions ::deep .text-pill {
-    flex: 1 0 100% !important;
-    width: 100%;
-    max-width: none;
+.left-actions ::deep .modifier-pill {
+    flex: 1 1 140px;
+    min-width: 0;
 }
 
 .right-actions {
-    width: 100%;
-    justify-content: flex-end;
+    flex: 0 0 auto;
+    width: auto;
+    justify-content: center;
 }
 
 .hidden-roll-hint {
@@ -214,36 +226,13 @@
 }
 
 @media (min-width: 901px) {
-    ::deep .text-pill {
-        flex: 1 1 150px;
-        min-width: 120px;
-    }
-
     ::deep .modifier-pill {
-        flex: 0 1 170px;
+        flex: 1 1 170px;
         min-width: 120px;
     }
 }
 
 @container roll-actions (max-width: 680px) {
-    .right-actions {
-        width: 100%;
-    }
-
-    .right-actions {
-        justify-content: flex-end;
-    }
-
-    .right-actions .dsa-btn {
-        width: auto;
-    }
-
-    ::deep .text-pill {
-        flex: 1 1 100%;
-        width: 100%;
-        min-width: 0;
-    }
-
     ::deep .modifier-pill {
         flex: 1 1 170px;
         min-width: 0;
@@ -256,6 +245,20 @@
     }
 
     .left-actions {
+        flex-wrap: wrap;
         gap: 8px;
+    }
+
+    .left-actions ::deep .modifier-pill {
+        flex: 1 1 calc(100% - 104px);
+    }
+
+    .right-actions {
+        flex: 1 1 100%;
+        width: 100%;
+    }
+
+    .right-actions .dsa-btn {
+        width: 100%;
     }
 }

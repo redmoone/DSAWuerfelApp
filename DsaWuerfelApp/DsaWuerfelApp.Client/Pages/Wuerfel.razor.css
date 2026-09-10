@@ -268,7 +268,9 @@
 }
 
 .master-target-chip.active {
-    background: rgba(212, 175, 55, 0.18);
+    background: var(--dsa-gold);
+    color: var(--dsa-white);
+    border-color: var(--dsa-gold);
     box-shadow: none;
 }
 
@@ -403,7 +405,44 @@
 .roll-setup-panel ::deep .spell-selection-button.active {
     background: var(--dsa-gold) !important;
     border-color: var(--dsa-gold) !important;
-    color: #000 !important;
+    color: var(--dsa-white) !important;
+}
+
+.roll-setup-panel ::deep .attribute-pill.active {
+    background: var(--dsa-gold) !important;
+    border-color: var(--dsa-gold) !important;
+    color: var(--dsa-white) !important;
+}
+
+.roll-setup-panel ::deep .attribute-pill.active .attribute-icon {
+    filter: brightness(0) invert(1);
+}
+
+.roll-setup-panel ::deep .attribute-pill.active .attribute-value,
+.roll-setup-panel ::deep .attribute-pill.active .attribute-label,
+.roll-setup-panel ::deep .attribute-pill.active .selection-badge {
+    color: var(--dsa-white) !important;
+}
+
+.roll-setup-panel ::deep .attribute-pill.active .attribute-label,
+.roll-setup-panel ::deep .attribute-pill.active .selection-badge {
+    filter: none;
+}
+
+.roll-mode-button:not(.active):hover:not(:disabled),
+.master-selection-button:hover:not(:disabled),
+.master-target-chip:not(.active):hover:not(:disabled),
+.roll-setup-panel ::deep .attribute-pill:not(.active):hover,
+.roll-setup-panel ::deep .bad-trait-chip:not(.active):hover,
+.roll-setup-panel ::deep .spell-selection-button:not(.active):hover,
+.roll-setup-panel ::deep .die-selector:hover:not(:disabled),
+.roll-setup-panel ::deep .probe-info-button:hover:not(:disabled),
+.roll-setup-panel ::deep .forced-rolls-button:hover:not(:disabled) {
+    background: rgba(212, 175, 55, 0.18) !important;
+}
+
+.roll-setup-panel ::deep .probe-info-button:hover:not(:disabled) {
+    color: var(--dsa-white) !important;
 }
 
 .roll-setup-panel ::deep .bad-trait-chip-meta {
