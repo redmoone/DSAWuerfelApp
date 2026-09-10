@@ -23,6 +23,13 @@ export function registerHeroDropZone(dropZone) {
             return;
         }
 
+        if (input.disabled) {
+            if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = "none";
+            }
+            return;
+        }
+
         event.preventDefault();
         if (event.dataTransfer) {
             event.dataTransfer.dropEffect = "copy";
@@ -34,10 +41,17 @@ export function registerHeroDropZone(dropZone) {
             return;
         }
 
+        if (input.disabled) {
+            if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = "none";
+            }
+            return;
+        }
+
         event.preventDefault();
 
         const files = event.dataTransfer?.files;
-        if (!input || !files || files.length === 0) {
+        if (!files || files.length === 0) {
             return;
         }
 

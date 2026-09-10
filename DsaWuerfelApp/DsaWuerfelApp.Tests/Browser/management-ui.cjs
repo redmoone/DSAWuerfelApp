@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const { createAppFixture } = require('./browser-fixture.cjs');
 
 (async () => {
-  const fixture = await createAppFixture(process.argv[2], { userCount: 3 });
+  const fixture = await createAppFixture(process.argv[2], { userCount: 3, heroesPerUser: 2 });
   let origin;
   let pages;
   let users;
@@ -84,7 +84,52 @@ const { createAppFixture } = require('./browser-fixture.cjs');
     await new Promise(resolve => setTimeout(resolve, 150));
     assert.equal((await details()).players.length, playersBeforeLeaveCancel, 'leave cancel changed membership');
 
-    console.log('SessionTree management, refresh-safe collapse, rename and confirmation cancel checks passed');
+    await master.goto(`${origin}/helden-verwaltung`);
+    await master.locator('.helden-verwaltung-page').waitFor();
+    const heroRows = master.locator('.hero-row');
+    await waitFor(async () => await heroRows.count() === 2, 'two seeded heroes missing');
+    assert.equal(await master.locator('.hero-status.active').count(), 1, 'expected one active hero');
+
+    const heroRow = name => master.locator('.hero-row').filter({ has: master.locator('.hero-name', { hasText: new RegExp(`^${name}$`) }) }).first();
+    const activeHero = heroRow('Held0');
+    await activeHero.getByRole('button', { name: 'Entfernen', exact: true }).click();
+    const activeDeleteConfirmation = activeHero.locator('.hero-confirmation');
+    await activeDeleteConfirmation.waitFor({ state: 'visible' });
+    assert.match(await activeDeleteConfirmation.innerText(), /Held0/);
+    assert.match(await activeDeleteConfirmation.innerText(), /aktive Held/);
+    await activeDeleteConfirmation.getByRole('button', { name: 'Abbrechen', exact: true }).click();
+    await activeDeleteConfirmation.waitFor({ state: 'hidden' });
+    assert.equal(await heroRows.count(), 2, 'hero delete cancel changed the list');
+
+    await heroRow('Held0-1').getByRole('button', { name: 'Aktivieren', exact: true }).click();
+    await waitFor(async () => await master.locator('.hero-status.active').count() === 1, 'hero activation did not update the list');
+    assert.equal(await heroRow('Held0-1').getByRole('button', { name: 'Aktiv', exact: true }).isDisabled(), true);
+
+    const oldHero = heroRow('Held0');
+    await oldHero.getByRole('button', { name: 'Entfernen', exact: true }).click();
+    await oldHero.locator('.hero-confirmation').getByRole('button', { name: 'Entfernen bestätigen', exact: true }).click();
+    await waitFor(async () => await heroRows.count() === 1, 'inactive hero was not removed');
+    assert.equal(await master.locator('.hero-name', { hasText: /^Held0-1$/ }).count(), 1);
+
+    const heroInput = master.locator('#hero-files');
+    await heroInput.setInputFiles({ name: 'not-a-hero.txt', mimeType: 'text/plain', buffer: Buffer.from('invalid') });
+    await master.getByRole('alert').filter({ hasText: 'Keine Datei akzeptiert' }).waitFor();
+    assert.equal(await master.getByRole('button', { name: 'Importieren', exact: true }).count(), 0, 'invalid selection rendered an import action');
+
+    await heroInput.setInputFiles(Array.from({ length: 16 }, (_, index) => ({
+      name: `hero-${index}.xml`,
+      mimeType: 'text/xml',
+      buffer: Buffer.from('<hero />')
+    })));
+    await master.getByRole('alert').filter({ hasText: 'Maximal 15 Dateien' }).waitFor();
+
+    const remainingHero = heroRow('Held0-1');
+    await remainingHero.getByRole('button', { name: 'Entfernen', exact: true }).click();
+    await remainingHero.locator('.hero-confirmation').getByRole('button', { name: 'Entfernen bestätigen', exact: true }).click();
+    await waitFor(async () => await heroRows.count() === 0, 'active hero was not removed');
+    assert.equal(await master.locator('.hero-status.active').count(), 0, 'an automatic replacement hero was activated');
+
+    console.log('SessionTree and hero management, refresh-safe collapse, activation, import validation and confirmations passed');
     assert.deepEqual(fixture.errors, []);
   } catch (error) {
     if (pages?.[0]) console.log('Management page at failure:', await pages[0].locator('body').innerText({ timeout: 2000 }));

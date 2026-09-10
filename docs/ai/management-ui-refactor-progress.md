@@ -143,11 +143,36 @@ Status: TEILWEISE
 
 ### Loot / Commit
 
-- Commit: wird nach dem lokalen M3-Commit im nächsten Raidabschnitt oder im Abschlussbericht ergänzt.
+- Commit: `eed9cc4`
 
 ## M4 – Boss: Heldenverwaltung und Importtor
 
-Status: AUSSTEHEND
+Status: TEILWEISE
+
+Änderungen:
+
+- `DsaWuerfelApp/DsaWuerfelApp.Client/Pages/HeldenVerwaltung.razor`: kosmetischen `SelectedHero`-Zustand entfernt; kompakte Heldenzeilen, eindeutiger Aktivstatus, Inline-Bestätigung, Empty State und direkt erreichbare Importfläche umgesetzt.
+- `DsaWuerfelApp/DsaWuerfelApp.Client/Pages/HeldenVerwaltung.razor.cs`: Lade-/Retry-Zustand, Busy-Guard, 15-Dateien-/5-MiB-Prüfung, Teilakzeptanz, sichere Aktivierung/Löschung, stale-response-Schutz und bestehende Dropzone-Lifecycle-Logik zusammengeführt.
+- `DsaWuerfelApp/DsaWuerfelApp.Client/Pages/HeldenVerwaltung.razor.css`: Würfelpalette, 1600px-Shell mit 3fr/2fr-Desktopraster, Reflow bei 900px, kompakte Zeilen, sichtbare/fokussierbare native Dateiauswahl und schattenfreie 1px-Goldrahmen umgesetzt. Die Blazor-`InputFile`-Isolation wird gezielt über `::deep` adressiert.
+- `DsaWuerfelApp/DsaWuerfelApp.Client/wwwroot/js/hero-dropzone.js`: programmgesteuerte Drops während eines Imports werden wie der native Dateischalter gesperrt.
+- `DsaWuerfelApp/DsaWuerfelApp.Tests/Browser/browser-fixture.cjs` und `management-ui.cjs`: optionale zweite Testhelden sowie fokussierte Helden-/Importvalidierungsprüfungen ergänzt; Standardfixtures bleiben unverändert.
+
+### Besiegte Mobs
+
+- `dotnet build DsaWuerfelApp.sln -c Release -v minimal`: PASS, 0 Warnungen, 0 Fehler.
+- `dotnet test DsaWuerfelApp/DsaWuerfelApp.Tests/DsaWuerfelApp.Tests.csproj -c Release --no-restore --filter FullyQualifiedName~ClientStateTests`: PASS, 18/18.
+- Frischer Release-Publish nach `C:\Users\Bosko\AppData\Local\Temp\dsawuerfel-management-m4b-411bbfaeeec94f0a9f5d40ca39b22cbf`: PASS.
+- `node management-ui.cjs <M4b-Publish>`: PASS; SessionTree-Refreshschutz sowie Heldenaktivierung, Abbruch und Bestätigung des Entfernens, aktiver Held ohne Ersatz, ungültige Endung und 16-Dateien-Grenze geprüft.
+- `node responsive-ui.cjs <M4b-Publish>`: BASELINE ROT mit ausschließlich den vier bekannten Dice-History-Fehlern (Tablet/Desktop nur vier sichtbare Einträge). Der neue 320px-Helden-Overflow wurde behoben und wird nicht mehr gemeldet.
+- `node app-workflows.cjs <M4b-Publish>`: BASELINE ROT erst beim bestehenden offenen Würfel-Detail-Timeout; Login, Session erstellen, zwei Beitritte, drei Heldenzuordnungen und Bad-Trait-Workflow bestanden davor.
+- `node --check` für `browser-fixture.cjs`, `management-ui.cjs`, `app-workflows.cjs`, `responsive-ui.cjs` und `hero-dropzone.js`: PASS.
+- `git diff --check`: nach Abschluss dieses Pakets noch auszuführen.
+
+### Offene Mobs
+
+- Ein echter erfolgreicher Import mit anonymisierter gültiger HLD/XML/ZIP-Datei fehlt weiterhin; die UI-Fehlerpfade sind geprüft, der Parsernachweis bleibt offen.
+- Native iOS-/Android-Dateiauswahl, physische Touchbedienung und Tastatur-/Dropnachweis auf echten Geräten fehlen.
+- Die vier bekannten Dice-History-Baselinefehler und der bestehende offene Detail-Timeout bleiben unverändert.
 
 ## M5 – Endboss: Responsive und integrierte Abnahme
 

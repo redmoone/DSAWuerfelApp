@@ -2,71 +2,162 @@
 @attribute [Authorize]
 
 <div class="helden-verwaltung-page">
-    <div class="helden-verwaltung-container">
-        <h2 class="page-title">Helden Verwaltung</h2>
+    <div class="helden-verwaltung-shell">
+        <header class="helden-header">
+            <div>
+                <p class="hero-eyebrow">DSA Würfelrunde</p>
+                <h1 class="page-title">Heldenverwaltung</h1>
+            </div>
+        </header>
 
-        <div class="upload-section">
-            <label class="drop-zone @DragClass"
-                   @ref="DropZoneElement"
-                   @ondragenter="SetDragClass"
-                   @ondragleave="ClearDragClass"
-                   @ondragover="SetDragClass"
-                   @ondragenter:preventDefault="true"
-                   @ondragover:preventDefault="true"
-                   @ondragleave:preventDefault="true">
-
-                <div class="file-input-host">
-                    <InputFile OnChange="LoadFiles" multiple accept=".hld,.zip,.xml" class="file-input"/>
+        <section class="hero-list-panel panel-surface" aria-labelledby="hero-list-title">
+            <div class="section-header">
+                <div>
+                    <h2 id="hero-list-title" class="panel-title">Meine Helden (@Heroes.Count)</h2>
+                    <p class="panel-subtitle">Aktiviere den Helden, den du in deinen Würfen verwenden möchtest.</p>
                 </div>
-                <p class="drop-zone-text">XML- oder ZIP-Dateien hierhin ziehen oder klicken zum Auswählen</p>
-            </label>
+                <a class="jump-link" href="#hero-import">Helden importieren</a>
+            </div>
+
+            @if (IsLoadingHeroes)
+            {
+                <div class="state-card" aria-live="polite">
+                    <span class="section-kicker">Wird geladen</span>
+                    <p>Deine Helden werden geladen …</p>
+                </div>
+            }
+            else if (HeroesLoadFailed)
+            {
+                <div class="state-card state-error" role="alert">
+                    <p>@LoadErrorMessage</p>
+                    <button type="button" class="management-btn" @onclick="LoadHeroesAsync" disabled="@IsBusy">
+                        Erneut laden
+                    </button>
+                </div>
+            }
+            else if (Heroes.Count == 0)
+            {
+                <div class="state-card">
+                    <p>Noch keine Helden. Importiere einen Helden, um ihn hier auszuwählen.</p>
+                    <a class="jump-link" href="#hero-import">Zum Heldenimport</a>
+                </div>
+            }
+            else
+            {
+                <div class="hero-list">
+                    @foreach (var hero in Heroes)
+                    {
+                        var isPendingDelete = PendingDeleteHeroId == hero.Id;
+
+                        <article @key="hero.Id" class="hero-row">
+                            <div class="hero-info">
+                                <span class="hero-name">@hero.Name</span>
+                                <span class="hero-status @(hero.IsActive ? "active" : string.Empty)">
+                                    @(hero.IsActive ? "Aktiv" : "Nicht aktiv")
+                                </span>
+                            </div>
+
+                            <div class="hero-actions">
+                                <button type="button"
+                                        class="management-btn primary-btn @(hero.IsActive ? "is-active" : string.Empty)"
+                                        disabled="@(IsBusy || hero.IsActive)"
+                                        @onclick="() => SetActiveHeroAsync(hero)">
+                                    @(hero.IsActive ? "Aktiv" : "Aktivieren")
+                                </button>
+                                <button type="button"
+                                        class="management-btn danger-btn"
+                                        disabled="@IsBusy"
+                                        @onclick="() => BeginRemoveHero(hero)">
+                                    Entfernen
+                                </button>
+                            </div>
+
+                            @if (isPendingDelete)
+                            {
+                                <div class="hero-confirmation" role="alert">
+                                    <p>
+                                        Held „@hero.Name“ entfernen?@(hero.IsActive ? " Der aktive Held geht dabei verloren; es wird kein Ersatz aktiviert." : string.Empty)
+                                    </p>
+                                    <div class="hero-confirmation-actions">
+                                        <button type="button"
+                                                class="management-btn danger-btn"
+                                                disabled="@IsBusy"
+                                                @onclick="() => ConfirmRemoveHeroAsync(hero.Id)">
+                                            Entfernen bestätigen
+                                        </button>
+                                        <button type="button"
+                                                class="management-btn"
+                                                disabled="@IsBusy"
+                                                @onclick="CancelRemoveHero">
+                                            Abbrechen
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+
+        <section id="hero-import" class="hero-import-panel panel-surface" aria-labelledby="hero-import-title">
+            <div class="section-header">
+                <div>
+                    <h2 id="hero-import-title" class="panel-title">Helden importieren</h2>
+                    <p class="panel-subtitle">Wähle Dateien aus oder ziehe sie in die Dropzone. Importierte Helden werden nicht automatisch aktiviert.</p>
+                </div>
+            </div>
+
+            <div class="drop-zone @DragClass"
+                 @ref="DropZoneElement"
+                 @ondragenter="SetDragClass"
+                 @ondragleave="ClearDragClass"
+                 @ondragover="SetDragClass"
+                 @ondragenter:preventDefault="true"
+                 @ondragover:preventDefault="true"
+                 @ondragleave:preventDefault="true">
+                <p class="drop-zone-text">HLD-, XML- oder ZIP-Dateien auswählen oder hierher ziehen</p>
+                <div class="file-input-host">
+                    <label class="file-input-label" for="hero-files">Dateien auswählen</label>
+                    <InputFile id="hero-files"
+                               OnChange="LoadFiles"
+                               multiple
+                               accept=".hld,.zip,.xml"
+                               class="file-input"
+                               disabled="@IsBusy"/>
+                </div>
+                <p class="file-input-hint">Maximal 15 Dateien, je 5 MiB.</p>
+            </div>
 
             @if (SelectedFiles.Any())
             {
                 <div class="selected-files">
+                    <h3 class="section-title">Ausgewählte Dateien</h3>
                     <ul class="selected-files-list">
                         @foreach (var file in SelectedFiles)
                         {
                             <li>@file.Name</li>
                         }
                     </ul>
-                    <button class="btn-upload" @onclick="UploadFilesAsync">Hochladen</button>
+                    <button type="button"
+                            class="management-btn primary-btn"
+                            disabled="@IsBusy"
+                            aria-busy="@(IsBusy ? "true" : "false")"
+                            @onclick="UploadFilesAsync">
+                        Importieren
+                    </button>
                 </div>
             }
-        </div>
 
-        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
-        {
-            <div class="alert-error">
-                @ErrorMessage
-            </div>
-        }
+            @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+            {
+                <div class="alert-error" role="alert">@ErrorMessage</div>
+            }
 
-        @if (Heroes.Any())
-        {
-            <div class="hero-list">
-                @foreach (var hero in Heroes)
-                {
-                    <div class="hero-card @(hero == SelectedHero ? "selected" : "")"
-                         @onclick="() => SelectHero(hero)">
-                        <div class="hero-info">
-                            <span class="hero-name">@hero.Name</span>
-                        </div>
-                        <div class="hero-actions">
-                            <button class="btn-activate @(hero.IsActive ? "is-active" : "")"
-                                    @onclick="() => SetActiveHeroAsync(hero)"
-                                    @onclick:stopPropagation>
-                                @(hero.IsActive ? "Aktiv" : "Aktivieren")
-                            </button>
-                            <button class="btn-delete"
-                                    @onclick="() => RemoveHeroAsync(hero)"
-                                    @onclick:stopPropagation>
-                                Entfernen
-                            </button>
-                        </div>
-                    </div>
-                }
-            </div>
-        }
+            @if (!string.IsNullOrWhiteSpace(StatusMessage))
+            {
+                <div class="alert-success" role="status">@StatusMessage</div>
+            }
+        </section>
     </div>
 </div>

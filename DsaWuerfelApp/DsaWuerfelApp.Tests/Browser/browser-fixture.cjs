@@ -6,7 +6,7 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
 
-async function createAppFixture(publishDirectory, { userCount = 3 } = {}) {
+async function createAppFixture(publishDirectory, { userCount = 3, heroesPerUser = 1 } = {}) {
   const publish = path.resolve(publishDirectory);
   const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'dsa-browser-fixture-'));
   const origin = 'http://127.0.0.1:5298';
@@ -70,7 +70,6 @@ async function createAppFixture(publishDirectory, { userCount = 3 } = {}) {
     for (let i = 0; i < userCount; i++) {
       const authId = randomUUID().toUpperCase();
       const id = authId.replaceAll('-', '').toLowerCase();
-      const heroId = randomUUID().toUpperCase();
       const token = randomUUID();
       const email = `browser${i}@example.test`;
       const now = new Date().toISOString();
@@ -79,9 +78,15 @@ async function createAppFixture(publishDirectory, { userCount = 3 } = {}) {
         .run(authId, email, `Spieler${i}`, now, now);
       db.prepare('INSERT INTO MagicLinkTokens(Id,Email,TokenHash,RedirectPath,RequestedAtUtc,ExpiresAtUtc) VALUES(?,?,?,?,?,?)')
         .run(randomUUID().toUpperCase(), email, createHash('sha256').update(token).digest('hex').toUpperCase(), '/', now, expires);
-      db.prepare('INSERT INTO Heroes(Id,OwnerUserId,IsActive,Name,Geschlecht,"Alter",Eigenschaften,SchlechteEigenschaften,Talente,Zauber,ImportVersion) VALUES(?,?,1,?,?,?,?,?,?,?,3)')
-        .run(heroId, id, `Held${i}`, '', 20, JSON.stringify({ MU: 12, KL: 12, IN: 12, CH: 12, FF: 12, GE: 12, KO: 12, KK: 12 }), badTraits, '{}', spells);
-      users.push({ id, heroId, token, email });
+      let firstHeroId = null;
+      for (let heroIndex = 0; heroIndex < heroesPerUser; heroIndex++) {
+        const heroId = randomUUID().toUpperCase();
+        const heroName = heroIndex === 0 ? `Held${i}` : `Held${i}-${heroIndex}`;
+        db.prepare('INSERT INTO Heroes(Id,OwnerUserId,IsActive,Name,Geschlecht,"Alter",Eigenschaften,SchlechteEigenschaften,Talente,Zauber,ImportVersion) VALUES(?,?,?,?,?,?,?,?,?,?,3)')
+          .run(heroId, id, heroIndex === 0 ? 1 : 0, heroName, '', 20, JSON.stringify({ MU: 12, KL: 12, IN: 12, CH: 12, FF: 12, GE: 12, KO: 12, KK: 12 }), badTraits, '{}', spells);
+        firstHeroId ??= heroId;
+      }
+      users.push({ id, heroId: firstHeroId, token, email });
     }
     db.close();
     db = null;
