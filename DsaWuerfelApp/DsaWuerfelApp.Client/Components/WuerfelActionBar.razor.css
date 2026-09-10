@@ -14,14 +14,14 @@
 
 .results-bar ::deep .text-pill,
 .results-bar ::deep .modifier-pill {
-    border-width: 1px;
-    box-shadow: none;
+    border-width: 1px !important;
+    box-shadow: none !important;
 }
 
 .results-bar ::deep .text-pill:focus-within {
     outline: 2px solid var(--dsa-gold);
     outline-offset: 2px;
-    box-shadow: none;
+    box-shadow: none !important;
 }
 
 .results-bar ::deep .mod-btn:focus-visible {

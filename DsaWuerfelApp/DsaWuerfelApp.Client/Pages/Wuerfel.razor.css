@@ -310,14 +310,14 @@
     min-width: 0;
     border: 1px solid rgba(212, 175, 55, 0.42);
     border-radius: 8px;
-    background: rgba(3, 12, 23, 0.72);
+    background: rgba(9, 25, 48, 0.88);
     overflow: hidden;
 }
 
 .dice-3d-box.is-empty {
     height: 130px;
     border-color: rgba(212, 175, 55, 0.22);
-    background: rgba(3, 12, 23, 0.42);
+    background: rgba(9, 25, 48, 0.88);
 }
 
 .dice-3d-box.has-selection {
@@ -363,8 +363,8 @@
 .roll-setup-panel ::deep .probe-info-button,
 .roll-setup-panel ::deep .dsa-btn,
 .roll-setup-panel ::deep .dsa-btn-icon {
-    border-width: 1px;
-    box-shadow: none;
+    border-width: 1px !important;
+    box-shadow: none !important;
 }
 
 .roll-setup-panel ::deep .probe-info-button {
