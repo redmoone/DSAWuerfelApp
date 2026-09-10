@@ -329,6 +329,58 @@ async function assertProbeInfoPresentation(page, label) {
   await page.getByRole('button', { name: 'Probeninformationen schliessen', exact: true }).click();
   await details.waitFor({ state: 'hidden' });
   await assertNoHorizontalOverflow(page, `${label} after close`);
+  await assertExpandableProbeInfoKeepsPrimarySections(page, label);
+}
+
+async function assertExpandableProbeInfoKeepsPrimarySections(page, label) {
+  await page.locator('[data-testid="mode-probe"]').click();
+  const search = page.locator('.search-input');
+  await search.fill('Bannbaladin');
+  await page.getByRole('button', { name: /Bannbaladin/ }).click();
+  await page.locator('.probe-info-button').click();
+
+  const details = page.locator('.probe-info-details');
+  await details.waitFor({ state: 'visible' });
+  const threshold = page.locator('.probe-info-section')
+    .filter({ has: page.locator('summary', { hasText: 'ZfP' }) });
+  assert.equal(await threshold.count(), 1, `${label}: Bannbaladin has no unique ZfP threshold section`);
+
+  const readLayout = () => page.evaluate(() => {
+    const content = document.querySelector('.probe-info-details-content');
+    const primary = document.querySelector('.probe-info-primary');
+    const fields = primary?.querySelector('.probe-info-primary-fields');
+    const threshold = [...document.querySelectorAll('.probe-info-section')]
+      .find(element => element.querySelector('summary')?.textContent?.includes('ZfP'));
+    return {
+      contentClientHeight: content?.clientHeight ?? 0,
+      contentScrollHeight: content?.scrollHeight ?? 0,
+      primaryOpen: primary?.open ?? false,
+      primaryClientHeight: primary?.clientHeight ?? 0,
+      primaryScrollHeight: primary?.scrollHeight ?? 0,
+      primaryHeight: primary?.getBoundingClientRect().height ?? 0,
+      fieldsHeight: fields?.getBoundingClientRect().height ?? 0,
+      thresholdOpen: threshold?.open ?? false
+    };
+  });
+
+  const before = await readLayout();
+  assert.equal(before.primaryOpen, true, `${label}: Bannbaladin primary information is not open initially`);
+  assert.ok(before.primaryHeight > 100, `${label}: Bannbaladin primary information is already clipped ${JSON.stringify(before)}`);
+
+  await threshold.locator('summary').click();
+  await page.waitForTimeout(40);
+  const after = await readLayout();
+  assert.equal(after.thresholdOpen, true, `${label}: Bannbaladin threshold section did not open`);
+  assert.equal(after.primaryOpen, true, `${label}: Bannbaladin primary information closed when thresholds opened`);
+  assert.ok(after.primaryHeight > 100, `${label}: Bannbaladin primary information collapsed when thresholds opened ${JSON.stringify(after)}`);
+  assert.ok(after.primaryClientHeight >= after.primaryScrollHeight - 1,
+    `${label}: Bannbaladin primary information is clipped after thresholds opened ${JSON.stringify(after)}`);
+  assert.ok(after.fieldsHeight > 0, `${label}: Bannbaladin primary fields disappeared after thresholds opened`);
+  assert.ok(after.contentScrollHeight > after.contentClientHeight,
+    `${label}: Bannbaladin info container did not grow its scroll area ${JSON.stringify(after)}`);
+
+  await page.getByRole('button', { name: 'Probeninformationen schliessen', exact: true }).click();
+  await details.waitFor({ state: 'hidden' });
 }
 
 async function assertMobileMenu(page, label) {

@@ -127,6 +127,10 @@
     scrollbar-gutter: stable;
 }
 
+.probe-info-details-content > * {
+    flex: 0 0 auto;
+}
+
 .probe-info-sections {
     display: flex;
     flex-direction: column;
