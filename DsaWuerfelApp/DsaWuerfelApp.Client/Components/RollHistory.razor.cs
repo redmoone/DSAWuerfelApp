@@ -16,7 +16,7 @@ public partial class RollHistory
 
     private static string GetEntryClass(RollHistoryEntryDto entry)
     {
-        return entry.Context?.Outcome switch
+        return GetVisualOutcome(entry) switch
         {
             RollHistoryOutcome.Success => "success",
             RollHistoryOutcome.Failure => "failure",
@@ -29,7 +29,7 @@ public partial class RollHistory
 
     private static string GetStatusClass(RollHistoryEntryDto entry)
     {
-        return entry.Context?.Outcome switch
+        return GetVisualOutcome(entry) switch
         {
             RollHistoryOutcome.Success => "success",
             RollHistoryOutcome.Failure => "failure",
@@ -58,6 +58,18 @@ public partial class RollHistory
                 : "EIGENSCHAFT SETZT SICH DURCH";
         }
 
+        if (context.Kind == RollHistoryKind.Attribute)
+        {
+            return context.Outcome switch
+            {
+                RollHistoryOutcome.CriticalSuccess => GetSpecialStatusText("GLÜCKLICHER WURF", context),
+                RollHistoryOutcome.Fumble => GetSpecialStatusText("PATZER", context),
+                _ when context.Snapshot?.RequiredTalentValue is { } requiredTalentValue =>
+                    $"BENÖTIGT {requiredTalentValue}",
+                _ => "EIGENSCHAFTSWURF"
+            };
+        }
+
         return context.Outcome switch
         {
             RollHistoryOutcome.Success => context.Kind == RollHistoryKind.Spell
@@ -70,6 +82,16 @@ public partial class RollHistory
             RollHistoryOutcome.Fumble => GetSpecialStatusText("PATZER", context),
             _ => "WURF"
         };
+    }
+
+    private static RollHistoryOutcome? GetVisualOutcome(RollHistoryEntryDto entry)
+    {
+        if (entry.Context is { Kind: RollHistoryKind.Attribute, Outcome: RollHistoryOutcome.Success or RollHistoryOutcome.Failure })
+        {
+            return null;
+        }
+
+        return entry.Context?.Outcome;
     }
 
     private static string GetSpecialStatusText(string status, RollHistoryContextDto context)

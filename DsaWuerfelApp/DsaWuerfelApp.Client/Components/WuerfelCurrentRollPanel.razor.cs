@@ -56,9 +56,14 @@ public partial class WuerfelCurrentRollPanel
 
     private static string GetAttributeStatusText(AttributeRollResultDto result)
     {
-        return result.Success
-            ? $"BESTANDEN · {result.SuccessCount}/{result.Details.Length}"
-            : $"MISSLUNGEN · {result.FailureCount} nicht bestanden";
+        return result.Requirement is { } requirement
+            ? $"BENÖTIGT {requirement.RequiredTalentValue}"
+            : "EIGENSCHAFTSWURF";
+    }
+
+    private static string GetAttributeEvaluationClass(AttributeRollResultDto result)
+    {
+        return string.Empty;
     }
 
     private static string GetAttributeRollChipClass(AttributeRollDetailDto detail)
@@ -176,6 +181,18 @@ public partial class WuerfelCurrentRollPanel
                 : "MISSLUNGEN · EIGENSCHAFT SETZT SICH DURCH";
         }
 
+        if (context.Kind == RollHistoryKind.Attribute)
+        {
+            return context.Outcome switch
+            {
+                RollHistoryOutcome.CriticalSuccess => "GLÜCKLICHER WURF",
+                RollHistoryOutcome.Fumble => "PATZER",
+                _ when context.Snapshot?.RequiredTalentValue is { } requiredTalentValue =>
+                    $"BENÖTIGT {requiredTalentValue}",
+                _ => "EIGENSCHAFTSWURF"
+            };
+        }
+
         return context.Outcome switch
         {
             RollHistoryOutcome.Success when context.Kind == RollHistoryKind.Spell =>
@@ -190,6 +207,11 @@ public partial class WuerfelCurrentRollPanel
 
     private static string GetHistoryEvaluationClass(RollHistoryEntryDto entry)
     {
+        if (entry.Context is { Kind: RollHistoryKind.Attribute, Outcome: RollHistoryOutcome.Success or RollHistoryOutcome.Failure })
+        {
+            return string.Empty;
+        }
+
         return entry.Context?.Outcome switch
         {
             RollHistoryOutcome.Success => "success",
@@ -270,7 +292,8 @@ public partial class WuerfelCurrentRollPanel
                 $"{snapshot.SchlechteEigenschaftName}: {FormatModifier(snapshot.SchlechteEigenschaftModifier ?? 0)}");
         }
 
-        if (snapshot.SuccessCount is { } successCount && snapshot.FailureCount is { } failureCount)
+        if (context.Kind != RollHistoryKind.Attribute &&
+            snapshot.SuccessCount is { } successCount && snapshot.FailureCount is { } failureCount)
         {
             details.Add($"Bestanden: {successCount} · Fehlgeschlagen: {failureCount}");
         }
@@ -290,7 +313,10 @@ public partial class WuerfelCurrentRollPanel
         }
 
         AddValue(details, "Benötigter Talentwert", snapshot.RequiredTalentValue);
-        AddValue(details, "Benötigter Ausgleich", snapshot.RequiredCompensation);
+        if (context.Kind != RollHistoryKind.Attribute)
+        {
+            AddValue(details, "Benötigter Ausgleich", snapshot.RequiredCompensation);
+        }
         AddValue(details, "Original-ZfW", snapshot.OriginalZfw);
         AddModifier(details, "Automatisch", snapshot.AutomaticModifier);
         AddModifier(details, "Manuell", snapshot.ManualModifier);

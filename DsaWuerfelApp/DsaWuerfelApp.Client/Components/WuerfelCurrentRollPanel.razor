@@ -48,7 +48,7 @@
                             }
                         </div>
 
-                        @if (snapshot.RequirementChecks.Length > 0)
+                        @if (context.Kind != RollHistoryKind.Attribute && snapshot.RequirementChecks.Length > 0)
                         {
                             <div class="probe-evaluation-rolls requirement-rolls">
                                 @foreach (var requirementCheck in snapshot.RequirementChecks)
@@ -204,7 +204,7 @@
     }
     else if (AttributeResult is not null)
     {
-        <article class="probe-evaluation attribute-evaluation @(AttributeResult.Success ? "success" : "failure")" data-roll-kind="attribute">
+        <article class="probe-evaluation attribute-evaluation @GetAttributeEvaluationClass(AttributeResult)" data-roll-kind="attribute">
             <div class="probe-evaluation-header">
                 <span class="probe-evaluation-name">@AttributeResult.Probe</span>
                 <span class="probe-evaluation-status" data-testid="current-roll-status">@GetAttributeStatusText(AttributeResult)</span>

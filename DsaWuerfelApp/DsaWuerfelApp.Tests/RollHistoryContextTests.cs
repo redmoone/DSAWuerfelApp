@@ -113,6 +113,28 @@ public sealed class RollHistoryContextTests
     }
 
     [Fact]
+    public void Three_attribute_roll_keeps_the_required_talent_value_and_roll_snapshot()
+    {
+        var service = new AttributeProbeService(new DiceService());
+
+        var result = service.RollAttributeProbe(
+            new ResolvedAttributeRollRequest(
+                AttributeSelection.Create(["IN", "KL", "CH"]),
+                [15, 14, 14],
+                0,
+                null,
+                0,
+                "IN/KL/CH",
+                ForcedRollValues.CreateOptional("4,17,12", 3)),
+            "Tester");
+
+        var context = Assert.IsType<RollHistoryContextDto>(result.HistoryEntry.Context);
+        Assert.Equal(3, context.Snapshot?.RequiredTalentValue);
+        Assert.Equal(3, context.Snapshot?.RequirementChecks.Length);
+        Assert.Equal([4, 17, 12], context.Checks.Select(check => check.Roll));
+    }
+
+    [Fact]
     public void Bad_trait_history_uses_bad_trait_kind_and_success_outcome_when_the_hero_resists()
     {
         var service = new SchlechteEigenschaftProbeService(new DiceService());
