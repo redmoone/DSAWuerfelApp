@@ -445,6 +445,10 @@
     color: var(--dsa-white) !important;
 }
 
+.roll-setup-panel ::deep .bad-trait-chip:hover {
+    transform: none;
+}
+
 .roll-setup-panel ::deep .bad-trait-chip-meta {
     border: 0 !important;
     background: transparent !important;
