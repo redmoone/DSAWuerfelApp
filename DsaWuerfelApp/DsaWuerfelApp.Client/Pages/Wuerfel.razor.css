@@ -40,7 +40,7 @@
     min-height: 44px;
     padding: 8px 10px;
     border: 1px solid var(--wuerfel-frame-color);
-    border-radius: 999px;
+    border-radius: 7px;
     background: rgba(255, 255, 255, 0.05);
     color: var(--dsa-white);
     cursor: pointer;
@@ -58,8 +58,8 @@
 }
 
 .roll-mode-button.active {
-    background: rgba(212, 175, 55, 0.18);
-    color: #ffe7a6;
+    background: var(--dsa-gold);
+    color: var(--dsa-white);
     box-shadow: none;
 }
 
@@ -393,11 +393,39 @@
     border-radius: 999px !important;
 }
 
+.roll-setup-panel ::deep .bad-trait-chip,
+.roll-setup-panel ::deep .spell-selection-button {
+    background: var(--pill-bg) !important;
+    color: var(--dsa-white) !important;
+}
+
+.roll-setup-panel ::deep .bad-trait-chip.active,
+.roll-setup-panel ::deep .spell-selection-button.active {
+    background: var(--dsa-gold) !important;
+    border-color: var(--dsa-gold) !important;
+    color: #000 !important;
+}
+
 .roll-setup-panel ::deep .bad-trait-chip-meta {
     border: 0 !important;
     background: transparent !important;
-    color: var(--dsa-gold);
+    color: inherit;
+    font-size: 0.8rem;
+    line-height: 1.2;
     padding: 2px 0;
+}
+
+.roll-setup-panel ::deep .bad-trait-summary {
+    flex-direction: column;
+    gap: 4px;
+}
+
+.roll-setup-panel ::deep .bad-trait-summary span {
+    padding: 0;
+    border: 0 !important;
+    border-radius: 0;
+    background: transparent !important;
+    color: rgba(255, 248, 220, 0.9);
 }
 
 .roll-setup-panel ::deep .spell-selection-button {
