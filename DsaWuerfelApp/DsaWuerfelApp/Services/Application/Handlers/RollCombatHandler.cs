@@ -11,6 +11,8 @@ public sealed partial class RollCombatHandler(
     HeroCombatProfileReader heroCombatProfileReader,
     DiceService diceService)
 {
+    private const int RuntimeValueLimit = 1_000_000;
+
     public async Task<CombatRollResultDto> HandleAsync(
         CombatRollRequestDto request,
         string userId,
@@ -48,7 +50,7 @@ public sealed partial class RollCombatHandler(
             CombatActionKind.WeaponParry or
             CombatActionKind.ShieldParry or
             CombatActionKind.Dodge or
-            CombatActionKind.RangedAttack => RollCheck(request, hero, set, resolvedPlayerName, userId),
+            CombatActionKind.RangedAttack => RollCheck(request, hero, profile, set, resolvedPlayerName, userId),
             CombatActionKind.Damage => RollDamage(request, hero, set, resolvedPlayerName, userId),
             CombatActionKind.HitZone => RollHitZone(request, hero, set, resolvedPlayerName, userId),
             CombatActionKind.InitiativeHelper or
@@ -61,6 +63,7 @@ public sealed partial class RollCombatHandler(
     private CombatRollResultDto RollCheck(
         CombatRollRequestDto request,
         DsaWuerfelApp.Shared.Models.Hero hero,
+        CombatProfileDto profile,
         CombatSetVariantDto set,
         string playerName,
         string userId)
@@ -72,8 +75,16 @@ public sealed partial class RollCombatHandler(
             throw Validation($"Für {GetActionLabel(request.Action)} ist im importierten Kampfset kein Zielwert vorhanden.");
         }
 
-        var modifiers = request.Modifiers ?? [];
         var options = request.Options ?? new CombatRuleOptionsDto();
+        var runtimeModifiers = CombatRuntimeModifierRules.Resolve(
+            profile,
+            set,
+            request.RuntimeState,
+            request.Action,
+            options);
+        var modifiers = (request.Modifiers ?? [])
+            .Concat(runtimeModifiers.Modifiers)
+            .ToArray();
         var mainRoll = RollSingleD20();
         var preliminary = CombatRollRules.Evaluate(
             request.Action,
@@ -114,7 +125,9 @@ public sealed partial class RollCombatHandler(
             Action = request.Action,
             ActionLabel = GetActionLabel(request.Action),
             WeaponName = weapon?.Name,
-            ValuesSource = "Import",
+            ValuesSource = runtimeModifiers.Modifiers.Length > 0 || runtimeModifiers.RuleNotes.Length > 0
+                ? "Import + laufender Kampfzustand"
+                : "Import",
             BaseValue = baseValue,
             UnmodifiedBaseValue = baseValue,
             EffectiveTarget = evaluation.EffectiveTarget,
@@ -129,7 +142,7 @@ public sealed partial class RollCombatHandler(
                     new CombatLabeledRollDto("Kontrollwurf", 20, controlRoll.Value)
                 ]
                 : [new CombatLabeledRollDto("Hauptwurf", 20, mainRoll)],
-            RuleNotes = BuildRuleNotes(request, evaluation)
+            RuleNotes = BuildRuleNotes(request, evaluation, runtimeModifiers.RuleNotes)
         };
 
         return CreateResult(
@@ -421,7 +434,10 @@ public sealed partial class RollCombatHandler(
         return checks.ToArray();
     }
 
-    private static string[] BuildRuleNotes(CombatRollRequestDto request, CombatRollEvaluationDto? evaluation)
+    private static string[] BuildRuleNotes(
+        CombatRollRequestDto request,
+        CombatRollEvaluationDto? evaluation,
+        IReadOnlyList<string>? runtimeNotes = null)
     {
         var notes = new List<string>();
         if (evaluation?.RequiresDefenseDecision == true)
@@ -432,6 +448,11 @@ public sealed partial class RollCombatHandler(
         if (request.Modifiers is { Length: > 0 })
         {
             notes.Add("Situative Modifikatoren sind im Snapshot einzeln gespeichert.");
+        }
+
+        if (runtimeNotes is { Count: > 0 })
+        {
+            notes.AddRange(runtimeNotes);
         }
 
         if (!string.IsNullOrWhiteSpace(request.Note))
@@ -560,6 +581,27 @@ public sealed partial class RollCombatHandler(
         if (request.DamageModifier is < -999 or > 999)
         {
             throw Validation("Der TP-Modifikator liegt außerhalb des zulässigen Bereichs.");
+        }
+
+        if (request.RuntimeState is { } runtimeState)
+        {
+            if (runtimeState.CurrentLeP is < -RuntimeValueLimit or > RuntimeValueLimit)
+            {
+                throw Validation("Der laufende LeP-Wert liegt außerhalb des zulässigen Bereichs.");
+            }
+
+            if (runtimeState.CurrentAuP is < 0 or > RuntimeValueLimit)
+            {
+                throw Validation("Der laufende AuP-Wert liegt außerhalb des zulässigen Bereichs.");
+            }
+
+            foreach (var wound in runtimeState.Wounds ?? [])
+            {
+                if (!Enum.IsDefined(wound.Key) || wound.Value is < 0 or > 3)
+                {
+                    throw Validation("Laufende Wundstände müssen pro Zone zwischen 0 und 3 liegen.");
+                }
+            }
         }
     }
 

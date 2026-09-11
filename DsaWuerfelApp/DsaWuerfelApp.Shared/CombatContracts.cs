@@ -41,6 +41,18 @@ public sealed record CombatRuleOptionsDto(
     bool SpecialResultsEnabled = true,
     bool LowLePEnabled = false);
 
+public sealed record CombatRuntimeStateDto
+{
+    public bool IsStarted { get; init; }
+    public int? CurrentLeP { get; init; }
+    public int? CurrentAuP { get; init; }
+    public Dictionary<CombatWoundZone, int?> Wounds { get; init; } = [];
+}
+
+public sealed record CombatRuntimeModifierResult(
+    CombatModifierDto[] Modifiers,
+    string[] RuleNotes);
+
 public sealed record CombatHelperRollRequestDto
 {
     public int DiceCount { get; init; } = 1;
@@ -73,6 +85,7 @@ public sealed record CombatRollRequestDto
     public CombatActionKind Action { get; init; }
     public string? WeaponId { get; init; }
     public string? WeaponName { get; init; }
+    public CombatRuntimeStateDto? RuntimeState { get; init; }
     public int? BaseValue { get; init; }
     public int? UnmodifiedBaseValue { get; init; }
     public CombatModifierDto[] Modifiers { get; init; } = [];

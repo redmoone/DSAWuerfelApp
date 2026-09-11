@@ -1,3 +1,5 @@
+using System.Globalization;
+
 using DsaWuerfelApp.Client.Components.Combat;
 using DsaWuerfelApp.Client.Services;
 using DsaWuerfelApp.Shared;
@@ -130,12 +132,22 @@ public partial class Kampf : IDisposable
 
     private int? EffectiveTarget => CombatRollRules.ResolveEffectiveTarget(GetActionBaseValue(), GetCurrentModifiers());
 
-    private string TargetSource => GetActionKind() switch
+    private string TargetSource
     {
-        CombatActionKind.Damage => "TP werden separat aus der importierten Formel berechnet.",
-        CombatActionKind.MeleeAttack or CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge or CombatActionKind.RangedAttack => "Importierter Zielwert",
-        _ => "Hilfswurf ohne Zielwert"
-    };
+        get
+        {
+            var source = GetActionKind() switch
+            {
+                CombatActionKind.Damage => "TP werden separat aus der importierten Formel berechnet.",
+                CombatActionKind.MeleeAttack or CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge or CombatActionKind.RangedAttack => "Importierter Zielwert",
+                _ => "Hilfswurf ohne Zielwert"
+            };
+            var automatic = GetAutomaticModifiers();
+            return automatic.Count == 0
+                ? source
+                : $"{source}; automatisch {string.Join(", ", automatic.Select(FormatModifier))}";
+        }
+    }
 
     private bool CanRoll => IsAttributeMode
         ? HasCombatContext && !_rollBusy && SelectedAttributes.Count > 0
@@ -367,6 +379,7 @@ public partial class Kampf : IDisposable
             WeaponId = action is CombatActionKind.Dodge or CombatActionKind.HitZone or CombatActionKind.InitiativeHelper or CombatActionKind.WoundHelper or CombatActionKind.FumbleHelper
                 ? null
                 : SelectedWeapon?.Id,
+            RuntimeState = BuildRuntimeState(),
             Modifiers = modifiers,
             Options = new CombatRuleOptionsDto(SpecialResultsEnabled: true, LowLePEnabled: true),
             Damage = action == CombatActionKind.Damage
@@ -855,9 +868,48 @@ public partial class Kampf : IDisposable
         _ => null
     };
 
-    private IReadOnlyList<CombatModifierDto> GetCurrentModifiers() => Modifier == 0
-        ? Array.Empty<CombatModifierDto>()
-        : [new CombatModifierDto("Situativ", Modifier)];
+    private IReadOnlyList<CombatModifierDto> GetCurrentModifiers()
+    {
+        var automatic = GetAutomaticModifiers();
+        if (Modifier == 0)
+        {
+            return automatic;
+        }
+
+        return automatic
+            .Append(new CombatModifierDto("Situativ", Modifier, "Kampfseite"))
+            .ToArray();
+    }
+
+    private IReadOnlyList<CombatModifierDto> GetAutomaticModifiers()
+    {
+        if (Profile is null || SelectedSet is null || GetActionKind() is not { } action)
+        {
+            return Array.Empty<CombatModifierDto>();
+        }
+
+        return CombatRuntimeModifierRules.Resolve(
+                Profile,
+                SelectedSet,
+                BuildRuntimeState(),
+                action,
+                new CombatRuleOptionsDto(SpecialResultsEnabled: true, LowLePEnabled: true))
+            .Modifiers;
+    }
+
+    private CombatRuntimeStateDto BuildRuntimeState() => new()
+    {
+        IsStarted = IsCombatStarted,
+        CurrentLeP = CurrentLeP,
+        CurrentAuP = CurrentAuP,
+        Wounds = Wounds.ToDictionary(pair => pair.Key, pair => pair.Value)
+    };
+
+    private static string FormatModifier(CombatModifierDto modifier)
+    {
+        var value = modifier.Value > 0 ? $"+{modifier.Value}" : modifier.Value.ToString(CultureInfo.InvariantCulture);
+        return $"{modifier.Label} {value}";
+    }
 
     private bool IsLastCriticalAttack()
     {

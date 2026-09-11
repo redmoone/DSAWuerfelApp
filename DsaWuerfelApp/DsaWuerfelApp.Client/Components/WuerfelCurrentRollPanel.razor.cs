@@ -22,6 +22,12 @@ public partial class WuerfelCurrentRollPanel
         return modifier > 0 ? $"+{modifier}" : modifier.ToString();
     }
 
+    private static string FormatCombatModifier(CombatModifierDto modifier)
+    {
+        var source = string.IsNullOrWhiteSpace(modifier.Source) ? string.Empty : $" [{modifier.Source}]";
+        return $"{modifier.Label} {FormatModifier(modifier.Value)}{source}";
+    }
+
     private static string GetProbeStatusText(TalentRollResultDto result)
     {
         return result.Status switch
@@ -297,7 +303,7 @@ public partial class WuerfelCurrentRollPanel
             if (combat.Modifiers.Length > 0)
             {
                 details.Add($"Modifikatoren: {string.Join(", ", combat.Modifiers.Select(modifier =>
-                    $"{modifier.Label} {FormatModifier(modifier.Value)}"))}");
+                    FormatCombatModifier(modifier)))}");
             }
 
             details.AddRange(combat.LabeledRolls.Select(roll =>
@@ -452,7 +458,7 @@ public partial class WuerfelCurrentRollPanel
         if (snapshot.Modifiers.Length > 0)
         {
             details.Add($"Modifikatoren: {string.Join(", ", snapshot.Modifiers.Select(modifier =>
-                $"{modifier.Label} {FormatModifier(modifier.Value)}"))}");
+                FormatCombatModifier(modifier)))}");
         }
 
         details.AddRange(snapshot.LabeledRolls.Select(roll =>
