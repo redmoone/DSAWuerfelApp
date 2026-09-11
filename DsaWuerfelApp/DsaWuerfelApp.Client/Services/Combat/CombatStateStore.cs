@@ -95,6 +95,7 @@ public sealed record CombatRuntimeSnapshot(
     public string? SelectedAttribute { get; init; }
     public string[] SelectedAttributes { get; init; } = [];
     public int SituationalModifier { get; init; }
+    public int InitiativeRuntimeModifier { get; init; }
     public string RollText { get; init; } = string.Empty;
     public CombatFacing Facing { get; init; } = CombatFacing.Front;
     public CombatWoundZone? SelectedZone { get; init; }

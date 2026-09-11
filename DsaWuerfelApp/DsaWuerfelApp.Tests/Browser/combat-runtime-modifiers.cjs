@@ -15,6 +15,12 @@ async function setNumber(drawer, label, value) {
   await drawer.getByRole('button', { name: 'Anwenden', exact: true }).click();
 }
 
+function readInitiative(text) {
+  const match = text.match(/INI\s+(-?\d+)/);
+  assert.ok(match, `initiative missing from ${text}`);
+  return Number(match[1]);
+}
+
 (async () => {
   const fixture = await createAppFixture(publishDirectory, { userCount: 1, heroSourceXml: combatXml });
   try {
@@ -48,8 +54,30 @@ async function setNumber(drawer, label, value) {
     assert.match(detailsText, /Brustwunden -1 \[WdS S\. 107/);
     assert.match(detailsText, /Niedrige LeP -1 \[WdS S\. 83\]/);
     assert.match(detailsText, /Niedrige AuP -1 \[WdS S\. 83\]/);
+
+    await page.locator('.probe-info-close').click();
+    await page.locator('.hero-resource-initiative').click();
+    const initiativeDrawer = page.locator('.combat-details-drawer');
+    await initiativeDrawer.getByRole('button', { name: /1W6/ }).click();
+    await initiativeDrawer.getByRole('button', { name: 'Wert setzen', exact: true }).click();
+    const beforeLegWound = readInitiative(await page.locator('.hero-resource-initiative').innerText());
+
+    const zoneSwitcher = page.getByRole('button', { name: 'Zonen', exact: true });
+    if (await zoneSwitcher.count() > 0) {
+      await zoneSwitcher.click();
+    }
+    const zones = page.locator('.combat-zones-area');
+    await zones.locator('.combat-zone-row').filter({ hasText: 'Linkes Bein' }).click();
+    await setNumber(page.locator('.combat-details-drawer'), 'Wunden', 1);
+    const afterLegWound = readInitiative(await page.locator('.hero-resource-initiative').innerText());
+    assert.equal(afterLegWound, beforeLegWound - 2);
+
+    await zones.locator('.combat-zone-row').filter({ hasText: 'Linkes Bein' }).click();
+    await setNumber(page.locator('.combat-details-drawer'), 'Wunden', 0);
+    const afterHealing = readInitiative(await page.locator('.hero-resource-initiative').innerText());
+    assert.equal(afterHealing, beforeLegWound);
     assert.equal(errors.length, 0, `browser errors: ${errors.join(' | ')}`);
-    console.log(JSON.stringify({ runtimeModifiers: true, effectiveTarget: 16, details: true }));
+    console.log(JSON.stringify({ runtimeModifiers: true, effectiveTarget: 16, details: true, initiativeDelta: -2 }));
   } finally {
     await fixture.close();
   }

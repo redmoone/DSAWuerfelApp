@@ -196,7 +196,7 @@ public sealed class CombatState : IDisposable
         var normalized = resource == CombatResourceKind.LeP
             ? value
             : value.HasValue ? Math.Max(0, value.Value) : null;
-        _runtime = (resource switch
+        var next = (resource switch
         {
             CombatResourceKind.LeP => _runtime with { CurrentLeP = normalized },
             CombatResourceKind.AuP => _runtime with { CurrentAuP = normalized },
@@ -208,6 +208,7 @@ public sealed class CombatState : IDisposable
             IsStarted = _runtime.IsStarted || normalized.HasValue,
             LastChangedAtUtc = DateTimeOffset.UtcNow
         };
+        _runtime = AdjustInitiativeForRuntimeChange(_runtime, next);
         await PersistCurrentAsync();
     }
 
@@ -223,12 +224,13 @@ public sealed class CombatState : IDisposable
         {
             [zone] = Math.Clamp(value, 0, 3)
         };
-        _runtime = _runtime with
+        var next = _runtime with
         {
             IsStarted = true,
             Wounds = wounds,
             LastChangedAtUtc = DateTimeOffset.UtcNow
         };
+        _runtime = AdjustInitiativeForRuntimeChange(_runtime, next);
         await PersistCurrentAsync();
     }
 
@@ -270,7 +272,7 @@ public sealed class CombatState : IDisposable
 
         _undo = _runtime;
         var wounds = _runtime.Wounds.ToDictionary(pair => pair.Key, pair => (int?)(pair.Value ?? 0));
-        _runtime = _runtime with
+        var next = _runtime with
         {
             IsStarted = true,
             CurrentLeP = _runtime.CurrentLeP ?? Profile.Resources.LeP,
@@ -280,6 +282,7 @@ public sealed class CombatState : IDisposable
             Wounds = wounds,
             LastChangedAtUtc = DateTimeOffset.UtcNow
         };
+        _runtime = AdjustInitiativeForRuntimeChange(_runtime, next);
         await PersistCurrentAsync();
         return true;
     }
@@ -295,6 +298,7 @@ public sealed class CombatState : IDisposable
         _runtime = _runtime with
         {
             CurrentInitiative = initiative,
+            InitiativeRuntimeModifier = ResolveInitiativeRuntimeModifier(_runtime),
             LastChangedAtUtc = DateTimeOffset.UtcNow
         };
         await PersistCurrentAsync();
@@ -604,6 +608,45 @@ public sealed class CombatState : IDisposable
 
     private static Dictionary<CombatWoundZone, int?> EmptyWounds() =>
         Enum.GetValues<CombatWoundZone>().ToDictionary(zone => zone, _ => (int?)null);
+
+    private CombatRuntimeSnapshot AdjustInitiativeForRuntimeChange(
+        CombatRuntimeSnapshot previous,
+        CombatRuntimeSnapshot next)
+    {
+        var previousModifier = ResolveInitiativeRuntimeModifier(previous);
+        var nextModifier = ResolveInitiativeRuntimeModifier(next);
+        return next with
+        {
+            InitiativeRuntimeModifier = nextModifier,
+            CurrentInitiative = previous.CurrentInitiative.HasValue
+                ? previous.CurrentInitiative.Value + nextModifier - previousModifier
+                : next.CurrentInitiative
+        };
+    }
+
+    private int ResolveInitiativeRuntimeModifier(CombatRuntimeSnapshot runtime)
+    {
+        if (Profile is null)
+        {
+            return 0;
+        }
+
+        var set = Profile.Sets.FirstOrDefault(current => current.Id == runtime.SelectedSetId)
+            ?? PreferredSet(Profile.Sets);
+        if (set is null)
+        {
+            return 0;
+        }
+
+        var state = new CombatRuntimeStateDto
+        {
+            IsStarted = runtime.IsStarted,
+            CurrentLeP = runtime.CurrentLeP,
+            CurrentAuP = runtime.CurrentAuP,
+            Wounds = runtime.Wounds?.ToDictionary(pair => pair.Key, pair => pair.Value) ?? EmptyWounds()
+        };
+        return CombatRuntimeModifierRules.ResolveInitiative(Profile, set, state).Modifier;
+    }
 
     private static CombatRuntimeSnapshot NormalizeSnapshot(
         CombatRuntimeSnapshot snapshot,
