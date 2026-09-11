@@ -174,7 +174,14 @@
                                             @if (action.State == CombatActionEntryState.Open)
                                             {
                                                 <span class="combat-action-entry-buttons">
-                                                    <button type="button" class="combat-inline-button" @onclick="() => CompleteActionAsync(action)">Abschließen</button>
+                                                    @if (IsOrientationAction(action) && action.RequiresCheck)
+                                                    {
+                                                        <button type="button" class="combat-inline-button" @onclick="() => ResolveOrientationAsync(action)">IN-Probe würfeln</button>
+                                                    }
+                                                    else
+                                                    {
+                                                        <button type="button" class="combat-inline-button" @onclick="() => CompleteActionAsync(action)">@(IsOrientationAction(action) ? "Orientieren abschließen" : "Abschließen")</button>
+                                                    }
                                                     <button type="button" class="combat-inline-button" @onclick="() => HoldActionAsync(action)">Warten</button>
                                                 </span>
                                             }
@@ -190,7 +197,7 @@
                         <div class="combat-initiative-actions">
                             <button type="button" class="combat-header-button" @onclick="OpenInitiativeDrawer">Eigene INI</button>
                             <button type="button" class="combat-header-button" disabled="@(!(SessionCombat?.IsStarted ?? false))" @onclick="NewRoundAsync">Neue Runde</button>
-                            <button type="button" class="combat-header-button" disabled="@(OwnSessionParticipant?.CurrentInitiative is null)" @onclick="() => OrientAsync(false)">Orientieren</button>
+                            <button type="button" class="combat-header-button" disabled="@(OwnSessionParticipant?.CurrentInitiative is null)" @onclick="OpenOrientationDrawer">Orientieren</button>
                             <button type="button" class="combat-header-button" @onclick="OpenAnnouncementDrawer">Rundenansage</button>
                             @if (IsSessionMaster)
                             {
@@ -270,6 +277,35 @@
             <div class="combat-drawer-actions">
                 <button type="button" class="combat-header-button primary" disabled="@(!HasCombatContext || _rollBusy)" @onclick="RollInitiativeAsync">1W6 würfeln</button>
                 <button type="button" class="combat-header-button" @onclick="ApplyInitiativeAsync">Wert setzen</button>
+                <button type="button" class="combat-header-button" @onclick="CloseDrawer">Abbrechen</button>
+            </div>
+        </div>
+    }
+    else if (_drawer == CombatDrawer.Orientation)
+    {
+        <div class="combat-drawer-form">
+            <p class="combat-drawer-lead">Orientieren ist erst nach dem ersten INI-Wurf möglich und braucht eine ungestörte Beobachtungsphase.</p>
+            @if (Profile is { } orientationProfile)
+            {
+                <p class="combat-drawer-hint">
+                    Aufmerksamkeit: @(orientationProfile.HasAttention ? "vorhanden · 1 Aktion · keine IN-Probe" : "nicht vorhanden · 2 Aktionen · IN-Probe erforderlich").
+                </p>
+                @if (!orientationProfile.HasAttention)
+                {
+                    <NumberControl Label="Kriegskunst-Erleichterung"
+                                   Value="@_orientationReliefDraft"
+                                   ValueChanged="HandleOrientationReliefChanged"
+                                   Minimum="0"
+                                   Maximum="20" />
+                    <p class="combat-drawer-hint">Importierter Kriegskunst-TaW: @(orientationProfile.KriegskunstValue?.ToString() ?? "nicht vorhanden"). Je zwei TaW-Punkte ergeben eine Erleichterung von 1.</p>
+                }
+            }
+            <label class="combat-drawer-check">
+                <input type="checkbox" checked="@_orientationUninterruptedDraft" @onchange="HandleOrientationUninterruptedChanged" />
+                <span>Ungestört möglich</span>
+            </label>
+            <div class="combat-drawer-actions">
+                <button type="button" class="combat-header-button primary" disabled="@(OwnSessionParticipant?.CurrentInitiative is null)" @onclick="ApplyOrientationAsync">Handlung anlegen</button>
                 <button type="button" class="combat-header-button" @onclick="CloseDrawer">Abbrechen</button>
             </div>
         </div>

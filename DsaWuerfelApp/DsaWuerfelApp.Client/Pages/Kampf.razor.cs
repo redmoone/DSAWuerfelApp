@@ -28,6 +28,8 @@ public partial class Kampf : IDisposable
     private int? _resourceDraft;
     private int? _woundDraft;
     private int? _initiativeDraft;
+    private int? _orientationReliefDraft;
+    private bool _orientationUninterruptedDraft = true;
     private string? _initiativeParticipantId;
     private Guid? _initiativeHeroId;
     private string _opponentNameDraft = string.Empty;
@@ -96,6 +98,7 @@ public partial class Kampf : IDisposable
     private CombatArea ActiveArea => _activeArea;
     private CombatWoundZone WoundDrawerZone => SelectedZone ?? CombatWoundZone.Torso;
     private bool IsAttributeMode => _attributeMode;
+    private bool HasAttention => Profile?.HasAttention == true;
 
     private string HeroDisplayName => ActiveHero?.Name ?? "Kein aktiver Held";
     private string ProfileStatus => ActiveHero is null
@@ -148,6 +151,7 @@ public partial class Kampf : IDisposable
         CombatDrawer.Resource => $"{GetResourceLabel(_resourceKind ?? CombatResourceKind.LeP)} setzen",
         CombatDrawer.Wound => "Wundstand setzen",
         CombatDrawer.Initiative => "Initiative",
+        CombatDrawer.Orientation => "Orientieren",
         CombatDrawer.Participant => _participantDrawerMode == CombatParticipantDrawerMode.Opponent
             ? "Gegner hinzufügen"
             : "Rundenansage",
@@ -412,6 +416,15 @@ public partial class Kampf : IDisposable
         _initiativeHeroId = ActiveHero?.Id;
         _initiativeDraft = CurrentInitiative ?? SelectedSet?.Initiative;
         _drawer = CombatDrawer.Initiative;
+    }
+
+    private void OpenOrientationDrawer()
+    {
+        _orientationReliefDraft = Profile?.KriegskunstValue is { } kriegskunst
+            ? Math.Max(0, kriegskunst / 2)
+            : 0;
+        _orientationUninterruptedDraft = true;
+        _drawer = CombatDrawer.Orientation;
     }
 
     private void OpenParticipantInitiativeDrawer(CombatSessionParticipantDto participant)
@@ -708,8 +721,55 @@ public partial class Kampf : IDisposable
 
     private async Task OrientAsync(bool hasAttention)
     {
-        var result = await CombatSessionState.OrientAsync(hasAttention, OwnSessionParticipant?.Id, ActiveHero?.Id);
+        var result = await CombatSessionState.OrientAsync(
+            hasAttention,
+            OwnSessionParticipant?.Id,
+            ActiveHero?.Id,
+            hasAttention ? null : _orientationReliefDraft,
+            _orientationUninterruptedDraft);
         _notice = result.Message;
+    }
+
+    private async Task ApplyOrientationAsync()
+    {
+        if (OwnSessionParticipant?.CurrentInitiative is null)
+        {
+            _notice = "Orientieren ist erst nach dem ersten Initiativewurf verfügbar.";
+            return;
+        }
+
+        await OrientAsync(HasAttention);
+        if (_notice is not null && SessionCombat?.Actions.Any(action =>
+                action.Round == SessionCombat.Round &&
+                IsOrientationAction(action) &&
+                action.ParticipantId == OwnSessionParticipant.Id &&
+                action.State == CombatActionEntryState.Open) == true)
+        {
+            CloseDrawer();
+        }
+    }
+
+    private async Task ResolveOrientationAsync(CombatSessionActionDto action)
+    {
+        var result = await CombatSessionState.ResolveOrientationAsync(action.Id, action.ParticipantId);
+        _notice = result.Message;
+    }
+
+    private static bool IsOrientationAction(CombatSessionActionDto action) =>
+        string.Equals(action.Label, "Orientieren", StringComparison.OrdinalIgnoreCase);
+
+    private Task HandleOrientationReliefChanged(int? value)
+    {
+        _orientationReliefDraft = value.HasValue ? Math.Clamp(value.Value, 0, 20) : 0;
+        return Task.CompletedTask;
+    }
+
+    private Task HandleOrientationUninterruptedChanged(ChangeEventArgs args)
+    {
+        _orientationUninterruptedDraft = args.Value is bool value
+            ? value
+            : bool.TryParse(args.Value?.ToString(), out var parsed) && parsed;
+        return Task.CompletedTask;
     }
 
     private bool IsCurrentParticipant(CombatSessionParticipantDto participant)
@@ -909,6 +969,7 @@ public partial class Kampf : IDisposable
         Resource,
         Wound,
         Initiative,
+        Orientation,
         Participant,
         History
     }
