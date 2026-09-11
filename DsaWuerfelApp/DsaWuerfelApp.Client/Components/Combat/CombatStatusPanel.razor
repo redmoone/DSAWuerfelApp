@@ -1,7 +1,7 @@
 @using DsaWuerfelApp.Shared
 @using DsaWuerfelApp.Client.Services
 
-<section class="hero-status-bar" aria-labelledby="combat-status-title">
+<section class="hero-status-bar combat-status-panel" aria-labelledby="combat-status-title">
     <div class="hero-status-topline">
         <div class="hero-status-identity">
             <p class="combat-kicker">Heldenstatus</p>
@@ -27,7 +27,7 @@
     }
     else
     {
-        <div class="hero-status-resources" aria-label="Ressourcen">
+        <div class="hero-status-resources combat-resource-strip" aria-label="Ressourcen">
             @if (ShouldShowResource(CombatResourceKind.LeP, Profile.Resources.LeP))
             {
                 <button type="button" class="hero-resource hero-resource-lep" @onclick="() => ResourceEditRequested.InvokeAsync(CombatResourceKind.LeP)">
