@@ -141,8 +141,9 @@
                         <div class="combat-initiative-list" aria-label="Gemeinsame Initiative">
                             @foreach (var participant in InitiativeParticipants)
                             {
-                                <div class="combat-initiative-row @(IsCurrentParticipant(participant) ? "current" : string.Empty) @(participant.CurrentInitiative.HasValue ? string.Empty : "unknown")">
+                                <div class="combat-initiative-row @(IsCurrentParticipant(participant) ? "current" : string.Empty) @(participant.CurrentInitiative.HasValue ? string.Empty : "unknown") @GetParticipantTurnClass(participant)">
                                     <div class="combat-initiative-person">
+                                        <span class="combat-turn-label">@GetParticipantTurnLabel(participant)</span>
                                         <strong>@participant.Name</strong>
                                         <span>@(string.IsNullOrWhiteSpace(participant.Affiliation) ? participant.Kind == CombatParticipantKind.Hero ? "Held" : "Gegner" : participant.Affiliation)</span>
                                     </div>

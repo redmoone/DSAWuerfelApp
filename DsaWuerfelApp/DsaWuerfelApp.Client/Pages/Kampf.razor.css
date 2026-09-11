@@ -225,6 +225,15 @@
     box-shadow: inset 3px 0 0 var(--dsa-gold);
 }
 
+.combat-initiative-row.turn-next {
+    border-color: rgba(212, 175, 55, 0.7);
+}
+
+.combat-initiative-row.turn-completed,
+.combat-initiative-row.turn-held {
+    opacity: 0.78;
+}
+
 .combat-initiative-row.unknown {
     opacity: 0.72;
 }
@@ -388,6 +397,22 @@
     flex: 0 0 auto;
     color: var(--dsa-text-muted);
     font-size: 0.72rem;
+}
+
+.combat-initiative-person .combat-turn-label {
+    color: var(--dsa-gold);
+    font-size: 0.58rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.combat-initiative-row.turn-completed .combat-turn-label {
+    color: var(--dsa-text-muted);
+}
+
+.combat-initiative-row.turn-held .combat-turn-label {
+    color: var(--dsa-white);
 }
 
 .combat-history-surface {

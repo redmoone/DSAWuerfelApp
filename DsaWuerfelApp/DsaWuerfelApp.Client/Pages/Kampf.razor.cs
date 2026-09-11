@@ -155,6 +155,36 @@ public partial class Kampf : IDisposable
             .Where(action => action.Round == (SessionCombat?.Round ?? 1) && action.State != CombatActionEntryState.Completed)
             .ToArray() ?? Array.Empty<CombatSessionActionDto>();
 
+    private IReadOnlySet<string> NextInitiativeParticipantIds
+    {
+        get
+        {
+            var snapshot = SessionCombat;
+            if (snapshot is null || !snapshot.CurrentActionIds.Any())
+            {
+                return new HashSet<string>(StringComparer.Ordinal);
+            }
+
+            var currentActionIds = snapshot.CurrentActionIds.ToHashSet(StringComparer.Ordinal);
+            var nextActions = snapshot.Actions
+                .Where(action => action.Round == snapshot.Round &&
+                                 !action.IsReaction &&
+                                 action.State == CombatActionEntryState.Open &&
+                                 !currentActionIds.Contains(action.Id))
+                .ToArray();
+            if (nextActions.Length == 0)
+            {
+                return new HashSet<string>(StringComparer.Ordinal);
+            }
+
+            var nextInitiative = nextActions.Max(action => GetActionInitiative(action, snapshot));
+            return nextActions
+                .Where(action => GetActionInitiative(action, snapshot) == nextInitiative)
+                .Select(action => action.ParticipantId)
+                .ToHashSet(StringComparer.Ordinal);
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         CombatState.Changed += HandleCombatStateChanged;
@@ -627,6 +657,51 @@ public partial class Kampf : IDisposable
     {
         return SessionCombat?.CurrentActionIds.Any(actionId =>
             SessionCombat.Actions.FirstOrDefault(action => action.Id == actionId)?.ParticipantId == participant.Id) == true;
+    }
+
+    private string GetParticipantTurnLabel(CombatSessionParticipantDto participant)
+    {
+        if (IsCurrentParticipant(participant))
+        {
+            return "Jetzt";
+        }
+
+        if (NextInitiativeParticipantIds.Contains(participant.Id))
+        {
+            return "Als Nächstes";
+        }
+
+        var actions = GetParticipantActions(participant.Id);
+        if (actions.Any(action => action.State == CombatActionEntryState.Held))
+        {
+            return "Wartet";
+        }
+
+        if (actions.Any(action => action.State == CombatActionEntryState.Completed))
+        {
+            return "Bereits gehandelt";
+        }
+
+        return participant.CurrentInitiative.HasValue ? "Weitere offen" : "INI fehlt";
+    }
+
+    private string GetParticipantTurnClass(CombatSessionParticipantDto participant) => GetParticipantTurnLabel(participant) switch
+    {
+        "Jetzt" => "turn-now",
+        "Als Nächstes" => "turn-next",
+        "Wartet" => "turn-held",
+        "Bereits gehandelt" => "turn-completed",
+        "INI fehlt" => "turn-unknown",
+        _ => "turn-open"
+    };
+
+    private static int GetActionInitiative(
+        CombatSessionActionDto action,
+        CombatSessionSnapshotDto snapshot)
+    {
+        return snapshot.Participants.FirstOrDefault(participant => participant.Id == action.ParticipantId)?.CurrentInitiative
+               ?? action.PhaseInitiative
+               ?? int.MinValue;
     }
 
     private IReadOnlyList<CombatSessionActionDto> GetParticipantActions(string participantId)
