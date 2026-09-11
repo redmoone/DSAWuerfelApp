@@ -486,7 +486,10 @@ public partial class Kampf : IDisposable
         }
 
         await CombatState.SetResourceAsync(resource, _resourceDraft);
-        _notice = $"{GetResourceLabel(resource)} gespeichert.";
+        var sessionResult = await SyncSessionRuntimeStateAsync();
+        _notice = sessionResult?.Stale == true
+            ? sessionResult.Message
+            : $"{GetResourceLabel(resource)} gespeichert.";
         CloseDrawer();
     }
 
@@ -499,7 +502,10 @@ public partial class Kampf : IDisposable
         }
 
         await CombatState.SetWoundAsync(WoundDrawerZone, _woundDraft.Value);
-        _notice = $"{GetWoundLabel(WoundDrawerZone)} gespeichert.";
+        var sessionResult = await SyncSessionRuntimeStateAsync();
+        _notice = sessionResult?.Stale == true
+            ? sessionResult.Message
+            : $"{GetWoundLabel(WoundDrawerZone)} gespeichert.";
         CloseDrawer();
     }
 
@@ -920,6 +926,19 @@ public partial class Kampf : IDisposable
         CurrentAuP = CurrentAuP,
         Wounds = Wounds.ToDictionary(pair => pair.Key, pair => pair.Value)
     };
+
+    private async Task<CombatSessionMutationResultDto?> SyncSessionRuntimeStateAsync()
+    {
+        if (!IsSessionCombat || OwnSessionParticipant is not { } participant || ActiveHero is null)
+        {
+            return null;
+        }
+
+        return await CombatSessionState.SyncRuntimeStateAsync(
+            BuildRuntimeState(),
+            participant.Id,
+            ActiveHero.Id);
+    }
 
     private static string FormatSigned(int value) => value > 0 ? $"+{value}" : value.ToString(CultureInfo.InvariantCulture);
 
