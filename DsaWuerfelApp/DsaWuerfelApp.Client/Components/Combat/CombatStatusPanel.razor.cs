@@ -32,6 +32,8 @@ public partial class CombatStatusPanel
     [Parameter] public IReadOnlyList<string> Effects { get; set; } = Array.Empty<string>();
 
     private int TotalWounds => Wounds.Values.Where(value => value.HasValue).Sum(value => Math.Clamp(value!.Value, 0, 3));
+    private bool HasUnknownWounds => Wounds.Values.Any(value => !value.HasValue);
+    private string WoundSummary => HasUnknownWounds ? "—" : TotalWounds.ToString();
 
     private static bool ShouldShowResource(CombatResourceKind resource, int? maximum) =>
         resource == CombatResourceKind.LeP ? !maximum.HasValue || maximum.Value > 0 : maximum is > 0;
@@ -40,7 +42,7 @@ public partial class CombatStatusPanel
     {
         if (!current.HasValue)
         {
-            return maximum.HasValue ? $"? / {maximum.Value}" : "?";
+            return maximum.HasValue ? $"— / {maximum.Value}" : "—";
         }
 
         return maximum.HasValue ? $"{current.Value} / {maximum.Value}" : current.Value.ToString();

@@ -9,7 +9,7 @@
             <span>@(string.IsNullOrWhiteSpace(SessionName) ? "Solo" : SessionName)</span>
         </div>
         <div class="hero-status-actions">
-            <span class="hero-status-state">@(IsLoading ? "Profil wird geladen" : Profile is null ? "Profil fehlt" : "Import aktiv")</span>
+            <span class="hero-status-state">@(IsLoading ? "Profil wird geladen" : Profile is null ? "Profil fehlt" : IsCombatStarted ? "Zustand erfasst" : "Zustand offen")</span>
             @if (CanUndo)
             {
                 <button type="button" class="combat-compact-button" @onclick="UndoRequested">Rückgängig</button>
@@ -65,10 +65,24 @@
                 <small>@(CurrentInitiative.HasValue ? "laufender Wert · bearbeiten" : "Importwert · würfeln")</small>
             </button>
             <button type="button" class="hero-resource hero-resource-wounds" @onclick="WoundsRequested">
-                <span class="hero-resource-heading"><strong>Wunden</strong><span>@TotalWounds</span></span>
-                <small>7 Wundzonen · bearbeiten</small>
+                <span class="hero-resource-heading"><strong>Wunden</strong><span>@WoundSummary</span></span>
+                <small>@(HasUnknownWounds ? "Wundstand nicht erfasst · bearbeiten" : "7 Wundzonen · bearbeiten")</small>
             </button>
         </div>
+
+        @if (!IsCombatStarted && CanStartCombat)
+        {
+            <div class="hero-status-initialize" role="status">
+                <div>
+                    <strong>Aktueller Zustand noch nicht erfasst</strong>
+                    <span>Setze die Werte direkt oder beginne mit den importierten Maxima.</span>
+                </div>
+                <div class="hero-status-initialize-actions">
+                    <button type="button" class="combat-compact-button primary" @onclick="StartCombatRequested">Mit Maximalwerten beginnen</button>
+                    <button type="button" class="combat-compact-button" @onclick="() => ResourceEditRequested.InvokeAsync(CombatResourceKind.LeP)">Aktuelle Werte erfassen</button>
+                </div>
+            </div>
+        }
 
         <div class="hero-status-footer">
             <span>Set @(SelectedSet is null ? "—" : $"{SelectedSet.Number} · {GetArmorLabel()}")</span>

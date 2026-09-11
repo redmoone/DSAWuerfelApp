@@ -134,6 +134,46 @@
     overflow-wrap: anywhere;
 }
 
+.hero-status-initialize {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid rgba(212, 175, 55, 0.42);
+    border-radius: 8px;
+    background: rgba(7, 17, 29, 0.48);
+}
+
+.hero-status-initialize > div:first-child {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.12rem;
+}
+
+.hero-status-initialize strong {
+    color: var(--dsa-white);
+    font-size: 0.78rem;
+}
+
+.hero-status-initialize span {
+    color: var(--dsa-text-muted);
+    font-size: 0.7rem;
+}
+
+.hero-status-initialize-actions {
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.combat-compact-button.primary {
+    background: var(--dsa-gold);
+    color: #07111d;
+}
+
 .hero-resource-initiative,
 .hero-resource-wounds {
     justify-content: center;
@@ -185,6 +225,19 @@
     .hero-status-actions {
         width: 100%;
         justify-content: space-between;
+    }
+
+    .hero-status-initialize {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .hero-status-initialize-actions {
+        width: 100%;
+    }
+
+    .hero-status-initialize-actions .combat-compact-button {
+        flex: 1 1 12rem;
     }
 
     .hero-status-resources {

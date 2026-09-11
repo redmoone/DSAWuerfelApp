@@ -478,6 +478,20 @@ public partial class Kampf : IDisposable
         _resourceKind = null;
     }
 
+    private async Task InitializeCombatStateAsync()
+    {
+        if (!await CombatState.StartCombatAsync())
+        {
+            _notice = "Für die Initialisierung fehlt ein importiertes Kampfprofil.";
+            return;
+        }
+
+        var sessionResult = await SyncSessionRuntimeStateAsync();
+        _notice = sessionResult?.Stale == true
+            ? sessionResult.Message
+            : "Laufende Kampfwerte mit den importierten Maximalwerten initialisiert.";
+    }
+
     private async Task ApplyResourceAsync()
     {
         if (_resourceKind is not { } resource)
@@ -921,7 +935,7 @@ public partial class Kampf : IDisposable
 
     private CombatRuntimeStateDto BuildRuntimeState() => new()
     {
-        IsStarted = IsCombatStarted,
+        IsStarted = CombatState.IsStarted,
         CurrentLeP = CurrentLeP,
         CurrentAuP = CurrentAuP,
         Wounds = Wounds.ToDictionary(pair => pair.Key, pair => pair.Value)

@@ -203,7 +203,11 @@ public sealed class CombatState : IDisposable
             CombatResourceKind.AeP => _runtime with { CurrentAeP = normalized },
             CombatResourceKind.KeP => _runtime with { CurrentKeP = normalized },
             _ => _runtime
-        }) with { LastChangedAtUtc = DateTimeOffset.UtcNow };
+        }) with
+        {
+            IsStarted = _runtime.IsStarted || normalized.HasValue,
+            LastChangedAtUtc = DateTimeOffset.UtcNow
+        };
         await PersistCurrentAsync();
     }
 
@@ -219,7 +223,12 @@ public sealed class CombatState : IDisposable
         {
             [zone] = Math.Clamp(value, 0, 3)
         };
-        _runtime = _runtime with { Wounds = wounds, LastChangedAtUtc = DateTimeOffset.UtcNow };
+        _runtime = _runtime with
+        {
+            IsStarted = true,
+            Wounds = wounds,
+            LastChangedAtUtc = DateTimeOffset.UtcNow
+        };
         await PersistCurrentAsync();
     }
 
@@ -259,9 +268,16 @@ public sealed class CombatState : IDisposable
             return true;
         }
 
+        _undo = _runtime;
+        var wounds = _runtime.Wounds.ToDictionary(pair => pair.Key, pair => (int?)(pair.Value ?? 0));
         _runtime = _runtime with
         {
             IsStarted = true,
+            CurrentLeP = _runtime.CurrentLeP ?? Profile.Resources.LeP,
+            CurrentAuP = _runtime.CurrentAuP ?? Profile.Resources.AuP,
+            CurrentAeP = _runtime.CurrentAeP ?? Profile.Resources.AeP,
+            CurrentKeP = _runtime.CurrentKeP ?? Profile.Resources.KeP,
+            Wounds = wounds,
             LastChangedAtUtc = DateTimeOffset.UtcNow
         };
         await PersistCurrentAsync();
@@ -575,26 +591,19 @@ public sealed class CombatState : IDisposable
             1,
             contextKey,
             profile.SourceRevision,
-            true,
-            profile.Resources.LeP,
-            profile.Resources.AuP,
+            false,
             null,
-            ZeroWounds(),
+            null,
+            null,
+            EmptyWounds(),
             0,
             [],
             null,
-            DateTimeOffset.UtcNow)
-        {
-            CurrentAeP = profile.Resources.AeP,
-            CurrentKeP = profile.Resources.KeP
-        };
+            null);
     }
 
     private static Dictionary<CombatWoundZone, int?> EmptyWounds() =>
         Enum.GetValues<CombatWoundZone>().ToDictionary(zone => zone, _ => (int?)null);
-
-    private static Dictionary<CombatWoundZone, int?> ZeroWounds() =>
-        Enum.GetValues<CombatWoundZone>().ToDictionary(zone => zone, _ => (int?)0);
 
     private static CombatRuntimeSnapshot NormalizeSnapshot(
         CombatRuntimeSnapshot snapshot,

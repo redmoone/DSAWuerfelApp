@@ -325,6 +325,20 @@ public partial class Wuerfel : IDisposable
         _combatResourceKind = null;
     }
 
+    private async Task InitializeCombatStateAsync()
+    {
+        if (!await CombatState.StartCombatAsync())
+        {
+            _combatNotice = "Für die Initialisierung fehlt ein importiertes Kampfprofil.";
+            return;
+        }
+
+        var sessionResult = await SyncCombatSessionRuntimeStateAsync();
+        _combatNotice = sessionResult?.Stale == true
+            ? sessionResult.Message
+            : "Laufende Kampfwerte mit den importierten Maximalwerten initialisiert.";
+    }
+
     private async Task ApplyCombatResourceAsync()
     {
         if (_combatResourceKind is not { } resource || CombatProfile is null)
@@ -504,7 +518,7 @@ public partial class Wuerfel : IDisposable
 
     private CombatRuntimeStateDto BuildCombatRuntimeState() => new()
     {
-        IsStarted = CombatIsStarted,
+        IsStarted = CombatState.IsStarted,
         CurrentLeP = CombatCurrentLeP,
         CurrentAuP = CombatCurrentAuP,
         Wounds = CombatWounds.ToDictionary(pair => pair.Key, pair => pair.Value)
