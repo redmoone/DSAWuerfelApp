@@ -22,7 +22,9 @@ const combatXml = `
 
     const status = page.locator('.wuerfel-status-surface .combat-status-panel');
     assert.match(await status.innerText(), /Held0/);
-    assert.match(await page.locator('.hero-resource-lep').innerText(), /22 \/ 22/);
+    assert.match(await page.locator('.hero-resource-lep').innerText(), /— \/ 22/);
+    await page.getByRole('button', { name: 'Mit Maximalwerten beginnen', exact: true }).click();
+    await page.waitForFunction(() => document.querySelector('.hero-resource-lep')?.textContent.includes('22 / 22'));
     assert.equal(await page.locator('.hero-resource').filter({ hasText: /AeP/i }).count(), 1);
 
     await page.locator('.hero-resource-lep').click();

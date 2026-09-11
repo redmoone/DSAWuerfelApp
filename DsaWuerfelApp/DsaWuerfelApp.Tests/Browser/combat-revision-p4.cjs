@@ -16,6 +16,11 @@ function statusText(page) {
   return page.locator('.combat-status-panel').innerText();
 }
 
+async function setNumber(drawer, label, value) {
+  await drawer.locator(`input[aria-label="${label}"]`).fill(String(value));
+  await drawer.getByRole('button', { name: 'Anwenden', exact: true }).click();
+}
+
 (async () => {
   await fs.mkdir(screenshotDirectory, { recursive: true });
   const fixture = await createAppFixture(publishDirectory, { userCount: 1, heroSourceXml: combatXml });
@@ -28,61 +33,56 @@ function statusText(page) {
     await page.locator('.combat-resource-strip').waitFor();
 
     let text = await statusText(page);
-    assert.match(text, /LEP\s+22\s+noch nicht gestartet/);
-    assert.match(text, /Kampfzustand noch nicht gestartet/);
-    assert.equal(await page.getByRole('button', { name: 'Kampfzustand starten', exact: true }).count(), 1);
+    assert.match(text, /—\s*\/\s*22/);
+    assert.match(text, /Aktueller Zustand noch nicht erfasst/);
+    assert.equal(await page.getByRole('button', { name: 'Mit Maximalwerten beginnen', exact: true }).count(), 1);
 
-    await page.getByRole('button', { name: 'Kampfzustand starten', exact: true }).click();
-    await page.getByText('Kampfzustand auf diesem Gerät', { exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Aktuelle Werte erfassen', exact: true }).click();
+    const resourceDrawer = page.locator('.combat-details-drawer');
+    await resourceDrawer.waitFor();
+    await resourceDrawer.locator('input[aria-label="LeP"]').fill('17');
+    await resourceDrawer.getByRole('button', { name: 'Abbrechen', exact: true }).click();
+    assert.match(await page.locator('.hero-resource-lep').innerText(), /—\s*\/\s*22/);
+
+    await page.locator('.hero-resource-lep').click();
+    await setNumber(page.locator('.combat-details-drawer'), 'LeP', 17);
     text = await statusText(page);
-    assert.match(text, /22 \/ 22/);
-    assert.match(text, /WUNDEN GESAMT\s+0/i);
+    assert.match(text, /17\s*\/\s*22/);
+    assert.match(text, /WUNDEN\s+—/i);
 
-    const situationalModifier = page.locator('.combat-action-summary .modifier-pill');
-    await situationalModifier.locator('.mod-btn').last().click();
-    await situationalModifier.getByText('+1', { exact: true }).waitFor();
-
-    await page.getByRole('button', { name: 'Treffer erfassen', exact: true }).click();
-    const capture = page.locator('.combat-hit-capture');
-    await capture.waitFor();
-    await capture.locator('select').selectOption('Torso');
-    await capture.locator('.text-pill-input[type="number"]').fill('5');
-    await capture.locator('.modifier-pill .mod-btn').last().click();
-    await capture.locator('.text-pill-input[placeholder="Optional"]').fill('Treffer am Torso');
-    assert.match(await capture.locator('.combat-hit-preview').innerText(), /17/);
-    assert.match(await capture.locator('.combat-hit-preview').innerText(), /0.*→ 1/);
-    await capture.getByRole('button', { name: 'Übernehmen', exact: true }).click();
-
+    await page.getByRole('button', { name: 'Zonen', exact: true }).click();
+    const zones = page.locator('.combat-zones-area.active');
+    await zones.locator('.combat-zone-row').filter({ hasText: 'Brust' }).click();
+    await setNumber(page.locator('.combat-details-drawer'), 'Wunden', 1);
     text = await statusText(page);
-    assert.match(text, /17 \/ 22/);
-    assert.match(text, /WUNDEN GESAMT\s+1/i);
-    const torsoRows = page.locator('.combat-zone-row').filter({ hasText: 'Brust' });
-    assert.equal(await torsoRows.count(), 1);
-    assert.match(await torsoRows.innerText(), /Wunden 1\/3/);
-    assert.match(await page.locator('.combat-notice').innerText(), /Treffer wurde manuell erfasst/);
+    assert.match(text, /17\s*\/\s*22/);
+    assert.match(text, /WUNDEN\s+1\s+\+\s+\?/i);
+    assert.match(await zones.locator('.combat-zone-row').filter({ hasText: 'Brust' }).innerText(), /Wunden 1\/3/);
 
-    await page.getByRole('button', { name: 'Rückseite', exact: true }).click();
-    assert.match(await page.locator('.combat-zone-row').filter({ hasText: 'Rücken' }).innerText(), /Wunden 1\/3/);
-    await page.getByRole('button', { name: 'Vorderseite', exact: true }).click();
+    await zones.locator('.combat-facing-button').nth(1).click();
+    assert.match(await zones.locator('.combat-zone-row').filter({ hasText: /Rück/ }).innerText(), /Wunden 1\/3/);
+    await zones.locator('.combat-facing-button').first().click();
 
-    await page.getByRole('button', { name: 'Letzte Änderung rückgängig', exact: true }).click();
+    await page.getByRole('button', { name: 'Rückgängig', exact: true }).click();
     text = await statusText(page);
-    assert.match(text, /22 \/ 22/);
-    assert.match(text, /WUNDEN GESAMT\s+0/i);
-    assert.match(await page.locator('.combat-zone-row').filter({ hasText: 'Brust' }).innerText(), /Wunden 0\/3/);
+    assert.match(text, /17\s*\/\s*22/);
+    assert.match(text, /WUNDEN\s+—/i);
+    assert.match(await zones.locator('.combat-zone-row').filter({ hasText: 'Brust' }).innerText(), /Wunden \?\/3/);
 
-    await page.getByRole('button', { name: 'Treffer erfassen', exact: true }).click();
-    await page.locator('.combat-hit-capture').getByRole('button', { name: 'Abbrechen', exact: true }).click();
-    await page.getByRole('button', { name: 'Treffer erfassen', exact: true }).click();
-    await page.locator('.combat-hit-capture').locator('.text-pill-input[type="number"]').fill('3');
-    await page.locator('.combat-hit-capture').getByRole('button', { name: 'Übernehmen', exact: true }).click();
+    await zones.locator('.combat-zone-row').filter({ hasText: 'Brust' }).click();
+    await page.locator('.combat-details-drawer').getByRole('button', { name: 'Abbrechen', exact: true }).click();
+    assert.match(await zones.locator('.combat-zone-row').filter({ hasText: 'Brust' }).innerText(), /Wunden \?\/3/);
+
+    await zones.locator('.combat-zone-row').filter({ hasText: 'Brust' }).click();
+    await setNumber(page.locator('.combat-details-drawer'), 'Wunden', 1);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.locator('.combat-resource-strip').waitFor();
-    await page.getByText('Kampfzustand auf diesem Gerät', { exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Zonen', exact: true }).click();
+    await page.locator('.combat-zones-area.active .combat-zone-row').filter({ hasText: 'Brust' }).waitFor();
     text = await statusText(page);
-    assert.match(text, /19 \/ 22/);
-    assert.match(text, /WUNDEN GESAMT\s+0/i);
-    assert.match(await page.locator('.combat-action-summary .modifier-pill').innerText(), /\+1/);
+    assert.match(text, /17\s*\/\s*22/);
+    assert.match(text, /WUNDEN\s+1\s+\+\s+\?/i);
+    assert.match(await page.locator('.combat-zones-area.active .combat-zone-row').filter({ hasText: 'Brust' }).innerText(), /Wunden 1\/3/);
     const storageKeys = await page.evaluate(() => Object.keys(localStorage).filter(key => key.startsWith('dsa.combat-state:')));
     assert.equal(storageKeys.length, 1);
 

@@ -33,7 +33,9 @@ public partial class CombatStatusPanel
 
     private int TotalWounds => Wounds.Values.Where(value => value.HasValue).Sum(value => Math.Clamp(value!.Value, 0, 3));
     private bool HasUnknownWounds => Wounds.Values.Any(value => !value.HasValue);
-    private string WoundSummary => HasUnknownWounds ? "—" : TotalWounds.ToString();
+    private string WoundSummary => HasUnknownWounds
+        ? TotalWounds > 0 ? $"{TotalWounds} + ?" : "—"
+        : TotalWounds.ToString();
 
     private static bool ShouldShowResource(CombatResourceKind resource, int? maximum) =>
         resource == CombatResourceKind.LeP ? !maximum.HasValue || maximum.Value > 0 : maximum is > 0;
