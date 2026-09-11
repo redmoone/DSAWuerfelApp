@@ -46,7 +46,7 @@ Dieser Arbeitsstand folgt `DSA-Kampfseite-Luna-Max-Plan.md`, Revision 3. Der lok
 - `CombatHitCapturePanel` setzt bestehende `TextPill` und `ModifierPill` zusammen. Zone, am Tisch ermittelter LeP-Verlust, Wundstand und Notiz werden als manueller Treffer mit Vorher/Nachher, Apply, Cancel und einer begrenzten Undo-Änderung geführt.
 - Brust und Rücken lesen denselben `CombatWoundZone.Torso`-Wert. Der Vorder-/Rückwechsel ändert nur die Ansicht. Setwechsel erhält laufende LeP und Wunden.
 - `CombatStateStore` speichert den laufenden Stand je Kontext in `localStorage`. Ein Speicherfehler lässt die UI weiterarbeiten und zeigt eine kurze Warnung.
-- Browserprüfung `combat-revision-p4.cjs` bestätigt Start, Treffer 5 LeP plus eine Torso-Wunde, Vorder-/Rückwechsel, Undo, Abbrechen und Reload-Wiederherstellung ohne Browserfehler; Screenshots liegen unter `artifacts/combat-revision-p5-p4-screenshots/`.
+- Browserprüfung `combat-revision-p4.cjs` bestätigt Start, einen situativen Modifikator, Treffer 5 LeP plus eine Torso-Wunde, Vorder-/Rückwechsel, Undo, Abbrechen und Reload-Wiederherstellung ohne Browserfehler; Screenshots liegen unter `artifacts/combat-revision-p5-p4-screenshots/`.
 
 ## P5 – visuelle und funktionale Abnahme
 

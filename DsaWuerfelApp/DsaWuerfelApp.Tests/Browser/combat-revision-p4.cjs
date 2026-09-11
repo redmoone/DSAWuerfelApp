@@ -38,6 +38,10 @@ function statusText(page) {
     assert.match(text, /22 \/ 22/);
     assert.match(text, /WUNDEN GESAMT\s+0/i);
 
+    const situationalModifier = page.locator('.combat-action-summary .modifier-pill');
+    await situationalModifier.locator('.mod-btn').last().click();
+    await situationalModifier.getByText('+1', { exact: true }).waitFor();
+
     await page.getByRole('button', { name: 'Treffer erfassen', exact: true }).click();
     const capture = page.locator('.combat-hit-capture');
     await capture.waitFor();
@@ -78,6 +82,7 @@ function statusText(page) {
     text = await statusText(page);
     assert.match(text, /19 \/ 22/);
     assert.match(text, /WUNDEN GESAMT\s+0/i);
+    assert.match(await page.locator('.combat-action-summary .modifier-pill').innerText(), /\+1/);
     const storageKeys = await page.evaluate(() => Object.keys(localStorage).filter(key => key.startsWith('dsa.combat-state:')));
     assert.equal(storageKeys.length, 1);
 
