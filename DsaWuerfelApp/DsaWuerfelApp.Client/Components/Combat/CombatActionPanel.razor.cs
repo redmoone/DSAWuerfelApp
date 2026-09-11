@@ -14,6 +14,8 @@ public partial class CombatActionPanel
     [Parameter] public bool IsLoading { get; set; }
     [Parameter] public string? SelectedSetId { get; set; }
     [Parameter] public EventCallback<string> SetSelected { get; set; }
+    [Parameter] public bool AttributeMode { get; set; }
+    [Parameter] public EventCallback<bool> AttributeModeChanged { get; set; }
     [Parameter] public IReadOnlyList<CombatWeaponDto> Weapons { get; set; } = Array.Empty<CombatWeaponDto>();
     [Parameter] public string? SelectedWeaponId { get; set; }
     [Parameter] public EventCallback<string> WeaponSelected { get; set; }
@@ -38,6 +40,7 @@ public partial class CombatActionPanel
     [Parameter] public int? EffectiveTarget { get; set; }
     [Parameter] public string TargetSource { get; set; } = "Importierter Zielwert";
     [Parameter] public CombatRollResultDto? CombatResult { get; set; }
+    [Parameter] public AttributeRollResultDto? AttributeResult { get; set; }
     [Parameter] public IReadOnlyList<int> ResultDiceSides { get; set; } = Array.Empty<int>();
     [Parameter] public IReadOnlyList<int> ResultDiceValues { get; set; } = Array.Empty<int>();
     [Parameter] public long ResultVersion { get; set; }

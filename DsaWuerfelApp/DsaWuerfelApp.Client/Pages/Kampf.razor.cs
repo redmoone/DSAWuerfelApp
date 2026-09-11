@@ -21,6 +21,7 @@ public partial class Kampf : IDisposable
     private string? _notice;
     private string? _lastContextKey;
     private bool _rollBusy;
+    private bool _attributeMode;
     private CombatArea _activeArea = CombatArea.Wurf;
     private CombatDrawer _drawer;
     private CombatResourceKind? _resourceKind;
@@ -84,11 +85,17 @@ public partial class Kampf : IDisposable
     private CombatWoundZone? SelectedZone => CombatState.SelectedZone;
     private IReadOnlyList<RollHistoryEntryDto> History => WuerfelState.Current.History;
     private CombatRollResultDto? CombatResult => WuerfelState.Current.LastCombatRoll;
-    private IReadOnlyList<int> ResultDiceSides => CombatResult?.Rolls.Select(roll => roll.Sides).ToArray() ?? Array.Empty<int>();
-    private IReadOnlyList<int> ResultDiceValues => CombatResult?.Rolls.Select(roll => roll.Value).ToArray() ?? Array.Empty<int>();
+    private AttributeRollResultDto? AttributeResult => WuerfelState.Current.LastAttributeRoll;
+    private IReadOnlyList<int> ResultDiceSides => IsAttributeMode
+        ? WuerfelState.Current.AnimatedDiceSides
+        : CombatResult?.Rolls.Select(roll => roll.Sides).ToArray() ?? Array.Empty<int>();
+    private IReadOnlyList<int> ResultDiceValues => IsAttributeMode
+        ? WuerfelState.Current.AnimatedDiceValues
+        : CombatResult?.Rolls.Select(roll => roll.Value).ToArray() ?? Array.Empty<int>();
     private long ResultVersion => WuerfelState.Current.ResultVersion;
     private CombatArea ActiveArea => _activeArea;
     private CombatWoundZone WoundDrawerZone => SelectedZone ?? CombatWoundZone.Torso;
+    private bool IsAttributeMode => _attributeMode;
 
     private string HeroDisplayName => ActiveHero?.Name ?? "Kein aktiver Held";
     private string ProfileStatus => ActiveHero is null
@@ -127,8 +134,10 @@ public partial class Kampf : IDisposable
         _ => "Hilfswurf ohne Zielwert"
     };
 
-    private bool CanRoll => HasCombatContext && !_rollBusy &&
-                            Actions.FirstOrDefault(action => action.Key == SelectedAction)?.IsAvailable == true;
+    private bool CanRoll => IsAttributeMode
+        ? HasCombatContext && !_rollBusy && SelectedAttributes.Count > 0
+        : HasCombatContext && !_rollBusy &&
+          Actions.FirstOrDefault(action => action.Key == SelectedAction)?.IsAvailable == true;
 
     private string DrawerTitle => _drawer switch
     {
@@ -259,6 +268,12 @@ public partial class Kampf : IDisposable
 
     private Task HandleActionSelected(string action) => CombatState.SetSelectedActionAsync(action);
 
+    private Task HandleAttributeModeChanged(bool attributeMode)
+    {
+        _attributeMode = attributeMode;
+        return Task.CompletedTask;
+    }
+
     private Task HandleProbeSelected(string probe) => CombatState.SetSelectedProbeAsync(probe);
 
     private Task HandleAttributeSelected(string attribute) => CombatState.AddSelectedAttributeAsync(attribute);
@@ -273,6 +288,12 @@ public partial class Kampf : IDisposable
 
     private async Task HandleRollRequested()
     {
+        if (IsAttributeMode)
+        {
+            await HandleAttributeRollRequested();
+            return;
+        }
+
         if (!CanRoll || GetActionKind() is not { } action)
         {
             _notice = "Bitte zuerst ein importiertes Set, eine passende Waffe und eine verfügbare Aktion wählen.";
@@ -285,6 +306,33 @@ public partial class Kampf : IDisposable
         {
             var result = await CombatCoordinator.RollAsync(BuildRollRequest(action));
             _notice = result.Snapshot.StatusLabel;
+        }
+        catch (Exception exception)
+        {
+            _notice = exception.Message;
+        }
+        finally
+        {
+            _rollBusy = false;
+        }
+    }
+
+    private async Task HandleAttributeRollRequested()
+    {
+        if (!CanRoll)
+        {
+            _notice = "Bitte mindestens eine Eigenschaft auswählen.";
+            return;
+        }
+
+        _rollBusy = true;
+        _notice = null;
+        try
+        {
+            await WuerfelFacade.RollAttributesAsync(SelectedAttributes, Modifier, ActiveHero?.Id);
+            _notice = AttributeResult is { Success: true }
+                ? "Eigenschaftsprobe gelungen."
+                : "Eigenschaftsprobe ausgewertet.";
         }
         catch (Exception exception)
         {
@@ -591,9 +639,9 @@ public partial class Kampf : IDisposable
 
     private void OpenLastResultDetails()
     {
-        if (CombatResult is not null)
+        if (CombatResult is not null || AttributeResult is not null)
         {
-            _selectedHistoryEntry = CombatResult.HistoryEntry;
+            _selectedHistoryEntry = CombatResult?.HistoryEntry ?? AttributeResult?.HistoryEntry;
         }
     }
 

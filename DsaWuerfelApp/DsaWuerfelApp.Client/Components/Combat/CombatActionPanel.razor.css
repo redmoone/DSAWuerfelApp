@@ -34,6 +34,38 @@
     font-weight: 700;
 }
 
+.combat-mode-switcher {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem;
+}
+
+.combat-mode-switcher button {
+    min-height: var(--ui-touch-target);
+    padding: 0.42rem 0.55rem;
+    border: 1px solid rgba(212, 175, 55, 0.55);
+    border-radius: 8px;
+    background: rgba(7, 17, 29, 0.62);
+    color: var(--dsa-text-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.combat-mode-switcher button.active,
+.combat-mode-switcher button:hover,
+.combat-mode-switcher button:focus-visible {
+    border-color: var(--dsa-gold);
+    background: var(--dsa-hover-background);
+    color: var(--dsa-white);
+}
+
+.combat-mode-switcher button:focus-visible {
+    outline: 2px solid var(--dsa-gold);
+    outline-offset: 2px;
+}
+
 .combat-action-state,
 .combat-unavailable,
 .combat-muted {

@@ -191,6 +191,33 @@ public sealed class WuerfelFacade(
             : Task.CompletedTask;
     }
 
+    public Task RollAttributesAsync(
+        IReadOnlyList<string> attributes,
+        int modifier,
+        Guid? heroId,
+        bool isHidden = false)
+    {
+        ArgumentNullException.ThrowIfNull(attributes);
+        if (attributes.Count is < 1 or > 3)
+        {
+            state.SetError("Es müssen zwischen 1 und 3 Eigenschaften ausgewählt werden.");
+            return Task.CompletedTask;
+        }
+
+        var request = new AttributeRollRequestDto(
+            gameClient.CurrentSessionId,
+            heroId,
+            attributes.ToArray(),
+            modifier,
+            null,
+            isHidden);
+
+        return ExecuteAsync(new WuerfelRollCommand<AttributeRollResultDto>(
+            client => client.RollAttribute(request),
+            (apiClient, cancellationToken) => apiClient.RollAttributeAsync(request, cancellationToken),
+            state.ApplyAttributeRollResult));
+    }
+
     public Task ExecuteBadTraitRollAsync()
     {
         var heroId = state.Current.ActiveHeroId;

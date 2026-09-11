@@ -10,14 +10,31 @@
         <span class="combat-action-state">@ActionAvailabilityText</span>
     </div>
 
-    @if (Sets.Count == 0)
+    <div class="combat-mode-switcher" role="tablist" aria-label="Wurfmodus">
+        <button type="button"
+                role="tab"
+                class="@(AttributeMode ? string.Empty : "active")"
+                aria-selected="@(!AttributeMode)"
+                @onclick="() => AttributeModeChanged.InvokeAsync(false)">
+            Kampf
+        </button>
+        <button type="button"
+                role="tab"
+                class="@(AttributeMode ? "active" : string.Empty)"
+                aria-selected="@AttributeMode"
+                @onclick="() => AttributeModeChanged.InvokeAsync(true)">
+            Eigenschaften
+        </button>
+    </div>
+
+    @if (!AttributeMode && Sets.Count == 0)
     {
         <div class="combat-empty-state">
             <strong>@EmptyStateTitle</strong>
             <span>@EmptyStateText</span>
         </div>
     }
-    else
+    else if (!AttributeMode)
     {
         <div class="combat-set-row">
             <label class="combat-field-label" for="combat-set-select">Kampfset</label>
@@ -82,76 +99,82 @@
         </div>
     }
 
-    <div class="combat-maneuver-block">
-        <div class="combat-block-heading">
-            <div>
-                <span class="combat-field-label">Manöver und Sonderfertigkeiten</span>
-                <p>Gelernt, vergünstigt oder als manuelle Entscheidung markiert.</p>
-            </div>
-            @if (!string.IsNullOrWhiteSpace(SelectedProbe))
-            {
-                <span class="combat-selected-chip">@SelectedProbe</span>
-            }
-        </div>
-        <ProbenSearch AvailableProben="Maneuvers"
-                      UseFallbackCatalog="false"
-                      Placeholder="Sonderfertigkeit oder Manöver suchen …"
-                      SelectedProbe="@SelectedProbe"
-                      SelectedProbeChanged="ProbeSelected" />
-    </div>
-
-    <div class="combat-attribute-block">
-        <div class="combat-block-heading">
-            <div>
-                <span class="combat-field-label">Eigenschaften für Zusatzproben</span>
-                <p>Mehrfachauswahl bleibt in der tatsächlichen Reihenfolge erhalten.</p>
-            </div>
-        </div>
-        <div class="combat-attribute-strip">
-            @foreach (var entry in Attributes)
-            {
-                <AttributePill ShortName="@entry.Key"
-                               Value="@(entry.Value ?? 0)"
-                               IconPath="@entry.IconPath"
-                               IsSelected="@SelectedAttributes.Contains(entry.Key)"
-                               OnClick="() => AttributeSelected.InvokeAsync(entry.Key)" />
-            }
-        </div>
-        <div class="combat-selection-chips" aria-label="Ausgewählte Eigenschaften">
-            @if (SelectedAttributes.Count == 0)
-            {
-                <span class="combat-selection-placeholder">Keine Eigenschaft ausgewählt</span>
-            }
-            else
-            {
-                @for (var index = 0; index < SelectedAttributes.Count; index++)
+    @if (!AttributeMode)
+    {
+        <div class="combat-maneuver-block">
+            <div class="combat-block-heading">
+                <div>
+                    <span class="combat-field-label">Manöver und Sonderfertigkeiten</span>
+                    <p>Gelernt, vergünstigt oder als manuelle Entscheidung markiert.</p>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(SelectedProbe))
                 {
-                    var selectedIndex = index;
-                    var attribute = SelectedAttributes[selectedIndex];
-                    <span class="combat-selection-chip">
-                        @((string)attribute)
-                        <button type="button"
-                                aria-label="@($"{attribute} aus Auswahl entfernen")"
-                                @onclick="() => AttributeRemoved.InvokeAsync(selectedIndex)">×</button>
-                    </span>
+                    <span class="combat-selected-chip">@SelectedProbe</span>
                 }
-            }
+            </div>
+            <ProbenSearch AvailableProben="Maneuvers"
+                          UseFallbackCatalog="false"
+                          Placeholder="Sonderfertigkeit oder Manöver suchen …"
+                          SelectedProbe="@SelectedProbe"
+                          SelectedProbeChanged="ProbeSelected" />
         </div>
-    </div>
+    }
+
+    @if (AttributeMode)
+    {
+        <div class="combat-attribute-block">
+            <div class="combat-block-heading">
+                <div>
+                    <span class="combat-field-label">Eigenschaftsprobe</span>
+                    <p>Mehrfachauswahl bleibt in der tatsächlichen Reihenfolge erhalten.</p>
+                </div>
+            </div>
+            <div class="combat-attribute-strip">
+                @foreach (var entry in Attributes)
+                {
+                    <AttributePill ShortName="@entry.Key"
+                                   Value="@(entry.Value ?? 0)"
+                                   IconPath="@entry.IconPath"
+                                   IsSelected="@SelectedAttributes.Contains(entry.Key)"
+                                   OnClick="() => AttributeSelected.InvokeAsync(entry.Key)" />
+                }
+            </div>
+            <div class="combat-selection-chips" aria-label="Ausgewählte Eigenschaften">
+                @if (SelectedAttributes.Count == 0)
+                {
+                    <span class="combat-selection-placeholder">Eigenschaften auswählen</span>
+                }
+                else
+                {
+                    @for (var index = 0; index < SelectedAttributes.Count; index++)
+                    {
+                        var selectedIndex = index;
+                        var attribute = SelectedAttributes[selectedIndex];
+                        <span class="combat-selection-chip">
+                            @((string)attribute)
+                            <button type="button"
+                                    aria-label="@($"{attribute} aus Auswahl entfernen")"
+                                    @onclick="() => AttributeRemoved.InvokeAsync(selectedIndex)">×</button>
+                        </span>
+                    }
+                }
+            </div>
+        </div>
+    }
 
     <div class="combat-target-preview" aria-live="polite">
-        <span class="combat-field-label">Effektives Ziel</span>
-        <strong>@EffectiveTargetText</strong>
-        <span>@TargetSourceText</span>
+        <span class="combat-field-label">@(AttributeMode ? "Eigenschaften" : "Effektives Ziel")</span>
+        <strong>@(AttributeMode ? $"{SelectedAttributes.Count} ausgewählt" : EffectiveTargetText)</strong>
+        <span>@(AttributeMode ? "Serverseitige Eigenschaftsprobe" : TargetSourceText)</span>
     </div>
 
     <div class="combat-dice-area">
         <div class="combat-dice-heading">
             <div>
-                <span class="combat-field-label">Würfelbereich</span>
-                <p>Hauptwurf und Kontrollwurf werden nach dem Serverwurf animiert.</p>
+                <span class="combat-field-label">@(AttributeMode ? "Eigenschaftswurf" : "Würfelbereich")</span>
+                <p>@(AttributeMode ? "Ein W20 pro ausgewählter Eigenschaft wird serverseitig ausgewertet." : "Hauptwurf und Kontrollwurf werden nach dem Serverwurf animiert.")</p>
             </div>
-            <span class="combat-muted">W20 · W20 bei 1/20</span>
+            <span class="combat-muted">@(AttributeMode ? "W20 je Eigenschaft" : "W20 · W20 bei 1/20")</span>
         </div>
         <div class="combat-dice-viewport" data-testid="combat-dice-viewport" title="3D-Ansicht der Kampf-Würfel">
             <DiceViewport SelectedDice="@EmptyDice"
@@ -169,11 +192,24 @@
                          RollRequested="RollRequested"
                          CanRoll="@CanRoll"
                          IsBusy="@IsBusy"
-                         RollButtonText="Wurf ausführen"
-                         RollButtonAriaLabel="Kampfwurf ausführen"
+                         RollButtonText="@(AttributeMode ? "Eigenschaften würfeln" : "Wurf ausführen")"
+                         RollButtonAriaLabel="@(AttributeMode ? "Eigenschaftsprobe ausführen" : "Kampfwurf ausführen")"
                          AllowDirectModifierInput="true" />
 
-        @if (CombatResult is not null)
+        @if (AttributeMode && AttributeResult is not null)
+        {
+            <div class="combat-roll-result" data-testid="combat-roll-result" aria-live="assertive">
+                <div>
+                    <span class="combat-field-label">Ergebnis</span>
+                    <strong>@(AttributeResult.Success ? "Eigenschaftsprobe gelungen" : "Eigenschaftsprobe misslungen")</strong>
+                    <span>@AttributeResult.SuccessCount von @AttributeResult.Details.Length Eigenschaften gelungen</span>
+                </div>
+                <button type="button" class="combat-result-details" @onclick="ResultDetailsRequested">
+                    Details
+                </button>
+            </div>
+        }
+        else if (!AttributeMode && CombatResult is not null)
         {
             <div class="combat-roll-result" data-testid="combat-roll-result" aria-live="assertive">
                 <div>
