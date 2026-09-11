@@ -79,7 +79,8 @@ const combatXml = `
     await page.getByText('AT 20', { exact: true }).waitFor();
     const simpleText = await page.locator('.combat-page').innerText();
     assert.match(simpleText, /PA 15/);
-    assert.match(simpleText, /RS \/ BE[\s\S]*6 \/ 4/);
+    assert.match(simpleText, /Einfache/);
+    assert.doesNotMatch(simpleText, /RS \/ BE/);
 
     const bodyMetrics = await page.evaluate(() => ({
       scrollWidth: document.body.scrollWidth,

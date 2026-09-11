@@ -19,6 +19,9 @@ const viewports = [320, 390, 640, 900, 901, 1280, 1600];
       await page.setViewportSize({ width, height: 900 });
       await page.goto(`${origin}/kampf`, { waitUntil: 'domcontentloaded' });
       await page.locator('.combat-page').waitFor();
+      if (width <= 900) {
+        await page.getByRole('button', { name: 'Zonen', exact: true }).click();
+      }
       await page.locator('.combat-zone-row').first().waitFor();
 
       const metrics = await page.evaluate(() => ({

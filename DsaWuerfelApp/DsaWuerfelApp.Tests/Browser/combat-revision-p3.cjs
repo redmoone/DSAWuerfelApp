@@ -26,22 +26,20 @@ const combatXml = `
     await page.locator('.combat-resource-strip').waitFor();
 
     await page.locator('.combat-option').filter({ hasText: 'Magierstab als Stab Nr. 2' }).click();
-    await page.getByText('Waffe / Abwehr', { exact: true }).waitFor();
-    let infoText = await page.locator('.combat-info-surface').innerText();
+    await page.getByText('Waffe oder Abwehr', { exact: true }).waitFor();
+    let infoText = await page.locator('.combat-action-panel').innerText();
     assert.match(infoText, /Nr\. 2/);
     assert.match(infoText, /AT 19/);
-    assert.match(infoText, /TP 1W\+4/);
-    assert.match(infoText, /inkl\. 1W\+3/);
+    assert.match(infoText, /TP 1W\+3/);
+    assert.equal(await page.locator('.combat-info-surface').count(), 0);
 
     const maneuverSearch = page.locator('.combat-maneuver-block .search-input');
     await maneuverSearch.click();
     await maneuverSearch.fill('Aufmerksamkeit');
     const learnedEntry = page.locator('.combat-maneuver-block .dropdown-item-main').getByText('Aufmerksamkeit', { exact: true });
     await learnedEntry.click();
-    infoText = await page.locator('.combat-info-surface').innerText();
-    assert.match(infoText, /Sonderfertigkeit[\s\S]*Aufmerksamkeit/);
-    assert.match(infoText, /gelernt/);
-    assert.match(infoText, /Nahkampf · Kampf/);
+    infoText = await page.locator('.combat-maneuver-block').innerText();
+    assert.match(infoText, /Aufmerksamkeit/);
 
     await maneuverSearch.click();
     await maneuverSearch.fill('Binden');
@@ -49,8 +47,8 @@ const combatXml = `
     await discountedEntry.getByText('Binden (vergünstigt)', { exact: true }).waitFor();
     assert.equal(await discountedEntry.locator('button').count(), 0);
 
-    const rollButton = page.getByRole('button', { name: 'Kampfwurf', exact: true });
-    assert.equal(await rollButton.isDisabled(), true);
+    const rollButton = page.getByRole('button', { name: 'Kampfwurf ausführen', exact: true });
+    assert.equal(await rollButton.isDisabled(), false);
     assert.equal(await page.locator('.roll-history').count(), 1);
     assert.equal(await page.locator('.combat-zone-row').count(), 8);
 
