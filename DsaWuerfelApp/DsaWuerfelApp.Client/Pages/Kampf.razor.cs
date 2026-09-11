@@ -1,263 +1,171 @@
+using DsaWuerfelApp.Client.Services;
+using DsaWuerfelApp.Shared;
+using DsaWuerfelApp.Shared.Models;
+
+using Microsoft.AspNetCore.Components;
+
 namespace DsaWuerfelApp.Client.Pages;
 
-public partial class Kampf
+public partial class Kampf : IDisposable
 {
-    private readonly List<StatusBar> _statusBars = new()
+    [Inject] public ActiveHeroState ActiveHeroState { get; set; } = null!;
+    [Inject] public SessionState SessionState { get; set; } = null!;
+    [Inject] public WuerfelState WuerfelState { get; set; } = null!;
+    [Inject] public WuerfelFacade WuerfelFacade { get; set; } = null!;
+
+    private readonly Dictionary<CombatWoundZone, int?> _wounds = Enum
+        .GetValues<CombatWoundZone>()
+        .ToDictionary(zone => zone, _ => (int?)null);
+
+    private CombatFacing _facing = CombatFacing.Front;
+    private CombatWoundZone? _selectedZone;
+    private string? _selectedSetId;
+    private string? _selectedWeaponId;
+    private string _selectedAction = "attack";
+    private string _selectedProbe = string.Empty;
+    private string? _selectedAttribute;
+    private int _modifier;
+    private string _rollText = string.Empty;
+    private string? _notice;
+
+    private Hero? ActiveHero => ActiveHeroState.CurrentHero;
+    private CombatProfileDto? Profile => null;
+    private IReadOnlyList<CombatSetVariantDto> Sets => Array.Empty<CombatSetVariantDto>();
+    private IReadOnlyList<CombatWeaponDto> Weapons => Array.Empty<CombatWeaponDto>();
+    private IReadOnlyList<CombatAttributeDto> Attributes => Array.Empty<CombatAttributeDto>();
+    private IReadOnlyList<ProbeSearchEntryDto> Maneuvers => Array.Empty<ProbeSearchEntryDto>();
+    private IReadOnlyList<string> Effects => Array.Empty<string>();
+    private CombatSetVariantDto? SelectedSet => null;
+    private int? CurrentLeP => null;
+    private int? CurrentAuP => null;
+    private int? CurrentInitiative => null;
+    private IReadOnlyDictionary<CombatWoundZone, int?> Wounds => _wounds;
+    private bool HasCombatContext => ActiveHero is not null && Profile is not null;
+
+    private string? SelectedSetId => _selectedSetId;
+    private string? SelectedWeaponId => _selectedWeaponId;
+    private string SelectedAction => _selectedAction;
+    private string SelectedProbe => _selectedProbe;
+    private string? SelectedAttribute => _selectedAttribute;
+    private int Modifier => _modifier;
+    private string RollText => _rollText;
+    private CombatFacing Facing => _facing;
+    private CombatWoundZone? SelectedZone => _selectedZone;
+
+    private string HeroDisplayName => ActiveHero?.Name ?? "Kein aktiver Held";
+    private string ProfileStatus => ActiveHero is null ? "Aktiven Helden wählen" : "Kampfprofil wird angeschlossen";
+    private string CombatInformationSummary => Profile is null
+        ? "Wähle einen aktiven Helden, um Kampfwerte aus dem gespeicherten Import zu laden."
+        : "Ausgewählte Kampfaktion und Quellwerte des Helden.";
+
+    private string SelectionSummary => _selectedAction switch
     {
-        new("LeP", "Lebensenergie", 31, 38, 82, "health"),
-        new("AuP", "Ausdauer", 29, 35, 83, "stamina")
+        "parry" => "Parade",
+        "dodge" => "Ausweichen",
+        "ranged" => "Fernkampf",
+        _ => "Attacke"
     };
 
-    private readonly List<StatusSummaryItem> _statusSummary = new()
+    private IReadOnlyList<InitiativeEntry> InitiativeEntries =>
+        SessionState.ActiveSession?.Players
+            .Select(player => new InitiativeEntry(player.Name, null))
+            .Prepend(new InitiativeEntry(HeroDisplayName, CurrentInitiative))
+            .ToArray() ??
+        (ActiveHero is null ? Array.Empty<InitiativeEntry>() : [new InitiativeEntry(HeroDisplayName, CurrentInitiative)]);
+
+    protected override async Task OnInitializedAsync()
     {
-        new("Wunden", "1 / 3", "Schmerz I"),
-        new("RS", "4", "Kettenhemd"),
-        new("BE", "1", "Leicht behindert")
-    };
-
-    private readonly List<StatusEffect> _statusEffects = new()
-    {
-        new("Armatrutz", "+2 RS, 6 KR", "buff"),
-        new("Axxeleratus", "+4 INI, 3 KR", "buff")
-    };
-
-    private readonly List<WoundState> _wounds = new()
-    {
-        new("Wunde I", true),
-        new("Wunde II", false),
-        new("Wunde III", false)
-    };
-
-    private readonly List<WeaponState> _weaponStates = new()
-    {
-        new("Haupthand", "Langschwert", "1W6+4, WM 0/0"),
-        new("Nebenhand", "Holzschild", "PA +2, Schild bereit")
-    };
-
-    private readonly List<string> _conditionTags = new()
-    {
-        "Heiltrank x3",
-        "Freie Aktion offen",
-        "Keine Schmerzstufe"
-    };
-
-    private readonly List<HeroAttribute> _attributes = new()
-    {
-        new("MU", "Mut", 14, "lion.svg"),
-        new("KL", "Klugheit", 13, "owl.svg"),
-        new("IN", "Intuition", 15, "eye.svg"),
-        new("CH", "Charisma", 12, "mask.svg"),
-        new("FF", "Fingerfertigkeit", 15, "hand.svg"),
-        new("GE", "Gewandtheit", 15, "cat.svg"),
-        new("KO", "Konstitution", 14, "shield.svg"),
-        new("KK", "Koerperkraft", 13, "muscle.svg")
-    };
-
-    private readonly List<ManeuverCard> _maneuvers = new()
-    {
-        new(
-            "Finte",
-            "Angriffsmanoever",
-            "+X auf AT",
-            "Attacke gegen Parade",
-            "Parade des Gegners sinkt",
-            "Praeziser Druck auf die gegnerische Abwehr mit bewusst riskanter Fuehrung.",
-            new[] { "Praezision", "Druck", "Nahkampf" },
-            new[]
-            {
-                new ManeuverNote("Einsatz", "Gut gegen starke Verteidiger oder Schildkaempfer."),
-                new ManeuverNote("Timing", "Vor allem sinnvoll, wenn Parade wichtiger als roher Schaden ist."),
-                new ManeuverNote("Kombi", "Laesst sich gut mit hohem AT-Wert oder Initiativevorteil spielen.")
-            }),
-        new(
-            "Wuchtschlag",
-            "Angriffsmanoever",
-            "+X auf AT",
-            "Attacke gegen Parade",
-            "Mehr TP bei Treffer",
-            "Treffsicherheit wird gegen Wucht getauscht, ideal gegen offene Luecken.",
-            new[] { "Schaden", "Kraft", "Ansage" },
-            new[]
-            {
-                new ManeuverNote("Einsatz", "Sinnvoll gegen Ziele mit geringer Parade oder hoher Wundschwelle."),
-                new ManeuverNote("Timing", "Vor allem dann gut, wenn du den Treffer halbwegs sicher hast."),
-                new ManeuverNote("Kombi", "Profitiert von Situationsboni und vorbereiteter Ueberzahl.")
-            }),
-        new(
-            "Meisterparade",
-            "Abwehrmanoever",
-            "Erschwerte Parade",
-            "Parade",
-            "Bessere Folgeposition",
-            "Die Verteidigung wird aktiv gesetzt, um danach die Kontrolle zu gewinnen.",
-            new[] { "Abwehr", "Tempo", "Reaktion" },
-            new[]
-            {
-                new ManeuverNote("Einsatz", "Defensives Werkzeug gegen Einzelgegner mit hohem Druck."),
-                new ManeuverNote("Timing", "Gut in der Runde, in der du die Initiative halten willst."),
-                new ManeuverNote("Kombi", "Passt zu Schild und defensivem Kampfstil.")
-            }),
-        new(
-            "Gezieltes Ausweichen",
-            "Abwehrmanoever",
-            "Freie Aktion oder Reaktion",
-            "Ausweichen",
-            "Linie verlassen",
-            "Bewegung ersetzt Waffenbindung und schafft Distanz oder Winkelvorteil.",
-            new[] { "Mobilitaet", "Abstand", "Initiative" },
-            new[]
-            {
-                new ManeuverNote("Einsatz", "Wenn Position wichtiger ist als reine Waffenabwehr."),
-                new ManeuverNote("Timing", "Stark bei Unterzahl oder wenn du aus der Bindung musst."),
-                new ManeuverNote("Kombi", "Synergiert mit hoher GE, INI und freier Bahn.")
-            }),
-        new(
-            "Befreiungsschlag",
-            "Spezialmanoever",
-            "Hohe Ansage",
-            "Attacke gegen mehrere Gegner",
-            "Raum schaffen",
-            "Weiter Schlag gegen Bedraengung, angelehnt an die WdS-Option fuer enge Lagen.",
-            new[] { "Flaeche", "Kontrolle", "Optional" },
-            new[]
-            {
-                new ManeuverNote("Einsatz", "Wenn du gleichzeitig von mehreren Gegnern gebunden wirst."),
-                new ManeuverNote("Timing", "Nicht fuer den Dauereinsatz, sondern fuer kritische Engstellen."),
-                new ManeuverNote("Kombi", "Vorbereitete Initiative oder Platz im Ruecken helfen enorm.")
-            }),
-        new(
-            "Entwaffnen",
-            "Spezialmanoever",
-            "Situativ",
-            "Attacke gegen Waffenfuehrung",
-            "Gegner verliert Druck",
-            "Nicht auf Schaden, sondern auf den gegnerischen Waffenarm und dessen Kontrolle gezielt.",
-            new[] { "Technik", "Kontrolle", "Optional" },
-            new[]
-            {
-                new ManeuverNote("Einsatz", "Gegen bewaffnete Gegner mit gefaehrlicher Hauptwaffe."),
-                new ManeuverNote("Timing", "Wenn Schaden nicht reicht oder die Lage sofort kippen muss."),
-                new ManeuverNote("Kombi", "Mit Ueberzahl oder nach gelungener Parade besonders stark.")
-            }),
-        new(
-            "Sturmangriff",
-            "Angriffsmanoever",
-            "Anlauf noetig",
-            "Attacke",
-            "Wucht aus Bewegung",
-            "Bewegung und Treffermoment werden gebuendelt, braucht Raum und klare Linie.",
-            new[] { "Bewegung", "Eroeffnung", "Optional" },
-            new[]
-            {
-                new ManeuverNote("Einsatz", "Fuer den Kampfbeginn oder bei offener Distanz."),
-                new ManeuverNote("Timing", "Nur sinnvoll, wenn Platz fuer Anlauf und Linie vorhanden sind."),
-                new ManeuverNote("Kombi", "Hohe GS und fruehe Initiative machen das Manoever verlaesslicher.")
-            })
-    };
-
-    private readonly List<QuickAction> _quickActions = new()
-    {
-        new("Attacke", "Offensiver Standardwurf oder angesagtes Manoever."),
-        new("Parade", "Defensive Reaktion gegen den naechsten Angriff."),
-        new("Ausweichen", "Position retten und aus der Linie gehen.")
-    };
-
-    private readonly List<InitiativeEntry> _initiativeEntries = new()
-    {
-        new("1", "Alrik vom Blautann", "Spielerheld", 12, true),
-        new("2", "Kultist mit Speer", "Nahkampf links", 11, false),
-        new("3", "Kultist mit Dolch", "Nahkampf rechts", 9, false),
-        new("4", "Bogenschuetze", "Hintere Reihe", 7, false)
-    };
-
-    private readonly List<HistoryEntry> _historyEntries = new()
-    {
-        new("Runde 1", "Alrik", "Finte", "Finte angesagt, Gegner haelt Parade knapp.", "attack"),
-        new("Runde 2", "Kultist", "Angriff", "Speerangriff trifft nicht, Parade bleibt stabil.", "neutral"),
-        new("Runde 2", "Alrik", "Parade", "Meisterparade setzt die bessere Folgeposition.", "defense"),
-        new("Runde 3", "Alrik", "Wahl offen", "Wuchtschlag oder Ausweichen sind beide plausible Folgeoptionen.", "neutral")
-    };
-
-    private int Modifier { get; set; }
-    private bool _isSearchOpen;
-
-    public string SearchTerm { get; set; } = string.Empty;
-    public string SelectedManeuverName { get; set; } = "Finte";
-    public string SelectedAttributeCode { get; set; } = "MU";
-    public string ActiveActionLabel { get; set; } = "Attacke";
-
-    private IEnumerable<ManeuverCard> FilteredManeuvers =>
-        (string.IsNullOrWhiteSpace(SearchTerm) ? _maneuvers : _maneuvers.Where(maneuver =>
-            maneuver.Name.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)
-            || maneuver.Category.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)
-            || maneuver.Keywords.Any(keyword => keyword.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))))
-        .Take(6);
-
-    private ManeuverCard ActiveManeuver =>
-        _maneuvers.FirstOrDefault(maneuver => maneuver.Name == SelectedManeuverName) ?? _maneuvers[0];
-
-    private HeroAttribute ActiveAttribute =>
-        _attributes.FirstOrDefault(attribute => attribute.Code == SelectedAttributeCode) ?? _attributes[0];
-
-    private string FormattedModifier => Modifier > 0 ? $"+{Modifier}" : Modifier.ToString();
-
-    private async Task HandleSearchBlur()
-    {
-        await Task.Delay(140);
-        _isSearchOpen = false;
+        ActiveHeroState.Changed += HandleStateChanged;
+        SessionState.ActiveSessionChanged += HandleStateChanged;
+        WuerfelState.Changed += HandleStateChanged;
+        await ActiveHeroState.EnsureLoadedAsync();
+        await WuerfelFacade.AttachAsync();
     }
 
-    private void SelectManeuverFromSearch(string maneuverName)
+    public void Dispose()
     {
-        SelectedManeuverName = maneuverName;
-        SearchTerm = maneuverName;
-        _isSearchOpen = false;
+        ActiveHeroState.Changed -= HandleStateChanged;
+        SessionState.ActiveSessionChanged -= HandleStateChanged;
+        WuerfelState.Changed -= HandleStateChanged;
+        WuerfelFacade.Detach();
     }
 
-    private void HandleModifierChanged(int value)
+    private void HandleStateChanged() => _ = InvokeAsync(StateHasChanged);
+
+    private Task HandleSetSelected(string setId)
     {
-        Modifier = Math.Clamp(value, -8, 8);
+        _selectedSetId = setId;
+        _notice = "Kampfsetauswahl wird mit dem Kampfprofil verfügbar.";
+        return Task.CompletedTask;
     }
 
-    private void SelectAttribute(string attributeCode)
+    private Task HandleWeaponSelected(string weaponId)
     {
-        SelectedAttributeCode = attributeCode;
+        _selectedWeaponId = weaponId;
+        return Task.CompletedTask;
     }
 
-    private void SelectAction(string actionLabel)
+    private Task HandleActionSelected(string action)
     {
-        ActiveActionLabel = actionLabel;
+        _selectedAction = action;
+        return Task.CompletedTask;
     }
 
-    private sealed record StatusBar(string Code, string Label, int Current, int Maximum, int Percent, string ToneClass);
+    private Task HandleProbeSelected(string probe)
+    {
+        _selectedProbe = probe;
+        return Task.CompletedTask;
+    }
 
-    private sealed record StatusSummaryItem(string Label, string Value, string Meta);
+    private Task HandleAttributeSelected(string attribute)
+    {
+        _selectedAttribute = attribute;
+        return Task.CompletedTask;
+    }
 
-    private sealed record StatusEffect(string Name, string Detail, string ToneClass);
+    private Task HandleModifierChanged(int modifier)
+    {
+        _modifier = modifier;
+        return Task.CompletedTask;
+    }
 
-    private sealed record CombatFact(string Label, string Value, string Meta);
+    private Task HandleRollTextChanged(string text)
+    {
+        _rollText = text;
+        return Task.CompletedTask;
+    }
 
-    private sealed record WoundState(string Label, bool IsMarked);
+    private Task ResetAction()
+    {
+        _modifier = 0;
+        _rollText = string.Empty;
+        _notice = null;
+        return Task.CompletedTask;
+    }
 
-    private sealed record WeaponState(string Slot, string Name, string Stats);
+    private Task HandleRollRequested()
+    {
+        _notice = "Kampfwürfe noch nicht angebunden.";
+        return Task.CompletedTask;
+    }
 
-    private sealed record HeroAttribute(string Code, string Label, int Value, string IconPath);
+    private Task HandleFacingChanged(CombatFacing facing)
+    {
+        _facing = facing;
+        return Task.CompletedTask;
+    }
 
-    private sealed record ManeuverNote(string Label, string Text);
+    private Task HandleZoneSelected(CombatWoundZone zone)
+    {
+        _selectedZone = zone;
+        return Task.CompletedTask;
+    }
 
-    private sealed record ManeuverCard(
-        string Name,
-        string Category,
-        string Announcement,
-        string Check,
-        string Impact,
-        string Summary,
-        string[] Keywords,
-        ManeuverNote[] Notes);
+    private Task HandleHistorySelected(RollHistoryEntryDto entry)
+    {
+        _notice = $"Historieneintrag {entry.Timestamp.ToLocalTime():HH:mm} ausgewählt.";
+        return Task.CompletedTask;
+    }
 
-    private sealed record QuickAction(string Label, string Description);
-
-    private sealed record InitiativeEntry(string Rank, string Name, string Meta, int Value, bool IsActive);
-
-    private sealed record HistoryEntry(string Round, string Actor, string Action, string Text, string ToneClass);
+    private sealed record InitiativeEntry(string Name, int? Initiative);
 }

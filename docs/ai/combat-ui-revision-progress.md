@@ -9,7 +9,7 @@ Dieser Arbeitsstand folgt `DSA-Kampfseite-Luna-Max-Plan.md`, Revision 3. Der lok
 | Paket | Status | Nachweis |
 |---|---|---|
 | P0 | erledigt | Ausgangsbaum sauber auf `master`; Branchvergleich und Dateigrenzen geprüft. |
-| P1 | offen | Sichtbare UI- und Komponentenüberarbeitung ausstehend. |
+| P1 | erledigt | Sichtbare UI-Überarbeitung, Komponentenwiederverwendung und Viewportprüfung abgeschlossen; lokaler Commit folgt nach dieser Dokumentation. |
 | P2 | offen | Importprojektion und geschützter Profilendpunkt ausstehend. |
 | P3 | offen | Aktionen, Suche, Info, Verlauf und ehrlicher Kampfwurf-Leerzustand ausstehend. |
 | P4 | offen | Laufender lokaler Kampfzustand und Treffererfassung ausstehend. |
@@ -30,6 +30,15 @@ Dieser Arbeitsstand folgt `DSA-Kampfseite-Luna-Max-Plan.md`, Revision 3. Der lok
 - Der laufende Zustand enthält sieben Wundbestände; Brust und Rücken teilen einen Bestand. Ressourcen und Initiative bleiben vom Importprofil getrennt.
 - Es wird kein Kampfwurf simuliert und kein allgemeiner Eigenschaftswurf als Ersatz aufgerufen. Solange kein separater Regel-/Würfeldienst existiert, bleibt die Kampfwurfaktion deaktiviert und erklärt den Grund.
 
+## P1 – sichtbare UI und Wiederverwendung
+
+- `Kampf.razor` besteht aus `CombatStatusPanel`, `CombatActionPanel`, `CombatBodyPanel`, `WuerfelInformationPanel` und `RollHistory`; die vorhandenen Würfel- und Pill-Komponenten bleiben die Bedienbausteine.
+- `WuerfelActionBar` erhielt nur optionale Buttontexte mit unveränderten Defaults. `WuerfelInformationPanel` erhielt optionale Überschrift, Zusammenfassung und Inhaltsfläche mit unveränderten Defaults.
+- Die neue Zonendarstellung zeigt acht Rüstungsbereiche und sieben Wundbestände. Brust und Rücken verweisen auf denselben Torso-Bestand; die getrennte RS-Anzeige bleibt möglich.
+- Der sichtbare Zustand ohne geladenes Profil ist ehrlich: keine Eingabeformulare, keine erfundenen Kampfwerte und kein Ersatzwurf.
+- Browserprüfung `combat-revision-p1.cjs` gegen einen Release-Publish: 320, 390, 640, 900, 901, 1280 und 1600 Pixel ohne horizontalen Überlauf; je acht Zonen, zwei Front-/Rückseiten-Schalter, ein `DiceViewport`, eine gemeinsame `WuerfelActionBar` und eine gemeinsame `RollHistory`.
+- Vergleichsscreenshots liegen unter `artifacts/combat-revision-p1-screenshots/` für Kampf-, Würfel- und Heldenseite bei 390 und 1440 Pixeln.
+
 ## Nächster Schritt
 
-P1: Kampfseite auf die bestehende Seitenpalette und die vorhandenen Controls umstellen, mit kompakter Statuszeile, Arbeitsfläche, Info-/Initiative-/Verlaufsbereichen sowie der neuen Körperzonen-Darstellung.
+P2: Die gespeicherte `SourceXml` serverseitig mit dem sicheren XML-Leser in eine typisierte Kampfprofilprojektion überführen und über den geschützten Profilendpunkt an die Seite anbinden.

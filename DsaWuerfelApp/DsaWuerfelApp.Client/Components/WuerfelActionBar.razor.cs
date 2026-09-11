@@ -15,6 +15,12 @@ public partial class WuerfelActionBar
     [Parameter] public EventCallback RollRequested { get; set; }
     [Parameter] public bool CanRoll { get; set; }
     [Parameter] public bool IsBusy { get; set; }
+    [Parameter] public string RollButtonText { get; set; } = "Würfeln";
+    [Parameter] public string? RollButtonAriaLabel { get; set; }
 
     private int CurrentDisplayModifier => DisplayModifier ?? Modifier;
+
+    private string EffectiveRollButtonAriaLabel => string.IsNullOrWhiteSpace(RollButtonAriaLabel)
+        ? RollButtonText
+        : RollButtonAriaLabel;
 }

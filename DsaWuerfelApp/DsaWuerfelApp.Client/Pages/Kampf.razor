@@ -1,312 +1,140 @@
 @page "/kampf"
 @using DsaWuerfelApp.Client.Components
+@using DsaWuerfelApp.Client.Components.Combat
+@using DsaWuerfelApp.Shared
 @attribute [Authorize]
 
 <div class="combat-page">
     <div class="combat-shell">
-        <section class="combat-surface combat-overview">
-            <div class="overview-grid">
-                <div class="subsurface status-panel">
-                    <div class="mini-header">
-                        <p class="mini-kicker">Status</p>
-                        <h2 class="mini-title">Zustand und Effekte</h2>
-                    </div>
-
-                    <div class="hero-copy">
-                        <strong class="hero-name">Alrik vom Blautann</strong>
-                        <span class="hero-meta">Horasischer Fechter mit Langschwert und Schild</span>
-                    </div>
-
-                    <div class="status-grid">
-                        @foreach (var status in _statusBars)
-                        {
-                            <div class="status-card">
-                                <div class="status-heading">
-                                    <span class="status-label">@status.Code</span>
-                                    <span class="status-value">@status.Current / @status.Maximum</span>
-                                </div>
-
-                                <div class="status-track">
-                                    <div class="status-fill @status.ToneClass" style="@($"width: {status.Percent}%;")"></div>
-                                </div>
-
-                                <span class="status-meta">@status.Label</span>
-                            </div>
-                        }
-                    </div>
-
-                    <div class="status-summary-grid">
-                        @foreach (var item in _statusSummary)
-                        {
-                            <div class="summary-card">
-                                <span class="summary-label">@item.Label</span>
-                                <strong>@item.Value</strong>
-                                <span>@item.Meta</span>
-                            </div>
-                        }
-                    </div>
-
-                    <div class="effects-block">
-                        <div class="block-topline">
-                            <span class="section-chip">Aktive Effekte</span>
-                            <span class="section-meta">@_statusEffects.Count aktiv</span>
-                        </div>
-
-                        <div class="effect-list">
-                            @foreach (var effect in _statusEffects)
-                            {
-                                <div class="effect-card @effect.ToneClass">
-                                    <strong>@effect.Name</strong>
-                                    <span>@effect.Detail</span>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                </div>
-
-                <div class="subsurface combat-state-panel">
-                    <div class="mini-header">
-                        <p class="mini-kicker">Kampfstatus</p>
-                        <h2 class="mini-title">Wunden und Waffen</h2>
-                    </div>
-
-                    <div class="state-section">
-                        <span class="section-chip">Wunden</span>
-                        <div class="wound-strip">
-                            @foreach (var wound in _wounds)
-                            {
-                                <div class="wound-slot @(wound.IsMarked ? "marked" : string.Empty)">
-                                    <span>@wound.Label</span>
-                                </div>
-                            }
-                        </div>
-                    </div>
-
-                    <div class="state-section">
-                        <span class="section-chip">Waffenlage</span>
-                        <div class="weapon-list">
-                            @foreach (var weapon in _weaponStates)
-                            {
-                                <div class="weapon-row">
-                                    <span class="weapon-slot">@weapon.Slot</span>
-                                    <strong>@weapon.Name</strong>
-                                    <span class="weapon-meta">@weapon.Stats</span>
-                                </div>
-                            }
-                        </div>
-                    </div>
-
-                    <div class="tag-strip">
-                        @foreach (var tag in _conditionTags)
-                        {
-                            <span class="tag-pill">@tag</span>
-                        }
-                    </div>
-                </div>
+        <header class="combat-header panel-surface">
+            <div class="combat-header-copy">
+                <p class="combat-kicker">Kampf</p>
+                <h1>@HeroDisplayName</h1>
+                <p class="combat-subtitle">
+                    @(string.IsNullOrWhiteSpace(SessionState.ActiveSession?.Name)
+                        ? "Kampfoberfläche für den aktiven Helden"
+                        : $"Session · {SessionState.ActiveSession.Name}")
+                </p>
             </div>
+            <div class="combat-header-actions">
+                <a class="combat-header-button" href="#combat-body-panel">Körperzonen</a>
+                <button type="button"
+                        class="combat-header-button primary"
+                        disabled="@(!HasCombatContext)"
+                        title="Treffererfassung wird mit dem laufenden Kampfzustand verfügbar">
+                    Treffer erfassen
+                </button>
+            </div>
+        </header>
+
+        @if (!string.IsNullOrWhiteSpace(_notice))
+        {
+            <p class="combat-notice" role="status">@_notice</p>
+        }
+
+        <section class="combat-status-surface panel-surface">
+            <CombatStatusPanel HeroName="@HeroDisplayName"
+                               SessionName="@SessionState.ActiveSession?.Name"
+                               Profile="@Profile"
+                               SelectedSet="@SelectedSet"
+                               CurrentLeP="@CurrentLeP"
+                               CurrentAuP="@CurrentAuP"
+                               CurrentInitiative="@CurrentInitiative"
+                               Wounds="@Wounds"
+                               Effects="@Effects" />
         </section>
 
-        <section class="combat-surface combat-workbench">
-            <div class="surface-header">
-                <div class="surface-copy">
-                    <p class="surface-kicker">Kampfaktionen und Manoever</p>
-                    <h2 class="surface-title surface-title-small">Kampfwuerfe</h2>
-                    <p class="surface-subtitle">
-                        Suchpille fuer Manoever, zentraler Wurfbereich und ein separates Infofeld.
-                    </p>
-                </div>
-            </div>
+        <main class="combat-main panel-surface">
+            <CombatActionPanel Sets="@Sets"
+                               SelectedSetId="@SelectedSetId"
+                               SetSelected="HandleSetSelected"
+                               Weapons="@Weapons"
+                               SelectedWeaponId="@SelectedWeaponId"
+                               WeaponSelected="HandleWeaponSelected"
+                               SelectedAction="@SelectedAction"
+                               ActionSelected="HandleActionSelected"
+                               Maneuvers="@Maneuvers"
+                               SelectedProbe="@SelectedProbe"
+                               ProbeSelected="HandleProbeSelected"
+                               Attributes="@Attributes"
+                               SelectedAttribute="@SelectedAttribute"
+                               AttributeSelected="HandleAttributeSelected"
+                               Modifier="@Modifier"
+                               ModifierChanged="HandleModifierChanged"
+                               RollText="@RollText"
+                               RollTextChanged="HandleRollTextChanged"
+                               ResetRequested="ResetAction"
+                               RollRequested="HandleRollRequested" />
 
-            <div class="combat-search-row">
-                <label class="search-shell search-shell-wide" for="combat-search">
-                    <img src="icons/search.svg" alt="" class="search-icon" />
-                    <input id="combat-search"
-                           type="text"
-                           class="search-input"
-                           placeholder="Manoever, Sonderfertigkeit oder Notiz suchen ..."
-                           @bind="SearchTerm"
-                           @bind:event="oninput"
-                           @onfocus="@(() => _isSearchOpen = true)"
-                           @onblur="HandleSearchBlur" />
+            <CombatBodyPanel SelectedSet="@SelectedSet"
+                             Facing="@Facing"
+                             FacingChanged="HandleFacingChanged"
+                             SelectedZone="@SelectedZone"
+                             ZoneSelected="HandleZoneSelected"
+                             Wounds="@Wounds" />
+        </main>
 
-                    @if (_isSearchOpen && FilteredManeuvers.Any())
-                    {
-                        <div class="search-dropdown">
-                            @foreach (var maneuver in FilteredManeuvers)
-                            {
-                                <button type="button"
-                                        class="search-dropdown-item"
-                                        @onclick="@(() => SelectManeuverFromSearch(maneuver.Name))">
-                                    <span class="maneuver-category">@maneuver.Category</span>
-                                    <strong class="maneuver-name">@maneuver.Name</strong>
-                                    <span class="maneuver-impact">@maneuver.Impact</span>
-                                </button>
-                            }
-                        </div>
-                    }
-                </label>
-            </div>
-
-            <div class="workbench-grid">
-                <div class="subsurface dice-zone">
-                    <div class="mini-header compact">
-                        <p class="mini-kicker">Wuerfelbereich</p>
-                        <h3 class="mini-title">Attacke, Parade, Ausweichen</h3>
-                    </div>
-
-                    <div class="dice-zone-toolbar">
-                        <ModifierPill Value="@Modifier" ValueChanged="HandleModifierChanged" />
-                    </div>
-
-                    <div class="action-grid">
-                        @foreach (var action in _quickActions)
-                        {
-                            <button type="button"
-                                    class="action-button @(action.Label == ActiveActionLabel ? "active" : string.Empty)"
-                                    @onclick="@(() => SelectAction(action.Label))">
-                                <span class="action-label">@action.Label</span>
-                                <span class="action-text">@action.Description</span>
-                            </button>
-                        }
-                    </div>
-
-                    <div class="roll-preview-strip">
-                        <div class="roll-preview-card">
-                            <span class="metric-label">Aktionswurf</span>
-                            <strong>@ActiveActionLabel</strong>
-                            <span>@ActiveManeuver.Name</span>
-                        </div>
-
-                        <div class="roll-preview-card">
-                            <span class="metric-label">Wurfmodus</span>
-                            <strong>1W20</strong>
-                            <span>Modifikator @FormattedModifier</span>
-                        </div>
-
-                        <div class="roll-preview-card">
-                            <span class="metric-label">Eigenschaft</span>
-                            <strong>@ActiveAttribute.Code @ActiveAttribute.Value</strong>
-                            <span>@ActiveAttribute.Label</span>
-                        </div>
-                    </div>
-
-                    <div class="attribute-strip">
-                        @foreach (var attributeEntry in _attributes)
-                        {
-                            <AttributePill ShortName="@attributeEntry.Code"
-                                           Value="@attributeEntry.Value"
-                                           IconPath="@attributeEntry.IconPath"
-                                           IsSelected="@(attributeEntry.Code == SelectedAttributeCode)"
-                                           OnClick="@(() => SelectAttribute(attributeEntry.Code))" />
-                        }
-                    </div>
-                </div>
-
-                <div class="subsurface combat-info-panel">
-                    <div class="mini-header compact">
-                        <p class="mini-kicker">Infofeld</p>
-                        <h3 class="mini-title">Manoeverinformation</h3>
-                    </div>
-
-                    <div class="combat-info-content">
-                        <div class="info-summary-card">
-                            <span class="detail-kicker">@ActiveManeuver.Category</span>
-                            <h3 class="detail-title">@ActiveManeuver.Name</h3>
-                            <p class="detail-summary">@ActiveManeuver.Summary</p>
-                        </div>
-
-                        <div class="detail-metrics">
-                            <div class="metric-card">
-                                <span class="metric-label">Ansage</span>
-                                <strong>@ActiveManeuver.Announcement</strong>
+        <aside class="combat-side">
+            <section class="combat-info-surface panel-surface" aria-labelledby="combat-info-title">
+                <WuerfelInformationPanel CustomTitle="Kampfinformation"
+                                         CustomAriaLabel="Kampfinformation"
+                                         CustomSummary="@CombatInformationSummary">
+                    <CustomContent>
+                        <div class="combat-information-content">
+                            <div class="combat-info-row">
+                                <span>Auswahl</span>
+                                <strong>@SelectionSummary</strong>
                             </div>
-
-                            <div class="metric-card">
-                                <span class="metric-label">Probe</span>
-                                <strong>@ActiveManeuver.Check</strong>
+                            <div class="combat-info-row">
+                                <span>Datenstatus</span>
+                                <strong>@ProfileStatus</strong>
                             </div>
-
-                            <div class="metric-card">
-                                <span class="metric-label">Wirkung</span>
-                                <strong>@ActiveManeuver.Impact</strong>
+                            <div class="combat-info-row">
+                                <span>Regelanbindung</span>
+                                <strong>Kampfwürfe noch nicht angebunden</strong>
                             </div>
+                            <p class="combat-info-note">Importierte Werte werden angezeigt. Diese Oberfläche berechnet keine Treffer, TP oder Wundfolgen.</p>
                         </div>
+                    </CustomContent>
+                </WuerfelInformationPanel>
+            </section>
 
-                        <div class="keyword-strip">
-                            @foreach (var keyword in ActiveManeuver.Keywords)
-                            {
-                                <span class="keyword-pill">@keyword</span>
-                            }
-                        </div>
-
-                        <div class="info-note-grid">
-                            @foreach (var note in ActiveManeuver.Notes)
-                            {
-                                <div class="info-note-card">
-                                    <span class="metric-label">@note.Label</span>
-                                    <p>@note.Text</p>
-                                </div>
-                            }
-                        </div>
+            <section class="combat-initiative-surface panel-surface" aria-labelledby="combat-initiative-title">
+                <div class="combat-side-heading">
+                    <div>
+                        <p class="combat-kicker">Initiative</p>
+                        <h2 id="combat-initiative-title">Rundenübersicht</h2>
                     </div>
+                    <span class="combat-side-meta">@(CurrentInitiative.HasValue ? $"INI {CurrentInitiative}" : "nicht geführt")</span>
                 </div>
-            </div>
-        </section>
-
-        <aside class="combat-surface combat-sidebar">
-            <div class="surface-header">
-                <div class="surface-copy">
-                    <p class="surface-kicker">Initiative und Verlauf</p>
-                    <h2 class="surface-title surface-title-small">Ini und Kampf-History</h2>
-                    <p class="surface-subtitle">
-                        Oben die Reihenfolge im Schlagabtausch, darunter die saubere Chronik des Kampfes.
-                    </p>
-                </div>
-            </div>
-
-            <div class="sidebar-stack">
-                <div class="subsurface initiative-card">
-                    <div class="mini-header compact">
-                        <p class="mini-kicker">Ini-Uebersicht</p>
-                        <h3 class="mini-title">Reihenfolge</h3>
-                    </div>
-
-                    <div class="initiative-list">
-                        @foreach (var entry in _initiativeEntries)
+                @if (InitiativeEntries.Count == 0)
+                {
+                    <p class="combat-side-empty">Noch keine Teilnehmer oder laufende Initiative vorhanden.</p>
+                }
+                else
+                {
+                    <div class="combat-initiative-list">
+                        @foreach (var entry in InitiativeEntries)
                         {
-                            <div class="initiative-row @(entry.IsActive ? "active" : string.Empty)">
-                                <span class="initiative-rank">@entry.Rank</span>
-                                <div class="initiative-copy">
-                                    <strong>@entry.Name</strong>
-                                    <span>@entry.Meta</span>
-                                </div>
-                                <span class="initiative-total">@entry.Value</span>
+                            <div class="combat-initiative-row">
+                                <strong>@entry.Name</strong>
+                                <span>@(entry.Initiative.HasValue ? $"INI {entry.Initiative}" : "nicht geführt")</span>
                             </div>
                         }
                     </div>
-                </div>
+                }
+            </section>
 
-                <div class="subsurface history-card">
-                    <div class="mini-header compact">
-                        <p class="mini-kicker">Kampf-History</p>
-                        <h3 class="mini-title">Verlauf</h3>
+            <section class="combat-history-surface panel-surface" aria-labelledby="combat-history-title">
+                <div class="combat-side-heading">
+                    <div>
+                        <p class="combat-kicker">Verlauf</p>
+                        <h2 id="combat-history-title">Würfelhistorie</h2>
                     </div>
-
-                    <div class="history-list">
-                        @foreach (var entry in _historyEntries)
-                        {
-                            <article class="history-entry @entry.ToneClass">
-                                <div class="history-entry-top">
-                                    <span class="timeline-round">@entry.Round</span>
-                                    <strong>@entry.Actor</strong>
-                                    <span class="history-action">@entry.Action</span>
-                                </div>
-                                <p>@entry.Text</p>
-                            </article>
-                        }
-                    </div>
+                    <span class="combat-side-meta">@WuerfelState.Current.History.Count Einträge</span>
                 </div>
-            </div>
+                <RollHistory Entries="@WuerfelState.Current.History" EntrySelected="HandleHistorySelected" />
+            </section>
         </aside>
     </div>
 </div>

@@ -1,0 +1,117 @@
+.combat-status-panel {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+.combat-panel-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.combat-kicker,
+.combat-field-label {
+    color: var(--dsa-gold);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.combat-kicker {
+    margin: 0 0 0.2rem;
+}
+
+.combat-panel-heading h2 {
+    margin: 0;
+    color: var(--dsa-gold);
+    font-size: 1.05rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.combat-status-context,
+.combat-muted,
+.combat-resource-card small {
+    color: var(--dsa-text-muted);
+    font-size: 0.72rem;
+}
+
+.combat-empty-state {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.8rem;
+    border: 1px dashed rgba(212, 175, 55, 0.65);
+    border-radius: var(--dsa-panel-radius);
+    background: rgba(7, 17, 29, 0.62);
+    color: var(--dsa-text-muted);
+    font-size: 0.8rem;
+}
+
+.combat-empty-state strong {
+    color: var(--dsa-white);
+}
+
+.combat-resource-strip,
+.combat-status-facts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.45rem;
+}
+
+.combat-resource-card,
+.combat-status-facts > div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.14rem;
+    padding: 0.55rem;
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    border-radius: 8px;
+    background: rgba(7, 17, 29, 0.5);
+}
+
+.combat-resource-card > span,
+.combat-status-facts span {
+    color: var(--dsa-text-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.combat-resource-card strong,
+.combat-status-facts strong {
+    color: var(--dsa-white);
+    font-size: 0.95rem;
+    overflow-wrap: anywhere;
+}
+
+.combat-effect-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.combat-effect-chip {
+    padding: 0.3rem 0.55rem;
+    border: 1px solid rgba(212, 175, 55, 0.52);
+    border-radius: 999px;
+    color: var(--dsa-white);
+    font-size: 0.72rem;
+}
+
+@media (max-width: 760px) {
+    .combat-resource-strip,
+    .combat-status-facts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .combat-panel-heading {
+        flex-direction: column;
+    }
+}

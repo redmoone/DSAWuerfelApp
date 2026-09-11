@@ -7,13 +7,13 @@
                       ValueChanged="@RollTextChanged"
                       Placeholder="Würfeltext"
                       Label="TEXT"
-                      Disabled="@IsBusy"/>
+                      Disabled="@IsBusy" />
         </div>
 
         <div class="left-actions">
             <ModifierPill Value="@Modifier"
                           DisplayValue="@CurrentDisplayModifier"
-                          ValueChanged="ModifierChanged"/>
+                          ValueChanged="ModifierChanged" />
 
             <span class="hidden-roll-hint"
                   role="img"
@@ -24,7 +24,7 @@
                         disabled="true"
                         aria-hidden="true"
                         tabindex="-1">
-                    <img src="icons/eye-closed.svg" class="btn-icon" alt="" aria-hidden="true"/>
+                    <img src="icons/eye-closed.svg" class="btn-icon" alt="" aria-hidden="true" />
                 </button>
             </span>
 
@@ -34,16 +34,16 @@
                            Disabled="@IsBusy"
                            title="Tisch leeren"
                            Class="rounded-circle reset-roll-button"
-                           Style="width: 48px; height: 48px; background-color: var(--pill-bg); color: var(--dsa-white); border: 1px solid var(--dsa-gold);"/>
+                           Style="width: 48px; height: 48px; background-color: var(--pill-bg); color: var(--dsa-white); border: 1px solid var(--dsa-gold);" />
 
             <div class="right-actions">
                 <button type="button"
                         class="dsa-btn"
-                        title="Wurf ausführen"
-                        aria-label="Würfeln"
+                        title="@RollButtonText ausführen"
+                        aria-label="@EffectiveRollButtonAriaLabel"
                         @onclick="RollRequested"
                         disabled="@(!CanRoll || IsBusy)">
-                    Würfeln
+                    @RollButtonText
                 </button>
             </div>
         </div>

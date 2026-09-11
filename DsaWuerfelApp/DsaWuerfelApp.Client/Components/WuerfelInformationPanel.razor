@@ -4,23 +4,33 @@
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 
-@if (ProbeInfo is not null && HasProbeInfoContent(ProbeInfo))
+@if ((ProbeInfo is not null && HasProbeInfoContent(ProbeInfo)) || CustomContent is not null)
 {
-    <section class="probe-info-summary" aria-label="Kompakte Probeninformation">
+    <section class="probe-info-summary" aria-label="@CustomAriaLabel">
         <div class="probe-info-summary-heading">
-            <span class="probe-info-summary-title">Probeninfo</span>
+            <span class="probe-info-summary-title">@CustomTitle</span>
             @if (HasProbeInfoDetails(ProbeInfo))
             {
                 <span class="probe-info-summary-hint">Details ueber den Info-Button</span>
             }
         </div>
 
-        @if (!string.IsNullOrWhiteSpace(ProbeInfo.SummaryText))
+        @if (ProbeInfo is not null && !string.IsNullOrWhiteSpace(ProbeInfo.SummaryText))
         {
             <p class="probe-info-summary-text">@ProbeInfo.SummaryText</p>
         }
 
-        @if (ProbeInfo.Sections.Length > 0)
+        @if (!string.IsNullOrWhiteSpace(CustomSummary))
+        {
+            <p class="probe-info-summary-text">@CustomSummary</p>
+        }
+
+        @if (CustomContent is not null)
+        {
+            @CustomContent
+        }
+
+        @if (ProbeInfo is not null && ProbeInfo.Sections.Length > 0)
         {
             <div class="probe-info-summary-fields">
                 @foreach (var section in GetCompactProbeInfoSections(ProbeInfo))
@@ -100,6 +110,10 @@
 
 @code {
     [Parameter] public ProbeInfoResultDto? ProbeInfo { get; set; }
+    [Parameter] public string CustomTitle { get; set; } = "Probeninfo";
+    [Parameter] public string CustomAriaLabel { get; set; } = "Kompakte Probeninformation";
+    [Parameter] public string? CustomSummary { get; set; }
+    [Parameter] public RenderFragment? CustomContent { get; set; }
     [Parameter] public RollHistoryEntryDto? SelectedHistoryEntry { get; set; }
     [Parameter] public bool ShowProbeInfoDetails { get; set; }
     [Parameter] public EventCallback CloseRequested { get; set; }

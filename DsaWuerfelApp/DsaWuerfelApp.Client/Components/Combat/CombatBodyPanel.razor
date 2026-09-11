@@ -1,0 +1,64 @@
+@using DsaWuerfelApp.Shared
+
+<section class="combat-body-panel" id="combat-body-panel" aria-labelledby="combat-body-title">
+    <div class="combat-panel-heading">
+        <div>
+            <p class="combat-kicker">Körperzonen</p>
+            <h2 id="combat-body-title">Rüstung und Wunden</h2>
+        </div>
+        <div class="combat-facing-toggle" role="group" aria-label="Körperansicht">
+            <button type="button"
+                    class="combat-facing-button @(Facing == CombatFacing.Front ? "active" : string.Empty)"
+                    aria-pressed="@(Facing == CombatFacing.Front)"
+                    @onclick="() => FacingChanged.InvokeAsync(CombatFacing.Front)">
+                Vorderseite
+            </button>
+            <button type="button"
+                    class="combat-facing-button @(Facing == CombatFacing.Back ? "active" : string.Empty)"
+                    aria-pressed="@(Facing == CombatFacing.Back)"
+                    @onclick="() => FacingChanged.InvokeAsync(CombatFacing.Back)">
+                Rückseite
+            </button>
+        </div>
+    </div>
+
+    <div class="combat-body-layout">
+        <div class="combat-silhouette" aria-label="Schematische Körperansicht">
+            <svg viewBox="0 0 180 300" role="img" aria-label="Körper-Silhouette">
+                <circle cx="90" cy="34" r="22" />
+                <path d="M66 62 C48 70 40 94 42 122 L53 178 L62 178 L68 126 L73 177 L60 258 L78 258 L90 190 L102 258 L120 258 L107 177 L102 126 L108 178 L127 178 L138 122 C140 94 132 70 114 62 Z" />
+                <path d="M43 92 L20 153 L32 158 L57 112 M137 92 L160 153 L148 158 L123 112" />
+                <path class="silhouette-highlight" d="M67 72 H113 V142 H67 Z" />
+                @if (Facing == CombatFacing.Back)
+                {
+                    <path class="silhouette-back-line" d="M90 73 V178" />
+                }
+            </svg>
+            <span class="combat-silhouette-caption">@(Facing == CombatFacing.Front ? "Vorderseite des Helden" : "Rückseite des Helden")</span>
+        </div>
+
+        <div class="combat-zone-list dsa-scroll-region" role="list" aria-label="Acht Rüstungsbereiche">
+            @foreach (var zone in Zones)
+            {
+                var woundZone = GetWoundZone(zone.Zone);
+                var isSelected = SelectedZone == woundZone;
+                <button type="button"
+                        class="combat-zone-row @(isSelected ? "active" : string.Empty)"
+                        role="listitem"
+                        aria-pressed="@isSelected"
+                        aria-label="@GetAccessibleLabel(zone, woundZone)"
+                        @onclick="() => ZoneSelected.InvokeAsync(woundZone)">
+                    <span class="combat-zone-name">@zone.Label</span>
+                    <span class="combat-zone-rs">RS @FormatValue(GetArmorValue(zone.Zone))</span>
+                    <span class="combat-zone-wounds">Wunden @FormatWounds(woundZone)</span>
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="combat-body-footnote">
+        <span>8 RS-Bereiche</span>
+        <span>7 Wundbestände</span>
+        <span>Brust/Rücken gemeinsam</span>
+    </div>
+</section>

@@ -1,0 +1,143 @@
+@using DsaWuerfelApp.Shared
+
+<section class="combat-action-panel" aria-labelledby="combat-actions-title">
+    <div class="combat-panel-heading">
+        <div>
+            <p class="combat-kicker">Kampfaktionen</p>
+            <h2 id="combat-actions-title">Waffe, Aktion und Manöver</h2>
+        </div>
+        <span class="combat-action-state">@ActionAvailabilityText</span>
+    </div>
+
+    @if (Sets.Count == 0)
+    {
+        <div class="combat-empty-state">
+            <strong>Noch kein Kampfprofil geladen.</strong>
+            <span>Waffen, Werte und Sonderfertigkeiten werden aus dem gespeicherten Heldenimport übernommen.</span>
+        </div>
+    }
+    else
+    {
+        <div class="combat-selection-grid">
+            <div class="combat-selection-block">
+                <span class="combat-field-label">Kampfset</span>
+                <select class="combat-select"
+                        aria-label="Kampfset auswählen"
+                        value="@SelectedSetId"
+                        @onchange="HandleSetChanged">
+                    @foreach (var set in Sets)
+                    {
+                        <option value="@set.Id">@GetSetLabel(set)</option>
+                    }
+                </select>
+            </div>
+
+            <div class="combat-selection-block combat-weapon-block">
+                <span class="combat-field-label">Waffe oder Abwehr</span>
+                <div class="combat-option-list" role="listbox" aria-label="Waffen und Abwehrgeräte">
+                    @foreach (var weapon in Weapons)
+                    {
+                        <button type="button"
+                                class="combat-option @(weapon.Id == SelectedWeaponId ? "active" : string.Empty)"
+                                role="option"
+                                aria-selected="@(weapon.Id == SelectedWeaponId)"
+                                @onclick="() => WeaponSelected.InvokeAsync(weapon.Id)">
+                            <span class="combat-option-name">@GetWeaponLabel(weapon)</span>
+                            <span class="combat-option-meta">@GetWeaponValue(weapon)</span>
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="combat-action-options" role="listbox" aria-label="Kampfaktion">
+            @foreach (var action in Actions)
+            {
+                <button type="button"
+                        class="combat-option action-option @(action.Key == SelectedAction ? "active" : string.Empty)"
+                        role="option"
+                        aria-selected="@(action.Key == SelectedAction)"
+                        disabled="@(!action.IsAvailable)"
+                        @onclick="() => ActionSelected.InvokeAsync(action.Key)">
+                    <span class="combat-option-name">@action.Label</span>
+                    <span class="combat-option-meta">@action.Detail</span>
+                </button>
+            }
+        </div>
+    }
+
+    <div class="combat-maneuver-block">
+        <div class="combat-block-heading">
+            <div>
+                <span class="combat-field-label">Manöver und Sonderfertigkeiten</span>
+                <p>Kenntnis und Auswahl werden angezeigt; automatische Wirkung folgt separat.</p>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(SelectedProbe))
+            {
+                <span class="combat-selected-chip">@SelectedProbe</span>
+            }
+        </div>
+        <ProbenSearch AvailableProben="Maneuvers"
+                      UseFallbackCatalog="false"
+                      Placeholder="Sonderfertigkeit oder Manöver suchen …"
+                      SelectedProbe="@SelectedProbe"
+                      SelectedProbeChanged="ProbeSelected" />
+    </div>
+
+    @if (Attributes.Count > 0)
+    {
+        <div class="combat-attribute-block">
+            <div class="combat-block-heading">
+                <span class="combat-field-label">Eigenschaften des Helden</span>
+                <span class="combat-muted">Nur Anzeige/Details, kein Ersatz für AT/PA/FK.</span>
+            </div>
+            <div class="combat-attribute-strip">
+                @foreach (var entry in Attributes)
+                {
+                    <AttributePill ShortName="@entry.Key"
+                                   Value="@(entry.Value ?? 0)"
+                                   IconPath="@entry.IconPath"
+                                   IsSelected="@(SelectedAttribute == entry.Key)"
+                                   OnClick="() => AttributeSelected.InvokeAsync(entry.Key)" />
+                }
+            </div>
+        </div>
+    }
+
+    <div class="combat-action-summary" aria-live="polite">
+        <div>
+            <span class="combat-field-label">Auswahl</span>
+            <strong>@SelectionSummary</strong>
+        </div>
+        <div>
+            <span class="combat-field-label">Situativ</span>
+            <ModifierPill Value="@Modifier" ValueChanged="ModifierChanged" />
+        </div>
+    </div>
+
+    <div class="combat-dice-area">
+        <div class="combat-dice-heading">
+            <div>
+                <span class="combat-field-label">Würfelbereich</span>
+                <p>Die vorhandene 3D-Fläche bleibt im Kampfablauf erhalten.</p>
+            </div>
+            <span class="combat-unavailable">Kampfwürfe noch nicht angebunden</span>
+        </div>
+        <div class="combat-dice-viewport" title="3D-Ansicht der Kampf-Würfel">
+            <DiceViewport SelectedDice="@EmptyDice"
+                          ResultDiceSides="@EmptyDice"
+                          ResultDiceValues="@EmptyDice"
+                          PreviewVersion="0"
+                          ResultVersion="0" />
+        </div>
+        <WuerfelActionBar RollText="@RollText"
+                         RollTextChanged="RollTextChanged"
+                         Modifier="@Modifier"
+                         ModifierChanged="ModifierChanged"
+                         ResetRequested="ResetRequested"
+                         RollRequested="RollRequested"
+                         CanRoll="false"
+                         IsBusy="false"
+                         RollButtonText="Kampfwurf" />
+    </div>
+</section>

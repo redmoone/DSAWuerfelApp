@@ -1,0 +1,74 @@
+@using DsaWuerfelApp.Shared
+
+<section class="combat-status-panel" aria-labelledby="combat-status-title">
+    <div class="combat-panel-heading">
+        <div>
+            <p class="combat-kicker">Heldenstatus</p>
+            <h2 id="combat-status-title">@HeroName</h2>
+        </div>
+        <span class="combat-status-context">@(string.IsNullOrWhiteSpace(SessionName) ? "Solo" : SessionName)</span>
+    </div>
+
+    @if (Profile is null)
+    {
+        <div class="combat-empty-state">
+            <strong>Kein Kampfprofil verfügbar.</strong>
+            <span>Wähle einen aktiven Helden. Die Seite verwendet anschließend die gespeicherte Heldenquelle.</span>
+        </div>
+    }
+    else
+    {
+        <div class="combat-resource-strip">
+            <div class="combat-resource-card">
+                <span>LeP</span>
+                <strong>@FormatCurrent(CurrentLeP, Profile.Resources.LeP)</strong>
+                <small>@GetResourceState(CurrentLeP)</small>
+            </div>
+            <div class="combat-resource-card">
+                <span>AuP</span>
+                <strong>@FormatCurrent(CurrentAuP, Profile.Resources.AuP)</strong>
+                <small>@GetResourceState(CurrentAuP)</small>
+            </div>
+            <div class="combat-resource-card">
+                <span>INI</span>
+                <strong>@FormatValue(CurrentInitiative ?? SelectedSet?.Initiative)</strong>
+                <small>laufender Wert</small>
+            </div>
+            <div class="combat-resource-card">
+                <span>RS / BE</span>
+                <strong>@FormatValue(GetTotalArmor()) / @FormatValue(GetEncumbrance())</strong>
+                <small>@GetArmorLabel()</small>
+            </div>
+        </div>
+
+        <div class="combat-status-facts">
+            <div>
+                <span>Wundschwelle</span>
+                <strong>@FormatValue(Profile.WoundThreshold)</strong>
+            </div>
+            <div>
+                <span>Wunden gesamt</span>
+                <strong>@TotalWounds</strong>
+            </div>
+            <div>
+                <span>Set</span>
+                <strong>@(SelectedSet is null ? "—" : $"{SelectedSet.Number} · {SelectedSet.ArmorModel}")</strong>
+            </div>
+        </div>
+
+        <div class="combat-effect-line">
+            <span class="combat-field-label">Geführte Effekte</span>
+            @if (Effects.Count == 0)
+            {
+                <span class="combat-muted">Keine Effekte eingetragen.</span>
+            }
+            else
+            {
+                @foreach (var effect in Effects)
+                {
+                    <span class="combat-effect-chip">@effect</span>
+                }
+            }
+        </div>
+    }
+</section>
