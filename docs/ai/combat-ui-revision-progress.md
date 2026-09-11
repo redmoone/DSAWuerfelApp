@@ -12,8 +12,8 @@ Dieser Arbeitsstand folgt `DSA-Kampfseite-Luna-Max-Plan.md`, Revision 3. Der lok
 | P1 | erledigt | Sichtbare UI-Überarbeitung, Komponentenwiederverwendung und Viewportprüfung abgeschlossen; Commit `6333d5f`. |
 | P2 | erledigt | SourceXml-Projektion, geschützter Profilendpunkt, aktive-Held-Anbindung und reale Prüffälle abgeschlossen; Commit `d8e48a0`. |
 | P3 | erledigt | Aktionen, Suche, Auswahl-Details, Info, Initiative, Verlauf und ehrlicher Kampfwurf-Leerzustand geprüft; Commit `0cf1159`. |
-| P4 | erledigt | Laufender lokaler Kampfzustand, Treffererfassung, Zonenbindung, Apply/Cancel/Undo und Reload-Persistenz abgeschlossen; Commit folgt nach dieser Dokumentation. |
-| P5 | in Arbeit | Gesamtprüfung, Screenshots und Übergabedokumentation laufen. |
+| P4 | erledigt | Laufender lokaler Kampfzustand, Treffererfassung, Zonenbindung, Apply/Cancel/Undo und Reload-Persistenz abgeschlossen; Commit `a3cf7a1`. |
+| P5 | erledigt | Gesamtprüfung, Screenshots und Übergabedokumentation abgeschlossen. |
 
 ## Baseline vor der Umsetzung
 
@@ -55,9 +55,9 @@ Dieser Arbeitsstand folgt `DSA-Kampfseite-Luna-Max-Plan.md`, Revision 3. Der lok
 - `dotnet build DsaWuerfelApp.sln -c Release --no-restore -v minimal`: erfolgreich, 0 Warnungen, 0 Fehler.
 - `dotnet test DsaWuerfelApp.sln -c Release --no-restore -v minimal`: 97 erfolgreich, 8 bestehende fachliche Fehler in Talent-/Zauber-/RollHistory-Tests. `--filter "FullyQualifiedName~CombatProfile"`: 5 erfolgreich.
 
-## Nächster Schritt
+## Übergabepunkt
 
-P5 abschließen, Fortschrittsdatei und Browserartefakte committen und anschließend die noch nicht angebundene Kampfregelauswertung als separaten Folgeschritt übergeben.
+Die UI-/Datenanbindung gemäß Revision 3 ist abgeschlossen. Die vollständige Kampfregelauswertung bleibt ein separater Folgeschritt; die deaktivierte Kampfwurfaktion behauptet weiterhin kein nicht vorhandenes Ergebnis.
 
 ## P2 – SourceXml und Importprojektion
 
