@@ -309,7 +309,13 @@ public partial class Wuerfel : IDisposable
 
     private void OpenCombatInitiativeDrawer()
     {
-        _combatInitiativeDraft = CombatCurrentInitiative ?? CombatSelectedSet?.Initiative;
+        var runtimeModifier = CombatProfile is null || CombatSelectedSet is null
+            ? 0
+            : CombatRuntimeModifierRules.ResolveInitiative(
+                CombatProfile,
+                CombatSelectedSet,
+                BuildCombatRuntimeState()).Modifier;
+        _combatInitiativeDraft = CombatCurrentInitiative ?? (CombatSelectedSet?.Initiative + runtimeModifier);
         _combatDrawer = WuerfelCombatDrawer.Initiative;
     }
 
@@ -327,7 +333,10 @@ public partial class Wuerfel : IDisposable
         }
 
         await CombatState.SetResourceAsync(resource, _combatResourceDraft);
-        _combatNotice = $"{GetCombatResourceLabel(resource)} gespeichert.";
+        var sessionResult = await SyncCombatSessionRuntimeStateAsync();
+        _combatNotice = sessionResult?.Stale == true
+            ? sessionResult.Message
+            : $"{GetCombatResourceLabel(resource)} gespeichert.";
         CloseCombatDrawer();
     }
 
@@ -340,7 +349,10 @@ public partial class Wuerfel : IDisposable
         }
 
         await CombatState.SetWoundAsync(CombatWoundDrawerZone, _combatWoundDraft.Value);
-        _combatNotice = $"{GetCombatWoundLabel(CombatWoundDrawerZone)} gespeichert.";
+        var sessionResult = await SyncCombatSessionRuntimeStateAsync();
+        _combatNotice = sessionResult?.Stale == true
+            ? sessionResult.Message
+            : $"{GetCombatWoundLabel(CombatWoundDrawerZone)} gespeichert.";
         CloseCombatDrawer();
     }
 
@@ -358,7 +370,8 @@ public partial class Wuerfel : IDisposable
             var result = await CombatSessionState.SetInitiativeAsync(
                 _combatInitiativeDraft.Value,
                 participant?.Id,
-                CombatHero?.Id);
+                CombatHero?.Id,
+                BuildCombatRuntimeState());
             _combatNotice = result.Message;
             if (result.Applied)
             {
@@ -394,7 +407,10 @@ public partial class Wuerfel : IDisposable
             if (CombatIsSession)
             {
                 var participant = OwnCombatParticipant;
-                var result = await CombatSessionState.RollInitiativeAsync(participant?.Id, CombatHero?.Id);
+                var result = await CombatSessionState.RollInitiativeAsync(
+                    participant?.Id,
+                    CombatHero?.Id,
+                    BuildCombatRuntimeState());
                 var updatedParticipant = result.Snapshot.Participants.FirstOrDefault(current =>
                     participant is not null
                         ? current.Id == participant.Id
@@ -417,6 +433,7 @@ public partial class Wuerfel : IDisposable
                 HeroId = CombatHero?.Id,
                 SetId = CombatSelectedSet.Id,
                 Action = CombatActionKind.InitiativeHelper,
+                RuntimeState = BuildCombatRuntimeState(),
                 Helper = new CombatHelperRollRequestDto
                 {
                     DiceCount = 1,
@@ -425,8 +442,14 @@ public partial class Wuerfel : IDisposable
                 }
             });
             var baseInitiative = CombatSelectedSet.Initiative ?? 0;
-            _combatInitiativeDraft = baseInitiative + rollResult.Rolls.Sum(roll => roll.Value);
-            _combatNotice = $"INI-Hilfswurf: {_combatInitiativeDraft} zum Anwenden bereit.";
+            var runtime = CombatRuntimeModifierRules.ResolveInitiative(
+                CombatProfile,
+                CombatSelectedSet,
+                BuildCombatRuntimeState());
+            _combatInitiativeDraft = baseInitiative + rollResult.Rolls.Sum(roll => roll.Value) + runtime.Modifier;
+            _combatNotice = runtime.Modifier == 0
+                ? $"INI-Hilfswurf: {_combatInitiativeDraft} zum Anwenden bereit."
+                : $"INI-Hilfswurf: {_combatInitiativeDraft} zum Anwenden bereit ({runtime.Modifier} laufend).";
         }
         catch (Exception exception)
         {
@@ -477,6 +500,27 @@ public partial class Wuerfel : IDisposable
         _combatNotice = await CombatState.UndoLastChangeAsync()
             ? "Letzte Änderung wurde rückgängig gemacht."
             : "Keine Änderung zum Rückgängigmachen vorhanden.";
+    }
+
+    private CombatRuntimeStateDto BuildCombatRuntimeState() => new()
+    {
+        IsStarted = CombatIsStarted,
+        CurrentLeP = CombatCurrentLeP,
+        CurrentAuP = CombatCurrentAuP,
+        Wounds = CombatWounds.ToDictionary(pair => pair.Key, pair => pair.Value)
+    };
+
+    private async Task<CombatSessionMutationResultDto?> SyncCombatSessionRuntimeStateAsync()
+    {
+        if (!CombatIsSession || OwnCombatParticipant is not { } participant || CombatHero is null)
+        {
+            return null;
+        }
+
+        return await CombatSessionState.SyncRuntimeStateAsync(
+            BuildCombatRuntimeState(),
+            participant.Id,
+            CombatHero.Id);
     }
 
     private int? GetCombatResourceValue(CombatResourceKind resource) => resource switch
