@@ -11,8 +11,8 @@ Dieser Arbeitsstand folgt `DSA-Kampfseite-Luna-Max-Plan.md`, Revision 3. Der lok
 | P0 | erledigt | Ausgangsbaum sauber auf `master`; Branchvergleich und Dateigrenzen geprüft. |
 | P1 | erledigt | Sichtbare UI-Überarbeitung, Komponentenwiederverwendung und Viewportprüfung abgeschlossen; lokaler Commit folgt nach dieser Dokumentation. |
 | P2 | erledigt | SourceXml-Projektion, geschützter Profilendpunkt, aktive-Held-Anbindung und reale Prüffälle abgeschlossen; lokaler Commit folgt nach dieser Dokumentation. |
-| P3 | in Arbeit | Aktionen, Suche und Info verwenden importierte Werte; Auswahl-/Detailprüfung wird mit dem laufenden Zustand weitergeführt. |
-| P4 | offen | Laufender lokaler Kampfzustand und Treffererfassung ausstehend. |
+| P3 | erledigt | Aktionen, Suche, Auswahl-Details, Info, Initiative, Verlauf und ehrlicher Kampfwurf-Leerzustand geprüft; lokaler Commit folgt nach dieser Dokumentation. |
+| P4 | in Arbeit | Laufender lokaler Kampfzustand und Treffererfassung ausstehend. |
 | P5 | offen | Gesamtprüfung, Screenshots und Übergabedokumentation ausstehend. |
 
 ## Baseline vor der Umsetzung
@@ -41,7 +41,7 @@ Dieser Arbeitsstand folgt `DSA-Kampfseite-Luna-Max-Plan.md`, Revision 3. Der lok
 
 ## Nächster Schritt
 
-P3: Die Auswahl- und Informationsführung vervollständigen, anschließend den manuellen laufenden Kampfzustand mit Apply/Cancel/Undo und gerätebezogener Speicherung anschließen.
+P4: Den laufenden Zustand für Solo-/Sessionkontext einführen, Ressourcen/Wunden nach Reload erhalten und die manuelle Treffererfassung mit Apply/Cancel/Undo anschließen.
 
 ## P2 – SourceXml und Importprojektion
 
@@ -52,3 +52,11 @@ P3: Die Auswahl- und Informationsführung vervollständigen, anschließend den m
 - Fernkampf verwendet `fernkampfwaffe/at` als FK; Reichweiten, TP-Modifikatoren, Ladezeit und Talent bleiben getrennt. Paradewaffen behalten `typ` und ihre eigene PA.
 - `CombatProfileMappingTests` decken Darian-, Ardor- und Cordula-Fälle ab. `CombatProfileEndpointTests` decken Eigentum, fehlende Quelle und das Nichtausliefern des XML ab.
 - Der P2-Browserlauf prüft reale Profilwerte, zwei gleichnamige Schwerter, Set-/Modellwechsel, SF-Suche, Zonenwerte und keinen horizontalen Überlauf; Screenshots liegen unter `artifacts/combat-revision-p2-screenshots/`.
+
+## P3 – Aktionen, Suche und Information
+
+- Die Aktionsauswahl zeigt importierte AT, PA, FK und Ausweichen direkt an der Aktion; fehlende Werte deaktivieren nur die betroffene Aktion.
+- `ProbenSearch` erhält erlernte Sonderfertigkeiten und zeigt vergünstigte Einträge als nicht auswählbaren Status. Die Auswahl eines erlernten Eintrags wird im bestehenden `WuerfelInformationPanel` mit Kategorien und Kenntnisstatus angezeigt.
+- Das Informationspanel zeigt die ausgewählte Waffenidentität, Kategorie, exportierte Primärwerte, Basis-TP und berechnete TP getrennt. Es bleibt ausdrücklich ohne Treffer-, TP- oder Wundfolgenberechnung.
+- Der vorhandene `RollHistory` bleibt die einzige Verlaufskomponente. Die `Kampfwurf`-Schaltfläche bleibt deaktiviert, solange kein Kampfwurfdienst existiert.
+- `combat-revision-p3.cjs` prüft zwei gleichnamige Waffen, Info-Details, erlernte/vergünstigte SF, deaktivierten Kampfwurf, acht Zonen und den Überlauf; Screenshots liegen unter `artifacts/combat-revision-p3-screenshots/`.

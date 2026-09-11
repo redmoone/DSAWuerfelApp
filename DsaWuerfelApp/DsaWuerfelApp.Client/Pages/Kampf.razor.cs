@@ -48,9 +48,11 @@ public partial class Kampf : IDisposable
                 : $"{specialization.Name} (vergünstigt)",
             specialization.IsLearned ? specialization.Identifier ?? specialization.Name : null,
             specialization.IsLearned,
-            specialization.Categories
-                .Select(category => new ProbeSearchAlternativeDto(category, category))
-                .ToArray()))
+            specialization.IsLearned
+                ? specialization.Categories
+                    .Select(category => new ProbeSearchAlternativeDto(category, category))
+                    .ToArray()
+                : Array.Empty<ProbeSearchAlternativeDto>()))
         .ToArray() ?? Array.Empty<ProbeSearchEntryDto>();
     private IReadOnlyList<string> Effects => Array.Empty<string>();
     private CombatSetVariantDto? SelectedSet => Sets.FirstOrDefault(set => set.Id == _selectedSetId);
