@@ -16,6 +16,17 @@ function statusText(page) {
   return page.locator('.combat-status-panel').innerText();
 }
 
+async function assertFocus(page, locator, label) {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    if (await locator.evaluate(element => element === document.activeElement)) {
+      return;
+    }
+    await page.waitForTimeout(25);
+  }
+
+  assert.fail(`${label}: focus was not returned`);
+}
+
 async function setNumber(drawer, label, value) {
   await drawer.locator(`input[aria-label="${label}"]`).fill(String(value));
   await drawer.getByRole('button', { name: 'Anwenden', exact: true }).click();
@@ -37,15 +48,25 @@ async function setNumber(drawer, label, value) {
     assert.match(text, /Aktueller Zustand noch nicht erfasst/);
     assert.equal(await page.getByRole('button', { name: 'Mit Maximalwerten beginnen', exact: true }).count(), 1);
 
-    await page.getByRole('button', { name: 'Aktuelle Werte erfassen', exact: true }).click();
+    const initialResourceTrigger = page.getByRole('button', { name: 'Aktuelle Werte erfassen', exact: true });
+    await initialResourceTrigger.click();
     const resourceDrawer = page.locator('.combat-details-drawer');
     await resourceDrawer.waitFor();
     await resourceDrawer.locator('input[aria-label="LeP"]').fill('17');
     await resourceDrawer.getByRole('button', { name: 'Abbrechen', exact: true }).click();
+    await assertFocus(page, initialResourceTrigger, 'resource drawer cancel');
     assert.match(await page.locator('.hero-resource-lep').innerText(), /—\s*\/\s*22/);
 
-    await page.locator('.hero-resource-lep').click();
+    await initialResourceTrigger.click();
+    await resourceDrawer.waitFor();
+    await resourceDrawer.press('Escape');
+    await resourceDrawer.waitFor({ state: 'detached' });
+    await assertFocus(page, initialResourceTrigger, 'resource drawer escape');
+
+    const resource = page.locator('.hero-resource-lep');
+    await resource.click();
     await setNumber(page.locator('.combat-details-drawer'), 'LeP', 17);
+    await assertFocus(page, resource, 'resource drawer apply');
     text = await statusText(page);
     assert.match(text, /17\s*\/\s*22/);
     assert.match(text, /WUNDEN\s+—/i);

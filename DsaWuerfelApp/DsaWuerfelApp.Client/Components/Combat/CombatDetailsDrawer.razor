@@ -2,10 +2,10 @@
 
 @if (Open)
 {
-    <aside class="combat-details-drawer" role="dialog" aria-modal="true" aria-label="@Title" @onkeydown="HandleKeyDown">
+    <aside class="combat-details-drawer" role="dialog" aria-modal="true" aria-label="@Title" tabindex="-1" @onkeydown="HandleKeyDown">
         <div class="combat-details-drawer-header">
             <h2>@Title</h2>
-            <button type="button" class="combat-details-close" aria-label="Details schließen" @onclick="CloseRequested">
+            <button type="button" class="combat-details-close" @ref="_closeButton" aria-label="Details schließen" @onclick="CloseRequested">
                 Schließen
             </button>
         </div>

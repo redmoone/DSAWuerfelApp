@@ -6,7 +6,7 @@ const publishDirectory = path.resolve(process.argv[2] ?? path.join(__dirname, '.
 const combatXml = `
 <daten>
   <angaben><name>Ardor Collen</name><wundschwelle>9</wundschwelle></angaben>
-  <eigenschaften><intuition><akt>15</akt></intuition><lebensenergie><akt>40</akt></lebensenergie><ausdauer><akt>35</akt></ausdauer></eigenschaften>
+  <eigenschaften><intuition><akt>0</akt></intuition><lebensenergie><akt>40</akt></lebensenergie><ausdauer><akt>35</akt></ausdauer></eigenschaften>
   <kampfsets><kampfset nr="1" tzm="true" inbenutzung="true"><ausweichen>11</ausweichen><ini>14</ini><ruestungzonen><kopf>0</kopf><brust>0</brust><ruecken>0</ruecken><bauch>0</bauch><linkerarm>0</linkerarm><rechterarm>0</rechterarm><linkesbein>0</linkesbein><rechtesbein>0</rechtesbein></ruestungzonen></kampfset></kampfsets>
 </daten>`;
 
@@ -28,7 +28,9 @@ const combatXml = `
 
     await page.getByRole('button', { name: 'Eigene INI', exact: true }).click();
     await page.getByRole('button', { name: /1W6/ }).click();
-    await page.locator('.combat-initiative-row.current .combat-initiative-value').waitFor();
+    const initiativeBefore = page.locator('.combat-initiative-row.current .combat-initiative-value');
+    await initiativeBefore.waitFor();
+    const initiativeBeforeText = await initiativeBefore.innerText();
     assert.equal(await orientationButton.isDisabled(), false);
 
     await orientationButton.click();
@@ -40,7 +42,11 @@ const combatXml = `
     const orientationEntry = page.locator('.combat-action-entry').filter({ hasText: 'Orientieren' }).first();
     await orientationEntry.getByRole('button', { name: /IN-Probe/ }).click();
     await page.locator('.combat-action-entry.completed').filter({ hasText: 'Orientieren' }).waitFor();
-    await page.locator('.combat-notice').filter({ hasText: /IN-Probe/ }).waitFor();
+    const notice = page.locator('.combat-notice').filter({ hasText: /IN-Probe/ });
+    await notice.waitFor();
+    assert.match(await notice.innerText(), /misslungen/);
+    assert.match(await notice.innerText(), /INI bleibt/);
+    assert.equal(await page.locator('.combat-initiative-row.current .combat-initiative-value').innerText(), initiativeBeforeText);
     assert.equal(await page.locator('.combat-action-entry.completed').filter({ hasText: 'Orientieren' }).count(), 1);
     assert.equal(errors.length, 0, `browser errors: ${errors.join(' | ')}`);
     console.log(JSON.stringify({ orientation: true, attention: false, probe: true }));
