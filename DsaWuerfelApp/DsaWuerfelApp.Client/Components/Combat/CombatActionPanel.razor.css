@@ -63,6 +63,35 @@
     gap: 0.75rem;
 }
 
+.combat-set-row,
+.combat-choice-block {
+    min-width: 0;
+    padding: 0.7rem;
+    border: 1px solid rgba(212, 175, 55, 0.52);
+    border-radius: var(--dsa-panel-radius);
+    background: rgba(7, 17, 29, 0.48);
+}
+
+.combat-set-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.7rem;
+}
+
+.combat-choice-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.combat-inline-empty,
+.combat-selection-placeholder {
+    margin: 0;
+    color: var(--dsa-text-muted);
+    font-size: 0.76rem;
+}
+
 .combat-selection-block,
 .combat-maneuver-block,
 .combat-attribute-block,
@@ -198,6 +227,74 @@
     gap: 0.4rem;
 }
 
+.combat-attribute-strip ::deep .attribute-pill {
+    width: 82px;
+    min-width: 82px;
+    box-sizing: border-box;
+}
+
+.combat-selection-chips {
+    display: flex;
+    min-height: 2rem;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0;
+}
+
+.combat-selection-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.4rem 0.25rem 0.55rem;
+    border: 1px solid rgba(212, 175, 55, 0.72);
+    border-radius: 999px;
+    background: rgba(212, 175, 55, 0.12);
+    color: var(--dsa-white);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.combat-selection-chip button {
+    width: 1.25rem;
+    height: 1.25rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--dsa-gold);
+    cursor: pointer;
+    font: inherit;
+    font-weight: 900;
+}
+
+.combat-selection-chip button:hover,
+.combat-selection-chip button:focus-visible {
+    background: rgba(212, 175, 55, 0.2);
+    color: var(--dsa-white);
+}
+
+.combat-target-preview {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid rgba(212, 175, 55, 0.68);
+    border-radius: var(--dsa-panel-radius);
+    background: rgba(7, 17, 29, 0.62);
+}
+
+.combat-target-preview strong {
+    color: var(--dsa-gold);
+    font-size: 1.05rem;
+}
+
+.combat-target-preview > span:last-child {
+    color: var(--dsa-text-muted);
+    font-size: 0.72rem;
+}
+
 .combat-action-summary {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -215,11 +312,59 @@
 }
 
 .combat-dice-viewport {
+    height: 130px;
     min-height: 130px;
     overflow: hidden;
     border: 1px solid var(--dsa-gold);
     border-radius: 8px;
     background: rgba(7, 17, 29, 0.72);
+}
+
+.combat-roll-result {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid rgba(212, 175, 55, 0.72);
+    border-radius: var(--dsa-panel-radius);
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.combat-roll-result > div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.18rem;
+}
+
+.combat-roll-result strong {
+    color: var(--dsa-white);
+    overflow-wrap: anywhere;
+}
+
+.combat-roll-result > div > span:last-child {
+    color: var(--dsa-text-muted);
+    font-size: 0.75rem;
+}
+
+.combat-result-details {
+    min-height: var(--ui-touch-target);
+    padding: 0.35rem 0.7rem;
+    border: 1px solid var(--dsa-gold);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--dsa-gold);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.combat-result-details:hover,
+.combat-result-details:focus-visible {
+    background: var(--dsa-hover-background);
+    color: var(--dsa-white);
 }
 
 .combat-dice-viewport ::deep canvas {
@@ -245,6 +390,17 @@
 
     .combat-selected-chip {
         max-width: 100%;
+    }
+
+    .combat-set-row,
+    .combat-target-preview {
+        grid-template-columns: 1fr;
+        align-items: start;
+    }
+
+    .combat-roll-result {
+        align-items: flex-start;
+        flex-direction: column;
     }
 }
 

@@ -10,21 +10,32 @@ namespace DsaWuerfelApp.Client.Pages;
 public partial class Kampf : IDisposable
 {
     [Inject] public ActiveHeroState ActiveHeroState { get; set; } = null!;
+    [Inject] public AuthState AuthState { get; set; } = null!;
+    [Inject] public CombatCoordinator CombatCoordinator { get; set; } = null!;
     [Inject] public CombatState CombatState { get; set; } = null!;
+    [Inject] public CombatSessionState CombatSessionState { get; set; } = null!;
     [Inject] public SessionState SessionState { get; set; } = null!;
     [Inject] public WuerfelState WuerfelState { get; set; } = null!;
     [Inject] public WuerfelFacade WuerfelFacade { get; set; } = null!;
 
     private string? _notice;
-    private string _hitLePLossText = "0";
-    private int _hitWounds;
-    private CombatWoundZone? _hitZone;
-    private string _hitNote = string.Empty;
-    private string _initiativeText = string.Empty;
-    private bool _initiativeDraftDirty;
-    private bool _hitCaptureOpen;
-    private bool _hitBusy;
     private string? _lastContextKey;
+    private bool _rollBusy;
+    private CombatArea _activeArea = CombatArea.Wurf;
+    private CombatDrawer _drawer;
+    private CombatResourceKind? _resourceKind;
+    private int? _resourceDraft;
+    private int? _woundDraft;
+    private int? _initiativeDraft;
+    private string? _initiativeParticipantId;
+    private Guid? _initiativeHeroId;
+    private string _opponentNameDraft = string.Empty;
+    private string _opponentAffiliationDraft = "Gegner";
+    private int? _opponentInitiativeBaseDraft;
+    private int? _opponentInitiativeDraft;
+    private string _announcementDraft = string.Empty;
+    private CombatParticipantDrawerMode _participantDrawerMode;
+    private RollHistoryEntryDto? _selectedHistoryEntry;
 
     private Hero? ActiveHero => ActiveHeroState.CurrentHero;
     private CombatProfileDto? Profile => CombatState.Profile;
@@ -33,41 +44,51 @@ public partial class Kampf : IDisposable
     private IReadOnlyList<CombatSetVariantDto> Sets => Profile?.Sets ?? Array.Empty<CombatSetVariantDto>();
     private IReadOnlyList<CombatWeaponDto> Weapons => CombatState.Weapons;
     private IReadOnlyList<CombatAttributeDto> Attributes => Profile?.Attributes ?? Array.Empty<CombatAttributeDto>();
+    private IReadOnlyList<string> SelectedAttributes => CombatState.SelectedAttributes;
     private IReadOnlyList<ProbeSearchEntryDto> Maneuvers => Profile?.Specializations
         .Select(specialization => new ProbeSearchEntryDto(
-            specialization.IsLearned
-                ? specialization.Name
-                : $"{specialization.Name} (vergünstigt)",
+            specialization.IsLearned ? specialization.Name : $"{specialization.Name} (vergünstigt)",
             specialization.IsLearned ? specialization.Identifier ?? specialization.Name : null,
             specialization.IsLearned,
             specialization.IsLearned
-                ? specialization.Categories
-                    .Select(category => new ProbeSearchAlternativeDto(category, category))
-                    .ToArray()
+                ? specialization.Categories.Select(category => new ProbeSearchAlternativeDto(category, category)).ToArray()
                 : Array.Empty<ProbeSearchAlternativeDto>()))
         .ToArray() ?? Array.Empty<ProbeSearchEntryDto>();
     private IReadOnlyList<string> Effects => CombatState.Effects;
     private CombatSetVariantDto? SelectedSet => CombatState.SelectedSet;
     private CombatWeaponDto? SelectedWeapon => CombatState.SelectedWeapon;
-    private CombatWeaponDto? RangedWeapon => Weapons.FirstOrDefault(weapon => weapon.Category == CombatWeaponCategory.Ranged);
-    private CombatSpecializationDto? SelectedSpecialization => Profile?.Specializations.FirstOrDefault(specialization =>
-        string.Equals(specialization.Identifier, CombatState.SelectedProbe, StringComparison.Ordinal) ||
-        string.Equals(specialization.Name, CombatState.SelectedProbe, StringComparison.Ordinal));
     private int? CurrentLeP => CombatState.CurrentLeP;
     private int? CurrentAuP => CombatState.CurrentAuP;
-    private int? CurrentInitiative => CombatState.CurrentInitiative;
+    private int? CurrentAeP => CombatState.CurrentAeP;
+    private int? CurrentKeP => CombatState.CurrentKeP;
+    private CombatSessionSnapshotDto? SessionCombat => CombatSessionState.Current;
+    private CombatSessionParticipantDto? OwnSessionParticipant => SessionCombat?.Participants
+        .FirstOrDefault(participant => participant.HeroId == ActiveHero?.Id);
+    private int? CurrentInitiative => OwnSessionParticipant?.CurrentInitiative ?? CombatState.CurrentInitiative;
     private IReadOnlyDictionary<CombatWoundZone, int?> Wounds => CombatState.Wounds;
-    private bool HasCombatContext => ActiveHero is not null && Profile is not null;
+    private bool HasCombatContext => ActiveHero is not null && Profile is not null && SelectedSet is not null;
+    private bool IsSessionCombat => !string.IsNullOrWhiteSpace(SessionState.ActiveSessionId);
+    private bool IsCombatStarted => IsSessionCombat ? SessionCombat?.IsStarted == true : CombatState.IsStarted;
+    private bool CanUndoCombat => IsSessionCombat ? CombatSessionState.CanUndo : CombatState.CanUndo;
+    private bool IsSessionMaster => IsSessionCombat &&
+                                    string.Equals(SessionState.ActiveSession?.MasterUserId,
+                                        AuthState.Current.User?.Id, StringComparison.Ordinal);
 
     private string? SelectedSetId => CombatState.SelectedSetId;
     private string? SelectedWeaponId => CombatState.SelectedWeaponId;
     private string SelectedAction => CombatState.SelectedAction;
     private string SelectedProbe => CombatState.SelectedProbe;
-    private string? SelectedAttribute => CombatState.SelectedAttribute;
     private int Modifier => CombatState.Modifier;
     private string RollText => CombatState.RollText;
     private CombatFacing Facing => CombatState.Facing;
     private CombatWoundZone? SelectedZone => CombatState.SelectedZone;
+    private IReadOnlyList<RollHistoryEntryDto> History => WuerfelState.Current.History;
+    private CombatRollResultDto? CombatResult => WuerfelState.Current.LastCombatRoll;
+    private IReadOnlyList<int> ResultDiceSides => CombatResult?.Rolls.Select(roll => roll.Sides).ToArray() ?? Array.Empty<int>();
+    private IReadOnlyList<int> ResultDiceValues => CombatResult?.Rolls.Select(roll => roll.Value).ToArray() ?? Array.Empty<int>();
+    private long ResultVersion => WuerfelState.Current.ResultVersion;
+    private CombatArea ActiveArea => _activeArea;
+    private CombatWoundZone WoundDrawerZone => SelectedZone ?? CombatWoundZone.Torso;
 
     private string HeroDisplayName => ActiveHero?.Name ?? "Kein aktiver Held";
     private string ProfileStatus => ActiveHero is null
@@ -77,78 +98,80 @@ public partial class Kampf : IDisposable
             : Profile is not null
                 ? "Importierte Kampfwerte geladen"
                 : "Kampfprofil fehlt";
-    private string CombatInformationSummary => Profile is null
-        ? ProfileLoading
-            ? "Die Kampfwerte werden aus dem gespeicherten Heldenimport gelesen."
-            : "Wähle einen aktiven Helden, um Kampfwerte aus dem gespeicherten Import zu laden."
-        : "Ausgewählte Kampfaktion und Quellwerte des Helden.";
 
     private IReadOnlyList<CombatActionPanel.ActionOption> Actions =>
     [
-        new("attack", "Attacke", FormatActionValue("AT", SelectedWeapon?.Attack ?? SelectedSet?.Raufen?.Attack),
-            SelectedWeapon?.Attack.HasValue == true || SelectedSet?.Raufen?.Attack.HasValue == true),
-        new("parry", "Parade", FormatActionValue("PA", SelectedWeapon?.Parry ?? SelectedSet?.Raufen?.Parry),
-            SelectedWeapon?.Parry.HasValue == true || SelectedSet?.Raufen?.Parry.HasValue == true),
+        new("attack", "Attacke", FormatActionValue("AT", SelectedWeapon?.Attack), HasWeaponAttack),
+        new("parry", "Waffenparade", FormatActionValue("PA", SelectedWeapon?.Parry), HasWeaponParry),
+        new("shield-parry", "Schildparade", FormatActionValue("PA", SelectedWeapon?.Parry), HasShieldParry),
         new("dodge", "Ausweichen", FormatActionValue("AW", SelectedSet?.Dodge), SelectedSet?.Dodge.HasValue == true),
-        new("ranged", "Fernkampf", FormatActionValue("FK", RangedWeapon?.RangedValue), RangedWeapon?.RangedValue.HasValue == true)
+        new("ranged", "Fernkampf", FormatActionValue("FK", SelectedWeapon?.RangedValue), HasRangedValue),
+        new("damage", "Trefferpunkte", $"TP {GetDamageText(SelectedWeapon)}", HasDamage),
+        new("zone", "Trefferzone", "W20", HasCombatContext),
+        new("wound-helper", "Wund-Hilfswurf", "W6", HasCombatContext),
+        new("fumble-helper", "Patzer-Hilfswurf", "W20", HasCombatContext)
     ];
 
-    private string SelectionSummary
+    private bool HasWeaponAttack => SelectedWeapon is { Category: CombatWeaponCategory.Melee or CombatWeaponCategory.Unarmed } && SelectedWeapon.Attack.HasValue;
+    private bool HasWeaponParry => SelectedWeapon is { Category: CombatWeaponCategory.Melee or CombatWeaponCategory.Unarmed } && SelectedWeapon.Parry.HasValue;
+    private bool HasShieldParry => SelectedWeapon is { Category: CombatWeaponCategory.Shield } && SelectedWeapon.Parry.HasValue;
+    private bool HasRangedValue => SelectedWeapon is { Category: CombatWeaponCategory.Ranged } && SelectedWeapon.RangedValue.HasValue;
+    private bool HasDamage => SelectedWeapon is not null && !string.IsNullOrWhiteSpace(SelectedWeapon.CalculatedDamage ?? SelectedWeapon.BaseDamage);
+
+    private int? EffectiveTarget => CombatRollRules.ResolveEffectiveTarget(GetActionBaseValue(), GetCurrentModifiers());
+
+    private string TargetSource => GetActionKind() switch
     {
-        get
-        {
-            var action = Actions.FirstOrDefault(item => item.Key == SelectedAction);
-            var actionText = action?.Label ?? "Keine Aktion";
-            return SelectedWeapon is null
-                ? actionText
-                : $"{SelectedWeapon.Name} · {actionText} · {GetWeaponPrimaryValues(SelectedWeapon)}";
-        }
-    }
+        CombatActionKind.Damage => "TP werden separat aus der importierten Formel berechnet.",
+        CombatActionKind.MeleeAttack or CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge or CombatActionKind.RangedAttack => "Importierter Zielwert",
+        _ => "Hilfswurf ohne Zielwert"
+    };
 
-    private IReadOnlyList<InitiativeEntry> InitiativeEntries =>
-        SessionState.ActiveSession?.Players
-            .Select(player => new InitiativeEntry(player.Name, null))
-            .Prepend(new InitiativeEntry(HeroDisplayName, CurrentInitiative))
-            .ToArray() ??
-        (ActiveHero is null ? Array.Empty<InitiativeEntry>() : [new InitiativeEntry(HeroDisplayName, CurrentInitiative)]);
+    private bool CanRoll => HasCombatContext && !_rollBusy &&
+                            Actions.FirstOrDefault(action => action.Key == SelectedAction)?.IsAvailable == true;
 
-    private int? CurrentHitWounds => _hitZone.HasValue && Wounds.TryGetValue(_hitZone.Value, out var wounds)
-        ? wounds
-        : null;
-
-    private int? HitPreviewLeP
+    private string DrawerTitle => _drawer switch
     {
-        get
-        {
-            if (!CurrentLeP.HasValue || !int.TryParse(_hitLePLossText, out var loss))
-            {
-                return CurrentLeP;
-            }
+        CombatDrawer.Resource => $"{GetResourceLabel(_resourceKind ?? CombatResourceKind.LeP)} setzen",
+        CombatDrawer.Wound => "Wundstand setzen",
+        CombatDrawer.Initiative => "Initiative",
+        CombatDrawer.Participant => _participantDrawerMode == CombatParticipantDrawerMode.Opponent
+            ? "Gegner hinzufügen"
+            : "Rundenansage",
+        CombatDrawer.History => "Vollständige Würfelhistorie",
+        _ => "Details"
+    };
 
-            return Math.Max(0, CurrentLeP.Value - Math.Max(0, loss));
-        }
-    }
+    private IReadOnlyList<CombatSessionParticipantDto> InitiativeParticipants =>
+        SessionCombat?.Participants
+            .OrderByDescending(participant => participant.CurrentInitiative.HasValue)
+            .ThenByDescending(participant => participant.CurrentInitiative ?? int.MinValue)
+            .ThenByDescending(participant => participant.InitiativeBase ?? int.MinValue)
+            .ThenBy(participant => participant.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray() ?? Array.Empty<CombatSessionParticipantDto>();
 
-    private bool CanApplyHit => CombatState.IsStarted &&
-                                 CurrentLeP.HasValue &&
-                                 _hitZone.HasValue &&
-                                 int.TryParse(_hitLePLossText, out var loss) &&
-                                 loss >= 0;
+    private IReadOnlyList<CombatSessionActionDto> CurrentSessionActions =>
+        SessionCombat?.Actions
+            .Where(action => action.Round == (SessionCombat?.Round ?? 1) && action.State != CombatActionEntryState.Completed)
+            .ToArray() ?? Array.Empty<CombatSessionActionDto>();
 
     protected override async Task OnInitializedAsync()
     {
         CombatState.Changed += HandleCombatStateChanged;
+        CombatSessionState.Changed += HandleStateChanged;
         SessionState.ActiveSessionChanged += HandleStateChanged;
         WuerfelState.Changed += HandleStateChanged;
+        CombatCoordinator.Attach();
         await CombatState.EnsureLoadedAsync();
+        await CombatSessionState.EnsureLoadedAsync();
         _lastContextKey = CombatState.ContextKey;
-        SyncInitiativeText();
         await WuerfelFacade.AttachAsync();
     }
 
     public void Dispose()
     {
         CombatState.Changed -= HandleCombatStateChanged;
+        CombatSessionState.Changed -= HandleStateChanged;
         SessionState.ActiveSessionChanged -= HandleStateChanged;
         WuerfelState.Changed -= HandleStateChanged;
         WuerfelFacade.Detach();
@@ -161,28 +184,56 @@ public partial class Kampf : IDisposable
         if (!string.Equals(_lastContextKey, CombatState.ContextKey, StringComparison.Ordinal))
         {
             _lastContextKey = CombatState.ContextKey;
-            CloseHitCapture();
+            CloseDrawer();
+            _selectedHistoryEntry = null;
             _notice = null;
-            _initiativeDraftDirty = false;
-        }
-
-        if (!_initiativeDraftDirty)
-        {
-            SyncInitiativeText();
+            _activeArea = CombatArea.Wurf;
         }
 
         _ = InvokeAsync(StateHasChanged);
     }
 
-    private Task HandleSetSelected(string setId) => CombatState.SetSelectedSetAsync(setId);
+    private async Task HandleSetSelected(string setId)
+    {
+        await CombatState.SetSelectedSetAsync(setId);
+        if (SelectedWeapon?.Category == CombatWeaponCategory.Ranged)
+        {
+            await CombatState.SetSelectedActionAsync("ranged");
+        }
+        else if (SelectedWeapon?.Category == CombatWeaponCategory.Shield)
+        {
+            await CombatState.SetSelectedActionAsync("shield-parry");
+        }
+        else if (SelectedAction is "ranged" or "shield-parry")
+        {
+            await CombatState.SetSelectedActionAsync("attack");
+        }
+    }
 
-    private Task HandleWeaponSelected(string weaponId) => CombatState.SetSelectedWeaponAsync(weaponId);
+    private async Task HandleWeaponSelected(string weaponId)
+    {
+        await CombatState.SetSelectedWeaponAsync(weaponId);
+        if (SelectedWeapon?.Category == CombatWeaponCategory.Ranged)
+        {
+            await CombatState.SetSelectedActionAsync("ranged");
+        }
+        else if (SelectedWeapon?.Category == CombatWeaponCategory.Shield)
+        {
+            await CombatState.SetSelectedActionAsync("shield-parry");
+        }
+        else if (SelectedAction is "ranged" or "shield-parry")
+        {
+            await CombatState.SetSelectedActionAsync("attack");
+        }
+    }
 
     private Task HandleActionSelected(string action) => CombatState.SetSelectedActionAsync(action);
 
     private Task HandleProbeSelected(string probe) => CombatState.SetSelectedProbeAsync(probe);
 
-    private Task HandleAttributeSelected(string attribute) => CombatState.SetSelectedAttributeAsync(attribute);
+    private Task HandleAttributeSelected(string attribute) => CombatState.AddSelectedAttributeAsync(attribute);
+
+    private Task HandleAttributeRemoved(int index) => CombatState.RemoveSelectedAttributeAtAsync(index);
 
     private Task HandleModifierChanged(int modifier) => CombatState.SetModifierAsync(modifier);
 
@@ -190,186 +241,548 @@ public partial class Kampf : IDisposable
 
     private Task ResetAction() => CombatState.ResetActionAsync();
 
-    private Task HandleRollRequested()
+    private async Task HandleRollRequested()
     {
-        _notice = "Kampfwürfe noch nicht angebunden.";
-        return Task.CompletedTask;
+        if (!CanRoll || GetActionKind() is not { } action)
+        {
+            _notice = "Bitte zuerst ein importiertes Set, eine passende Waffe und eine verfügbare Aktion wählen.";
+            return;
+        }
+
+        _rollBusy = true;
+        _notice = null;
+        try
+        {
+            var result = await CombatCoordinator.RollAsync(BuildRollRequest(action));
+            _notice = result.Snapshot.StatusLabel;
+        }
+        catch (Exception exception)
+        {
+            _notice = exception.Message;
+        }
+        finally
+        {
+            _rollBusy = false;
+        }
+    }
+
+    private CombatRollRequestDto BuildRollRequest(CombatActionKind action)
+    {
+        var modifiers = action == CombatActionKind.Damage || Modifier == 0
+            ? Array.Empty<CombatModifierDto>()
+            : [new CombatModifierDto("Situativ", Modifier, "Kampfseite")];
+        return new CombatRollRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = SessionState.ActiveSessionId,
+            HeroId = ActiveHero?.Id,
+            SetId = SelectedSet?.Id,
+            Action = action,
+            WeaponId = action is CombatActionKind.Dodge or CombatActionKind.HitZone or CombatActionKind.InitiativeHelper or CombatActionKind.WoundHelper or CombatActionKind.FumbleHelper
+                ? null
+                : SelectedWeapon?.Id,
+            Modifiers = modifiers,
+            Options = new CombatRuleOptionsDto(SpecialResultsEnabled: true, LowLePEnabled: true),
+            Damage = action == CombatActionKind.Damage
+                ? new CombatDamageRollRequestDto { IsCritical = IsLastCriticalAttack() }
+                : null,
+            DamageModifier = action == CombatActionKind.Damage ? Modifier : 0,
+            Zone = action == CombatActionKind.HitZone
+                ? new CombatZoneRollRequestDto(Facing, CombatArmorZone.LeftArm, CombatArmorZone.RightArm)
+                : null,
+            Helper = action switch
+            {
+                CombatActionKind.WoundHelper => new CombatHelperRollRequestDto { DiceCount = 1, DiceSides = 6, Purpose = "Wund-Hilfswurf" },
+                CombatActionKind.FumbleHelper => new CombatHelperRollRequestDto { DiceCount = 1, DiceSides = 20, Purpose = "Patzer-Hilfswurf" },
+                _ => null
+            },
+            Note = string.IsNullOrWhiteSpace(RollText) ? null : RollText.Trim()
+        };
     }
 
     private Task HandleFacingChanged(CombatFacing facing) => CombatState.SetFacingAsync(facing);
 
-    private Task HandleZoneSelected(CombatWoundZone zone) => CombatState.SetSelectedZoneAsync(zone);
-
-    private Task HandleHistorySelected(RollHistoryEntryDto entry)
+    private async Task HandleZoneSelected(CombatWoundZone zone)
     {
-        _notice = $"Historieneintrag {entry.Timestamp.ToLocalTime():HH:mm} ausgewählt.";
+        await CombatState.SetSelectedZoneAsync(zone);
+        OpenWoundDrawer();
+    }
+
+    private void SetArea(CombatArea area) => _activeArea = area;
+
+    private void OpenResourceDrawer(CombatResourceKind resource)
+    {
+        _resourceKind = resource;
+        _resourceDraft = GetResourceValue(resource);
+        _drawer = CombatDrawer.Resource;
+    }
+
+    private void OpenWoundDrawer()
+    {
+        var zone = WoundDrawerZone;
+        _woundDraft = Wounds.TryGetValue(zone, out var wounds) ? wounds ?? 0 : 0;
+        _drawer = CombatDrawer.Wound;
+    }
+
+    private void OpenInitiativeDrawer()
+    {
+        _initiativeParticipantId = OwnSessionParticipant?.Id;
+        _initiativeHeroId = ActiveHero?.Id;
+        _initiativeDraft = CurrentInitiative ?? SelectedSet?.Initiative;
+        _drawer = CombatDrawer.Initiative;
+    }
+
+    private void OpenParticipantInitiativeDrawer(CombatSessionParticipantDto participant)
+    {
+        _initiativeParticipantId = participant.Id;
+        _initiativeHeroId = participant.HeroId;
+        _initiativeDraft = participant.CurrentInitiative;
+        _drawer = CombatDrawer.Initiative;
+    }
+
+    private void OpenOpponentDrawer()
+    {
+        _participantDrawerMode = CombatParticipantDrawerMode.Opponent;
+        _opponentNameDraft = string.Empty;
+        _opponentAffiliationDraft = "Gegner";
+        _opponentInitiativeBaseDraft = null;
+        _opponentInitiativeDraft = null;
+        _drawer = CombatDrawer.Participant;
+    }
+
+    private void OpenAnnouncementDrawer()
+    {
+        _participantDrawerMode = CombatParticipantDrawerMode.Announcement;
+        _initiativeParticipantId = OwnSessionParticipant?.Id;
+        _initiativeHeroId = ActiveHero?.Id;
+        _announcementDraft = OwnSessionParticipant?.Announcement ?? string.Empty;
+        _drawer = CombatDrawer.Participant;
+    }
+
+    private void OpenHistoryDrawer() => _drawer = CombatDrawer.History;
+
+    private void CloseDrawer()
+    {
+        _drawer = CombatDrawer.None;
+        _resourceKind = null;
+    }
+
+    private async Task ApplyResourceAsync()
+    {
+        if (_resourceKind is not { } resource)
+        {
+            return;
+        }
+
+        await CombatState.SetResourceAsync(resource, _resourceDraft);
+        _notice = $"{GetResourceLabel(resource)} gespeichert.";
+        CloseDrawer();
+    }
+
+    private async Task ApplyWoundAsync()
+    {
+        if (!Wounds.TryGetValue(WoundDrawerZone, out _) || !_woundDraft.HasValue)
+        {
+            _notice = "Bitte einen Wundstand von 0 bis 3 setzen.";
+            return;
+        }
+
+        await CombatState.SetWoundAsync(WoundDrawerZone, _woundDraft.Value);
+        _notice = $"{GetWoundLabel(WoundDrawerZone)} gespeichert.";
+        CloseDrawer();
+    }
+
+    private async Task ApplyInitiativeAsync()
+    {
+        if (!_initiativeDraft.HasValue)
+        {
+            _notice = "Bitte einen konkreten INI-Wert setzen.";
+            return;
+        }
+
+        if (IsSessionCombat)
+        {
+            var result = await CombatSessionState.SetInitiativeAsync(
+                _initiativeDraft.Value,
+                _initiativeParticipantId,
+                _initiativeHeroId);
+            _notice = result.Message;
+            if (result.Applied)
+            {
+                if (_initiativeHeroId == ActiveHero?.Id)
+                {
+                    await CombatState.SetInitiativeAsync(_initiativeDraft);
+                }
+
+                CloseDrawer();
+            }
+            return;
+        }
+
+        if (await CombatState.SetInitiativeAsync(_initiativeDraft))
+        {
+            _notice = _initiativeDraft.HasValue ? $"INI {_initiativeDraft} gespeichert." : "Laufende Initiative entfernt.";
+            CloseDrawer();
+        }
+    }
+
+    private async Task ApplyParticipantDrawerAsync()
+    {
+        CombatSessionMutationResultDto result;
+        if (_participantDrawerMode == CombatParticipantDrawerMode.Opponent)
+        {
+            result = await CombatSessionState.AddOpponentAsync(
+                _opponentNameDraft,
+                _opponentInitiativeBaseDraft,
+                _opponentInitiativeDraft,
+                _opponentAffiliationDraft);
+        }
+        else
+        {
+            result = await CombatSessionState.SetAnnouncementAsync(
+                _announcementDraft,
+                _initiativeParticipantId,
+                _initiativeHeroId);
+        }
+
+        _notice = result.Message;
+        if (result.Applied)
+        {
+            CloseDrawer();
+        }
+    }
+
+    private async Task RollInitiativeAsync()
+    {
+        if (!HasCombatContext)
+        {
+            _notice = "Für den INI-Hilfswurf fehlt ein importiertes Kampfprofil.";
+            return;
+        }
+
+        _rollBusy = true;
+        try
+        {
+            if (IsSessionCombat)
+            {
+                var sessionResult = await CombatSessionState.RollInitiativeAsync(_initiativeParticipantId, _initiativeHeroId);
+                _initiativeDraft = sessionResult.Snapshot.Participants
+                    .FirstOrDefault(participant => participant.Id == _initiativeParticipantId)?.CurrentInitiative;
+                _notice = sessionResult.Message;
+                if (sessionResult.Applied)
+                {
+                    if (_initiativeHeroId == ActiveHero?.Id && _initiativeDraft.HasValue)
+                    {
+                        await CombatState.SetInitiativeAsync(_initiativeDraft);
+                    }
+
+                    CloseDrawer();
+                }
+
+                return;
+            }
+
+            var result = await CombatCoordinator.RollAsync(new CombatRollRequestDto
+            {
+                RequestId = Guid.NewGuid(),
+                SessionId = SessionState.ActiveSessionId,
+                HeroId = ActiveHero?.Id,
+                SetId = SelectedSet?.Id,
+                Action = CombatActionKind.InitiativeHelper,
+                Helper = new CombatHelperRollRequestDto { DiceCount = 1, DiceSides = 6, Purpose = "INI-Startwurf" }
+            });
+            var baseInitiative = SelectedSet?.Initiative ?? 0;
+            _initiativeDraft = baseInitiative + result.Rolls.Sum(roll => roll.Value);
+            _notice = $"INI-Hilfswurf: {_initiativeDraft} zum Anwenden bereit.";
+        }
+        catch (Exception exception)
+        {
+            _notice = exception.Message;
+        }
+        finally
+        {
+            _rollBusy = false;
+        }
+    }
+
+    private Task HandleResourceDraftChanged(int? value)
+    {
+        _resourceDraft = value;
         return Task.CompletedTask;
     }
 
-    private async Task StartCombatAsync()
+    private Task HandleWoundDraftChanged(int? value)
     {
-        if (await CombatState.StartCombatAsync())
+        _woundDraft = value.HasValue ? Math.Clamp(value.Value, 0, 3) : null;
+        return Task.CompletedTask;
+    }
+
+    private Task HandleInitiativeDraftChanged(int? value)
+    {
+        _initiativeDraft = value;
+        return Task.CompletedTask;
+    }
+
+    private Task HandleOpponentNameChanged(string value)
+    {
+        _opponentNameDraft = value ?? string.Empty;
+        return Task.CompletedTask;
+    }
+
+    private Task HandleOpponentAffiliationChanged(string value)
+    {
+        _opponentAffiliationDraft = value ?? string.Empty;
+        return Task.CompletedTask;
+    }
+
+    private Task HandleOpponentInitiativeBaseChanged(int? value)
+    {
+        _opponentInitiativeBaseDraft = value;
+        return Task.CompletedTask;
+    }
+
+    private Task HandleOpponentInitiativeChanged(int? value)
+    {
+        _opponentInitiativeDraft = value;
+        return Task.CompletedTask;
+    }
+
+    private Task HandleAnnouncementChanged(string value)
+    {
+        _announcementDraft = value ?? string.Empty;
+        return Task.CompletedTask;
+    }
+
+    private void HandleHistorySelected(RollHistoryEntryDto entry)
+    {
+        _drawer = CombatDrawer.None;
+        _selectedHistoryEntry = entry;
+    }
+
+    private void OpenLastResultDetails()
+    {
+        if (CombatResult is not null)
         {
-            _notice = "Kampfzustand gestartet: volle importierte Ressourcen, keine Wunden.";
+            _selectedHistoryEntry = CombatResult.HistoryEntry;
         }
+    }
+
+    private Task CloseHistoryDetails()
+    {
+        _selectedHistoryEntry = null;
+        return Task.CompletedTask;
     }
 
     private async Task UndoLastChangeAsync()
     {
+        if (IsSessionCombat)
+        {
+            var result = await CombatSessionState.UndoAsync();
+            _notice = result.Message;
+            return;
+        }
+
         _notice = await CombatState.UndoLastChangeAsync()
             ? "Letzte Änderung wurde rückgängig gemacht."
             : "Keine Änderung zum Rückgängigmachen vorhanden.";
     }
 
-    private void OpenHitCapture()
+    private async Task CompleteActionAsync(CombatSessionActionDto action)
     {
-        if (Profile is null)
-        {
-            _notice = "Treffererfassung ist erst mit einem importierten Kampfprofil verfügbar.";
-            return;
-        }
-
-        if (!CombatState.IsStarted)
-        {
-            _notice = "Starte zuerst den laufenden Kampfzustand mit vollen Ressourcen.";
-            return;
-        }
-
-        _hitZone = SelectedZone ?? CombatWoundZone.Torso;
-        _hitWounds = CurrentHitWounds ?? 0;
-        _hitLePLossText = "0";
-        _hitNote = string.Empty;
-        _hitCaptureOpen = true;
-        _notice = null;
+        var result = await CombatSessionState.CompleteActionAsync(action.Id, action.ParticipantId);
+        _notice = result.Message;
     }
 
-    private void CloseHitCapture()
+    private async Task ConsumeReactionAsync(CombatSessionParticipantDto participant)
     {
-        _hitCaptureOpen = false;
-        _hitBusy = false;
-        _hitZone = null;
-        _hitNote = string.Empty;
-        _hitLePLossText = "0";
-        _hitWounds = 0;
+        var result = await CombatSessionState.ConsumeReactionAsync(participant.Id, participant.HeroId);
+        _notice = result.Message;
     }
 
-    private Task HandleHitZoneChanged(CombatWoundZone? zone)
+    private async Task HoldActionAsync(CombatSessionActionDto action)
     {
-        _hitZone = zone;
-        _hitWounds = zone.HasValue && Wounds.TryGetValue(zone.Value, out var wounds) && wounds.HasValue
-            ? wounds.Value
-            : 0;
-        return Task.CompletedTask;
+        var result = await CombatSessionState.HoldActionAsync(action.Id, action.ParticipantId);
+        _notice = result.Message;
     }
 
-    private Task HandleHitLePLossChanged(string value)
+    private async Task ExecuteHeldActionAsync(CombatSessionActionDto action)
     {
-        _hitLePLossText = value;
-        return Task.CompletedTask;
+        var result = await CombatSessionState.ExecuteHeldActionAsync(action.Id, action.ParticipantId);
+        _notice = result.Message;
     }
 
-    private Task HandleHitWoundsChanged(int value)
+    private async Task NewRoundAsync()
     {
-        _hitWounds = Math.Clamp(value, 0, 3);
-        return Task.CompletedTask;
+        var result = await CombatSessionState.NewRoundAsync();
+        _notice = result.Message;
     }
 
-    private Task HandleHitNoteChanged(string value)
+    private async Task OrientAsync(bool hasAttention)
     {
-        _hitNote = value;
-        return Task.CompletedTask;
+        var result = await CombatSessionState.OrientAsync(hasAttention, OwnSessionParticipant?.Id, ActiveHero?.Id);
+        _notice = result.Message;
     }
 
-    private async Task ApplyHitAsync()
+    private bool IsCurrentParticipant(CombatSessionParticipantDto participant)
     {
-        if (!CanApplyHit || !_hitZone.HasValue || !int.TryParse(_hitLePLossText, out var loss))
-        {
-            _notice = "Bitte einen gültigen LeP-Verlust und eine Trefferzone angeben.";
-            return;
-        }
-
-        _hitBusy = true;
-        try
-        {
-            if (await CombatState.ApplyHitAsync(_hitZone.Value, loss, _hitWounds, _hitNote))
-            {
-                CloseHitCapture();
-                _notice = "Treffer wurde manuell erfasst.";
-            }
-            else
-            {
-                _notice = "Der laufende Kampfzustand ist noch nicht verfügbar.";
-            }
-        }
-        finally
-        {
-            _hitBusy = false;
-        }
+        return SessionCombat?.CurrentActionIds.Any(actionId =>
+            SessionCombat.Actions.FirstOrDefault(action => action.Id == actionId)?.ParticipantId == participant.Id) == true;
     }
 
-    private Task HandleInitiativeTextChanged(string value)
+    private IReadOnlyList<CombatSessionActionDto> GetParticipantActions(string participantId)
     {
-        _initiativeDraftDirty = true;
-        _initiativeText = value;
-        return Task.CompletedTask;
+        return SessionCombat?.Actions
+            .Where(action => action.ParticipantId == participantId && action.Round == SessionCombat.Round)
+            .OrderBy(action => action.State == CombatActionEntryState.Completed)
+            .ThenByDescending(action => action.PhaseInitiative ?? int.MinValue)
+            .ToArray() ?? Array.Empty<CombatSessionActionDto>();
     }
 
-    private async Task ApplyInitiativeAsync()
+    private CombatActionKind? GetActionKind() => SelectedAction switch
     {
-        if (string.IsNullOrWhiteSpace(_initiativeText))
-        {
-            if (await CombatState.SetInitiativeAsync(null))
-            {
-                _initiativeDraftDirty = false;
-                _notice = "Laufende Initiative entfernt.";
-            }
-
-            return;
-        }
-
-        if (!int.TryParse(_initiativeText, out var initiative))
-        {
-            _notice = "Initiative muss eine ganze Zahl sein.";
-            return;
-        }
-
-        if (await CombatState.SetInitiativeAsync(initiative))
-        {
-            _initiativeDraftDirty = false;
-            _notice = "Laufende Initiative gespeichert.";
-        }
-        else
-        {
-            _notice = "Starte zuerst den laufenden Kampfzustand.";
-        }
-    }
-
-    private void SyncInitiativeText() => _initiativeText = CurrentInitiative?.ToString() ?? string.Empty;
-
-    private static string FormatActionValue(string label, int? value) =>
-        value.HasValue ? $"{label} {value.Value}" : $"{label} nicht verfügbar";
-
-    private static string GetWeaponCategoryLabel(CombatWeaponCategory category) => category switch
-    {
-        CombatWeaponCategory.Melee => "Nahkampf",
-        CombatWeaponCategory.Ranged => "Fernkampf",
-        CombatWeaponCategory.Shield => "Abwehr",
-        _ => "Waffenlos"
+        "attack" => CombatActionKind.MeleeAttack,
+        "parry" => CombatActionKind.WeaponParry,
+        "shield-parry" => CombatActionKind.ShieldParry,
+        "dodge" => CombatActionKind.Dodge,
+        "ranged" => CombatActionKind.RangedAttack,
+        "damage" => CombatActionKind.Damage,
+        "zone" => CombatActionKind.HitZone,
+        "wound-helper" => CombatActionKind.WoundHelper,
+        "fumble-helper" => CombatActionKind.FumbleHelper,
+        _ => null
     };
 
-    private static string GetWeaponPrimaryValues(CombatWeaponDto weapon) => weapon.Category switch
+    private int? GetActionBaseValue() => GetActionKind() switch
     {
-        CombatWeaponCategory.Ranged => FormatActionValue("FK", weapon.RangedValue),
-        CombatWeaponCategory.Shield => FormatActionValue("PA", weapon.Parry),
-        _ => $"{FormatActionValue("AT", weapon.Attack)} · {FormatActionValue("PA", weapon.Parry)}"
+        CombatActionKind.MeleeAttack => SelectedWeapon?.Attack,
+        CombatActionKind.WeaponParry or CombatActionKind.ShieldParry => SelectedWeapon?.Parry,
+        CombatActionKind.Dodge => SelectedSet?.Dodge,
+        CombatActionKind.RangedAttack => SelectedWeapon?.RangedValue,
+        _ => null
     };
 
-    private static string GetWeaponDamage(CombatWeaponDto weapon)
+    private IReadOnlyList<CombatModifierDto> GetCurrentModifiers() => Modifier == 0
+        ? Array.Empty<CombatModifierDto>()
+        : [new CombatModifierDto("Situativ", Modifier)];
+
+    private bool IsLastCriticalAttack()
     {
-        var baseDamage = weapon.BaseDamage ?? "TP nicht verfügbar";
-        var calculatedDamage = weapon.CalculatedDamage is null ? null : $"inkl. {weapon.CalculatedDamage}";
-        return calculatedDamage is null ? baseDamage : $"{baseDamage} · {calculatedDamage}";
+        var result = CombatResult;
+        return result is not null &&
+               result.Snapshot.Action is CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack &&
+               result.Snapshot.Outcome == CombatOutcome.Critical &&
+               string.Equals(result.Snapshot.WeaponName, SelectedWeapon?.Name, StringComparison.Ordinal);
     }
 
-    private sealed record InitiativeEntry(string Name, int? Initiative);
+    private int? GetResourceValue(CombatResourceKind resource) => resource switch
+    {
+        CombatResourceKind.LeP => CurrentLeP,
+        CombatResourceKind.AuP => CurrentAuP,
+        CombatResourceKind.AeP => CurrentAeP,
+        CombatResourceKind.KeP => CurrentKeP,
+        _ => null
+    };
+
+    private int? GetResourceMaximum(CombatResourceKind resource) => resource switch
+    {
+        CombatResourceKind.LeP => Profile?.Resources.LeP,
+        CombatResourceKind.AuP => Profile?.Resources.AuP,
+        CombatResourceKind.AeP => Profile?.Resources.AeP,
+        CombatResourceKind.KeP => Profile?.Resources.KeP,
+        _ => null
+    };
+
+    private static int? GetResourceMinimum(CombatResourceKind resource) => resource == CombatResourceKind.LeP ? null : 0;
+
+    private static string GetResourceLabel(CombatResourceKind resource) => resource switch
+    {
+        CombatResourceKind.LeP => "LeP",
+        CombatResourceKind.AuP => "AuP",
+        CombatResourceKind.AeP => "AeP",
+        CombatResourceKind.KeP => "KE",
+        _ => "Wert"
+    };
+
+    private static string GetResourceDescription(CombatResourceKind resource) => resource switch
+    {
+        CombatResourceKind.LeP => "Lebenspunkte bleiben auch unter 0 sichtbar und werden nicht automatisch geheilt.",
+        CombatResourceKind.AuP => "Ausdauerpunkte dürfen nicht negativ gesetzt werden.",
+        CombatResourceKind.AeP => "Astralenergie wird nur angezeigt, wenn ein positives Maximum importiert wurde.",
+        CombatResourceKind.KeP => "Karmaenergie wird nur angezeigt, wenn ein positives Maximum importiert wurde.",
+        _ => string.Empty
+    };
+
+    private string GetWoundLabel(CombatWoundZone zone) => zone switch
+    {
+        CombatWoundZone.Head => "Kopf",
+        CombatWoundZone.Torso => "Torso",
+        CombatWoundZone.Abdomen => "Bauch",
+        CombatWoundZone.LeftArm => "Linker Arm",
+        CombatWoundZone.RightArm => "Rechter Arm",
+        CombatWoundZone.LeftLeg => "Linkes Bein",
+        CombatWoundZone.RightLeg => "Rechtes Bein",
+        _ => zone.ToString()
+    };
+
+    private string GetArmorFacingLabel()
+    {
+        var armorZone = WoundDrawerZone == CombatWoundZone.Torso
+            ? Facing == CombatFacing.Back ? CombatArmorZone.Back : CombatArmorZone.Chest
+            : WoundDrawerZone switch
+            {
+                CombatWoundZone.Head => CombatArmorZone.Head,
+                CombatWoundZone.Abdomen => CombatArmorZone.Abdomen,
+                CombatWoundZone.LeftArm => CombatArmorZone.LeftArm,
+                CombatWoundZone.RightArm => CombatArmorZone.RightArm,
+                CombatWoundZone.LeftLeg => CombatArmorZone.LeftLeg,
+                CombatWoundZone.RightLeg => CombatArmorZone.RightLeg,
+                _ => CombatArmorZone.Chest
+            };
+        return $"{(Facing == CombatFacing.Back ? "Rückseite" : "Vorderseite")} · RS {GetArmorValue(armorZone)?.ToString() ?? "—"}";
+    }
+
+    private int? GetArmorValue(CombatArmorZone zone)
+    {
+        var armor = SelectedSet?.ArmorZones;
+        return zone switch
+        {
+            CombatArmorZone.Head => armor?.Head,
+            CombatArmorZone.Chest => armor?.Chest,
+            CombatArmorZone.Back => armor?.Back,
+            CombatArmorZone.Abdomen => armor?.Abdomen,
+            CombatArmorZone.LeftArm => armor?.LeftArm,
+            CombatArmorZone.RightArm => armor?.RightArm,
+            CombatArmorZone.LeftLeg => armor?.LeftLeg,
+            CombatArmorZone.RightLeg => armor?.RightLeg,
+            _ => null
+        };
+    }
+
+    private static string FormatActionValue(string label, int? value) => value.HasValue ? $"{label} {value}" : $"{label} —";
+
+    private static string GetDamageText(CombatWeaponDto? weapon) => weapon?.CalculatedDamage ?? weapon?.BaseDamage ?? "—";
+
+    private enum CombatArea
+    {
+        Wurf,
+        Initiative,
+        Zonen
+    }
+
+    private enum CombatDrawer
+    {
+        None,
+        Resource,
+        Wound,
+        Initiative,
+        Participant,
+        History
+    }
+
+    private enum CombatParticipantDrawerMode
+    {
+        Opponent,
+        Announcement
+    }
+
 }

@@ -1,10 +1,11 @@
+@using DsaWuerfelApp.Client.Components
 @using DsaWuerfelApp.Shared
 
 <section class="combat-action-panel" aria-labelledby="combat-actions-title">
     <div class="combat-panel-heading">
         <div>
-            <p class="combat-kicker">Kampfaktionen</p>
-            <h2 id="combat-actions-title">Waffe, Aktion und Manöver</h2>
+            <p class="combat-kicker">Kampfaktion</p>
+            <h2 id="combat-actions-title">Wurf vorbereiten</h2>
         </div>
         <span class="combat-action-state">@ActionAvailabilityText</span>
     </div>
@@ -18,41 +19,51 @@
     }
     else
     {
-        <div class="combat-selection-grid">
-            <div class="combat-selection-block">
-                <span class="combat-field-label">Kampfset</span>
-                    <select class="combat-select"
-                            aria-label="Kampfset auswählen"
-                            value="@SelectedSetId"
-                            @onchange="HandleSetChanged">
-                    @foreach (var group in Sets.GroupBy(set => set.Number).OrderBy(group => group.Key))
-                    {
-                        <optgroup label="Set @group.Key">
-                            @foreach (var set in group.OrderBy(set => set.ArmorModel))
-                            {
-                                <option value="@set.Id">@GetSetLabel(set)</option>
-                            }
-                        </optgroup>
-                    }
-                    </select>
-            </div>
+        <div class="combat-set-row">
+            <label class="combat-field-label" for="combat-set-select">Kampfset</label>
+            <select id="combat-set-select"
+                    class="combat-select"
+                    aria-label="Kampfset auswählen"
+                    value="@SelectedSetId"
+                    @onchange="HandleSetChanged">
+                @foreach (var group in Sets.GroupBy(set => set.Number).OrderBy(group => group.Key))
+                {
+                    <optgroup label="Set @group.Key">
+                        @foreach (var set in group.OrderBy(set => set.ArmorModel))
+                        {
+                            <option value="@set.Id">@GetSetLabel(set)</option>
+                        }
+                    </optgroup>
+                }
+            </select>
+        </div>
 
-            <div class="combat-selection-block combat-weapon-block">
+        <div class="combat-choice-block">
+            <div class="combat-block-heading">
                 <span class="combat-field-label">Waffe oder Abwehr</span>
-                <div class="combat-option-list" role="listbox" aria-label="Waffen und Abwehrgeräte">
+                <span class="combat-muted">Importierte Werte</span>
+            </div>
+            @if (Weapons.Count == 0)
+            {
+                <p class="combat-inline-empty">Für dieses Set sind keine Waffen importiert.</p>
+            }
+            else
+            {
+                <div class="combat-option-list" role="listbox" aria-label="Waffen und Abwehr">
                     @foreach (var weapon in Weapons)
                     {
                         <button type="button"
                                 class="combat-option @(weapon.Id == SelectedWeaponId ? "active" : string.Empty)"
                                 role="option"
                                 aria-selected="@(weapon.Id == SelectedWeaponId)"
+                                disabled="@(weapon.IsAvailable == false)"
                                 @onclick="() => WeaponSelected.InvokeAsync(weapon.Id)">
                             <span class="combat-option-name">@GetWeaponLabel(weapon)</span>
                             <span class="combat-option-meta">@GetWeaponValue(weapon)</span>
                         </button>
                     }
                 </div>
-            </div>
+            }
         </div>
 
         <div class="combat-action-options" role="listbox" aria-label="Kampfaktion">
@@ -75,7 +86,7 @@
         <div class="combat-block-heading">
             <div>
                 <span class="combat-field-label">Manöver und Sonderfertigkeiten</span>
-                <p>Kenntnis und Auswahl werden angezeigt; automatische Wirkung folgt separat.</p>
+                <p>Gelernt, vergünstigt oder als manuelle Entscheidung markiert.</p>
             </div>
             @if (!string.IsNullOrWhiteSpace(SelectedProbe))
             {
@@ -89,60 +100,91 @@
                       SelectedProbeChanged="ProbeSelected" />
     </div>
 
-    @if (Attributes.Count > 0)
-    {
-        <div class="combat-attribute-block">
-            <div class="combat-block-heading">
-                <span class="combat-field-label">Eigenschaften des Helden</span>
-                <span class="combat-muted">Nur Anzeige/Details, kein Ersatz für AT/PA/FK.</span>
+    <div class="combat-attribute-block">
+        <div class="combat-block-heading">
+            <div>
+                <span class="combat-field-label">Eigenschaften für Zusatzproben</span>
+                <p>Mehrfachauswahl bleibt in der tatsächlichen Reihenfolge erhalten.</p>
             </div>
-            <div class="combat-attribute-strip">
-                @foreach (var entry in Attributes)
+        </div>
+        <div class="combat-attribute-strip">
+            @foreach (var entry in Attributes)
+            {
+                <AttributePill ShortName="@entry.Key"
+                               Value="@(entry.Value ?? 0)"
+                               IconPath="@entry.IconPath"
+                               IsSelected="@SelectedAttributes.Contains(entry.Key)"
+                               OnClick="() => AttributeSelected.InvokeAsync(entry.Key)" />
+            }
+        </div>
+        <div class="combat-selection-chips" aria-label="Ausgewählte Eigenschaften">
+            @if (SelectedAttributes.Count == 0)
+            {
+                <span class="combat-selection-placeholder">Keine Eigenschaft ausgewählt</span>
+            }
+            else
+            {
+                @for (var index = 0; index < SelectedAttributes.Count; index++)
                 {
-                    <AttributePill ShortName="@entry.Key"
-                                   Value="@(entry.Value ?? 0)"
-                                   IconPath="@entry.IconPath"
-                                   IsSelected="@(SelectedAttribute == entry.Key)"
-                                   OnClick="() => AttributeSelected.InvokeAsync(entry.Key)" />
+                    var selectedIndex = index;
+                    var attribute = SelectedAttributes[selectedIndex];
+                    <span class="combat-selection-chip">
+                        @((string)attribute)
+                        <button type="button"
+                                aria-label="@($"{attribute} aus Auswahl entfernen")"
+                                @onclick="() => AttributeRemoved.InvokeAsync(selectedIndex)">×</button>
+                    </span>
                 }
-            </div>
+            }
         </div>
-    }
+    </div>
 
-    <div class="combat-action-summary" aria-live="polite">
-        <div>
-            <span class="combat-field-label">Auswahl</span>
-            <strong>@SelectionSummary</strong>
-        </div>
-        <div>
-            <span class="combat-field-label">Situativ</span>
-            <ModifierPill Value="@Modifier" ValueChanged="ModifierChanged" />
-        </div>
+    <div class="combat-target-preview" aria-live="polite">
+        <span class="combat-field-label">Effektives Ziel</span>
+        <strong>@EffectiveTargetText</strong>
+        <span>@TargetSourceText</span>
     </div>
 
     <div class="combat-dice-area">
         <div class="combat-dice-heading">
             <div>
                 <span class="combat-field-label">Würfelbereich</span>
-                <p>Die vorhandene 3D-Fläche bleibt im Kampfablauf erhalten.</p>
+                <p>Hauptwurf und Kontrollwurf werden nach dem Serverwurf animiert.</p>
             </div>
-            <span class="combat-unavailable">Kampfwürfe noch nicht angebunden</span>
+            <span class="combat-muted">W20 · W20 bei 1/20</span>
         </div>
-        <div class="combat-dice-viewport" title="3D-Ansicht der Kampf-Würfel">
+        <div class="combat-dice-viewport" data-testid="combat-dice-viewport" title="3D-Ansicht der Kampf-Würfel">
             <DiceViewport SelectedDice="@EmptyDice"
-                          ResultDiceSides="@EmptyDice"
-                          ResultDiceValues="@EmptyDice"
-                          PreviewVersion="0"
-                          ResultVersion="0" />
+                          ResultDiceSides="@ResultDiceSides"
+                          ResultDiceValues="@ResultDiceValues"
+                          PreviewVersion="@ResultVersion"
+                          ResultVersion="@ResultVersion" />
         </div>
+
+        @if (CombatResult is not null)
+        {
+            <div class="combat-roll-result" data-testid="combat-roll-result" aria-live="assertive">
+                <div>
+                    <span class="combat-field-label">Ergebnis</span>
+                    <strong>@CombatResult.Snapshot.StatusLabel</strong>
+                    <span>@GetResultSummary(CombatResult)</span>
+                </div>
+                <button type="button" class="combat-result-details" @onclick="ResultDetailsRequested">
+                    Details
+                </button>
+            </div>
+        }
+
         <WuerfelActionBar RollText="@RollText"
                          RollTextChanged="RollTextChanged"
                          Modifier="@Modifier"
                          ModifierChanged="ModifierChanged"
                          ResetRequested="ResetRequested"
                          RollRequested="RollRequested"
-                         CanRoll="false"
-                         IsBusy="false"
-                         RollButtonText="Kampfwurf" />
+                         CanRoll="@CanRoll"
+                         IsBusy="@IsBusy"
+                         RollButtonText="Wurf ausführen"
+                         RollButtonAriaLabel="Kampfwurf ausführen"
+                         AllowDirectModifierInput="true" />
     </div>
 </section>

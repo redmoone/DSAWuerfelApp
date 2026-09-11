@@ -1,3 +1,5 @@
+using System.Globalization;
+
 using DsaWuerfelApp.Shared;
 
 using Microsoft.AspNetCore.Components;
@@ -17,27 +19,29 @@ public partial class CombatActionPanel
     [Parameter] public EventCallback<string> WeaponSelected { get; set; }
     [Parameter] public string SelectedAction { get; set; } = "attack";
     [Parameter] public EventCallback<string> ActionSelected { get; set; }
-    [Parameter] public IReadOnlyList<ActionOption> Actions { get; set; } = DefaultActions;
+    [Parameter] public IReadOnlyList<ActionOption> Actions { get; set; } = Array.Empty<ActionOption>();
     [Parameter] public IReadOnlyList<ProbeSearchEntryDto> Maneuvers { get; set; } = Array.Empty<ProbeSearchEntryDto>();
     [Parameter] public string SelectedProbe { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> ProbeSelected { get; set; }
     [Parameter] public IReadOnlyList<CombatAttributeDto> Attributes { get; set; } = Array.Empty<CombatAttributeDto>();
-    [Parameter] public string? SelectedAttribute { get; set; }
+    [Parameter] public IReadOnlyList<string> SelectedAttributes { get; set; } = Array.Empty<string>();
     [Parameter] public EventCallback<string> AttributeSelected { get; set; }
+    [Parameter] public EventCallback<int> AttributeRemoved { get; set; }
     [Parameter] public int Modifier { get; set; }
     [Parameter] public EventCallback<int> ModifierChanged { get; set; }
     [Parameter] public string RollText { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> RollTextChanged { get; set; }
     [Parameter] public EventCallback ResetRequested { get; set; }
     [Parameter] public EventCallback RollRequested { get; set; }
-
-    private static readonly ActionOption[] DefaultActions =
-    [
-        new("attack", "Attacke", "Wert aus dem Kampfset", true),
-        new("parry", "Parade", "Wert aus dem Kampfset", true),
-        new("dodge", "Ausweichen", "Wert aus dem Kampfset", true),
-        new("ranged", "Fernkampf", "Nur mit importierter FK-Waffe", false)
-    ];
+    [Parameter] public bool CanRoll { get; set; }
+    [Parameter] public bool IsBusy { get; set; }
+    [Parameter] public int? EffectiveTarget { get; set; }
+    [Parameter] public string TargetSource { get; set; } = "Importierter Zielwert";
+    [Parameter] public CombatRollResultDto? CombatResult { get; set; }
+    [Parameter] public IReadOnlyList<int> ResultDiceSides { get; set; } = Array.Empty<int>();
+    [Parameter] public IReadOnlyList<int> ResultDiceValues { get; set; } = Array.Empty<int>();
+    [Parameter] public long ResultVersion { get; set; }
+    [Parameter] public EventCallback ResultDetailsRequested { get; set; }
 
     private string ActionAvailabilityText => IsLoading
         ? "Profil wird geladen"
@@ -47,18 +51,13 @@ public partial class CombatActionPanel
 
     private string EmptyStateText => IsLoading
         ? "Die Werte werden aus dem gespeicherten Heldenimport gelesen."
-        : "Waffen, Werte und Sonderfertigkeiten werden aus dem gespeicherten Heldenimport übernommen.";
+        : "Waffen, Zielwerte und Sonderfertigkeiten werden aus dem gespeicherten Heldenimport übernommen.";
 
-    private string SelectionSummary
-    {
-        get
-        {
-            var action = Actions.FirstOrDefault(item => item.Key == SelectedAction);
-            var weapon = Weapons.FirstOrDefault(item => item.Id == SelectedWeaponId);
-            var actionText = action?.Label ?? "Keine Aktion";
-            return weapon is null ? actionText : $"{weapon.Name} · {actionText} · {GetWeaponValue(weapon)}";
-        }
-    }
+    private string EffectiveTargetText => EffectiveTarget?.ToString(CultureInfo.InvariantCulture) ?? "—";
+
+    private string TargetSourceText => EffectiveTarget.HasValue
+        ? $"{TargetSource}; Situativ {FormatModifier(Modifier)}"
+        : "Für diese Auswahl ist kein Zielwert importiert.";
 
     private static string GetSetLabel(CombatSetVariantDto set)
     {
@@ -77,19 +76,30 @@ public partial class CombatActionPanel
         return $"{weapon.Name}{number}";
     }
 
-    private static string GetWeaponValue(CombatWeaponDto weapon)
+    private static string GetWeaponValue(CombatWeaponDto weapon) => weapon.Category switch
     {
-        return weapon.Category switch
-        {
-            CombatWeaponCategory.Ranged => FormatValue("FK", weapon.RangedValue),
-            CombatWeaponCategory.Shield => FormatValue("PA", weapon.Parry),
-            _ => $"AT {FormatNumber(weapon.Attack)} · PA {FormatNumber(weapon.Parry)}"
-        };
-    }
+        CombatWeaponCategory.Ranged => FormatValue("FK", weapon.RangedValue),
+        CombatWeaponCategory.Shield => FormatValue("PA", weapon.Parry),
+        _ => $"AT {FormatNumber(weapon.Attack)} · PA {FormatNumber(weapon.Parry)}"
+    };
 
     private static string FormatValue(string label, int? value) => $"{label} {FormatNumber(value)}";
 
-    private static string FormatNumber(int? value) => value?.ToString() ?? "—";
+    private static string FormatNumber(int? value) => value?.ToString(CultureInfo.InvariantCulture) ?? "—";
+
+    private static string FormatModifier(int value) => value > 0 ? $"+{value}" : value.ToString(CultureInfo.InvariantCulture);
+
+    private static string GetResultSummary(CombatRollResultDto result)
+    {
+        if (result.Snapshot.Damage is { } damage)
+        {
+            return $"TP {damage.Total}";
+        }
+
+        return result.Snapshot.EffectiveTarget is { } target
+            ? $"Wurf {string.Join(" / ", result.Snapshot.LabeledRolls.Select(roll => roll.Value))} · Ziel {target}"
+            : string.Join(" / ", result.Snapshot.LabeledRolls.Select(roll => $"W{roll.Sides} {roll.Value}"));
+    }
 
     private async Task HandleSetChanged(ChangeEventArgs args)
     {
