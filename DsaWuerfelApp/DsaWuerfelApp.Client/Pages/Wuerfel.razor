@@ -1,9 +1,38 @@
 @page "/wuerfel"
 @using DsaWuerfelApp.Client.Components
+@using DsaWuerfelApp.Client.Components.Combat
 @using DsaWuerfelApp.Client.Services
+@using DsaWuerfelApp.Shared
 @attribute [Authorize]
 
 <div class="wuerfel-page-container pa-4">
+    <section class="wuerfel-status-surface panel-surface">
+        <CombatStatusPanel HeroName="@CombatHeroDisplayName"
+                           SessionName="@SessionState.ActiveSession?.Name"
+                           Profile="@CombatProfile"
+                           IsLoading="@CombatProfileLoading"
+                           ErrorMessage="@CombatProfileError"
+                           SelectedSet="@CombatSelectedSet"
+                           CurrentLeP="@CombatCurrentLeP"
+                           CurrentAuP="@CombatCurrentAuP"
+                           CurrentAeP="@CombatCurrentAeP"
+                           CurrentKeP="@CombatCurrentKeP"
+                           CurrentInitiative="@CombatCurrentInitiative"
+                           IsCombatStarted="@CombatIsStarted"
+                           CanUndo="@CombatCanUndo"
+                           UndoRequested="UndoCombatChangeAsync"
+                           ResourceEditRequested="OpenCombatResourceDrawer"
+                           InitiativeRequested="OpenCombatInitiativeDrawer"
+                           WoundsRequested="OpenCombatWoundDrawer"
+                           PersistenceWarning="@CombatState.PersistenceError"
+                           Wounds="@CombatWounds"
+                           Effects="@CombatEffects" />
+        @if (!string.IsNullOrWhiteSpace(_combatNotice))
+        {
+            <p class="wuerfel-combat-notice" role="status">@_combatNotice</p>
+        }
+    </section>
+
     <nav class="roll-mode-selector" aria-label="Wurfmodus">
         <button type="button"
                 class="roll-mode-button @(VisibleArea == WuerfelArea.ProbeSearch ? "active" : string.Empty)"
@@ -226,3 +255,68 @@
         </section>
     </div>
 </div>
+
+<CombatDetailsDrawer Open="@(_combatDrawer != WuerfelCombatDrawer.None)"
+                     Title="@CombatDrawerTitle"
+                     CloseRequested="CloseCombatDrawer">
+    @if (_combatDrawer == WuerfelCombatDrawer.Resource && _combatResourceKind is { } resource)
+    {
+        <div class="wuerfel-combat-drawer-form">
+            <p class="combat-drawer-lead">@GetCombatResourceDescription(resource)</p>
+            <NumberControl Label="@GetCombatResourceLabel(resource)"
+                           Value="@_combatResourceDraft"
+                           ValueChanged="HandleCombatResourceDraftChanged"
+                           Minimum="@GetCombatResourceMinimum(resource)"
+                           StepMaximum="@GetCombatResourceMaximum(resource)"
+                           AllowEmpty="true" />
+            <p class="combat-drawer-hint">LeP darf unter 0 fallen. Das Maximum begrenzt nur die Plus-Schritte; ein übermaximaler Wert bleibt erhalten.</p>
+            <div class="combat-drawer-actions">
+                <button type="button" class="combat-header-button primary" @onclick="ApplyCombatResourceAsync">Anwenden</button>
+                <button type="button" class="combat-header-button" @onclick="CloseCombatDrawer">Abbrechen</button>
+            </div>
+        </div>
+    }
+    else if (_combatDrawer == WuerfelCombatDrawer.Wound)
+    {
+        <div class="wuerfel-combat-drawer-form">
+            <CombatBodyPanel SelectedSet="@CombatSelectedSet"
+                             Facing="@CombatFacing"
+                             FacingChanged="HandleCombatFacingChanged"
+                             SelectedZone="@CombatSelectedZone"
+                             ZoneSelected="HandleCombatZoneSelected"
+                             Wounds="@CombatWounds" />
+            <p class="combat-drawer-lead">@GetCombatWoundLabel(CombatWoundDrawerZone) · @GetCombatArmorFacingLabel()</p>
+            <div class="combat-wound-markers" aria-label="Wundmarker">
+                @for (var marker = 1; marker <= 3; marker++)
+                {
+                    <span class="combat-wound-marker @(((_combatWoundDraft ?? 0) >= marker) ? "filled" : string.Empty)">@marker</span>
+                }
+            </div>
+            <NumberControl Label="Wunden"
+                           Value="@_combatWoundDraft"
+                           ValueChanged="HandleCombatWoundDraftChanged"
+                           Minimum="0"
+                           Maximum="3" />
+            <p class="combat-drawer-hint">Brust und Rücken teilen den Wundstand, behalten aber getrennte RS-Werte.</p>
+            <div class="combat-drawer-actions">
+                <button type="button" class="combat-header-button primary" @onclick="ApplyCombatWoundAsync">Anwenden</button>
+                <button type="button" class="combat-header-button" @onclick="CloseCombatDrawer">Abbrechen</button>
+            </div>
+        </div>
+    }
+    else if (_combatDrawer == WuerfelCombatDrawer.Initiative)
+    {
+        <div class="wuerfel-combat-drawer-form">
+            <p class="combat-drawer-lead">Der importierte Setwert wird einmal als Basis verwendet. Der Hilfswurf liefert den W6-Anteil.</p>
+            <NumberControl Label="INI"
+                           Value="@_combatInitiativeDraft"
+                           ValueChanged="HandleCombatInitiativeDraftChanged"
+                           AllowEmpty="true" />
+            <div class="combat-drawer-actions">
+                <button type="button" class="combat-header-button primary" disabled="@(CombatProfile is null || _combatInitiativeBusy)" @onclick="RollCombatInitiativeAsync">1W6 würfeln</button>
+                <button type="button" class="combat-header-button" @onclick="ApplyCombatInitiativeAsync">Wert setzen</button>
+                <button type="button" class="combat-header-button" @onclick="CloseCombatDrawer">Abbrechen</button>
+            </div>
+        </div>
+    }
+</CombatDetailsDrawer>
