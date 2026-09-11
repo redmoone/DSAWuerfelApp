@@ -35,6 +35,11 @@
     outline-offset: 2px;
 }
 
+.attribute-pill-main:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
 .attribute-icon-container {
     position: relative;
     display: flex;

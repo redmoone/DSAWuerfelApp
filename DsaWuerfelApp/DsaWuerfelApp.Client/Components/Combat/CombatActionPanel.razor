@@ -133,8 +133,9 @@
                 @foreach (var entry in Attributes)
                 {
                     <AttributePill ShortName="@entry.Key"
-                                   Value="@(entry.Value ?? 0)"
+                                   Value="@entry.Value"
                                    IconPath="@entry.IconPath"
+                                   IsAvailable="@entry.Value.HasValue"
                                    IsSelected="@SelectedAttributes.Contains(entry.Key)"
                                    OnClick="() => AttributeSelected.InvokeAsync(entry.Key)" />
                 }

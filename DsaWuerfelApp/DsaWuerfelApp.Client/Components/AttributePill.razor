@@ -1,7 +1,8 @@
 <div class="attribute-pill @((SelectionCount > 0 || IsSelected) ? "active" : "")">
     <button type="button"
             class="attribute-pill-main"
-            aria-label="@(OnClick.HasDelegate ? $"{ShortName} auswählen" : $"{ShortName} hinzufügen")"
+            aria-label="@(IsAvailable ? (OnClick.HasDelegate ? $"{ShortName} auswählen" : $"{ShortName} hinzufügen") : $"{ShortName} nicht verfügbar")"
+            disabled="@(!IsAvailable)"
             @onclick="HandleClick"
             @oncontextmenu="HandleRightClick"
             @oncontextmenu:preventDefault="true">
@@ -9,7 +10,7 @@
             <img src="icons/@IconPath" alt="@ShortName" class="attribute-icon" />
             <span class="attribute-label">@ShortName</span>
         </div>
-        <div class="attribute-value">@Value</div>
+        <div class="attribute-value">@(Value?.ToString() ?? "—")</div>
     </button>
 
     @if (SelectionCount > 0)

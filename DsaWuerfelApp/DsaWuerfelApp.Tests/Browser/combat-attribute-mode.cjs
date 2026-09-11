@@ -6,7 +6,7 @@ const publishDirectory = path.resolve(process.argv[2] ?? path.join(__dirname, '.
 const combatXml = `
 <daten>
   <angaben><name>Darian Falkenstein</name><wundschwelle>4</wundschwelle></angaben>
-  <eigenschaften><mut><akt>14</akt></mut><klugheit><akt>13</akt></klugheit><intuition><akt>15</akt></intuition><charisma><akt>12</akt></charisma><fingerfertigkeit><akt>14</akt></fingerfertigkeit><gewandtheit><akt>14</akt></gewandtheit><konstitution><akt>8</akt></konstitution><koerperkraft><akt>8</akt></koerperkraft><lebensenergie><akt>22</akt></lebensenergie><ausdauer><akt>28</akt></ausdauer></eigenschaften>
+  <eigenschaften><mut><akt>14</akt></mut><klugheit><akt>13</akt></klugheit><intuition><akt>15</akt></intuition><charisma><akt>12</akt></charisma><fingerfertigkeit><akt>14</akt></fingerfertigkeit><gewandtheit><akt>14</akt></gewandtheit><koerperkraft><akt>8</akt></koerperkraft><lebensenergie><akt>22</akt></lebensenergie><ausdauer><akt>28</akt></ausdauer></eigenschaften>
   <kampfsets><kampfset nr="1" tzm="true" inbenutzung="true"><ausweichen>13</ausweichen><ini>11</ini><ruestungzonen><kopf>0</kopf><brust>0</brust><ruecken>0</ruecken><bauch>0</bauch><linkerarm>0</linkerarm><rechterarm>0</rechterarm><linkesbein>0</linkesbein><rechtesbein>0</rechtesbein></ruestungzonen><nahkampfwaffen><nahkampfwaffe><nummer>1</nummer><name>Magierstab</name><at>19</at><pa>14</pa><tp>1W+4</tp></nahkampfwaffe></nahkampfwaffen></kampfset></kampfsets>
 </daten>`;
 
@@ -23,6 +23,10 @@ const combatXml = `
     assert.equal(await page.locator('.combat-set-row').count(), 0);
     assert.equal(await page.locator('.combat-maneuver-block').count(), 0);
     assert.match(await page.locator('.combat-attribute-block').innerText(), /Eigenschaftsprobe/i);
+
+    const unavailableAttribute = page.locator('.combat-attribute-strip .attribute-pill').filter({ hasText: 'KO' });
+    assert.equal(await unavailableAttribute.locator('button.attribute-pill-main').isDisabled(), true);
+    assert.equal(await unavailableAttribute.locator('.attribute-value').innerText(), '—');
 
     await page.getByRole('button', { name: 'MU auswählen', exact: true }).click();
     assert.equal(await page.locator('.combat-selection-chip').count(), 1);
