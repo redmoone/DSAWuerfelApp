@@ -30,15 +30,16 @@ public sealed class CombatSessionStateService(
             var session = runtimeState.GetMemberSession(sessionId, userId);
             var persisted = Load(session);
             var normalized = Normalize(session, persisted.Current, userId);
-            if (!ReferenceEquals(normalized, persisted.Current) || session.CombatStateJson is null)
-            {
-                Save(session, persisted with { Current = normalized });
-            }
-
-            return normalized with
+            var snapshot = normalized with
             {
                 UndoAvailable = persisted.Undo is not null && !string.IsNullOrWhiteSpace(persisted.UndoOwnerUserId)
             };
+            if (!ReferenceEquals(normalized, persisted.Current) || session.CombatStateJson is null)
+            {
+                Save(session, persisted with { Current = snapshot });
+            }
+
+            return snapshot;
         }
         finally
         {
@@ -439,9 +440,13 @@ public sealed class CombatSessionStateService(
         var participant = FindParticipant(current, request.ParticipantId, request.HeroId)
                           ?? throw Validation("Der Teilnehmer für die Ansage wurde nicht gefunden.");
         var announcement = string.IsNullOrWhiteSpace(request.Announcement) ? null : request.Announcement.Trim();
+        var announcementEnabled = current.Participants.Any(item =>
+            item.Id == participant.Id
+                ? announcement is not null
+                : !string.IsNullOrWhiteSpace(item.Announcement));
         return (current with
         {
-            AnnouncementEnabled = current.AnnouncementEnabled || announcement is not null,
+            AnnouncementEnabled = announcementEnabled,
             Participants = ReplaceParticipant(current.Participants, participant with { Announcement = announcement })
         }, announcement is null ? $"Ansage von {participant.Name} entfernt" : $"Ansage von {participant.Name} gespeichert");
     }
@@ -527,7 +532,26 @@ public sealed class CombatSessionStateService(
             return new AuthorizationResult(true, string.Empty);
         }
 
-        var participant = FindParticipant(current, request.ParticipantId, request.HeroId);
+        var requestedAction = string.IsNullOrWhiteSpace(request.ActionId)
+            ? null
+            : current.Actions.FirstOrDefault(action =>
+                string.Equals(action.Id, request.ActionId, StringComparison.Ordinal));
+        if (!string.IsNullOrWhiteSpace(request.ActionId) && requestedAction is null)
+        {
+            return new AuthorizationResult(false, "Die angeforderte Handlung wurde nicht gefunden.");
+        }
+
+        if (requestedAction is not null &&
+            !string.IsNullOrWhiteSpace(request.ParticipantId) &&
+            !string.Equals(requestedAction.ParticipantId, request.ParticipantId, StringComparison.Ordinal))
+        {
+            return new AuthorizationResult(false, "Handlung und Teilnehmer passen nicht zusammen.");
+        }
+
+        var participant = requestedAction is null
+            ? FindParticipant(current, request.ParticipantId, request.HeroId)
+            : current.Participants.FirstOrDefault(item =>
+                string.Equals(item.Id, requestedAction.ParticipantId, StringComparison.Ordinal));
         if (participant is null)
         {
             return new AuthorizationResult(false, "Der Kampfteilnehmer wurde nicht gefunden.");
