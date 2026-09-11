@@ -81,6 +81,7 @@ public sealed record CombatSessionSnapshotDto
     public Guid? LastMutationId { get; init; }
     public string? LastMutationDescription { get; init; }
     public string? LastMutationUserId { get; init; }
+    public bool UndoAvailable { get; init; }
 }
 
 public sealed record CombatSessionMutationRequestDto

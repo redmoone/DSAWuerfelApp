@@ -35,7 +35,10 @@ public sealed class CombatSessionStateService(
                 Save(session, persisted with { Current = normalized });
             }
 
-            return normalized;
+            return normalized with
+            {
+                UndoAvailable = persisted.Undo is not null && !string.IsNullOrWhiteSpace(persisted.UndoOwnerUserId)
+            };
         }
         finally
         {
@@ -64,7 +67,10 @@ public sealed class CombatSessionStateService(
         {
             var session = runtimeState.GetMemberSession(request.SessionId, userId);
             var persisted = Load(session);
-            var current = Normalize(session, persisted.Current, userId);
+            var current = Normalize(session, persisted.Current, userId) with
+            {
+                UndoAvailable = persisted.Undo is not null && !string.IsNullOrWhiteSpace(persisted.UndoOwnerUserId)
+            };
 
             if (persisted.AppliedRequestIds.Contains(request.RequestId))
             {
@@ -155,6 +161,7 @@ public sealed class CombatSessionStateService(
                 .ToArray();
             var undo = request.Kind == CombatSessionMutationKind.Undo ? null : previous;
             var undoOwner = request.Kind == CombatSessionMutationKind.Undo ? null : userId;
+            next = next with { UndoAvailable = undo is not null };
             Save(session, new PersistedState(next, undo, undoOwner, appliedRequestIds));
             return Result(request, next, applied: true, alreadyApplied: false, stale: false, description, rolls);
         }
@@ -232,7 +239,7 @@ public sealed class CombatSessionStateService(
             CurrentInitiative = request.Initiative,
             InitiativeCorrection = correction,
             ActionAvailable = true,
-            ReactionAvailable = participant.ReactionAvailable || current.Round == 1
+            ReactionAvailable = participant.ReactionAvailable
         };
         var actions = current.Actions;
         if (actions.All(action => action.ParticipantId != participant.Id || action.Round != current.Round))

@@ -25,7 +25,7 @@ public sealed class CombatSessionState : IDisposable
     public CombatSessionSnapshotDto? Current { get; private set; }
     public bool IsLoading { get; private set; }
     public string? Error { get; private set; }
-    public bool CanUndo => Current is { LastMutationUserId: not null } snapshot &&
+    public bool CanUndo => Current is { UndoAvailable: true, LastMutationUserId: not null } snapshot &&
                            string.Equals(snapshot.LastMutationUserId, _authState.Current.User?.Id,
                                StringComparison.Ordinal);
 
