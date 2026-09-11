@@ -139,6 +139,10 @@ public partial class Kampf : IDisposable
         : HasCombatContext && !_rollBusy &&
           Actions.FirstOrDefault(action => action.Key == SelectedAction)?.IsAvailable == true;
 
+    private bool CanConsumeReaction => IsSessionCombat &&
+                                       OwnSessionParticipant?.ReactionAvailable == true &&
+                                       CombatResult?.Snapshot.Action is CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge;
+
     private string DrawerTitle => _drawer switch
     {
         CombatDrawer.Resource => $"{GetResourceLabel(_resourceKind ?? CombatResourceKind.LeP)} setzen",
@@ -675,6 +679,13 @@ public partial class Kampf : IDisposable
     {
         var result = await CombatSessionState.ConsumeReactionAsync(participant.Id, participant.HeroId);
         _notice = result.Message;
+    }
+
+    private Task ConsumeReactionFromResultAsync()
+    {
+        return OwnSessionParticipant is { } participant
+            ? ConsumeReactionAsync(participant)
+            : Task.CompletedTask;
     }
 
     private async Task HoldActionAsync(CombatSessionActionDto action)

@@ -207,6 +207,12 @@
                 <button type="button" class="combat-result-details" @onclick="ResultDetailsRequested">
                     Details
                 </button>
+                @if (CanConsumeReaction && CombatResult?.Snapshot.Action is CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge)
+                {
+                    <button type="button" class="combat-result-reaction" @onclick="ConsumeReactionRequested">
+                        Reaktion verbrauchen
+                    </button>
+                }
             </div>
         }
         else if (!AttributeMode && CombatResult is not null)

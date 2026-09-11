@@ -41,6 +41,8 @@ public partial class CombatActionPanel
     [Parameter] public string TargetSource { get; set; } = "Importierter Zielwert";
     [Parameter] public CombatRollResultDto? CombatResult { get; set; }
     [Parameter] public AttributeRollResultDto? AttributeResult { get; set; }
+    [Parameter] public bool CanConsumeReaction { get; set; }
+    [Parameter] public EventCallback ConsumeReactionRequested { get; set; }
     [Parameter] public IReadOnlyList<int> ResultDiceSides { get; set; } = Array.Empty<int>();
     [Parameter] public IReadOnlyList<int> ResultDiceValues { get; set; } = Array.Empty<int>();
     [Parameter] public long ResultVersion { get; set; }
