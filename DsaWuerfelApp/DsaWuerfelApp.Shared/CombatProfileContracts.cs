@@ -140,7 +140,11 @@ public sealed record CombatWeaponDto(
     string? ShieldModifier,
     string? BreakageMinimum,
     string? BreakageCurrent,
-    string? Breakage);
+    string? Breakage)
+{
+    public string? RangeText { get; init; }
+    public string? RangeDamageModifierText { get; init; }
+}
 
 public sealed record CombatSpecializationDto(string Name, string? Identifier, string[] Categories, bool IsLearned);
 

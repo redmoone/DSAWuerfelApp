@@ -9,11 +9,18 @@
         <span class="combat-status-context">@(string.IsNullOrWhiteSpace(SessionName) ? "Solo" : SessionName)</span>
     </div>
 
-    @if (Profile is null)
+    @if (IsLoading)
     {
         <div class="combat-empty-state">
-            <strong>Kein Kampfprofil verfügbar.</strong>
-            <span>Wähle einen aktiven Helden. Die Seite verwendet anschließend die gespeicherte Heldenquelle.</span>
+            <strong>Kampfprofil wird geladen.</strong>
+            <span>Die Werte werden aus dem gespeicherten Heldenimport gelesen.</span>
+        </div>
+    }
+    else if (Profile is null)
+    {
+        <div class="combat-empty-state">
+            <strong>@(string.IsNullOrWhiteSpace(ErrorMessage) ? "Kein Kampfprofil verfügbar." : ErrorMessage)</strong>
+            <span>Wähle einen aktiven Helden oder importiere die Heldendatei erneut.</span>
         </div>
     }
     else

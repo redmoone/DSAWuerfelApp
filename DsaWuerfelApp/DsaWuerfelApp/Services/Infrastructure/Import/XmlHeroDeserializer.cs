@@ -13,13 +13,7 @@ public class XmlHeroDeserializer
     {
         ArgumentNullException.ThrowIfNull(xmlStream);
 
-        var settings = new XmlReaderSettings
-        {
-            DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null, MaxCharactersInDocument = 1024 * 1024 * 10
-        };
-
-        using var reader = XmlReader.Create(xmlStream, settings);
-        var document = XDocument.Load(reader, LoadOptions.None);
+        var document = LoadDocument(xmlStream);
         var serializer = new XmlSerializer(typeof(HeldenDatenDto));
 
         var result = new List<(HeldenDatenDto, byte[])>();
@@ -36,6 +30,39 @@ public class XmlHeroDeserializer
         }
 
         return result;
+    }
+
+    public IReadOnlyList<CombatXmlDatenDto> DeserializeCombat(Stream xmlStream)
+    {
+        ArgumentNullException.ThrowIfNull(xmlStream);
+
+        var document = LoadDocument(xmlStream);
+        var serializer = new XmlSerializer(typeof(CombatXmlDatenDto));
+        var result = new List<CombatXmlDatenDto>();
+
+        foreach (var datenNode in document.Descendants("daten"))
+        {
+            using var nodeReader = datenNode.CreateReader();
+            if (serializer.Deserialize(nodeReader) is CombatXmlDatenDto dto)
+            {
+                result.Add(dto);
+            }
+        }
+
+        return result;
+    }
+
+    private static XDocument LoadDocument(Stream xmlStream)
+    {
+        var settings = new XmlReaderSettings
+        {
+            DtdProcessing = DtdProcessing.Prohibit,
+            XmlResolver = null,
+            MaxCharactersInDocument = 1024 * 1024 * 10
+        };
+
+        using var reader = XmlReader.Create(xmlStream, settings);
+        return XDocument.Load(reader, LoadOptions.None);
     }
 
     private static List<SchlechteEigenschaftDto> ExtractSchlechteEigenschaften(XElement document)

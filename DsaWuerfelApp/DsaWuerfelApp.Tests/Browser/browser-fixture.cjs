@@ -6,7 +6,7 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
 
-async function createAppFixture(publishDirectory, { userCount = 3, heroesPerUser = 1 } = {}) {
+async function createAppFixture(publishDirectory, { userCount = 3, heroesPerUser = 1, heroSourceXml = null } = {}) {
   const publish = path.resolve(publishDirectory);
   const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'dsa-browser-fixture-'));
   const origin = 'http://127.0.0.1:5298';
@@ -82,8 +82,9 @@ async function createAppFixture(publishDirectory, { userCount = 3, heroesPerUser
       for (let heroIndex = 0; heroIndex < heroesPerUser; heroIndex++) {
         const heroId = randomUUID().toUpperCase();
         const heroName = heroIndex === 0 ? `Held${i}` : `Held${i}-${heroIndex}`;
-        db.prepare('INSERT INTO Heroes(Id,OwnerUserId,IsActive,Name,Geschlecht,"Alter",Eigenschaften,SchlechteEigenschaften,Talente,Zauber,ImportVersion) VALUES(?,?,?,?,?,?,?,?,?,?,3)')
-          .run(heroId, id, heroIndex === 0 ? 1 : 0, heroName, '', 20, JSON.stringify({ MU: 12, KL: 12, IN: 12, CH: 12, FF: 12, GE: 12, KO: 12, KK: 12 }), badTraits, '{}', spells);
+        db.prepare('INSERT INTO Heroes(Id,OwnerUserId,IsActive,Name,Geschlecht,"Alter",Eigenschaften,SchlechteEigenschaften,Talente,Zauber,ImportVersion,SourceXml) VALUES(?,?,?,?,?,?,?,?,?,?,3,?)')
+          .run(heroId, id, heroIndex === 0 ? 1 : 0, heroName, '', 20, JSON.stringify({ MU: 12, KL: 12, IN: 12, CH: 12, FF: 12, GE: 12, KO: 12, KK: 12 }), badTraits, '{}', spells,
+            heroSourceXml === null ? null : Buffer.from(heroSourceXml, 'utf8'));
         firstHeroId ??= heroId;
       }
       users.push({ id, heroId: firstHeroId, token, email });

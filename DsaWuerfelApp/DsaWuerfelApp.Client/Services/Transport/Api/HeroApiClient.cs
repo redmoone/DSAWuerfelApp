@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
+using DsaWuerfelApp.Shared;
 using DsaWuerfelApp.Shared.Models;
 
 using Microsoft.AspNetCore.Components.Forms;
@@ -11,6 +12,7 @@ namespace DsaWuerfelApp.Client.Services;
 public interface IHeroApiClient
 {
     Task<Hero?> GetActiveHeroAsync();
+    Task<CombatProfileDto> GetCombatProfileAsync(Guid heroId, CancellationToken cancellationToken = default);
     Task<List<Hero>> GetHeroesAsync();
     Task<Hero> SetActiveHeroAsync(Guid heroId);
     Task<List<Hero>> UploadHeroesAsync(IReadOnlyList<IBrowserFile> files, long maxFileSize);
@@ -69,6 +71,25 @@ public class HeroApiClient : IHeroApiClient
         }
 
         return await response.Content.ReadFromJsonAsync<Hero?>();
+    }
+
+    public async Task<CombatProfileDto> GetCombatProfileAsync(
+        Guid heroId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _httpClient.GetAsync($"api/heroes/{heroId}/combat-profile", cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync(cancellationToken);
+            errorMessage = string.IsNullOrWhiteSpace(errorMessage)
+                ? "Kampfprofil konnte nicht geladen werden."
+                : errorMessage.Trim();
+
+            throw new HttpRequestException(errorMessage);
+        }
+
+        var profile = await response.Content.ReadFromJsonAsync<CombatProfileDto>(cancellationToken);
+        return profile ?? throw new HttpRequestException("Kampfprofil konnte nicht gelesen werden.");
     }
 
     public async Task<Hero> SetActiveHeroAsync(Guid heroId)

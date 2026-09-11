@@ -9,6 +9,8 @@ public partial class CombatStatusPanel
     [Parameter] public string HeroName { get; set; } = "Kein aktiver Held";
     [Parameter] public string? SessionName { get; set; }
     [Parameter] public CombatProfileDto? Profile { get; set; }
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public string? ErrorMessage { get; set; }
     [Parameter] public CombatSetVariantDto? SelectedSet { get; set; }
     [Parameter] public int? CurrentLeP { get; set; }
     [Parameter] public int? CurrentAuP { get; set; }

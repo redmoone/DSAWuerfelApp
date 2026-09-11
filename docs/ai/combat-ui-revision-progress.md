@@ -10,8 +10,8 @@ Dieser Arbeitsstand folgt `DSA-Kampfseite-Luna-Max-Plan.md`, Revision 3. Der lok
 |---|---|---|
 | P0 | erledigt | Ausgangsbaum sauber auf `master`; Branchvergleich und Dateigrenzen geprüft. |
 | P1 | erledigt | Sichtbare UI-Überarbeitung, Komponentenwiederverwendung und Viewportprüfung abgeschlossen; lokaler Commit folgt nach dieser Dokumentation. |
-| P2 | offen | Importprojektion und geschützter Profilendpunkt ausstehend. |
-| P3 | offen | Aktionen, Suche, Info, Verlauf und ehrlicher Kampfwurf-Leerzustand ausstehend. |
+| P2 | erledigt | SourceXml-Projektion, geschützter Profilendpunkt, aktive-Held-Anbindung und reale Prüffälle abgeschlossen; lokaler Commit folgt nach dieser Dokumentation. |
+| P3 | in Arbeit | Aktionen, Suche und Info verwenden importierte Werte; Auswahl-/Detailprüfung wird mit dem laufenden Zustand weitergeführt. |
 | P4 | offen | Laufender lokaler Kampfzustand und Treffererfassung ausstehend. |
 | P5 | offen | Gesamtprüfung, Screenshots und Übergabedokumentation ausstehend. |
 
@@ -41,4 +41,14 @@ Dieser Arbeitsstand folgt `DSA-Kampfseite-Luna-Max-Plan.md`, Revision 3. Der lok
 
 ## Nächster Schritt
 
-P2: Die gespeicherte `SourceXml` serverseitig mit dem sicheren XML-Leser in eine typisierte Kampfprofilprojektion überführen und über den geschützten Profilendpunkt an die Seite anbinden.
+P3: Die Auswahl- und Informationsführung vervollständigen, anschließend den manuellen laufenden Kampfzustand mit Apply/Cancel/Undo und gerätebezogener Speicherung anschließen.
+
+## P2 – SourceXml und Importprojektion
+
+- Der bestehende sichere XML-Leser bleibt die einzige Parserstelle; `DtdProcessing.Prohibit`, kein Resolver und das 10-MB-Limit gelten auch für die Kampfprojektion.
+- `GET /api/heroes/{heroId}/combat-profile` prüft das vorhandene Heldeneigentum und liefert nur die strukturierte `CombatProfileDto`; `SourceXml` bleibt `JsonIgnore` und wird nicht an den Client gesendet.
+- Setvarianten behalten die Kombination aus Setnummer und Zonen-/einfachem Modell. Waffen-IDs enthalten Held, Set, Modell, Kategorie und Quellnummer; gleiche Namen werden nicht zusammengeführt.
+- Mapper erhalten nullable Zahlen und Rohtexte getrennt. Damit bleiben exportierte 0, fehlende Werte und `*` unterscheidbar. Zonen-RS kommt aus der aggregierten Setprojektion.
+- Fernkampf verwendet `fernkampfwaffe/at` als FK; Reichweiten, TP-Modifikatoren, Ladezeit und Talent bleiben getrennt. Paradewaffen behalten `typ` und ihre eigene PA.
+- `CombatProfileMappingTests` decken Darian-, Ardor- und Cordula-Fälle ab. `CombatProfileEndpointTests` decken Eigentum, fehlende Quelle und das Nichtausliefern des XML ab.
+- Der P2-Browserlauf prüft reale Profilwerte, zwei gleichnamige Schwerter, Set-/Modellwechsel, SF-Suche, Zonenwerte und keinen horizontalen Überlauf; Screenshots liegen unter `artifacts/combat-revision-p2-screenshots/`.

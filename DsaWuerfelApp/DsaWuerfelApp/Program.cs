@@ -105,8 +105,10 @@ builder.Services.AddTransient<HeroBadTraitsMapper>();
 builder.Services.AddTransient<HeroTalentsMapper>();
 builder.Services.AddTransient<HeroSpellsMapper>();
 builder.Services.AddTransient<HeroMapper>();
+builder.Services.AddTransient<HeroCombatMapper>();
 builder.Services.AddTransient<XmlHeroDeserializer>();
 builder.Services.AddTransient<HeroImportService>();
+builder.Services.AddTransient<HeroCombatProfileReader>();
 builder.Services.AddTransient<HeroReimportService>();
 builder.Services.AddDbContext<HeroDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("HeroesDb")));

@@ -9,6 +9,7 @@ public partial class CombatActionPanel
     private static readonly int[] EmptyDice = [];
 
     [Parameter] public IReadOnlyList<CombatSetVariantDto> Sets { get; set; } = Array.Empty<CombatSetVariantDto>();
+    [Parameter] public bool IsLoading { get; set; }
     [Parameter] public string? SelectedSetId { get; set; }
     [Parameter] public EventCallback<string> SetSelected { get; set; }
     [Parameter] public IReadOnlyList<CombatWeaponDto> Weapons { get; set; } = Array.Empty<CombatWeaponDto>();
@@ -38,7 +39,15 @@ public partial class CombatActionPanel
         new("ranged", "Fernkampf", "Nur mit importierter FK-Waffe", false)
     ];
 
-    private string ActionAvailabilityText => Sets.Count == 0 ? "Profil wird erwartet" : "Auswahl bereit";
+    private string ActionAvailabilityText => IsLoading
+        ? "Profil wird geladen"
+        : Sets.Count == 0 ? "Profil wird erwartet" : "Auswahl bereit";
+
+    private string EmptyStateTitle => IsLoading ? "Kampfprofil wird geladen." : "Noch kein Kampfprofil geladen.";
+
+    private string EmptyStateText => IsLoading
+        ? "Die Werte werden aus dem gespeicherten Heldenimport gelesen."
+        : "Waffen, Werte und Sonderfertigkeiten werden aus dem gespeicherten Heldenimport übernommen.";
 
     private string SelectionSummary
     {

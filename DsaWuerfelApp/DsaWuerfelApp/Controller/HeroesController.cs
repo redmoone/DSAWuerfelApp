@@ -3,6 +3,7 @@ using System.Security.Claims;
 using DsaWuerfelApp.Persistence;
 using DsaWuerfelApp.Services;
 using DsaWuerfelApp.Services.Application.Import;
+using DsaWuerfelApp.Shared;
 using DsaWuerfelApp.Shared.Models;
 
 using Microsoft.AspNetCore.Authorization;
@@ -14,7 +15,10 @@ namespace DsaWuerfelApp.Controller;
 [ApiController]
 [Authorize]
 [Route("api/[controller]")]
-public class HeroesController(HeroDbContext dbContext, HeroImportService heroImportService) : ControllerBase
+public class HeroesController(
+    HeroDbContext dbContext,
+    HeroImportService heroImportService,
+    HeroCombatProfileReader heroCombatProfileReader) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<List<Hero>>> GetHeroes()
@@ -37,6 +41,20 @@ public class HeroesController(HeroDbContext dbContext, HeroImportService heroImp
         return Ok(await dbContext.Heroes
             .AsNoTracking()
             .FirstOrDefaultAsync(hero => hero.OwnerUserId == userId && hero.IsActive));
+    }
+
+    [HttpGet("{id:guid}/combat-profile")]
+    public async Task<ActionResult<CombatProfileDto>> GetCombatProfile(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var profile = await heroCombatProfileReader.ReadAsync(id, GetRequiredUserId(), cancellationToken);
+            return profile is null ? NotFound() : Ok(profile);
+        }
+        catch (HeroCombatProfileException exception)
+        {
+            return BadRequest(exception.Message);
+        }
     }
 
     [HttpPost("upload")]

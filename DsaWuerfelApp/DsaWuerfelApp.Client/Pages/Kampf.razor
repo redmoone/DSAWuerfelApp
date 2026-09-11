@@ -36,6 +36,8 @@
             <CombatStatusPanel HeroName="@HeroDisplayName"
                                SessionName="@SessionState.ActiveSession?.Name"
                                Profile="@Profile"
+                               IsLoading="@_profileLoading"
+                               ErrorMessage="@_profileError"
                                SelectedSet="@SelectedSet"
                                CurrentLeP="@CurrentLeP"
                                CurrentAuP="@CurrentAuP"
@@ -46,6 +48,7 @@
 
         <main class="combat-main panel-surface">
             <CombatActionPanel Sets="@Sets"
+                               IsLoading="@_profileLoading"
                                SelectedSetId="@SelectedSetId"
                                SetSelected="HandleSetSelected"
                                Weapons="@Weapons"
@@ -53,6 +56,7 @@
                                WeaponSelected="HandleWeaponSelected"
                                SelectedAction="@SelectedAction"
                                ActionSelected="HandleActionSelected"
+                               Actions="@Actions"
                                Maneuvers="@Maneuvers"
                                SelectedProbe="@SelectedProbe"
                                ProbeSelected="HandleProbeSelected"
@@ -93,6 +97,28 @@
                                 <span>Regelanbindung</span>
                                 <strong>Kampfwürfe noch nicht angebunden</strong>
                             </div>
+                            @if (SelectedWeapon is not null)
+                            {
+                                <div class="combat-info-row">
+                                    <span>Waffe / Abwehr</span>
+                                    <strong>@SelectedWeapon.Name Nr. @SelectedWeapon.Number · @GetWeaponCategoryLabel(SelectedWeapon.Category)</strong>
+                                </div>
+                                <div class="combat-info-row">
+                                    <span>Quellwerte</span>
+                                    <strong>@GetWeaponPrimaryValues(SelectedWeapon) · TP @GetWeaponDamage(SelectedWeapon)</strong>
+                                </div>
+                            }
+                            @if (SelectedSpecialization is not null)
+                            {
+                                <div class="combat-info-row">
+                                    <span>Sonderfertigkeit</span>
+                                    <strong>@SelectedSpecialization.Name · @(SelectedSpecialization.IsLearned ? "gelernt" : "vergünstigt")</strong>
+                                </div>
+                                <div class="combat-info-row">
+                                    <span>Kategorien</span>
+                                    <strong>@(SelectedSpecialization.Categories.Length == 0 ? "Keine Kategorien exportiert" : string.Join(" · ", SelectedSpecialization.Categories))</strong>
+                                </div>
+                            }
                             <p class="combat-info-note">Importierte Werte werden angezeigt. Diese Oberfläche berechnet keine Treffer, TP oder Wundfolgen.</p>
                         </div>
                     </CustomContent>

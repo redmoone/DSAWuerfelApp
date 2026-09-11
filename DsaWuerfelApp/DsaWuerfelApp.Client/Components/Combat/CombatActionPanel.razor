@@ -12,8 +12,8 @@
     @if (Sets.Count == 0)
     {
         <div class="combat-empty-state">
-            <strong>Noch kein Kampfprofil geladen.</strong>
-            <span>Waffen, Werte und Sonderfertigkeiten werden aus dem gespeicherten Heldenimport übernommen.</span>
+            <strong>@EmptyStateTitle</strong>
+            <span>@EmptyStateText</span>
         </div>
     }
     else
@@ -21,15 +21,20 @@
         <div class="combat-selection-grid">
             <div class="combat-selection-block">
                 <span class="combat-field-label">Kampfset</span>
-                <select class="combat-select"
-                        aria-label="Kampfset auswählen"
-                        value="@SelectedSetId"
-                        @onchange="HandleSetChanged">
-                    @foreach (var set in Sets)
+                    <select class="combat-select"
+                            aria-label="Kampfset auswählen"
+                            value="@SelectedSetId"
+                            @onchange="HandleSetChanged">
+                    @foreach (var group in Sets.GroupBy(set => set.Number).OrderBy(group => group.Key))
                     {
-                        <option value="@set.Id">@GetSetLabel(set)</option>
+                        <optgroup label="Set @group.Key">
+                            @foreach (var set in group.OrderBy(set => set.ArmorModel))
+                            {
+                                <option value="@set.Id">@GetSetLabel(set)</option>
+                            }
+                        </optgroup>
                     }
-                </select>
+                    </select>
             </div>
 
             <div class="combat-selection-block combat-weapon-block">
