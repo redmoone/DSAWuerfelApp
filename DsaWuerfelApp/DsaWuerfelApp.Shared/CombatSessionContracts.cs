@@ -17,6 +17,7 @@ public enum CombatSessionMutationKind
 {
     RollInitiative,
     SetInitiative,
+    SyncRuntimeState,
     CompleteAction,
     ConsumeReaction,
     HoldAction,
@@ -44,6 +45,7 @@ public sealed record CombatSessionParticipantDto
     public int InitiativeCorrection { get; init; }
     public int InitiativeRuntimeModifier { get; init; }
     public string[] InitiativeRuntimeNotes { get; init; } = [];
+    public CombatRuntimeStateDto? RuntimeState { get; init; }
     public int RecoverableInitiativeLoss { get; init; }
     public int? CurrentInitiative { get; init; }
     public bool IsOnline { get; init; }

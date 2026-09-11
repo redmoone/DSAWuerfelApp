@@ -137,6 +137,18 @@ public sealed class CombatSessionState : IDisposable
             RuntimeState = runtimeState
         }, cancellationToken);
 
+    public Task<CombatSessionMutationResultDto> SyncRuntimeStateAsync(
+        CombatRuntimeStateDto runtimeState,
+        string? participantId = null,
+        Guid? heroId = null,
+        CancellationToken cancellationToken = default) => MutateAsync(new CombatSessionMutationRequestDto
+        {
+            Kind = CombatSessionMutationKind.SyncRuntimeState,
+            RuntimeState = runtimeState,
+            ParticipantId = participantId,
+            HeroId = heroId
+        }, cancellationToken);
+
     public Task<CombatSessionMutationResultDto> CompleteActionAsync(
         string? actionId = null,
         string? participantId = null,

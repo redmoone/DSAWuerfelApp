@@ -111,6 +111,9 @@ public sealed class CombatSessionStateService(
                 case CombatSessionMutationKind.SetInitiative:
                     (next, description) = await SetInitiativeAsync(session, current, request, userId, cancellationToken);
                     break;
+                case CombatSessionMutationKind.SyncRuntimeState:
+                    (next, description) = await SyncRuntimeStateAsync(current, request, userId, cancellationToken);
+                    break;
                 case CombatSessionMutationKind.CompleteAction:
                     (next, description) = CompleteAction(current, request);
                     break;
@@ -210,6 +213,7 @@ public sealed class CombatSessionStateService(
             InitiativeCorrection = 0,
             InitiativeRuntimeModifier = initiativeInfo.RuntimeModifier,
             InitiativeRuntimeNotes = initiativeInfo.RuntimeNotes,
+            RuntimeState = request.RuntimeState ?? participant.RuntimeState,
             RecoverableInitiativeLoss = 0,
             CurrentInitiative = initiativeInfo.BaseValue.Value + rollTotal + initiativeInfo.RuntimeModifier,
             ActionAvailable = true,
@@ -266,6 +270,7 @@ public sealed class CombatSessionStateService(
             InitiativeBase = baseValue,
             InitiativeRuntimeModifier = runtimeModifier,
             InitiativeRuntimeNotes = runtimeNotes,
+            RuntimeState = request.RuntimeState ?? participant.RuntimeState,
             CurrentInitiative = request.Initiative,
             InitiativeCorrection = correction,
             ActionAvailable = true,
@@ -279,6 +284,37 @@ public sealed class CombatSessionStateService(
 
         return (current with { IsStarted = true, Participants = ReplaceParticipant(current.Participants, updatedParticipant), Actions = actions },
             $"INI von {participant.Name} manuell korrigiert");
+    }
+
+    private async Task<(CombatSessionSnapshotDto Snapshot, string Description)> SyncRuntimeStateAsync(
+        CombatSessionSnapshotDto current,
+        CombatSessionMutationRequestDto request,
+        string userId,
+        CancellationToken cancellationToken)
+    {
+        if (request.RuntimeState is null)
+        {
+            throw Validation("Zum Aktualisieren des laufenden INI-Zustands muss ein Kampfzustand übertragen werden.");
+        }
+
+        var participant = FindParticipant(current, request.ParticipantId, request.HeroId)
+                          ?? throw Validation("Der Teilnehmer für den laufenden Kampfzustand wurde nicht gefunden.");
+        var initiativeInfo = await ResolveInitiativeInfoAsync(participant, request, userId, cancellationToken);
+        var initiativeDelta = initiativeInfo.RuntimeModifier - participant.InitiativeRuntimeModifier;
+        var updatedParticipant = participant with
+        {
+            RuntimeState = request.RuntimeState,
+            InitiativeRuntimeModifier = initiativeInfo.RuntimeModifier,
+            InitiativeRuntimeNotes = initiativeInfo.RuntimeNotes,
+            CurrentInitiative = participant.CurrentInitiative.HasValue
+                ? participant.CurrentInitiative.Value + initiativeDelta
+                : null
+        };
+
+        var description = initiativeDelta == 0
+            ? $"Laufender Kampfzustand von {participant.Name} gespeichert"
+            : $"Laufender Kampfzustand von {participant.Name} gespeichert; INI {FormatSigned(initiativeDelta)} angepasst";
+        return (current with { Participants = ReplaceParticipant(current.Participants, updatedParticipant) }, description);
     }
 
     private static (CombatSessionSnapshotDto Snapshot, string Description) CompleteAction(
@@ -671,7 +707,10 @@ public sealed class CombatSessionStateService(
             .FirstOrDefault()
             ?? profile?.Sets.FirstOrDefault(set => set.IsDefault)
             ?? profile?.Sets.FirstOrDefault();
-        var runtime = CombatRuntimeModifierRules.ResolveInitiative(profile, selectedSet, request.RuntimeState);
+        var runtime = CombatRuntimeModifierRules.ResolveInitiative(
+            profile,
+            selectedSet,
+            request.RuntimeState ?? participant.RuntimeState);
         return new InitiativeProfileInfo(
             selectedSet?.Initiative,
             profile?.HasKlingentaenzer == true ? 2 : 1,
@@ -1012,6 +1051,8 @@ public sealed class CombatSessionStateService(
 
     private static RequestRejectedException Validation(string message) =>
         new(RequestRejectionReason.Validation, message);
+
+    private static string FormatSigned(int value) => value > 0 ? $"+{value}" : value.ToString();
 
     private static void ValidateRuntimeState(CombatRuntimeStateDto? state)
     {

@@ -198,6 +198,28 @@ public sealed class CombatSessionStateTests
         Assert.Equal(participant.InitiativeBase + participant.StartRoll - 3, participant.CurrentInitiative);
         Assert.Contains(participant.InitiativeRuntimeNotes, note => note.Contains("linkes Bein", StringComparison.Ordinal));
         Assert.Contains(participant.InitiativeRuntimeNotes, note => note.Contains("AuP 8/28", StringComparison.Ordinal));
+
+        var recovered = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = rolled.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.SyncRuntimeState,
+            HeroId = hero.Id,
+            RuntimeState = new CombatRuntimeStateDto
+            {
+                IsStarted = true,
+                CurrentLeP = 22,
+                CurrentAuP = 28,
+                Wounds = Enum.GetValues<CombatWoundZone>()
+                    .ToDictionary(zone => zone, _ => (int?)0)
+            }
+        }, "owner");
+
+        var recoveredParticipant = Assert.Single(recovered.Snapshot.Participants, item => item.HeroId == hero.Id);
+        Assert.Equal(0, recoveredParticipant.InitiativeRuntimeModifier);
+        Assert.Equal(participant.CurrentInitiative + 3, recoveredParticipant.CurrentInitiative);
+        Assert.Equal(28, recoveredParticipant.RuntimeState?.CurrentAuP);
     }
 
     private static GameSession CreateSession(TestApplicationFactory factory, Hero hero, string owner)
