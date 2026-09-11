@@ -1,14 +1,20 @@
 <div class="results-bar">
-    <h3 class="results-title">Wurf abschließen</h3>
+    @if (ShowTitle)
+    {
+        <h3 class="results-title">Wurf abschließen</h3>
+    }
 
     <div class="global-actions-bar">
-        <div class="roll-text-row">
-            <TextPill Value="@RollText"
-                      ValueChanged="@RollTextChanged"
-                      Placeholder="Würfeltext"
-                      Label="TEXT"
-                      Disabled="@IsBusy" />
-        </div>
+        @if (ShowRollText)
+        {
+            <div class="roll-text-row">
+                <TextPill Value="@RollText"
+                          ValueChanged="@RollTextChanged"
+                          Placeholder="Würfeltext"
+                          Label="TEXT"
+                          Disabled="@IsBusy" />
+            </div>
+        }
 
         <div class="left-actions">
             <ModifierPill Value="@Modifier"

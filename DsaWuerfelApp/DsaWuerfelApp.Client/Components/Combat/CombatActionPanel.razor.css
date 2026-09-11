@@ -53,6 +53,17 @@
     font-weight: 800;
 }
 
+.combat-setup-row {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: 0.55rem;
+    min-width: 0;
+}
+
+.combat-setup-row.single {
+    grid-template-columns: minmax(0, 1fr);
+}
+
 .combat-mode-switcher button.active,
 .combat-mode-switcher button:hover,
 .combat-mode-switcher button:focus-visible {
@@ -430,6 +441,10 @@
 }
 
 @media (max-width: 760px) {
+    .combat-setup-row {
+        grid-template-columns: 1fr;
+    }
+
     .combat-selection-grid,
     .combat-action-options {
         grid-template-columns: 1fr;
@@ -453,6 +468,57 @@
     .combat-roll-result {
         align-items: flex-start;
         flex-direction: column;
+    }
+}
+
+@media (min-width: 901px) {
+    .combat-action-panel {
+        gap: 0.3rem;
+    }
+
+    .combat-panel-heading {
+        display: none;
+    }
+
+    .combat-set-row,
+    .combat-choice-block,
+    .combat-maneuver-block,
+    .combat-dice-area {
+        padding: 0.45rem 0.55rem;
+    }
+
+    .combat-choice-block,
+    .combat-maneuver-block,
+    .combat-dice-area {
+        gap: 0.35rem;
+    }
+
+    .combat-maneuver-block {
+        padding-top: 0.3rem;
+        padding-bottom: 0.3rem;
+    }
+
+    .combat-maneuver-block .combat-block-heading p {
+        display: none;
+    }
+
+    .combat-target-preview {
+        padding: 0.4rem 0.55rem;
+    }
+
+    .combat-dice-area {
+        padding-top: 0.3rem;
+        padding-bottom: 0.3rem;
+    }
+
+    .combat-action-options {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0.3rem;
+    }
+
+    .combat-option {
+        min-height: 42px;
+        padding: 0.3rem 0.45rem;
     }
 }
 

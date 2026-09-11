@@ -18,6 +18,8 @@ public partial class WuerfelActionBar
     [Parameter] public string RollButtonText { get; set; } = "Würfeln";
     [Parameter] public string? RollButtonAriaLabel { get; set; }
     [Parameter] public bool AllowDirectModifierInput { get; set; }
+    [Parameter] public bool ShowRollText { get; set; } = true;
+    [Parameter] public bool ShowTitle { get; set; } = true;
 
     private int CurrentDisplayModifier => DisplayModifier ?? Modifier;
 

@@ -10,21 +10,46 @@
         <span class="combat-action-state">@ActionAvailabilityText</span>
     </div>
 
-    <div class="combat-mode-switcher" role="tablist" aria-label="Wurfmodus">
-        <button type="button"
-                role="tab"
-                class="@(AttributeMode ? string.Empty : "active")"
-                aria-selected="@(!AttributeMode)"
-                @onclick="() => AttributeModeChanged.InvokeAsync(false)">
-            Kampf
-        </button>
-        <button type="button"
-                role="tab"
-                class="@(AttributeMode ? "active" : string.Empty)"
-                aria-selected="@AttributeMode"
-                @onclick="() => AttributeModeChanged.InvokeAsync(true)">
-            Eigenschaften
-        </button>
+    <div class="combat-setup-row @(AttributeMode || Sets.Count == 0 ? "single" : string.Empty)">
+        <div class="combat-mode-switcher" role="tablist" aria-label="Wurfmodus">
+            <button type="button"
+                    role="tab"
+                    class="@(AttributeMode ? string.Empty : "active")"
+                    aria-selected="@(!AttributeMode)"
+                    @onclick="() => AttributeModeChanged.InvokeAsync(false)">
+                Kampf
+            </button>
+            <button type="button"
+                    role="tab"
+                    class="@(AttributeMode ? "active" : string.Empty)"
+                    aria-selected="@AttributeMode"
+                    @onclick="() => AttributeModeChanged.InvokeAsync(true)">
+                Eigenschaften
+            </button>
+        </div>
+
+        @if (!AttributeMode && Sets.Count > 0)
+        {
+            <div class="combat-set-row">
+                <label class="combat-field-label" for="combat-set-select">Kampfset</label>
+                <select id="combat-set-select"
+                        class="combat-select"
+                        aria-label="Kampfset auswählen"
+                        value="@SelectedSetId"
+                        @onchange="HandleSetChanged">
+                    @foreach (var group in Sets.GroupBy(set => set.Number).OrderBy(group => group.Key))
+                    {
+                        <optgroup label="Set @group.Key">
+                            @foreach (var set in group.OrderBy(set => set.ArmorModel))
+                            {
+                                <option value="@set.Id">@GetSetLabel(set)</option>
+                            }
+                        }
+                    </optgroup>
+                    }
+                </select>
+            </div>
+        }
     </div>
 
     @if (!AttributeMode && Sets.Count == 0)
@@ -36,25 +61,6 @@
     }
     else if (!AttributeMode)
     {
-        <div class="combat-set-row">
-            <label class="combat-field-label" for="combat-set-select">Kampfset</label>
-            <select id="combat-set-select"
-                    class="combat-select"
-                    aria-label="Kampfset auswählen"
-                    value="@SelectedSetId"
-                    @onchange="HandleSetChanged">
-                @foreach (var group in Sets.GroupBy(set => set.Number).OrderBy(group => group.Key))
-                {
-                    <optgroup label="Set @group.Key">
-                        @foreach (var set in group.OrderBy(set => set.ArmorModel))
-                        {
-                            <option value="@set.Id">@GetSetLabel(set)</option>
-                        }
-                    </optgroup>
-                }
-            </select>
-        </div>
-
         <div class="combat-choice-block">
             <div class="combat-block-heading">
                 <span class="combat-field-label">Waffe oder Abwehr</span>
@@ -195,7 +201,9 @@
                          IsBusy="@IsBusy"
                          RollButtonText="@(AttributeMode ? "Eigenschaften würfeln" : "Wurf ausführen")"
                          RollButtonAriaLabel="@(AttributeMode ? "Eigenschaftsprobe ausführen" : "Kampfwurf ausführen")"
-                         AllowDirectModifierInput="true" />
+                         AllowDirectModifierInput="true"
+                         ShowRollText="false"
+                         ShowTitle="false" />
 
         @if (AttributeMode && AttributeResult is not null)
         {
