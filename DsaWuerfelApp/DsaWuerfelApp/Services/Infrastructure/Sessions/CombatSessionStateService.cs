@@ -409,7 +409,17 @@ public sealed class CombatSessionStateService(
                 IsOriented = false
             })
             .ToArray();
-        var actions = current.Actions.ToList();
+        var participantsById = participants.ToDictionary(participant => participant.Id, StringComparer.Ordinal);
+        var actions = current.Actions
+            .Select(action => action.State == CombatActionEntryState.Held &&
+                              participantsById.TryGetValue(action.ParticipantId, out var participant)
+                ? action with
+                {
+                    Round = round,
+                    PhaseInitiative = participant.CurrentInitiative ?? action.PhaseInitiative
+                }
+                : action)
+            .ToList();
         foreach (var participant in participants.Where(item => item.CurrentInitiative.HasValue))
         {
             actions.Add(CreateNormalAction(participant, round));
