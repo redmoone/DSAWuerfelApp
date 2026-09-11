@@ -407,7 +407,15 @@ public sealed class CombatSessionStateService(
                 $"IN-Probe für {participant.Name}: {roll.Value} gegen {target} misslungen; INI bleibt unverändert");
         }
 
-        var orientedParticipant = ApplyOrientation(participant);
+        var orientedParticipant = request.RuntimeState is null
+            ? participant
+            : participant with
+            {
+                RuntimeState = request.RuntimeState,
+                InitiativeRuntimeModifier = initiativeInfo.RuntimeModifier,
+                InitiativeRuntimeNotes = initiativeInfo.RuntimeNotes
+            };
+        orientedParticipant = ApplyOrientation(orientedParticipant);
         return (current with
         {
             Actions = actions,
