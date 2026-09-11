@@ -23,7 +23,10 @@
     </div>
 
     <div class="combat-body-layout">
-        <div class="combat-silhouette" aria-label="Schematische Körperansicht">
+        <button type="button"
+                class="combat-silhouette"
+                aria-label="Körperdetails öffnen"
+                @onclick="() => ZoneSelected.InvokeAsync(SelectedZone ?? CombatWoundZone.Torso)">
             <svg viewBox="0 0 180 300" role="img" aria-label="Körper-Silhouette">
                 <circle cx="90" cy="34" r="22" />
                 <path d="M66 62 C48 70 40 94 42 122 L53 178 L62 178 L68 126 L73 177 L60 258 L78 258 L90 190 L102 258 L120 258 L107 177 L102 126 L108 178 L127 178 L138 122 C140 94 132 70 114 62 Z" />
@@ -34,10 +37,10 @@
                     <path class="silhouette-back-line" d="M90 73 V178" />
                 }
             </svg>
-            <span class="combat-silhouette-caption">@(Facing == CombatFacing.Front ? "Vorderseite des Helden" : "Rückseite des Helden")</span>
-        </div>
+            <span class="combat-silhouette-caption">@(Facing == CombatFacing.Front ? "Vorderseite" : "Rückseite") · antippen für Details</span>
+        </button>
 
-        <div class="combat-zone-list dsa-scroll-region" role="list" aria-label="Acht Rüstungsbereiche">
+        <div class="combat-zone-list" role="list" aria-label="Acht Rüstungsbereiche">
             @foreach (var zone in Zones)
             {
                 var woundZone = GetWoundZone(zone.Zone);
@@ -50,7 +53,7 @@
                         @onclick="() => ZoneSelected.InvokeAsync(woundZone)">
                     <span class="combat-zone-name">@zone.Label</span>
                     <span class="combat-zone-rs">RS @FormatValue(GetArmorValue(zone.Zone))</span>
-                    <span class="combat-zone-wounds">Wunden @FormatWounds(woundZone)</span>
+                    <span class="combat-zone-wounds">@GetWoundMarkers(woundZone)</span>
                 </button>
             }
         </div>
@@ -59,6 +62,6 @@
     <div class="combat-body-footnote">
         <span>8 RS-Bereiche</span>
         <span>7 Wundbestände</span>
-        <span>Brust/Rücken gemeinsam</span>
+        <span>Brust/Rücken teilen Wunden</span>
     </div>
 </section>

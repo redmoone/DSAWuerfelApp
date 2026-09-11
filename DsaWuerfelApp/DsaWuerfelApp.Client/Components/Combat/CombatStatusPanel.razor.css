@@ -1,159 +1,197 @@
-.combat-status-panel {
-    min-width: 0;
+.hero-status-bar {
     display: flex;
+    min-width: 0;
     flex-direction: column;
+    gap: 0.65rem;
+}
+
+.hero-status-topline,
+.hero-status-footer,
+.hero-resource-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
     gap: 0.7rem;
 }
 
-.combat-panel-heading {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.75rem;
+.hero-status-identity {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 0.65rem;
 }
 
-.combat-kicker,
-.combat-field-label {
-    color: var(--dsa-gold);
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+.hero-status-identity .combat-kicker {
+    margin: 0;
 }
 
-.combat-kicker {
-    margin: 0 0 0.2rem;
-}
-
-.combat-panel-heading h2 {
+.hero-status-identity h2 {
+    min-width: 0;
     margin: 0;
     color: var(--dsa-gold);
-    font-size: 1.05rem;
-    font-weight: 700;
+    font-size: 1.08rem;
     overflow-wrap: anywhere;
 }
 
-.combat-status-context,
-.combat-muted,
-.combat-resource-card small {
+.hero-status-identity > span,
+.hero-status-state,
+.hero-status-footer,
+.hero-resource small,
+.hero-status-message {
     color: var(--dsa-text-muted);
     font-size: 0.72rem;
 }
 
-.combat-empty-state {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    padding: 0.8rem;
-    border: 1px dashed rgba(212, 175, 55, 0.65);
-    border-radius: var(--dsa-panel-radius);
-    background: rgba(7, 17, 29, 0.62);
-    color: var(--dsa-text-muted);
-    font-size: 0.8rem;
+.hero-status-actions {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: 0.5rem;
 }
 
-.combat-empty-state strong {
+.combat-compact-button {
+    min-height: 2rem;
+    padding: 0.25rem 0.6rem;
+    border: 1px solid rgba(212, 175, 55, 0.68);
+    border-radius: 999px;
+    background: rgba(7, 17, 29, 0.65);
     color: var(--dsa-white);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.7rem;
 }
 
-.combat-resource-strip,
-.combat-status-facts {
+.combat-compact-button:hover,
+.combat-compact-button:focus-visible {
+    background: var(--dsa-hover-background);
+}
+
+.hero-status-resources {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 0.45rem;
 }
 
-.combat-resource-card,
-.combat-status-facts > div {
+.hero-resource {
     display: flex;
     min-width: 0;
+    min-height: 4.15rem;
     flex-direction: column;
-    gap: 0.14rem;
-    padding: 0.55rem;
-    border: 1px solid rgba(212, 175, 55, 0.4);
+    justify-content: space-between;
+    gap: 0.3rem;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid rgba(212, 175, 55, 0.48);
     border-radius: 8px;
-    background: rgba(7, 17, 29, 0.5);
+    background: rgba(7, 17, 29, 0.62);
+    color: var(--dsa-white);
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
 }
 
-.combat-resource-card > span,
-.combat-status-facts span {
-    color: var(--dsa-text-muted);
-    font-size: 0.68rem;
-    font-weight: 700;
+.hero-resource-lep {
+    grid-column: span 2;
+}
+
+.hero-resource:hover,
+.hero-resource:focus-visible {
+    border-color: var(--dsa-gold);
+    background: var(--dsa-hover-background);
+}
+
+.hero-resource-heading strong {
+    color: var(--dsa-gold);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
 }
 
-.combat-resource-card strong,
-.combat-status-facts strong {
+.hero-resource-heading > span {
     color: var(--dsa-white);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    font-weight: 800;
     overflow-wrap: anywhere;
 }
 
-.combat-effect-line {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.45rem;
+.hero-resource-track {
+    display: block;
+    height: 0.28rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 248, 220, 0.14);
 }
 
-.combat-effect-chip {
-    padding: 0.3rem 0.55rem;
-    border: 1px solid rgba(212, 175, 55, 0.52);
+.hero-resource-track > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--dsa-gold);
+}
+
+.hero-resource small {
+    overflow-wrap: anywhere;
+}
+
+.hero-resource-initiative,
+.hero-resource-wounds {
+    justify-content: center;
+}
+
+.hero-status-footer {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+}
+
+.hero-effect-chip {
+    padding: 0.22rem 0.45rem;
+    border: 1px solid rgba(212, 175, 55, 0.48);
     border-radius: 999px;
     color: var(--dsa-white);
-    font-size: 0.72rem;
+    font-size: 0.68rem;
 }
 
-.combat-start-state {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0.65rem 0.75rem;
-    border: 1px dashed rgba(212, 175, 55, 0.6);
-    border-radius: var(--dsa-panel-radius);
-    background: rgba(7, 17, 29, 0.55);
-}
-
-.combat-start-state > div {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-}
-
-.combat-start-state strong,
-.combat-start-state span {
-    color: var(--dsa-white);
-    font-size: 0.75rem;
-}
-
-.combat-start-state span {
-    color: var(--dsa-text-muted);
-}
-
-.combat-start-state.compact {
-    justify-content: flex-start;
+.hero-status-message,
+.combat-persistence-warning {
+    margin: 0;
 }
 
 .combat-persistence-warning {
-    margin: 0;
     color: #ffd27d;
     font-size: 0.72rem;
 }
 
-@media (max-width: 760px) {
-    .combat-resource-strip,
-    .combat-status-facts {
+@media (max-width: 1120px) {
+    .hero-status-resources {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 680px) {
+    .hero-status-topline {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .hero-status-identity {
+        display: flex;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+
+    .hero-status-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .hero-status-resources {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .combat-panel-heading {
-        flex-direction: column;
-    }
-
-    .combat-start-state {
-        align-items: stretch;
-        flex-direction: column;
+    .hero-resource-lep {
+        grid-column: 1 / -1;
     }
 }

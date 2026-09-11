@@ -11,6 +11,7 @@ public partial class WuerfelCurrentRollPanel
     [Parameter] public TalentRollResultDto? TalentResult { get; set; }
     [Parameter] public AttributeRollResultDto? AttributeResult { get; set; }
     [Parameter] public BadTraitRollResultDto? BadTraitResult { get; set; }
+    [Parameter] public CombatRollResultDto? CombatResult { get; set; }
     [Parameter] public IReadOnlyList<MasterTalentRollTargetResultDto> MasterTalentResults { get; set; } =
         Array.Empty<MasterTalentRollTargetResultDto>();
     [Parameter] public IReadOnlyList<MasterAttributeRollTargetResultDto> MasterAttributeResults { get; set; } =
@@ -151,6 +152,7 @@ public partial class WuerfelCurrentRollPanel
             RollHistoryKind.Spell => "spell",
             RollHistoryKind.Attribute => "attribute",
             RollHistoryKind.BadTrait => "bad-trait",
+            RollHistoryKind.Combat => "combat",
             _ => "free"
         };
     }
@@ -172,6 +174,11 @@ public partial class WuerfelCurrentRollPanel
         if (context.Kind == RollHistoryKind.Free)
         {
             return "FREIER WURF";
+        }
+
+        if (context.Kind == RollHistoryKind.Combat && context.Snapshot?.Combat is { } combat)
+        {
+            return combat.StatusLabel;
         }
 
         if (context.Kind == RollHistoryKind.BadTrait)
@@ -275,6 +282,45 @@ public partial class WuerfelCurrentRollPanel
     {
         var details = new List<string>();
 
+        if (snapshot.Combat is { } combat)
+        {
+            details.Add($"Kampf: {combat.StatusLabel}");
+            AddText(details, "Aktion", combat.ActionLabel);
+            AddText(details, "Waffe", combat.WeaponName);
+            AddValue(details, "Importierter Zielwert", combat.BaseValue);
+            if (combat.UnmodifiedBaseValue != combat.BaseValue)
+            {
+                AddValue(details, "Unveränderter Importwert", combat.UnmodifiedBaseValue);
+            }
+            AddValue(details, "Effektives Ziel", combat.EffectiveTarget);
+            AddValue(details, "Kontrollziel", combat.ControlTarget);
+            if (combat.Modifiers.Length > 0)
+            {
+                details.Add($"Modifikatoren: {string.Join(", ", combat.Modifiers.Select(modifier =>
+                    $"{modifier.Label} {FormatModifier(modifier.Value)}"))}");
+            }
+
+            details.AddRange(combat.LabeledRolls.Select(roll =>
+                $"{roll.Role}: {roll.Value} (W{roll.Sides})"));
+            if (combat.Damage is { } damage)
+            {
+                details.Add($"TP-Rechnung: ({damage.DiceTotal} {FormatModifier(damage.WeaponBonus)}" +
+                            $" {FormatModifier(damage.PreMultiplierModifier)}) × {damage.Multiplier}" +
+                            $" {FormatModifier(damage.PostMultiplierModifier)} = {damage.Total}");
+            }
+
+            if (combat.Zone is { } zone)
+            {
+                AddValue(details, "Trefferzonenwurf", zone.W20);
+                AddText(details, "Rüstung", FormatCombatZone(zone.ArmorZone));
+                AddText(details, "Wundzone", FormatCombatZone(zone.WoundZone));
+                AddText(details, "Ansicht", zone.Facing == CombatFacing.Back ? "Rückseite" : "Vorderseite");
+                AddValue(details, "RS", zone.ArmorRating);
+            }
+
+            details.AddRange(combat.RuleNotes);
+        }
+
         AddText(details, "Probe", snapshot.Probe);
         AddValue(details, "Talentwert", snapshot.TalentValue);
         AddValue(details, "Effektiver Talentwert", snapshot.EffectiveTalentValue);
@@ -340,6 +386,95 @@ public partial class WuerfelCurrentRollPanel
             details.Add($"Verbleibend: {remainingPoints} {label}");
         }
 
+        return details;
+    }
+
+    private static string? FormatCombatZone(object? zone) => zone switch
+    {
+        CombatArmorZone.Head or CombatWoundZone.Head => "Kopf",
+        CombatArmorZone.Chest => "Brust",
+        CombatArmorZone.Back => "Rücken",
+        CombatArmorZone.Abdomen or CombatWoundZone.Abdomen => "Bauch",
+        CombatArmorZone.LeftArm or CombatWoundZone.LeftArm => "linker Arm",
+        CombatArmorZone.RightArm or CombatWoundZone.RightArm => "rechter Arm",
+        CombatArmorZone.LeftLeg or CombatWoundZone.LeftLeg => "linkes Bein",
+        CombatArmorZone.RightLeg or CombatWoundZone.RightLeg => "rechtes Bein",
+        CombatWoundZone.Torso => "Rumpf",
+        _ => zone?.ToString()
+    };
+
+    private static string GetCombatEvaluationClass(CombatRollResultDto result) => result.Outcome switch
+    {
+        CombatOutcome.Critical or CombatOutcome.Lucky => "glueck",
+        CombatOutcome.Success or CombatOutcome.FumbleAvoided => "success",
+        CombatOutcome.Failure or CombatOutcome.Fumble => "failure",
+        _ => string.Empty
+    };
+
+    private static string GetCombatRollChipClass(CombatRollResultDto result) => result.Outcome switch
+    {
+        CombatOutcome.Critical or CombatOutcome.Lucky => "glueck",
+        CombatOutcome.Success or CombatOutcome.FumbleAvoided => "success",
+        CombatOutcome.Failure or CombatOutcome.Fumble => "failure",
+        _ => string.Empty
+    };
+
+    private static string GetCombatRollSummary(CombatRollResultDto result)
+    {
+        var snapshot = result.Snapshot;
+        if (snapshot.Damage is { } damage)
+        {
+            return $"TP {damage.Total}";
+        }
+
+        return snapshot.EffectiveTarget is { } target
+            ? $"Ziel {target}"
+            : "Hilfswurf";
+    }
+
+    private static IReadOnlyList<string> GetCombatDetails(CombatRollResultDto result)
+    {
+        var snapshot = result.Snapshot;
+        var details = new List<string>
+        {
+            $"Status: {snapshot.StatusLabel}",
+            $"Quelle: {snapshot.ValuesSource}"
+        };
+        AddText(details, "Waffe", snapshot.WeaponName);
+        AddValue(details, "Importierter Zielwert", snapshot.BaseValue);
+        if (snapshot.UnmodifiedBaseValue != snapshot.BaseValue)
+        {
+            AddValue(details, "Unveränderter Importwert", snapshot.UnmodifiedBaseValue);
+        }
+        AddValue(details, "Effektives Ziel", snapshot.EffectiveTarget);
+        AddValue(details, "Kontrollziel", snapshot.ControlTarget);
+
+        if (snapshot.Modifiers.Length > 0)
+        {
+            details.Add($"Modifikatoren: {string.Join(", ", snapshot.Modifiers.Select(modifier =>
+                $"{modifier.Label} {FormatModifier(modifier.Value)}"))}");
+        }
+
+        details.AddRange(snapshot.LabeledRolls.Select(roll =>
+            $"{roll.Role}: {roll.Value} (W{roll.Sides})"));
+
+        if (snapshot.Damage is { } damage)
+        {
+            details.Add($"TP-Rechnung: ({damage.DiceTotal} {FormatModifier(damage.WeaponBonus)} " +
+                        $"{FormatModifier(damage.PreMultiplierModifier)}) × {damage.Multiplier} " +
+                        $"{FormatModifier(damage.PostMultiplierModifier)} = {damage.Total}");
+        }
+
+        if (snapshot.Zone is { } zone)
+        {
+            AddValue(details, "Trefferzonenwurf", zone.W20);
+            AddText(details, "Rüstung", FormatCombatZone(zone.ArmorZone));
+            AddText(details, "Wundzone", FormatCombatZone(zone.WoundZone));
+            AddText(details, "Ansicht", zone.Facing == CombatFacing.Back ? "Rückseite" : "Vorderseite");
+            AddValue(details, "RS", zone.ArmorRating);
+        }
+
+        details.AddRange(snapshot.RuleNotes);
         return details;
     }
 

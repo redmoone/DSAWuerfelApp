@@ -152,6 +152,42 @@
             </div>
         </section>
     }
+    else if (CombatResult is not null)
+    {
+        <article class="probe-evaluation combat-roll-evaluation @GetCombatEvaluationClass(CombatResult)"
+                 data-roll-kind="combat">
+            <div class="probe-evaluation-header">
+                <span class="probe-evaluation-name">@CombatResult.Snapshot.ActionLabel</span>
+                <span class="probe-evaluation-status" data-testid="current-roll-status">@CombatResult.Snapshot.StatusLabel</span>
+            </div>
+            <div class="historical-roll-meta">
+                <span>@CombatResult.PlayerName</span>
+                @if (!string.IsNullOrWhiteSpace(CombatResult.HeroName))
+                {
+                    <span>Held: @CombatResult.HeroName</span>
+                }
+                <span>@GetCombatRollSummary(CombatResult)</span>
+            </div>
+            <div class="probe-evaluation-rolls">
+                @foreach (var roll in CombatResult.Snapshot.LabeledRolls)
+                {
+                    <div class="probe-roll-chip @GetCombatRollChipClass(CombatResult)">
+                        <span class="probe-roll-attribute">@roll.Role</span>
+                        <span class="probe-roll-values">@roll.Value / W@roll.Sides</span>
+                    </div>
+                }
+            </div>
+            <details class="roll-details" open>
+                <summary>Berechnung und Details</summary>
+                <div class="probe-evaluation-meta">
+                    @foreach (var detail in GetCombatDetails(CombatResult))
+                    {
+                        <span>@detail</span>
+                    }
+                </div>
+            </details>
+        </article>
+    }
     else if (TalentResult is not null)
     {
         <article class="probe-evaluation @GetProbeEvaluationClass(TalentResult)" data-roll-kind="@(TalentResult.SpellDetails is null ? "talent" : "spell")">

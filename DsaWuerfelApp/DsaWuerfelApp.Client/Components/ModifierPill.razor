@@ -6,7 +6,21 @@
             <img src="icons/@IconPath" alt="" class="attribute-icon" />
             <span class="attribute-label">@LabelText</span>
         </div>
-        <div class="attribute-value">@FormattedValue</div>
+        @if (AllowDirectInput)
+        {
+            <input class="modifier-direct-input"
+                   type="number"
+                   inputmode="numeric"
+                   value="@_draft"
+                   aria-label="@LabelText"
+                   @oninput="HandleInput"
+                   @onkeydown="HandleKeyDown"
+                   @onblur="CommitAsync" />
+        }
+        else
+        {
+            <div class="attribute-value">@FormattedValue</div>
+        }
     </div>
 
     <button type="button" class="mod-btn" @onclick="Increase">+</button>

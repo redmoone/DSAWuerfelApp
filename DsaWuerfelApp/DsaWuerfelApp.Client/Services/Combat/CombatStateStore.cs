@@ -86,11 +86,14 @@ public sealed record CombatRuntimeSnapshot(
     string? Note,
     DateTimeOffset? LastChangedAtUtc)
 {
+    public int? CurrentAeP { get; init; }
+    public int? CurrentKeP { get; init; }
     public string? SelectedSetId { get; init; }
     public string? SelectedWeaponId { get; init; }
     public string SelectedAction { get; init; } = "attack";
     public string SelectedProbe { get; init; } = string.Empty;
     public string? SelectedAttribute { get; init; }
+    public string[] SelectedAttributes { get; init; } = [];
     public int SituationalModifier { get; init; }
     public string RollText { get; init; } = string.Empty;
     public CombatFacing Facing { get; init; } = CombatFacing.Front;

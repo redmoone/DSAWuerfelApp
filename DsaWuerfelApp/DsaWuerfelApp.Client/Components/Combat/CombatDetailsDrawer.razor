@@ -1,0 +1,16 @@
+@using Microsoft.AspNetCore.Components.Web
+
+@if (Open)
+{
+    <aside class="combat-details-drawer" role="dialog" aria-modal="true" aria-label="@Title" @onkeydown="HandleKeyDown">
+        <div class="combat-details-drawer-header">
+            <h2>@Title</h2>
+            <button type="button" class="combat-details-close" aria-label="Details schließen" @onclick="CloseRequested">
+                Schließen
+            </button>
+        </div>
+        <div class="combat-details-drawer-content">
+            @ChildContent
+        </div>
+    </aside>
+}

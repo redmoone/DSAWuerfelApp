@@ -1,4 +1,5 @@
 using DsaWuerfelApp.Shared;
+using DsaWuerfelApp.Client.Services;
 
 using Microsoft.AspNetCore.Components;
 
@@ -14,10 +15,15 @@ public partial class CombatStatusPanel
     [Parameter] public CombatSetVariantDto? SelectedSet { get; set; }
     [Parameter] public int? CurrentLeP { get; set; }
     [Parameter] public int? CurrentAuP { get; set; }
+    [Parameter] public int? CurrentAeP { get; set; }
+    [Parameter] public int? CurrentKeP { get; set; }
     [Parameter] public int? CurrentInitiative { get; set; }
     [Parameter] public bool IsCombatStarted { get; set; }
     [Parameter] public bool CanStartCombat { get; set; }
     [Parameter] public EventCallback StartCombatRequested { get; set; }
+    [Parameter] public EventCallback<CombatResourceKind> ResourceEditRequested { get; set; }
+    [Parameter] public EventCallback InitiativeRequested { get; set; }
+    [Parameter] public EventCallback WoundsRequested { get; set; }
     [Parameter] public bool CanUndo { get; set; }
     [Parameter] public EventCallback UndoRequested { get; set; }
     [Parameter] public string? PersistenceWarning { get; set; }
@@ -27,26 +33,31 @@ public partial class CombatStatusPanel
 
     private int TotalWounds => Wounds.Values.Where(value => value.HasValue).Sum(value => Math.Clamp(value!.Value, 0, 3));
 
-    private string FormatCurrent(int? current, int? maximum)
-    {
-        return current.HasValue && maximum.HasValue ? $"{current} / {maximum}" : FormatValue(current ?? maximum);
-    }
+    private static bool ShouldShowResource(CombatResourceKind resource, int? maximum) =>
+        resource == CombatResourceKind.LeP ? !maximum.HasValue || maximum.Value > 0 : maximum is > 0;
 
-    private static string GetResourceState(int? current) => current.HasValue ? "laufend" : "noch nicht gestartet";
-
-    private int? GetTotalArmor()
+    private static string FormatResource(int? current, int? maximum)
     {
-        if (SelectedSet?.ArmorZones is { } zones)
+        if (!current.HasValue)
         {
-            return zones.TotalZoneProtection ?? zones.TotalProtection ?? zones.Total;
+            return maximum.HasValue ? $"? / {maximum.Value}" : "?";
         }
 
-        return SelectedSet?.SimpleArmor?.Total;
+        return maximum.HasValue ? $"{current.Value} / {maximum.Value}" : current.Value.ToString();
     }
 
-    private int? GetEncumbrance() => SelectedSet?.ArmorZones?.Encumbrance ?? SelectedSet?.SimpleArmor?.Encumbrance;
+    private static string GetBarWidth(int? current, int? maximum)
+    {
+        if (!current.HasValue || !maximum.HasValue || maximum.Value <= 0)
+        {
+            return "0%";
+        }
 
-    private string GetArmorLabel() => SelectedSet?.ArmorZones is not null ? "Zonenmodell" : "Einfaches Modell";
+        var ratio = Math.Clamp((double)current.Value / maximum.Value, 0d, 1d);
+        return $"{ratio:P0}";
+    }
 
     private static string FormatValue(int? value) => value?.ToString() ?? "—";
+
+    private string GetArmorLabel() => SelectedSet?.ArmorZones is not null ? "Zonenrüstung" : "Einfache Rüstung";
 }

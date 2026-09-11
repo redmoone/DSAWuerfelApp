@@ -1,0 +1,67 @@
+.number-control {
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+    border: 1px solid rgba(212, 175, 55, 0.68);
+    border-radius: 8px;
+    background: rgba(7, 17, 29, 0.72);
+    color: var(--dsa-white);
+}
+
+.number-control-button {
+    width: var(--ui-touch-target);
+    min-width: var(--ui-touch-target);
+    min-height: var(--ui-touch-target);
+    border: 0;
+    background: transparent;
+    color: var(--dsa-gold);
+    cursor: pointer;
+    font: inherit;
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.number-control-button:hover:not(:disabled),
+.number-control-button:focus-visible {
+    background: rgba(212, 175, 55, 0.16);
+}
+
+.number-control-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.number-control-field {
+    display: flex;
+    min-width: 3.5rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+}
+
+.number-control-label {
+    color: var(--dsa-text-muted);
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.number-control-input {
+    box-sizing: border-box;
+    width: 4.2rem;
+    min-height: 1.55rem;
+    padding: 0 0.2rem;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--dsa-white);
+    font: inherit;
+    font-weight: 800;
+    text-align: center;
+}
+
+.number-control-input:focus-visible {
+    outline: 2px solid var(--dsa-gold);
+    outline-offset: 2px;
+}

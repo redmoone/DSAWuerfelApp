@@ -1,109 +1,90 @@
 @using DsaWuerfelApp.Shared
+@using DsaWuerfelApp.Client.Services
 
-<section class="combat-status-panel" aria-labelledby="combat-status-title">
-    <div class="combat-panel-heading">
-        <div>
+<section class="hero-status-bar" aria-labelledby="combat-status-title">
+    <div class="hero-status-topline">
+        <div class="hero-status-identity">
             <p class="combat-kicker">Heldenstatus</p>
             <h2 id="combat-status-title">@HeroName</h2>
+            <span>@(string.IsNullOrWhiteSpace(SessionName) ? "Solo" : SessionName)</span>
         </div>
-        <span class="combat-status-context">@(string.IsNullOrWhiteSpace(SessionName) ? "Solo" : SessionName)</span>
+        <div class="hero-status-actions">
+            <span class="hero-status-state">@(IsLoading ? "Profil wird geladen" : Profile is null ? "Profil fehlt" : "Import aktiv")</span>
+            @if (CanUndo)
+            {
+                <button type="button" class="combat-compact-button" @onclick="UndoRequested">Rückgängig</button>
+            }
+        </div>
     </div>
 
     @if (IsLoading)
     {
-        <div class="combat-empty-state">
-            <strong>Kampfprofil wird geladen.</strong>
-            <span>Die Werte werden aus dem gespeicherten Heldenimport gelesen.</span>
-        </div>
+        <p class="hero-status-message">Die Werte werden aus dem gespeicherten Heldenimport gelesen.</p>
     }
     else if (Profile is null)
     {
-        <div class="combat-empty-state">
-            <strong>@(string.IsNullOrWhiteSpace(ErrorMessage) ? "Kein Kampfprofil verfügbar." : ErrorMessage)</strong>
-            <span>Wähle einen aktiven Helden oder importiere die Heldendatei erneut.</span>
-        </div>
+        <p class="hero-status-message">@(string.IsNullOrWhiteSpace(ErrorMessage) ? "Kein Kampfprofil verfügbar." : ErrorMessage)</p>
     }
     else
     {
-        <div class="combat-resource-strip">
-            <div class="combat-resource-card">
-                <span>LeP</span>
-                <strong>@FormatCurrent(CurrentLeP, Profile.Resources.LeP)</strong>
-                <small>@GetResourceState(CurrentLeP)</small>
-            </div>
-            <div class="combat-resource-card">
-                <span>AuP</span>
-                <strong>@FormatCurrent(CurrentAuP, Profile.Resources.AuP)</strong>
-                <small>@GetResourceState(CurrentAuP)</small>
-            </div>
-            <div class="combat-resource-card">
-                <span>INI</span>
-                <strong>@FormatValue(CurrentInitiative ?? SelectedSet?.Initiative)</strong>
-                <small>@(CurrentInitiative.HasValue ? "laufender Wert" : "importierter Ausgangswert")</small>
-            </div>
-            <div class="combat-resource-card">
-                <span>RS / BE</span>
-                <strong>@FormatValue(GetTotalArmor()) / @FormatValue(GetEncumbrance())</strong>
-                <small>@GetArmorLabel()</small>
-            </div>
-        </div>
-
-        <div class="combat-status-facts">
-            <div>
-                <span>Wundschwelle</span>
-                <strong>@FormatValue(Profile.WoundThreshold)</strong>
-            </div>
-            <div>
-                <span>Wunden gesamt</span>
-                <strong>@TotalWounds</strong>
-            </div>
-            <div>
-                <span>Set</span>
-                <strong>@(SelectedSet is null ? "—" : $"{SelectedSet.Number} · {SelectedSet.ArmorModel}")</strong>
-            </div>
-        </div>
-
-        <div class="combat-effect-line">
-            <span class="combat-field-label">Geführte Effekte</span>
-            @if (Effects.Count == 0)
+        <div class="hero-status-resources" aria-label="Ressourcen">
+            @if (ShouldShowResource(CombatResourceKind.LeP, Profile.Resources.LeP))
             {
-                <span class="combat-muted">Keine Effekte eingetragen.</span>
-            }
-            else
-            {
-                @foreach (var effect in Effects)
-                {
-                    <span class="combat-effect-chip">@effect</span>
-                }
-            }
-        </div>
-
-        @if (!IsCombatStarted && CanStartCombat)
-        {
-            <div class="combat-start-state">
-                <div>
-                    <strong>Kampfzustand noch nicht gestartet</strong>
-                    <span>Mit vollen importierten Ressourcen und ohne Wunden beginnen.</span>
-                </div>
-                <button type="button" class="combat-header-button primary" @onclick="StartCombatRequested">
-                    Kampfzustand starten
+                <button type="button" class="hero-resource hero-resource-lep" @onclick="() => ResourceEditRequested.InvokeAsync(CombatResourceKind.LeP)">
+                    <span class="hero-resource-heading"><strong>LeP</strong><span>@FormatResource(CurrentLeP, Profile.Resources.LeP)</span></span>
+                    <span class="hero-resource-track" aria-hidden="true"><span style="width:@GetBarWidth(CurrentLeP, Profile.Resources.LeP)"></span></span>
+                    <small>Lebenspunkte · klicken zum Setzen</small>
                 </button>
-            </div>
-        }
-        else if (IsCombatStarted)
-        {
-            <div class="combat-start-state compact">
-                <span>Kampfzustand auf diesem Gerät</span>
-                @if (CanUndo)
-                {
-                    <button type="button" class="combat-header-button" @onclick="UndoRequested">Letzte Änderung rückgängig</button>
-                }
-            </div>
-        }
+            }
+            @if (ShouldShowResource(CombatResourceKind.AuP, Profile.Resources.AuP))
+            {
+                <button type="button" class="hero-resource" @onclick="() => ResourceEditRequested.InvokeAsync(CombatResourceKind.AuP)">
+                    <span class="hero-resource-heading"><strong>AuP</strong><span>@FormatResource(CurrentAuP, Profile.Resources.AuP)</span></span>
+                    <span class="hero-resource-track" aria-hidden="true"><span style="width:@GetBarWidth(CurrentAuP, Profile.Resources.AuP)"></span></span>
+                    <small>Ausdauer · klicken zum Setzen</small>
+                </button>
+            }
+            @if (ShouldShowResource(CombatResourceKind.AeP, Profile.Resources.AeP))
+            {
+                <button type="button" class="hero-resource" @onclick="() => ResourceEditRequested.InvokeAsync(CombatResourceKind.AeP)">
+                    <span class="hero-resource-heading"><strong>AeP</strong><span>@FormatResource(CurrentAeP, Profile.Resources.AeP)</span></span>
+                    <span class="hero-resource-track" aria-hidden="true"><span style="width:@GetBarWidth(CurrentAeP, Profile.Resources.AeP)"></span></span>
+                    <small>Astralenergie · klicken zum Setzen</small>
+                </button>
+            }
+            @if (ShouldShowResource(CombatResourceKind.KeP, Profile.Resources.KeP))
+            {
+                <button type="button" class="hero-resource" @onclick="() => ResourceEditRequested.InvokeAsync(CombatResourceKind.KeP)">
+                    <span class="hero-resource-heading"><strong>KE</strong><span>@FormatResource(CurrentKeP, Profile.Resources.KeP)</span></span>
+                    <span class="hero-resource-track" aria-hidden="true"><span style="width:@GetBarWidth(CurrentKeP, Profile.Resources.KeP)"></span></span>
+                    <small>Karmaenergie · klicken zum Setzen</small>
+                </button>
+            }
+            <button type="button" class="hero-resource hero-resource-initiative" @onclick="InitiativeRequested">
+                <span class="hero-resource-heading"><strong>INI</strong><span>@FormatValue(CurrentInitiative ?? SelectedSet?.Initiative)</span></span>
+                <small>@(CurrentInitiative.HasValue ? "laufender Wert · bearbeiten" : "Importwert · würfeln")</small>
+            </button>
+            <button type="button" class="hero-resource hero-resource-wounds" @onclick="WoundsRequested">
+                <span class="hero-resource-heading"><strong>Wunden</strong><span>@TotalWounds</span></span>
+                <small>7 Wundzonen · bearbeiten</small>
+            </button>
+        </div>
 
-        @if (!string.IsNullOrWhiteSpace(PersistenceWarning))
-        {
-            <p class="combat-persistence-warning" role="status">@PersistenceWarning</p>
-        }
+        <div class="hero-status-footer">
+            <span>Set @(SelectedSet is null ? "—" : $"{SelectedSet.Number} · {GetArmorLabel()}")</span>
+            <span>WS @FormatValue(Profile.WoundThreshold)</span>
+            @if (Effects.Count > 0)
+            {
+                @foreach (var effect in Effects.Take(3))
+                {
+                    <span class="hero-effect-chip">@effect</span>
+                }
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(PersistenceWarning))
+    {
+        <p class="combat-persistence-warning" role="status">@PersistenceWarning</p>
     }
 </section>

@@ -1,0 +1,27 @@
+@using Microsoft.AspNetCore.Components.Web
+
+<div class="number-control" aria-label="@Label">
+    <button type="button"
+            class="number-control-button"
+            aria-label="@($"{Label} verringern")"
+            disabled="@Disabled"
+            @onclick="() => StepAsync(-1)">−</button>
+    <label class="number-control-field">
+        <span class="number-control-label">@Label</span>
+        <input class="number-control-input"
+               type="number"
+               inputmode="numeric"
+               value="@_draft"
+               placeholder="@Placeholder"
+               aria-label="@Label"
+               disabled="@Disabled"
+               @oninput="HandleInput"
+               @onkeydown="HandleKeyDown"
+               @onblur="CommitAsync" />
+    </label>
+    <button type="button"
+            class="number-control-button"
+            aria-label="@($"{Label} erhöhen")"
+            disabled="@Disabled"
+            @onclick="() => StepAsync(1)">+</button>
+</div>

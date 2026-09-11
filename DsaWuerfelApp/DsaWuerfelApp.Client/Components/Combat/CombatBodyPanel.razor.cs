@@ -48,45 +48,34 @@ public partial class CombatBodyPanel
         };
     }
 
-    private static CombatWoundZone GetWoundZone(CombatArmorZone zone)
+    private static CombatWoundZone GetWoundZone(CombatArmorZone zone) => zone switch
     {
-        return zone switch
-        {
-            CombatArmorZone.Head => CombatWoundZone.Head,
-            CombatArmorZone.Chest or CombatArmorZone.Back => CombatWoundZone.Torso,
-            CombatArmorZone.Abdomen => CombatWoundZone.Abdomen,
-            CombatArmorZone.LeftArm => CombatWoundZone.LeftArm,
-            CombatArmorZone.RightArm => CombatWoundZone.RightArm,
-            CombatArmorZone.LeftLeg => CombatWoundZone.LeftLeg,
-            CombatArmorZone.RightLeg => CombatWoundZone.RightLeg,
-            _ => CombatWoundZone.Torso
-        };
+        CombatArmorZone.Head => CombatWoundZone.Head,
+        CombatArmorZone.Chest or CombatArmorZone.Back => CombatWoundZone.Torso,
+        CombatArmorZone.Abdomen => CombatWoundZone.Abdomen,
+        CombatArmorZone.LeftArm => CombatWoundZone.LeftArm,
+        CombatArmorZone.RightArm => CombatWoundZone.RightArm,
+        CombatArmorZone.LeftLeg => CombatWoundZone.LeftLeg,
+        CombatArmorZone.RightLeg => CombatWoundZone.RightLeg,
+        _ => CombatWoundZone.Torso
+    };
+
+    private string GetWoundMarkers(CombatWoundZone zone)
+    {
+        var value = GetWoundValue(zone);
+        return value.HasValue ? $"Wunden {Math.Clamp(value.Value, 0, 3)}/3" : "Wunden ?/3";
     }
 
-    private string FormatWounds(CombatWoundZone zone)
-    {
-        return Wounds.TryGetValue(zone, out var value) && value.HasValue
-            ? $"{Math.Clamp(value.Value, 0, 3)}/3"
-            : "nicht erfasst";
-    }
-
-    private int? GetWoundValue(CombatWoundZone zone)
-    {
-        return Wounds.TryGetValue(zone, out var value) ? value : null;
-    }
+    private int? GetWoundValue(CombatWoundZone zone) => Wounds.TryGetValue(zone, out var value) ? value : null;
 
     private static string FormatValue(int? value) => value?.ToString() ?? "—";
 
     private string GetAccessibleLabel(ZoneRow zone, CombatWoundZone woundZone)
     {
-        var armorValue = GetArmorValue(zone.Zone);
-        var wounds = GetWoundValue(woundZone);
-        var armorText = armorValue.HasValue ? armorValue.Value.ToString() : "nicht importiert";
-        var woundText = wounds.HasValue ? wounds.Value.ToString() : "nicht gesetzt";
+        var armorText = GetArmorValue(zone.Zone)?.ToString() ?? "nicht importiert";
+        var woundText = GetWoundValue(woundZone)?.ToString() ?? "nicht gesetzt";
         return $"{zone.Label}, Rüstungsschutz {armorText}, Wunden {woundText}";
     }
 
-    private sealed record ZoneRow(CombatArmorZone Zone, string Label)
-    {
-    }
+    private sealed record ZoneRow(CombatArmorZone Zone, string Label);
 }

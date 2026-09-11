@@ -3,6 +3,14 @@ using DsaWuerfelApp.Shared.Models;
 
 namespace DsaWuerfelApp.Client.Services;
 
+public enum CombatResourceKind
+{
+    LeP,
+    AuP,
+    AeP,
+    KeP
+}
+
 public sealed class CombatState : IDisposable
 {
     private readonly ActiveHeroState _activeHeroState;
@@ -50,6 +58,7 @@ public sealed class CombatState : IDisposable
     public string SelectedAction => _runtime.SelectedAction;
     public string SelectedProbe => _runtime.SelectedProbe;
     public string? SelectedAttribute => _runtime.SelectedAttribute;
+    public IReadOnlyList<string> SelectedAttributes => _runtime.SelectedAttributes;
     public int Modifier => _runtime.SituationalModifier;
     public string RollText => _runtime.RollText;
     public CombatFacing Facing => _runtime.Facing;
@@ -58,6 +67,8 @@ public sealed class CombatState : IDisposable
     public string? SelectedWeaponId => _runtime.SelectedWeaponId;
     public int? CurrentLeP => _runtime.CurrentLeP;
     public int? CurrentAuP => _runtime.CurrentAuP;
+    public int? CurrentAeP => _runtime.CurrentAeP;
+    public int? CurrentKeP => _runtime.CurrentKeP;
     public int? CurrentInitiative => _runtime.CurrentInitiative;
     public IReadOnlyDictionary<CombatWoundZone, int?> Wounds => _runtime.Wounds;
     public IReadOnlyList<string> Effects => _runtime.Effects;
@@ -135,9 +146,80 @@ public sealed class CombatState : IDisposable
         await PersistCurrentAsync();
     }
 
+    public async Task AddSelectedAttributeAsync(string attribute)
+    {
+        if (Profile?.Attributes.All(current => !string.Equals(current.Key, attribute, StringComparison.Ordinal)) != false)
+        {
+            return;
+        }
+
+        var selection = _runtime.SelectedAttributes.Append(attribute).ToArray();
+        _runtime = _runtime with
+        {
+            SelectedAttributes = selection,
+            SelectedAttribute = attribute
+        };
+        await PersistCurrentAsync();
+    }
+
+    public async Task RemoveSelectedAttributeAtAsync(int index)
+    {
+        if (index < 0 || index >= _runtime.SelectedAttributes.Length)
+        {
+            return;
+        }
+
+        var selection = _runtime.SelectedAttributes.ToList();
+        selection.RemoveAt(index);
+        _runtime = _runtime with
+        {
+            SelectedAttributes = selection.ToArray(),
+            SelectedAttribute = selection.LastOrDefault()
+        };
+        await PersistCurrentAsync();
+    }
+
     public async Task SetModifierAsync(int modifier)
     {
         _runtime = _runtime with { SituationalModifier = modifier };
+        await PersistCurrentAsync();
+    }
+
+    public async Task SetResourceAsync(CombatResourceKind resource, int? value)
+    {
+        if (Profile is null)
+        {
+            return;
+        }
+
+        _undo = _runtime;
+        var normalized = resource == CombatResourceKind.LeP
+            ? value
+            : value.HasValue ? Math.Max(0, value.Value) : null;
+        _runtime = (resource switch
+        {
+            CombatResourceKind.LeP => _runtime with { CurrentLeP = normalized },
+            CombatResourceKind.AuP => _runtime with { CurrentAuP = normalized },
+            CombatResourceKind.AeP => _runtime with { CurrentAeP = normalized },
+            CombatResourceKind.KeP => _runtime with { CurrentKeP = normalized },
+            _ => _runtime
+        }) with { LastChangedAtUtc = DateTimeOffset.UtcNow };
+        await PersistCurrentAsync();
+    }
+
+    public async Task SetWoundAsync(CombatWoundZone zone, int value)
+    {
+        if (Profile is null)
+        {
+            return;
+        }
+
+        _undo = _runtime;
+        var wounds = new Dictionary<CombatWoundZone, int?>(_runtime.Wounds)
+        {
+            [zone] = Math.Clamp(value, 0, 3)
+        };
+        _runtime = _runtime with { Wounds = wounds, LastChangedAtUtc = DateTimeOffset.UtcNow };
         await PersistCurrentAsync();
     }
 
@@ -167,31 +249,28 @@ public sealed class CombatState : IDisposable
 
     public async Task<bool> StartCombatAsync()
     {
-        if (Profile is null || _runtime.IsStarted)
+        if (Profile is null)
         {
             return false;
+        }
+
+        if (_runtime.IsStarted)
+        {
+            return true;
         }
 
         _runtime = _runtime with
         {
             IsStarted = true,
-            CurrentLeP = Profile.Resources.LeP,
-            CurrentAuP = Profile.Resources.AuP,
-            CurrentInitiative = null,
-            Wounds = ZeroWounds(),
-            Round = 0,
-            Effects = [],
-            Note = null,
             LastChangedAtUtc = DateTimeOffset.UtcNow
         };
-        _undo = null;
         await PersistCurrentAsync();
         return true;
     }
 
     public async Task<bool> SetInitiativeAsync(int? initiative)
     {
-        if (Profile is null || !_runtime.IsStarted)
+        if (Profile is null)
         {
             return false;
         }
@@ -224,7 +303,7 @@ public sealed class CombatState : IDisposable
         };
         _runtime = _runtime with
         {
-            CurrentLeP = Math.Max(0, _runtime.CurrentLeP.Value - Math.Max(0, lepLoss)),
+            CurrentLeP = _runtime.CurrentLeP.Value - Math.Max(0, lepLoss),
             Wounds = wounds,
             Note = string.IsNullOrWhiteSpace(note) ? _runtime.Note : note.Trim(),
             LastChangedAtUtc = DateTimeOffset.UtcNow
@@ -313,7 +392,7 @@ public sealed class CombatState : IDisposable
                 }
 
                 _runtime = NormalizeSnapshot(
-                    persisted?.Current ?? CreateEmptyRuntime(contextKey, profile.SourceRevision),
+                    persisted?.Current ?? CreateInitialRuntime(contextKey, profile),
                     contextKey,
                     profile.SourceRevision);
                 _undo = persisted?.Undo is null
@@ -421,7 +500,8 @@ public sealed class CombatState : IDisposable
             SelectedWeaponId = selectedWeapon?.Id,
             SelectedAction = string.IsNullOrWhiteSpace(_runtime.SelectedAction) ? "attack" : _runtime.SelectedAction,
             SelectedProbe = _runtime.SelectedProbe ?? string.Empty,
-            RollText = _runtime.RollText ?? string.Empty
+            RollText = _runtime.RollText ?? string.Empty,
+            SelectedAttributes = _runtime.SelectedAttributes ?? []
         };
     }
 
@@ -487,6 +567,27 @@ public sealed class CombatState : IDisposable
             [],
             null,
             null);
+    }
+
+    private static CombatRuntimeSnapshot CreateInitialRuntime(string contextKey, CombatProfileDto profile)
+    {
+        return new CombatRuntimeSnapshot(
+            1,
+            contextKey,
+            profile.SourceRevision,
+            true,
+            profile.Resources.LeP,
+            profile.Resources.AuP,
+            null,
+            ZeroWounds(),
+            0,
+            [],
+            null,
+            DateTimeOffset.UtcNow)
+        {
+            CurrentAeP = profile.Resources.AeP,
+            CurrentKeP = profile.Resources.KeP
+        };
     }
 
     private static Dictionary<CombatWoundZone, int?> EmptyWounds() =>
