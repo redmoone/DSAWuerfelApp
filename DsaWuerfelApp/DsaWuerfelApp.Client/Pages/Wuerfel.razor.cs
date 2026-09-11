@@ -385,7 +385,8 @@ public partial class Wuerfel : IDisposable
                 _combatInitiativeDraft.Value,
                 participant?.Id,
                 CombatHero?.Id,
-                BuildCombatRuntimeState());
+                BuildCombatRuntimeState(),
+                CombatSelectedSet?.Id);
             _combatNotice = result.Message;
             if (result.Applied)
             {
@@ -424,7 +425,8 @@ public partial class Wuerfel : IDisposable
                 var result = await CombatSessionState.RollInitiativeAsync(
                     participant?.Id,
                     CombatHero?.Id,
-                    BuildCombatRuntimeState());
+                    BuildCombatRuntimeState(),
+                    CombatSelectedSet?.Id);
                 var updatedParticipant = result.Snapshot.Participants.FirstOrDefault(current =>
                     participant is not null
                         ? current.Id == participant.Id
@@ -534,7 +536,8 @@ public partial class Wuerfel : IDisposable
         return await CombatSessionState.SyncRuntimeStateAsync(
             BuildCombatRuntimeState(),
             participant.Id,
-            CombatHero.Id);
+            CombatHero.Id,
+            CombatSelectedSet?.Id);
     }
 
     private int? GetCombatResourceValue(CombatResourceKind resource) => resource switch

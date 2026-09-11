@@ -40,6 +40,7 @@ public sealed record CombatSessionParticipantDto
     public string? OwnerUserId { get; init; }
     public string? Affiliation { get; init; }
     public int? InitiativeBase { get; init; }
+    public string? InitiativeSetId { get; init; }
     public int? StartRoll { get; init; }
     public int InitiativeDiceCount { get; init; } = 1;
     public int InitiativeCorrection { get; init; }
@@ -103,6 +104,7 @@ public sealed record CombatSessionMutationRequestDto
     public string? ActionId { get; init; }
     public string? Name { get; init; }
     public Guid? HeroId { get; init; }
+    public string? SetId { get; init; }
     public string? Affiliation { get; init; }
     public int? InitiativeBase { get; init; }
     public int? Initiative { get; init; }

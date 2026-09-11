@@ -2,6 +2,7 @@ using System.Text;
 
 using DsaWuerfelApp.Persistence;
 using DsaWuerfelApp.Services;
+using DsaWuerfelApp.Services.Application.Import;
 using DsaWuerfelApp.Shared;
 using DsaWuerfelApp.Shared.Models;
 using DsaWuerfelApp.Tests.Infrastructure;
@@ -222,6 +223,60 @@ public sealed class CombatSessionStateTests
         Assert.Equal(28, recoveredParticipant.RuntimeState?.CurrentAuP);
     }
 
+    [Fact]
+    public async Task Selected_set_is_stored_and_changes_update_running_initiative_base()
+    {
+        using var factory = new TestApplicationFactory();
+        var hero = await SeedHeroAsync(factory, "owner");
+        var profileReader = factory.Services.GetRequiredService<HeroCombatProfileReader>();
+        var profile = await profileReader.ReadAsync(hero.Id, "owner");
+        Assert.NotNull(profile);
+        var simpleSet = Assert.Single(profile.Sets, set => set.ArmorModel == CombatArmorModel.Simple);
+        var zonalSet = Assert.Single(profile.Sets, set => set.ArmorModel == CombatArmorModel.Zone);
+        var simpleInitiative = Assert.IsType<int>(simpleSet.Initiative);
+        var zonalInitiative = Assert.IsType<int>(zonalSet.Initiative);
+        var session = CreateSession(factory, hero, "owner");
+        var state = factory.Services.GetRequiredService<CombatSessionStateService>();
+        var initial = await state.GetAsync(session.SessionId, "owner");
+        var runtime = new CombatRuntimeStateDto
+        {
+            IsStarted = true,
+            CurrentLeP = 22,
+            CurrentAuP = 28,
+            Wounds = Enum.GetValues<CombatWoundZone>().ToDictionary(zone => zone, _ => (int?)0)
+        };
+
+        var rolled = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = initial.Revision,
+            Kind = CombatSessionMutationKind.RollInitiative,
+            HeroId = hero.Id,
+            SetId = simpleSet.Id,
+            RuntimeState = runtime
+        }, "owner");
+        var rolledParticipant = Assert.Single(rolled.Snapshot.Participants, item => item.HeroId == hero.Id);
+        Assert.Equal(simpleSet.Id, rolledParticipant.InitiativeSetId);
+        Assert.Equal(simpleInitiative, rolledParticipant.InitiativeBase);
+
+        var switched = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = rolled.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.SyncRuntimeState,
+            HeroId = hero.Id,
+            SetId = zonalSet.Id,
+            RuntimeState = runtime
+        }, "owner");
+        var switchedParticipant = Assert.Single(switched.Snapshot.Participants, item => item.HeroId == hero.Id);
+        Assert.Equal(zonalSet.Id, switchedParticipant.InitiativeSetId);
+        Assert.Equal(zonalInitiative, switchedParticipant.InitiativeBase);
+        Assert.Equal(rolledParticipant.CurrentInitiative + zonalInitiative - simpleInitiative,
+            switchedParticipant.CurrentInitiative);
+    }
+
     private static GameSession CreateSession(TestApplicationFactory factory, Hero hero, string owner)
     {
         var sessions = factory.Services.GetRequiredService<SessionService>();
@@ -245,7 +300,7 @@ public sealed class CombatSessionStateTests
                 <daten>
                   <angaben><name>Kampftestheld</name><wundschwelle>4</wundschwelle></angaben>
                   <eigenschaften><intuition><akt>14</akt></intuition><lebensenergie><akt>22</akt></lebensenergie><ausdauer><akt>28</akt></ausdauer></eigenschaften>
-                  <kampfsets><kampfset nr="1" tzm="true" inbenutzung="true"><ini>11</ini><ausweichen>13</ausweichen><ruestungzonen><kopf>0</kopf><brust>0</brust><ruecken>0</ruecken><bauch>0</bauch><linkerarm>0</linkerarm><rechterarm>0</rechterarm><linkesbein>0</linkesbein><rechtesbein>0</rechtesbein></ruestungzonen></kampfset></kampfsets>
+                  <kampfsets><kampfset nr="1" tzm="true" inbenutzung="true"><ini>11</ini><ausweichen>13</ausweichen><ruestungzonen><kopf>0</kopf><brust>0</brust><ruecken>0</ruecken><bauch>0</bauch><linkerarm>0</linkerarm><rechterarm>0</rechterarm><linkesbein>0</linkesbein><rechtesbein>0</rechtesbein></ruestungzonen></kampfset><kampfset nr="2" tzm="false" inbenutzung="false"><ini>8</ini><ruestungeinfach><gesamt>0</gesamt><behinderung>0</behinderung></ruestungeinfach></kampfset></kampfsets>
                 </daten>
                 """)
         };

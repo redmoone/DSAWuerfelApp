@@ -208,6 +208,7 @@ public sealed class CombatSessionStateService(
         var updatedParticipant = participant with
         {
             InitiativeBase = initiativeInfo.BaseValue,
+            InitiativeSetId = initiativeInfo.SetId,
             InitiativeDiceCount = initiativeInfo.DiceCount,
             StartRoll = rollTotal,
             InitiativeCorrection = 0,
@@ -248,16 +249,14 @@ public sealed class CombatSessionStateService(
         }
 
         var initiativeInfo = await ResolveInitiativeInfoAsync(participant, request, userId, cancellationToken);
-        var baseValue = participant.InitiativeBase;
-        if (!baseValue.HasValue && participant.Kind == CombatParticipantKind.Hero)
-        {
-            baseValue = initiativeInfo.BaseValue;
-        }
+        var baseValue = initiativeInfo.BaseValue ?? participant.InitiativeBase;
 
-        var runtimeModifier = request.RuntimeState is null
+        var usesNewInitiativeInputs = request.RuntimeState is not null ||
+                                      !string.IsNullOrWhiteSpace(request.SetId);
+        var runtimeModifier = !usesNewInitiativeInputs
             ? participant.InitiativeRuntimeModifier
             : initiativeInfo.RuntimeModifier;
-        var runtimeNotes = request.RuntimeState is null
+        var runtimeNotes = !usesNewInitiativeInputs
             ? participant.InitiativeRuntimeNotes
             : initiativeInfo.RuntimeNotes;
 
@@ -268,6 +267,7 @@ public sealed class CombatSessionStateService(
         var updatedParticipant = participant with
         {
             InitiativeBase = baseValue,
+            InitiativeSetId = initiativeInfo.SetId ?? participant.InitiativeSetId,
             InitiativeRuntimeModifier = runtimeModifier,
             InitiativeRuntimeNotes = runtimeNotes,
             RuntimeState = request.RuntimeState ?? participant.RuntimeState,
@@ -301,8 +301,18 @@ public sealed class CombatSessionStateService(
                           ?? throw Validation("Der Teilnehmer für den laufenden Kampfzustand wurde nicht gefunden.");
         var initiativeInfo = await ResolveInitiativeInfoAsync(participant, request, userId, cancellationToken);
         var initiativeDelta = initiativeInfo.RuntimeModifier - participant.InitiativeRuntimeModifier;
+        var initiativeBase = participant.InitiativeBase;
+        var setChanged = initiativeInfo.SetId is not null &&
+                         !string.Equals(initiativeInfo.SetId, participant.InitiativeSetId, StringComparison.Ordinal);
+        if (setChanged && initiativeInfo.BaseValue.HasValue && initiativeBase.HasValue)
+        {
+            initiativeDelta += initiativeInfo.BaseValue.Value - initiativeBase.Value;
+            initiativeBase = initiativeInfo.BaseValue;
+        }
         var updatedParticipant = participant with
         {
+            InitiativeBase = initiativeBase,
+            InitiativeSetId = initiativeInfo.SetId ?? participant.InitiativeSetId,
             RuntimeState = request.RuntimeState,
             InitiativeRuntimeModifier = initiativeInfo.RuntimeModifier,
             InitiativeRuntimeNotes = initiativeInfo.RuntimeNotes,
@@ -699,22 +709,30 @@ public sealed class CombatSessionStateService(
             request.HasAttention,
             null,
             null,
+            participant.InitiativeSetId,
             0,
             []);
         }
 
         if (!participant.HeroId.HasValue || string.IsNullOrWhiteSpace(participant.OwnerUserId))
         {
-            return new InitiativeProfileInfo(null, 1, false, null, null, 0, []);
+            return new InitiativeProfileInfo(null, 1, false, null, null, null, 0, []);
         }
 
         var profile = await ReadCombatProfileAsync(participant, cancellationToken);
-        var selectedSet = profile?.Sets
-            .Where(set => set.IsInUse)
-            .OrderByDescending(set => set.IsDefault)
-            .FirstOrDefault()
-            ?? profile?.Sets.FirstOrDefault(set => set.IsDefault)
-            ?? profile?.Sets.FirstOrDefault();
+        var selectedSet = string.IsNullOrWhiteSpace(request.SetId)
+            ? profile?.Sets.FirstOrDefault(set => set.Id == participant.InitiativeSetId)
+              ?? profile?.Sets
+                  .Where(set => set.IsInUse)
+                  .OrderByDescending(set => set.IsDefault)
+                  .FirstOrDefault()
+              ?? profile?.Sets.FirstOrDefault(set => set.IsDefault)
+              ?? profile?.Sets.FirstOrDefault()
+            : profile?.Sets.FirstOrDefault(set => set.Id == request.SetId);
+        if (!string.IsNullOrWhiteSpace(request.SetId) && selectedSet is null)
+        {
+            throw Validation("Das ausgewählte Kampfset ist im importierten Profil nicht vorhanden.");
+        }
         var runtime = CombatRuntimeModifierRules.ResolveInitiative(
             profile,
             selectedSet,
@@ -725,6 +743,7 @@ public sealed class CombatSessionStateService(
             profile?.HasAttention == true,
             profile?.KriegskunstValue,
             profile,
+            selectedSet?.Id,
             runtime.Modifier,
             runtime.RuleNotes);
     }
@@ -1100,6 +1119,7 @@ public sealed class CombatSessionStateService(
         bool HasAttention,
         int? KriegskunstValue,
         CombatProfileDto? Profile,
+        string? SetId,
         int RuntimeModifier,
         string[] RuntimeNotes);
 

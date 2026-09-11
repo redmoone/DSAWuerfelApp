@@ -267,6 +267,8 @@ public partial class Kampf : IDisposable
         {
             await CombatState.SetSelectedActionAsync("attack");
         }
+
+        await SyncSessionRuntimeStateAsync(setId);
     }
 
     private async Task HandleWeaponSelected(string weaponId)
@@ -537,7 +539,8 @@ public partial class Kampf : IDisposable
                 _initiativeDraft.Value,
                 _initiativeParticipantId,
                 _initiativeHeroId,
-                BuildRuntimeState());
+                BuildRuntimeState(),
+                SelectedSet?.Id);
             _notice = result.Message;
             if (result.Applied)
             {
@@ -600,7 +603,8 @@ public partial class Kampf : IDisposable
                 var sessionResult = await CombatSessionState.RollInitiativeAsync(
                     _initiativeParticipantId,
                     _initiativeHeroId,
-                    BuildRuntimeState());
+                    BuildRuntimeState(),
+                    SelectedSet?.Id);
                 _initiativeDraft = sessionResult.Snapshot.Participants
                     .FirstOrDefault(participant => participant.Id == _initiativeParticipantId)?.CurrentInitiative;
                 _notice = sessionResult.Message;
@@ -771,7 +775,8 @@ public partial class Kampf : IDisposable
             ActiveHero?.Id,
             hasAttention ? null : _orientationReliefDraft,
             _orientationUninterruptedDraft,
-            BuildRuntimeState());
+            BuildRuntimeState(),
+            SelectedSet?.Id);
         _notice = result.Message;
     }
 
@@ -800,7 +805,8 @@ public partial class Kampf : IDisposable
             action.Id,
             action.ParticipantId,
             ActiveHero?.Id,
-            BuildRuntimeState());
+            BuildRuntimeState(),
+            SelectedSet?.Id);
         _notice = result.Message;
     }
 
@@ -941,7 +947,7 @@ public partial class Kampf : IDisposable
         Wounds = Wounds.ToDictionary(pair => pair.Key, pair => pair.Value)
     };
 
-    private async Task<CombatSessionMutationResultDto?> SyncSessionRuntimeStateAsync()
+    private async Task<CombatSessionMutationResultDto?> SyncSessionRuntimeStateAsync(string? setId = null)
     {
         if (!IsSessionCombat || OwnSessionParticipant is not { } participant || ActiveHero is null)
         {
@@ -951,7 +957,8 @@ public partial class Kampf : IDisposable
         return await CombatSessionState.SyncRuntimeStateAsync(
             BuildRuntimeState(),
             participant.Id,
-            ActiveHero.Id);
+            ActiveHero.Id,
+            setId ?? SelectedSet?.Id);
     }
 
     private static string FormatSigned(int value) => value > 0 ? $"+{value}" : value.ToString(CultureInfo.InvariantCulture);
