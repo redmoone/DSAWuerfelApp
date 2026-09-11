@@ -732,7 +732,12 @@ public partial class Kampf : IDisposable
 
     private async Task CompleteActionAsync(CombatSessionActionDto action)
     {
-        var result = await CombatSessionState.CompleteActionAsync(action.Id, action.ParticipantId);
+        var result = await CombatSessionState.CompleteActionAsync(
+            action.Id,
+            action.ParticipantId,
+            ActiveHero?.Id,
+            BuildRuntimeState(),
+            SelectedSet?.Id);
         _notice = result.Message;
     }
 

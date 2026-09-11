@@ -159,12 +159,16 @@ public sealed class CombatSessionState : IDisposable
         string? actionId = null,
         string? participantId = null,
         Guid? heroId = null,
+        CombatRuntimeStateDto? runtimeState = null,
+        string? setId = null,
         CancellationToken cancellationToken = default) => MutateAsync(new CombatSessionMutationRequestDto
         {
             Kind = CombatSessionMutationKind.CompleteAction,
             ActionId = actionId,
             ParticipantId = participantId,
-            HeroId = heroId
+            HeroId = heroId,
+            RuntimeState = runtimeState,
+            SetId = setId
         }, cancellationToken);
 
     public Task<CombatSessionMutationResultDto> ConsumeReactionAsync(

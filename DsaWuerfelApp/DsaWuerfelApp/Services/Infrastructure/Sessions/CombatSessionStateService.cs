@@ -115,7 +115,7 @@ public sealed class CombatSessionStateService(
                     (next, description) = await SyncRuntimeStateAsync(current, request, userId, cancellationToken);
                     break;
                 case CombatSessionMutationKind.CompleteAction:
-                    (next, description) = CompleteAction(current, request);
+                    (next, description) = await CompleteActionAsync(current, request, userId, cancellationToken);
                     break;
                 case CombatSessionMutationKind.ConsumeReaction:
                     (next, description) = ConsumeReaction(current, request);
@@ -300,26 +300,7 @@ public sealed class CombatSessionStateService(
         var participant = FindParticipant(current, request.ParticipantId, request.HeroId)
                           ?? throw Validation("Der Teilnehmer für den laufenden Kampfzustand wurde nicht gefunden.");
         var initiativeInfo = await ResolveInitiativeInfoAsync(participant, request, userId, cancellationToken);
-        var initiativeDelta = initiativeInfo.RuntimeModifier - participant.InitiativeRuntimeModifier;
-        var initiativeBase = participant.InitiativeBase;
-        var setChanged = initiativeInfo.SetId is not null &&
-                         !string.Equals(initiativeInfo.SetId, participant.InitiativeSetId, StringComparison.Ordinal);
-        if (setChanged && initiativeInfo.BaseValue.HasValue && initiativeBase.HasValue)
-        {
-            initiativeDelta += initiativeInfo.BaseValue.Value - initiativeBase.Value;
-            initiativeBase = initiativeInfo.BaseValue;
-        }
-        var updatedParticipant = participant with
-        {
-            InitiativeBase = initiativeBase,
-            InitiativeSetId = initiativeInfo.SetId ?? participant.InitiativeSetId,
-            RuntimeState = request.RuntimeState,
-            InitiativeRuntimeModifier = initiativeInfo.RuntimeModifier,
-            InitiativeRuntimeNotes = initiativeInfo.RuntimeNotes,
-            CurrentInitiative = participant.CurrentInitiative.HasValue
-                ? participant.CurrentInitiative.Value + initiativeDelta
-                : null
-        };
+        var updatedParticipant = ApplyInitiativeInputs(participant, request, initiativeInfo, out var initiativeDelta);
 
         var description = initiativeDelta == 0
             ? $"Laufender Kampfzustand von {participant.Name} gespeichert"
@@ -327,9 +308,11 @@ public sealed class CombatSessionStateService(
         return (current with { Participants = ReplaceParticipant(current.Participants, updatedParticipant) }, description);
     }
 
-    private static (CombatSessionSnapshotDto Snapshot, string Description) CompleteAction(
+    private async Task<(CombatSessionSnapshotDto Snapshot, string Description)> CompleteActionAsync(
         CombatSessionSnapshotDto current,
-        CombatSessionMutationRequestDto request)
+        CombatSessionMutationRequestDto request,
+        string userId,
+        CancellationToken cancellationToken)
     {
         var action = FindAction(current, request.ActionId, request.ParticipantId)
                      ?? throw Validation("Die offene Handlung wurde nicht gefunden.");
@@ -343,6 +326,19 @@ public sealed class CombatSessionStateService(
             throw Validation("Für dieses Orientieren muss zuerst die IN-Probe gewürfelt werden.");
         }
 
+        var participant = current.Participants.FirstOrDefault(item => item.Id == action.ParticipantId)
+                          ?? throw Validation("Der Teilnehmer für die Handlung wurde nicht gefunden.");
+        if (request.RuntimeState is not null || !string.IsNullOrWhiteSpace(request.SetId))
+        {
+            var initiativeInfo = await ResolveInitiativeInfoAsync(
+                participant,
+                request,
+                userId,
+                cancellationToken);
+            participant = ApplyInitiativeInputs(participant, request, initiativeInfo, out _);
+            current = current with { Participants = ReplaceParticipant(current.Participants, participant) };
+        }
+
         var actions = ReplaceAction(current.Actions, action with
         {
             State = CombatActionEntryState.Completed,
@@ -352,7 +348,6 @@ public sealed class CombatSessionStateService(
         if (action.Label.Equals("Orientieren", StringComparison.OrdinalIgnoreCase) &&
             action.OrientationUninterrupted)
         {
-            var participant = current.Participants.First(item => item.Id == action.ParticipantId);
             participants = ReplaceParticipant(participants, ApplyOrientation(participant));
         }
 
@@ -361,6 +356,35 @@ public sealed class CombatSessionStateService(
             ? "Orientieren abgeschlossen, aber nicht ungestört möglich; INI bleibt unverändert"
             : $"{action.Label} abgeschlossen";
         return (current with { Actions = actions, Participants = participants }, description);
+    }
+
+    private static CombatSessionParticipantDto ApplyInitiativeInputs(
+        CombatSessionParticipantDto participant,
+        CombatSessionMutationRequestDto request,
+        InitiativeProfileInfo initiativeInfo,
+        out int initiativeDelta)
+    {
+        initiativeDelta = initiativeInfo.RuntimeModifier - participant.InitiativeRuntimeModifier;
+        var initiativeBase = participant.InitiativeBase;
+        var setChanged = initiativeInfo.SetId is not null &&
+                         !string.Equals(initiativeInfo.SetId, participant.InitiativeSetId, StringComparison.Ordinal);
+        if (setChanged && initiativeInfo.BaseValue.HasValue && initiativeBase.HasValue)
+        {
+            initiativeDelta += initiativeInfo.BaseValue.Value - initiativeBase.Value;
+            initiativeBase = initiativeInfo.BaseValue;
+        }
+
+        return participant with
+        {
+            InitiativeBase = initiativeBase,
+            InitiativeSetId = initiativeInfo.SetId ?? participant.InitiativeSetId,
+            RuntimeState = request.RuntimeState ?? participant.RuntimeState,
+            InitiativeRuntimeModifier = initiativeInfo.RuntimeModifier,
+            InitiativeRuntimeNotes = initiativeInfo.RuntimeNotes,
+            CurrentInitiative = participant.CurrentInitiative.HasValue
+                ? participant.CurrentInitiative.Value + initiativeDelta
+                : null
+        };
     }
 
     private async Task<(CombatSessionSnapshotDto Snapshot, DiceRollDto[] Rolls, string Description)> ResolveOrientationAsync(

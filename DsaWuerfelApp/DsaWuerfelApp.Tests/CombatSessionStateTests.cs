@@ -277,6 +277,69 @@ public sealed class CombatSessionStateTests
             switchedParticipant.CurrentInitiative);
     }
 
+    [Fact]
+    public async Task Completing_attention_orientation_uses_the_latest_runtime_modifier()
+    {
+        using var factory = new TestApplicationFactory();
+        var hero = await SeedHeroAsync(factory, "owner");
+        var session = CreateSession(factory, hero, "owner");
+        var state = factory.Services.GetRequiredService<CombatSessionStateService>();
+        var initial = await state.GetAsync(session.SessionId, "owner");
+        var startState = CreateRuntimeState(28);
+
+        var rolled = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = initial.Revision,
+            Kind = CombatSessionMutationKind.RollInitiative,
+            HeroId = hero.Id,
+            RuntimeState = startState
+        }, "owner");
+        var participant = Assert.Single(rolled.Snapshot.Participants, item => item.HeroId == hero.Id);
+
+        var oriented = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = rolled.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.Orient,
+            ParticipantId = participant.Id,
+            RuntimeState = startState,
+            OrientationUninterrupted = true
+        }, "owner");
+        var orientation = Assert.Single(oriented.Snapshot.Actions, action =>
+            action.ParticipantId == participant.Id && action.Label == "Orientieren");
+
+        var completed = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = oriented.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.CompleteAction,
+            ActionId = orientation.Id,
+            ParticipantId = participant.Id,
+            RuntimeState = CreateRuntimeState(8)
+        }, "owner");
+
+        var completedParticipant = Assert.Single(completed.Snapshot.Participants, item => item.HeroId == hero.Id);
+        Assert.Equal(CombatActionEntryState.Completed,
+            Assert.Single(completed.Snapshot.Actions, action => action.Id == orientation.Id).State);
+        Assert.Equal(-1, completedParticipant.InitiativeRuntimeModifier);
+        Assert.Equal(8, completedParticipant.RuntimeState?.CurrentAuP);
+        Assert.Equal(completedParticipant.InitiativeBase + completedParticipant.InitiativeDiceCount * 6 - 1 +
+                     completedParticipant.InitiativeCorrection,
+            completedParticipant.CurrentInitiative);
+    }
+
+    private static CombatRuntimeStateDto CreateRuntimeState(int currentAuP) => new()
+    {
+        IsStarted = true,
+        CurrentLeP = 22,
+        CurrentAuP = currentAuP,
+        Wounds = Enum.GetValues<CombatWoundZone>().ToDictionary(zone => zone, _ => (int?)0)
+    };
+
     private static GameSession CreateSession(TestApplicationFactory factory, Hero hero, string owner)
     {
         var sessions = factory.Services.GetRequiredService<SessionService>();
@@ -300,6 +363,7 @@ public sealed class CombatSessionStateTests
                 <daten>
                   <angaben><name>Kampftestheld</name><wundschwelle>4</wundschwelle></angaben>
                   <eigenschaften><intuition><akt>14</akt></intuition><lebensenergie><akt>22</akt></lebensenergie><ausdauer><akt>28</akt></ausdauer></eigenschaften>
+                  <sonderfertigkeiten><sonderfertigkeit><name>Aufmerksamkeit</name><bezeichner>Aufmerksamkeit</bezeichner><bereich>Kampf</bereich></sonderfertigkeit></sonderfertigkeiten>
                   <kampfsets><kampfset nr="1" tzm="true" inbenutzung="true"><ini>11</ini><ausweichen>13</ausweichen><ruestungzonen><kopf>0</kopf><brust>0</brust><ruecken>0</ruecken><bauch>0</bauch><linkerarm>0</linkerarm><rechterarm>0</rechterarm><linkesbein>0</linkesbein><rechtesbein>0</rechtesbein></ruestungzonen></kampfset><kampfset nr="2" tzm="false" inbenutzung="false"><ini>8</ini><ruestungeinfach><gesamt>0</gesamt><behinderung>0</behinderung></ruestungeinfach></kampfset></kampfsets>
                 </daten>
                 """)

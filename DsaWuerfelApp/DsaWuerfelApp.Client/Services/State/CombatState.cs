@@ -112,8 +112,28 @@ public sealed class CombatState : IDisposable
         }
 
         var set = Profile.Sets.First(set => string.Equals(set.Id, setId, StringComparison.Ordinal));
+        var previous = _runtime;
         var weaponId = PreferredWeaponId(set);
-        _runtime = _runtime with { SelectedSetId = set.Id, SelectedWeaponId = weaponId };
+        var next = _runtime with { SelectedSetId = set.Id, SelectedWeaponId = weaponId };
+        var previousBase = ResolveInitiativeBase(previous);
+        var nextBase = ResolveInitiativeBase(next);
+        var previousModifier = ResolveInitiativeRuntimeModifier(previous);
+        var nextModifier = ResolveInitiativeRuntimeModifier(next);
+        var baseDelta = previousBase.HasValue && nextBase.HasValue
+            ? nextBase.Value - previousBase.Value
+            : 0;
+        var initiativeDelta = baseDelta + nextModifier - previousModifier;
+        _runtime = next with
+        {
+            InitiativeRuntimeModifier = nextModifier,
+            CurrentInitiative = previous.CurrentInitiative.HasValue
+                ? previous.CurrentInitiative.Value + initiativeDelta
+                : next.CurrentInitiative
+        };
+        if (previous.CurrentInitiative.HasValue && initiativeDelta != 0)
+        {
+            _undo = previous;
+        }
         await PersistCurrentAsync();
     }
 
@@ -646,6 +666,17 @@ public sealed class CombatState : IDisposable
             Wounds = runtime.Wounds?.ToDictionary(pair => pair.Key, pair => pair.Value) ?? EmptyWounds()
         };
         return CombatRuntimeModifierRules.ResolveInitiative(Profile, set, state).Modifier;
+    }
+
+    private int? ResolveInitiativeBase(CombatRuntimeSnapshot runtime)
+    {
+        if (Profile is null)
+        {
+            return null;
+        }
+
+        return Profile.Sets.FirstOrDefault(current => current.Id == runtime.SelectedSetId)?.Initiative
+               ?? PreferredSet(Profile.Sets)?.Initiative;
     }
 
     private static CombatRuntimeSnapshot NormalizeSnapshot(
