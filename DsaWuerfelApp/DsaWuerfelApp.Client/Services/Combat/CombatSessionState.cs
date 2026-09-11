@@ -221,10 +221,26 @@ public sealed class CombatSessionState : IDisposable
         bool hasAttention,
         string? participantId = null,
         Guid? heroId = null,
+        int? orientationRelief = null,
+        bool orientationUninterrupted = true,
         CancellationToken cancellationToken = default) => MutateAsync(new CombatSessionMutationRequestDto
         {
             Kind = CombatSessionMutationKind.Orient,
             HasAttention = hasAttention,
+            OrientationRelief = orientationRelief,
+            OrientationUninterrupted = orientationUninterrupted,
+            ParticipantId = participantId,
+            HeroId = heroId
+        }, cancellationToken);
+
+    public Task<CombatSessionMutationResultDto> ResolveOrientationAsync(
+        string actionId,
+        string? participantId = null,
+        Guid? heroId = null,
+        CancellationToken cancellationToken = default) => MutateAsync(new CombatSessionMutationRequestDto
+        {
+            Kind = CombatSessionMutationKind.ResolveOrientation,
+            ActionId = actionId,
             ParticipantId = participantId,
             HeroId = heroId
         }, cancellationToken);

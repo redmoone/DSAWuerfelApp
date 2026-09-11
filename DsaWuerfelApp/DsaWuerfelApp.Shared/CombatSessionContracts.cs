@@ -26,7 +26,8 @@ public enum CombatSessionMutationKind
     NewRound,
     Undo,
     SetAnnouncement,
-    Orient
+    Orient,
+    ResolveOrientation
 }
 
 public sealed record CombatSessionParticipantDto
@@ -39,7 +40,9 @@ public sealed record CombatSessionParticipantDto
     public string? Affiliation { get; init; }
     public int? InitiativeBase { get; init; }
     public int? StartRoll { get; init; }
+    public int InitiativeDiceCount { get; init; } = 1;
     public int InitiativeCorrection { get; init; }
+    public int RecoverableInitiativeLoss { get; init; }
     public int? CurrentInitiative { get; init; }
     public bool IsOnline { get; init; }
     public bool ActionAvailable { get; init; }
@@ -60,6 +63,8 @@ public sealed record CombatSessionActionDto
     public bool IsReaction { get; init; }
     public bool IsAdditional { get; init; }
     public bool RequiresCheck { get; init; }
+    public int OrientationRelief { get; init; }
+    public bool OrientationUninterrupted { get; init; } = true;
     public CombatActionEntryState State { get; init; } = CombatActionEntryState.Open;
     public string? Announcement { get; init; }
     public bool IsCatchUp { get; init; }
@@ -103,6 +108,8 @@ public sealed record CombatSessionMutationRequestDto
     public int? PhaseInitiative { get; init; }
     public bool IsReaction { get; init; }
     public bool HasAttention { get; init; }
+    public int? OrientationRelief { get; init; }
+    public bool OrientationUninterrupted { get; init; } = true;
     public string? Announcement { get; init; }
 }
 

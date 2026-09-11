@@ -141,7 +141,18 @@ public sealed class CombatSessionStateService(
                     (next, description) = SetAnnouncement(current, request);
                     break;
                 case CombatSessionMutationKind.Orient:
-                    (next, description) = AddOrientationAction(current, request);
+                    (next, description) = await AddOrientationActionAsync(
+                        current,
+                        request,
+                        userId,
+                        cancellationToken);
+                    break;
+                case CombatSessionMutationKind.ResolveOrientation:
+                    (next, rolls, description) = await ResolveOrientationAsync(
+                        current,
+                        request,
+                        userId,
+                        cancellationToken);
                     break;
                 default:
                     throw Validation("Diese Kampfänderung wird nicht unterstützt.");
@@ -181,19 +192,22 @@ public sealed class CombatSessionStateService(
     {
         var participant = FindParticipant(current, request.ParticipantId, request.HeroId)
                           ?? throw Validation("Der Initiative-Teilnehmer wurde nicht gefunden.");
-        var baseValue = await ResolveInitiativeBaseAsync(participant, request, userId, cancellationToken);
-        if (!baseValue.HasValue)
+        var initiativeInfo = await ResolveInitiativeInfoAsync(participant, request, userId, cancellationToken);
+        if (!initiativeInfo.BaseValue.HasValue)
         {
             throw Validation("Für diesen Teilnehmer ist kein Initiative-Basiswert vorhanden.");
         }
 
-        var roll = diceService.RollDice([new DiceRollGroupDto(6, 1)]);
+        var roll = diceService.RollDice([new DiceRollGroupDto(6, initiativeInfo.DiceCount)]);
+        var rollTotal = roll.Sum(result => result.Value);
         var updatedParticipant = participant with
         {
-            InitiativeBase = baseValue,
-            StartRoll = roll[0].Value,
+            InitiativeBase = initiativeInfo.BaseValue,
+            InitiativeDiceCount = initiativeInfo.DiceCount,
+            StartRoll = rollTotal,
             InitiativeCorrection = 0,
-            CurrentInitiative = baseValue.Value + roll[0].Value,
+            RecoverableInitiativeLoss = 0,
+            CurrentInitiative = initiativeInfo.BaseValue.Value + rollTotal,
             ActionAvailable = true,
             ReactionAvailable = true,
             IsOriented = false
@@ -228,11 +242,12 @@ public sealed class CombatSessionStateService(
         var baseValue = participant.InitiativeBase;
         if (!baseValue.HasValue && participant.Kind == CombatParticipantKind.Hero)
         {
-            baseValue = await ResolveInitiativeBaseAsync(participant, request, userId, cancellationToken);
+            baseValue = (await ResolveInitiativeInfoAsync(participant, request, userId, cancellationToken)).BaseValue;
         }
 
         var correction = baseValue.HasValue && participant.StartRoll.HasValue
-            ? request.Initiative.Value - (baseValue.Value + participant.StartRoll.Value)
+            ? request.Initiative.Value -
+              (baseValue.Value + participant.StartRoll.Value - participant.RecoverableInitiativeLoss)
             : request.Initiative.Value - (baseValue ?? 0);
         var updatedParticipant = participant with
         {
@@ -263,19 +278,110 @@ public sealed class CombatSessionStateService(
             throw Validation("Nur eine offene eigene Handlung kann abgeschlossen werden.");
         }
 
+        if (action.Label.Equals("Orientieren", StringComparison.OrdinalIgnoreCase) && action.RequiresCheck)
+        {
+            throw Validation("Für dieses Orientieren muss zuerst die IN-Probe gewürfelt werden.");
+        }
+
         var actions = ReplaceAction(current.Actions, action with
         {
             State = CombatActionEntryState.Completed,
             CompletedAt = DateTimeOffset.UtcNow
         });
         var participants = current.Participants;
-        if (action.Label.Equals("Orientieren", StringComparison.OrdinalIgnoreCase) && !action.RequiresCheck)
+        if (action.Label.Equals("Orientieren", StringComparison.OrdinalIgnoreCase) &&
+            action.OrientationUninterrupted)
         {
             var participant = current.Participants.First(item => item.Id == action.ParticipantId);
-            participants = ReplaceParticipant(participants, participant with { IsOriented = true });
+            participants = ReplaceParticipant(participants, ApplyOrientation(participant));
         }
 
-        return (current with { Actions = actions, Participants = participants }, $"{action.Label} abgeschlossen");
+        var description = action.Label.Equals("Orientieren", StringComparison.OrdinalIgnoreCase) &&
+                          !action.OrientationUninterrupted
+            ? "Orientieren abgeschlossen, aber nicht ungestört möglich; INI bleibt unverändert"
+            : $"{action.Label} abgeschlossen";
+        return (current with { Actions = actions, Participants = participants }, description);
+    }
+
+    private async Task<(CombatSessionSnapshotDto Snapshot, DiceRollDto[] Rolls, string Description)> ResolveOrientationAsync(
+        CombatSessionSnapshotDto current,
+        CombatSessionMutationRequestDto request,
+        string userId,
+        CancellationToken cancellationToken)
+    {
+        var action = FindAction(current, request.ActionId, request.ParticipantId)
+                     ?? throw Validation("Die Orientieren-Handlung wurde nicht gefunden.");
+        if (!action.Label.Equals("Orientieren", StringComparison.OrdinalIgnoreCase) || !action.RequiresCheck)
+        {
+            throw Validation("Für diese Orientieren-Handlung ist keine IN-Probe erforderlich.");
+        }
+
+        if (action.State != CombatActionEntryState.Open)
+        {
+            throw Validation("Die Orientieren-Handlung ist nicht mehr offen.");
+        }
+
+        var participant = FindParticipant(current, action.ParticipantId, null)
+                          ?? throw Validation("Der Teilnehmer für Orientieren wurde nicht gefunden.");
+        var completedAction = action with
+        {
+            State = CombatActionEntryState.Completed,
+            CompletedAt = DateTimeOffset.UtcNow
+        };
+        var actions = ReplaceAction(current.Actions, completedAction);
+
+        if (!action.OrientationUninterrupted)
+        {
+            return (current with { Actions = actions }, [],
+                $"Orientieren von {participant.Name} nicht möglich: nicht ungestört; INI bleibt unverändert");
+        }
+
+        var initiativeInfo = await ResolveInitiativeInfoAsync(
+            participant,
+            request,
+            userId,
+            cancellationToken);
+        var intuition = initiativeInfo.Profile?.Attributes
+            .FirstOrDefault(attribute => string.Equals(attribute.Key, "IN", StringComparison.OrdinalIgnoreCase))
+            ?.Value;
+        if (!intuition.HasValue)
+        {
+            throw Validation($"Für {participant.Name} ist kein importierter IN-Wert verfügbar.");
+        }
+
+        var target = Math.Clamp(intuition.Value + action.OrientationRelief, 0, 20);
+        var roll = diceService.RollDice([new DiceRollGroupDto(20, 1)])[0];
+        if (roll.Value > target)
+        {
+            return (current with { Actions = actions }, [roll],
+                $"IN-Probe für {participant.Name}: {roll.Value} gegen {target} misslungen; INI bleibt unverändert");
+        }
+
+        var orientedParticipant = ApplyOrientation(participant);
+        return (current with
+        {
+            Actions = actions,
+            Participants = ReplaceParticipant(current.Participants, orientedParticipant)
+        }, [roll],
+            $"IN-Probe für {participant.Name}: {roll.Value} gegen {target} gelungen; INI auf Orientieren gesetzt");
+    }
+
+    private static CombatSessionParticipantDto ApplyOrientation(CombatSessionParticipantDto participant)
+    {
+        if (!participant.InitiativeBase.HasValue)
+        {
+            throw Validation("Orientieren braucht einen bekannten Initiative-Basiswert.");
+        }
+
+        var initiativeDiceMaximum = participant.InitiativeDiceCount >= 2 ? 12 : 6;
+        return participant with
+        {
+            StartRoll = initiativeDiceMaximum,
+            RecoverableInitiativeLoss = 0,
+            CurrentInitiative = participant.InitiativeBase.Value + initiativeDiceMaximum +
+                                participant.InitiativeCorrection,
+            IsOriented = true
+        };
     }
 
     private static (CombatSessionSnapshotDto Snapshot, string Description) ConsumeReaction(
@@ -461,9 +567,11 @@ public sealed class CombatSessionStateService(
         }, announcement is null ? $"Ansage von {participant.Name} entfernt" : $"Ansage von {participant.Name} gespeichert");
     }
 
-    private static (CombatSessionSnapshotDto Snapshot, string Description) AddOrientationAction(
+    private async Task<(CombatSessionSnapshotDto Snapshot, string Description)> AddOrientationActionAsync(
         CombatSessionSnapshotDto current,
-        CombatSessionMutationRequestDto request)
+        CombatSessionMutationRequestDto request,
+        string userId,
+        CancellationToken cancellationToken)
     {
         var participant = FindParticipant(current, request.ParticipantId, request.HeroId)
                           ?? throw Validation("Der Teilnehmer für Orientieren wurde nicht gefunden.");
@@ -472,6 +580,27 @@ public sealed class CombatSessionStateService(
             throw Validation("Orientieren ist erst nach dem ersten Initiativewurf verfügbar.");
         }
 
+        if (current.Actions.Any(action => action.ParticipantId == participant.Id &&
+                                          action.Round == current.Round &&
+                                          action.Label.Equals("Orientieren", StringComparison.OrdinalIgnoreCase) &&
+                                          action.State != CombatActionEntryState.Completed))
+        {
+            throw Validation("Für diesen Teilnehmer ist in der aktuellen Runde bereits Orientieren offen.");
+        }
+
+        var initiativeInfo = await ResolveInitiativeInfoAsync(
+            participant,
+            request,
+            userId,
+            cancellationToken);
+        var hasAttention = participant.Kind == CombatParticipantKind.Hero
+            ? initiativeInfo.HasAttention
+            : request.HasAttention;
+        var importedRelief = initiativeInfo.KriegskunstValue is { } kriegskunst
+            ? Math.Max(0, kriegskunst / 2)
+            : 0;
+        var orientationRelief = Math.Clamp(request.OrientationRelief ?? importedRelief, 0, 20);
+
         var action = new CombatSessionActionDto
         {
             Id = Guid.NewGuid().ToString("N"),
@@ -479,20 +608,26 @@ public sealed class CombatSessionStateService(
             Label = "Orientieren",
             Round = current.Round,
             PhaseInitiative = participant.CurrentInitiative,
-            ActionCost = request.HasAttention ? 1 : 2,
-            RequiresCheck = !request.HasAttention,
+            ActionCost = hasAttention ? 1 : 2,
+            RequiresCheck = !hasAttention,
+            OrientationRelief = orientationRelief,
+            OrientationUninterrupted = request.OrientationUninterrupted,
             State = CombatActionEntryState.Open,
-            Announcement = request.HasAttention
-                ? "Aufmerksamkeit: 1 Aktion"
-                : "IN-Probe mit Kriegskunst-Erleichterung erforderlich"
+            Announcement = hasAttention
+                ? request.OrientationUninterrupted
+                    ? "Aufmerksamkeit: 1 Aktion · ungestört möglich"
+                    : "Aufmerksamkeit: 1 Aktion · nicht ungestört"
+                : request.OrientationUninterrupted
+                    ? $"2 Aktionen · IN-Probe · Kriegskunst-Erleichterung +{orientationRelief}"
+                    : "2 Aktionen · nicht ungestört"
         };
         return (current with { Actions = current.Actions.Append(action).ToArray() },
-            request.HasAttention
+            hasAttention
                 ? $"Orientieren für {participant.Name} als 1 Aktion angelegt"
                 : $"Orientieren für {participant.Name} als 2 Aktionen mit IN-Probe angelegt");
     }
 
-    private async Task<int?> ResolveInitiativeBaseAsync(
+    private async Task<InitiativeProfileInfo> ResolveInitiativeInfoAsync(
         CombatSessionParticipantDto participant,
         CombatSessionMutationRequestDto request,
         string userId,
@@ -500,9 +635,38 @@ public sealed class CombatSessionStateService(
     {
         if (participant.Kind == CombatParticipantKind.Opponent)
         {
-            return request.InitiativeBase ?? participant.InitiativeBase;
+            return new InitiativeProfileInfo(
+                request.InitiativeBase ?? participant.InitiativeBase,
+                Math.Clamp(participant.InitiativeDiceCount, 1, 2),
+                request.HasAttention,
+                null,
+                null);
         }
 
+        if (!participant.HeroId.HasValue || string.IsNullOrWhiteSpace(participant.OwnerUserId))
+        {
+            return new InitiativeProfileInfo(null, 1, false, null, null);
+        }
+
+        var profile = await ReadCombatProfileAsync(participant, cancellationToken);
+        var selectedSet = profile?.Sets
+            .Where(set => set.IsInUse)
+            .OrderByDescending(set => set.IsDefault)
+            .FirstOrDefault()
+            ?? profile?.Sets.FirstOrDefault(set => set.IsDefault)
+            ?? profile?.Sets.FirstOrDefault();
+        return new InitiativeProfileInfo(
+            selectedSet?.Initiative,
+            profile?.HasKlingentaenzer == true ? 2 : 1,
+            profile?.HasAttention == true,
+            profile?.KriegskunstValue,
+            profile);
+    }
+
+    private async Task<CombatProfileDto?> ReadCombatProfileAsync(
+        CombatSessionParticipantDto participant,
+        CancellationToken cancellationToken)
+    {
         if (!participant.HeroId.HasValue || string.IsNullOrWhiteSpace(participant.OwnerUserId))
         {
             return null;
@@ -510,14 +674,7 @@ public sealed class CombatSessionStateService(
 
         await using var scope = scopeFactory.CreateAsyncScope();
         var profileReader = scope.ServiceProvider.GetRequiredService<HeroCombatProfileReader>();
-        var profile = await profileReader.ReadAsync(participant.HeroId.Value, participant.OwnerUserId, cancellationToken);
-        var selectedSet = profile?.Sets
-            .Where(set => set.IsInUse)
-            .OrderByDescending(set => set.IsDefault)
-            .FirstOrDefault()
-            ?? profile?.Sets.FirstOrDefault(set => set.IsDefault)
-            ?? profile?.Sets.FirstOrDefault();
-        return selectedSet?.Initiative;
+        return await profileReader.ReadAsync(participant.HeroId.Value, participant.OwnerUserId, cancellationToken);
     }
 
     private AuthorizationResult ResolveAuthorization(
@@ -632,6 +789,7 @@ public sealed class CombatSessionStateService(
             .Select(action => action with
             {
                 ActionCost = Math.Clamp(action.ActionCost, 1, 3),
+                OrientationRelief = Math.Clamp(action.OrientationRelief, 0, 20),
                 Label = string.IsNullOrWhiteSpace(action.Label) ? "Handlung" : action.Label,
                 State = Enum.IsDefined(action.State) ? action.State : CombatActionEntryState.Open
             })
@@ -641,7 +799,13 @@ public sealed class CombatSessionStateService(
         {
             SessionId = session.SessionId,
             Round = Math.Max(1, normalized.Round),
-            Participants = participants.ToArray(),
+            Participants = participants
+                .Select(participant => participant with
+                {
+                    InitiativeDiceCount = Math.Clamp(participant.InitiativeDiceCount, 1, 2),
+                    RecoverableInitiativeLoss = Math.Max(0, participant.RecoverableInitiativeLoss)
+                })
+                .ToArray(),
             Actions = actions,
             CurrentActionId = normalized.CurrentActionId,
             CurrentActionIds = normalized.CurrentActionIds ?? []
@@ -834,6 +998,13 @@ public sealed class CombatSessionStateService(
         CombatSessionSnapshotDto? Undo,
         string? UndoOwnerUserId,
         Guid[] AppliedRequestIds);
+
+    private sealed record InitiativeProfileInfo(
+        int? BaseValue,
+        int DiceCount,
+        bool HasAttention,
+        int? KriegskunstValue,
+        CombatProfileDto? Profile);
 
     private sealed record AuthorizationResult(bool Allowed, string Message);
 }
