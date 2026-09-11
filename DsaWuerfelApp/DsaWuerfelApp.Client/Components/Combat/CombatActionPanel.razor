@@ -161,6 +161,18 @@
                           ResultVersion="@ResultVersion" />
         </div>
 
+        <WuerfelActionBar RollText="@RollText"
+                         RollTextChanged="RollTextChanged"
+                         Modifier="@Modifier"
+                         ModifierChanged="ModifierChanged"
+                         ResetRequested="ResetRequested"
+                         RollRequested="RollRequested"
+                         CanRoll="@CanRoll"
+                         IsBusy="@IsBusy"
+                         RollButtonText="Wurf ausführen"
+                         RollButtonAriaLabel="Kampfwurf ausführen"
+                         AllowDirectModifierInput="true" />
+
         @if (CombatResult is not null)
         {
             <div class="combat-roll-result" data-testid="combat-roll-result" aria-live="assertive">
@@ -174,17 +186,5 @@
                 </button>
             </div>
         }
-
-        <WuerfelActionBar RollText="@RollText"
-                         RollTextChanged="RollTextChanged"
-                         Modifier="@Modifier"
-                         ModifierChanged="ModifierChanged"
-                         ResetRequested="ResetRequested"
-                         RollRequested="RollRequested"
-                         CanRoll="@CanRoll"
-                         IsBusy="@IsBusy"
-                         RollButtonText="Wurf ausführen"
-                         RollButtonAriaLabel="Kampfwurf ausführen"
-                         AllowDirectModifierInput="true" />
     </div>
 </section>

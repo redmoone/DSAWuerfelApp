@@ -92,3 +92,23 @@
     min-width: 25px;
     text-align: right;
 }
+
+.modifier-direct-input {
+    box-sizing: border-box;
+    width: 4.2rem;
+    min-height: 1.55rem;
+    padding: 0 0.2rem;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--dsa-white);
+    font: inherit;
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-align: center;
+}
+
+.modifier-direct-input:focus-visible {
+    outline: 2px solid var(--dsa-gold);
+    outline-offset: 2px;
+}
