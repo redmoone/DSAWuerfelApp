@@ -332,6 +332,51 @@ public sealed class CombatSessionStateTests
             completedParticipant.CurrentInitiative);
     }
 
+    [Fact]
+    public async Task Undo_is_rejected_after_a_foreign_session_mutation()
+    {
+        using var factory = new TestApplicationFactory();
+        var ownerHero = await SeedHeroAsync(factory, "owner");
+        var otherHero = await SeedHeroAsync(factory, "other");
+        var session = CreateSession(factory, ownerHero, "owner");
+        var sessions = factory.Services.GetRequiredService<SessionService>();
+        sessions.AddPlayer(session.SessionId, new PlayerInfo { UserId = "other", Name = "Andere" });
+        sessions.UpdatePlayerHero(session.SessionId, "other", otherHero.Id, otherHero.Name);
+        var state = factory.Services.GetRequiredService<CombatSessionStateService>();
+
+        var initial = await state.GetAsync(session.SessionId, "owner");
+        var rolled = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = initial.Revision,
+            Kind = CombatSessionMutationKind.RollInitiative,
+            HeroId = ownerHero.Id
+        }, "owner");
+        var otherParticipant = Assert.Single(rolled.Snapshot.Participants, item => item.HeroId == otherHero.Id);
+        var foreign = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = rolled.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.SetAnnouncement,
+            ParticipantId = otherParticipant.Id,
+            Announcement = "Andere Ansage"
+        }, "other");
+
+        await Assert.ThrowsAsync<RequestRejectedException>(() => state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = foreign.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.Undo
+        }, "owner"));
+
+        var current = await state.GetAsync(session.SessionId, "owner");
+        Assert.Equal(foreign.Snapshot.Revision, current.Revision);
+        Assert.Equal("Andere Ansage", Assert.Single(current.Participants, item => item.HeroId == otherHero.Id).Announcement);
+    }
+
     private static CombatRuntimeStateDto CreateRuntimeState(int currentAuP) => new()
     {
         IsStarted = true,

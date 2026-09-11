@@ -90,6 +90,27 @@ async function assertViewportRect(page, selector, viewport, label) {
       });
     }
 
+    // A 1440x900 display at 200% browser zoom exposes roughly 720x450 CSS pixels.
+    await page.setViewportSize({ width: 720, height: 450 });
+    await page.goto(`${origin}/kampf`, { waitUntil: 'domcontentloaded' });
+    await page.locator('.combat-resource-strip').waitFor();
+    await page.locator('.combat-action-panel').waitFor();
+    await assertNoHorizontalOverflow(page, '200-percent-zoom-equivalent');
+    await assertNoClippedControls(page, '200-percent-zoom-equivalent');
+    const zoomResource = page.locator('.hero-resource-lep');
+    await zoomResource.click();
+    const zoomDrawer = page.locator('.combat-details-drawer');
+    await zoomDrawer.waitFor();
+    const zoomDrawerRect = await zoomDrawer.boundingBox();
+    assert.ok(zoomDrawerRect && zoomDrawerRect.width <= 720 + 1 && zoomDrawerRect.x >= -1,
+      `200-percent drawer is clipped ${JSON.stringify(zoomDrawerRect)}`);
+    await zoomDrawer.locator('.combat-details-close').click();
+    await zoomDrawer.waitFor({ state: 'detached' });
+    await page.screenshot({
+      path: path.join(screenshotDirectory, 'combat-200-percent-equivalent.png'),
+      fullPage: true
+    });
+
     assert.equal(errors.length, 0, `browser errors: ${errors.join(' | ')}`);
     console.log(JSON.stringify({ viewports: viewports.map(viewport => viewport.name), screenshots: screenshotDirectory }));
   } finally {
