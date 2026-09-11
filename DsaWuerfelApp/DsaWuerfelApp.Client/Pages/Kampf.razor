@@ -125,9 +125,13 @@
                         else
                         {
                             <strong>@(CurrentInitiative.HasValue ? $"INI {CurrentInitiative}" : "Noch kein laufender INI-Wert")</strong>
-                            <span>Importierter Setwert: @(SelectedSet?.Initiative?.ToString() ?? "—") · Startwurf 1W6</span>
+                            <span>Importierter Setwert: @(SelectedSet?.Initiative?.ToString() ?? "—") · Startwurf @GetInitiativeDiceLabel()</span>
                         }
                     </div>
+                    @if (!IsSessionCombat && HasRuntimeInitiativeNotes())
+                    {
+                        <p class="combat-initiative-runtime">@GetRuntimeInitiativeSummary()</p>
+                    }
                     @if (!IsSessionCombat)
                     {
                         <div class="combat-initiative-row current">
@@ -166,6 +170,12 @@
                                     @if (!string.IsNullOrWhiteSpace(participant.Announcement))
                                     {
                                         <span class="combat-initiative-announcement">Ansage: @participant.Announcement</span>
+                                    }
+                                    @if (HasRuntimeInitiativeState(participant))
+                                    {
+                                        <span class="combat-initiative-runtime" title="@FormatRuntimeNotes(participant.InitiativeRuntimeNotes)">
+                                            Laufend @FormatSigned(participant.InitiativeRuntimeModifier)
+                                        </span>
                                     }
                                     @foreach (var action in GetParticipantActions(participant.Id))
                                     {
@@ -270,6 +280,10 @@
     {
         <div class="combat-drawer-form">
             <p class="combat-drawer-lead">Der importierte Setwert wird einmal als Basis verwendet. Der Hilfswurf liefert den W6.</p>
+            @if (HasRuntimeInitiativeNotes())
+            {
+                <p class="combat-drawer-hint">@GetRuntimeInitiativeSummary()</p>
+            }
             <NumberControl Label="INI"
                            Value="@_initiativeDraft"
                            ValueChanged="HandleInitiativeDraftChanged"

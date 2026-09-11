@@ -427,7 +427,10 @@ public partial class Kampf : IDisposable
     {
         _initiativeParticipantId = OwnSessionParticipant?.Id;
         _initiativeHeroId = ActiveHero?.Id;
-        _initiativeDraft = CurrentInitiative ?? SelectedSet?.Initiative;
+        var runtimeModifier = Profile is null || SelectedSet is null
+            ? 0
+            : CombatRuntimeModifierRules.ResolveInitiative(Profile, SelectedSet, BuildRuntimeState()).Modifier;
+        _initiativeDraft = CurrentInitiative ?? (SelectedSet?.Initiative + runtimeModifier);
         _drawer = CombatDrawer.Initiative;
     }
 
@@ -513,7 +516,8 @@ public partial class Kampf : IDisposable
             var result = await CombatSessionState.SetInitiativeAsync(
                 _initiativeDraft.Value,
                 _initiativeParticipantId,
-                _initiativeHeroId);
+                _initiativeHeroId,
+                BuildRuntimeState());
             _notice = result.Message;
             if (result.Applied)
             {
@@ -573,7 +577,10 @@ public partial class Kampf : IDisposable
         {
             if (IsSessionCombat)
             {
-                var sessionResult = await CombatSessionState.RollInitiativeAsync(_initiativeParticipantId, _initiativeHeroId);
+                var sessionResult = await CombatSessionState.RollInitiativeAsync(
+                    _initiativeParticipantId,
+                    _initiativeHeroId,
+                    BuildRuntimeState());
                 _initiativeDraft = sessionResult.Snapshot.Participants
                     .FirstOrDefault(participant => participant.Id == _initiativeParticipantId)?.CurrentInitiative;
                 _notice = sessionResult.Message;
@@ -597,11 +604,15 @@ public partial class Kampf : IDisposable
                 HeroId = ActiveHero?.Id,
                 SetId = SelectedSet?.Id,
                 Action = CombatActionKind.InitiativeHelper,
+                RuntimeState = BuildRuntimeState(),
                 Helper = new CombatHelperRollRequestDto { DiceCount = 1, DiceSides = 6, Purpose = "INI-Startwurf" }
             });
             var baseInitiative = SelectedSet?.Initiative ?? 0;
-            _initiativeDraft = baseInitiative + result.Rolls.Sum(roll => roll.Value);
-            _notice = $"INI-Hilfswurf: {_initiativeDraft} zum Anwenden bereit.";
+            var runtime = CombatRuntimeModifierRules.ResolveInitiative(Profile, SelectedSet, BuildRuntimeState());
+            _initiativeDraft = baseInitiative + result.Rolls.Sum(roll => roll.Value) + runtime.Modifier;
+            _notice = runtime.Modifier == 0
+                ? $"INI-Hilfswurf: {_initiativeDraft} zum Anwenden bereit."
+                : $"INI-Hilfswurf: {_initiativeDraft} zum Anwenden bereit ({FormatSigned(runtime.Modifier)} laufend).";
         }
         catch (Exception exception)
         {
@@ -739,7 +750,8 @@ public partial class Kampf : IDisposable
             OwnSessionParticipant?.Id,
             ActiveHero?.Id,
             hasAttention ? null : _orientationReliefDraft,
-            _orientationUninterruptedDraft);
+            _orientationUninterruptedDraft,
+            BuildRuntimeState());
         _notice = result.Message;
     }
 
@@ -764,7 +776,11 @@ public partial class Kampf : IDisposable
 
     private async Task ResolveOrientationAsync(CombatSessionActionDto action)
     {
-        var result = await CombatSessionState.ResolveOrientationAsync(action.Id, action.ParticipantId);
+        var result = await CombatSessionState.ResolveOrientationAsync(
+            action.Id,
+            action.ParticipantId,
+            ActiveHero?.Id,
+            BuildRuntimeState());
         _notice = result.Message;
     }
 
@@ -904,6 +920,30 @@ public partial class Kampf : IDisposable
         CurrentAuP = CurrentAuP,
         Wounds = Wounds.ToDictionary(pair => pair.Key, pair => pair.Value)
     };
+
+    private static string FormatSigned(int value) => value > 0 ? $"+{value}" : value.ToString(CultureInfo.InvariantCulture);
+
+    private CombatRuntimeInitiativeResult GetRuntimeInitiative() =>
+        CombatRuntimeModifierRules.ResolveInitiative(Profile, SelectedSet, BuildRuntimeState());
+
+    private bool HasRuntimeInitiativeNotes() => GetRuntimeInitiative().RuleNotes.Length > 0;
+
+    private string GetRuntimeInitiativeSummary()
+    {
+        var result = GetRuntimeInitiative();
+        var modifier = $"Automatische INI {FormatSigned(result.Modifier)}";
+        return result.RuleNotes.Length == 0
+            ? modifier
+            : $"{modifier} · {string.Join(" · ", result.RuleNotes)}";
+    }
+
+    private string GetInitiativeDiceLabel() => Profile?.HasKlingentaenzer == true ? "2W6" : "1W6";
+
+    private static bool HasRuntimeInitiativeState(CombatSessionParticipantDto participant) =>
+        participant.InitiativeRuntimeModifier != 0 || participant.InitiativeRuntimeNotes.Length > 0;
+
+    private static string FormatRuntimeNotes(IReadOnlyList<string> notes) =>
+        notes.Count == 0 ? "Keine automatische INI-Notiz" : string.Join(" · ", notes);
 
     private static string FormatModifier(CombatModifierDto modifier)
     {
