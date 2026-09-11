@@ -28,23 +28,30 @@ Der Arbeitsstand folgt `DSA-Kampfseite-Luna-Max-Plan.md`, Revision 5. Die alte E
 ## Nachweise
 
 - `dotnet build DsaWuerfelApp.sln -c Release --no-restore -v minimal`: erfolgreich, 0 Warnungen, 0 Fehler.
-- `dotnet test DsaWuerfelApp.sln --no-restore -v minimal`: erfolgreich, 113 von 113 Tests.
+- `dotnet test DsaWuerfelApp.sln --no-restore -v minimal`: erfolgreich, 116 von 116 Tests.
 - `combat-revision-p5.cjs`: zuvor mit Darian, Ardor, Cordula, fehlendem Profil und den responsiven Breiten 320, 390, 640, 900, 901, 1280 und 1600 ohne horizontalen Überlauf bestanden.
-- `combat-attribute-mode.cjs`: Kampf-Eigenschaftsmodus, Mehrfachauswahl, Ergebnis und Entfernen der Auswahl bestanden.
+- `combat-attribute-mode.cjs`: Kampf-Eigenschaftsmodus, Mehrfachauswahl, Ergebnis, Entfernen der Auswahl sowie ein fehlender KO-Wert als "—" und deaktivierte Auswahl bestanden.
 - `combat-orientation.cjs`: Sessionstart, Sperre vor INI, Aufmerksamkeit, Orientieren und INI-Anpassung bestanden.
+- `combat-orientation-probe.cjs`: Orientieren ohne Aufmerksamkeit mit dem tatsächlichen IN-Probenpfad bestanden.
 - `combat-shared-status.cjs`: Status auf `/wuerfel`, negative LeP, Navigation zu `/kampf` und zurück sowie horizontaler Überlauf bestanden.
+- `combat-visual-acceptance.cjs`: 1440x900, 1024x768 und 390x844, sichtbare Desktop-Hauptaktion, keine horizontal abgeschnittenen Controls und mobiler Detaildrawer bestanden; Screenshots wurden erzeugt.
+- `CombatSessionStateTests`: Revision/Stale/Idempotenz/Undo, Eigentümerschutz/Reconnect und gehaltene Handlungen über die Runde mit 3 Tests bestanden.
 
 ## Noch offene Abnahme
 
 - Die automatische Zuordnung aller laufenden Wund-, niedrige-LeP-/AuP- und strukturierten Effektfolgen zu AT/PA/FK/INI ist noch nicht vollständig modelliert. Die direkten manuellen Ressourcen- und Wundpfade funktionieren; unbekannte Folgen dürfen nicht als null erfunden werden.
-- Für Orientieren fehlt noch ein eigener Browserfall ohne Aufmerksamkeit mit tatsächlichem IN-Probenpfad sowie ein expliziter Misserfolgsfall.
-- Die Sessionübergänge brauchen noch fokussierte Tests für parallele veraltete Revisionen, doppelte Aktionen, gehaltene Handlungen über die Runde und Undo nach fremder Änderung.
-- Die visuelle P5-Abnahme muss noch gezielt mit 1440×900, 1024×768, 390×844 und 200 % Zoom einschließlich sichtbarer Hauptaktion und Fokus-/Drawerverhalten dokumentiert werden.
+- Der Browserlauf für Orientieren deckt den tatsächlichen IN-Probenpfad ab; ein deterministischer expliziter Misserfolgsfall bleibt offen.
+- Parallel veraltete Revisionen, doppelte Aktionsereignisse und Undo nach einer unabhängigen fremden Änderung bleiben als gezielte Session-Grenzfälle offen.
+- Die drei Zielansichten und der mobile Drawer sind visuell abgenommen; der gesonderte Nachweis für 200 % Zoom und die Rückführung des Fokus nach dem Schließen bleibt offen.
 
 ## Commitfolge dieses Arbeitsstands
 
 Die großen Änderungen wurden in kleine, einzeln gepushte Commits zerlegt. Die jüngsten Commits sind:
 
+- `8e6e4c9 fix(combat): fit primary roll into desktop viewport`
+- `0c29e73 fix(ui): show missing attributes honestly`
+- `03d8ad1 test(combat): cover session state transitions`
+- `f7920ef test(ui): cover orientation probe path`
 - `c0f65ae feat(combat): share status controls on dice page`
 - `f03f483 test(ui): verify shared combat status navigation`
 
