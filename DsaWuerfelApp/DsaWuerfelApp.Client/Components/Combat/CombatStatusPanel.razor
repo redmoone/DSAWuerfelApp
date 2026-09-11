@@ -39,7 +39,7 @@
             <div class="combat-resource-card">
                 <span>INI</span>
                 <strong>@FormatValue(CurrentInitiative ?? SelectedSet?.Initiative)</strong>
-                <small>laufender Wert</small>
+                <small>@(CurrentInitiative.HasValue ? "laufender Wert" : "importierter Ausgangswert")</small>
             </div>
             <div class="combat-resource-card">
                 <span>RS / BE</span>
@@ -77,5 +77,33 @@
                 }
             }
         </div>
+
+        @if (!IsCombatStarted && CanStartCombat)
+        {
+            <div class="combat-start-state">
+                <div>
+                    <strong>Kampfzustand noch nicht gestartet</strong>
+                    <span>Mit vollen importierten Ressourcen und ohne Wunden beginnen.</span>
+                </div>
+                <button type="button" class="combat-header-button primary" @onclick="StartCombatRequested">
+                    Kampfzustand starten
+                </button>
+            </div>
+        }
+        else if (IsCombatStarted)
+        {
+            <div class="combat-start-state compact">
+                <span>Kampfzustand auf diesem Gerät</span>
+                @if (CanUndo)
+                {
+                    <button type="button" class="combat-header-button" @onclick="UndoRequested">Letzte Änderung rückgängig</button>
+                }
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(PersistenceWarning))
+        {
+            <p class="combat-persistence-warning" role="status">@PersistenceWarning</p>
+        }
     }
 </section>

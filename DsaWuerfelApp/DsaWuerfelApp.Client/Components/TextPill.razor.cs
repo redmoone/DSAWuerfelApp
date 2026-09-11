@@ -8,6 +8,7 @@ public partial class TextPill
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     [Parameter] public string Label { get; set; } = "TEXT";
     [Parameter] public string Placeholder { get; set; } = "Text eingeben";
+    [Parameter] public string InputType { get; set; } = "text";
     [Parameter] public bool Disabled { get; set; }
 
     private Task HandleInput(ChangeEventArgs args)

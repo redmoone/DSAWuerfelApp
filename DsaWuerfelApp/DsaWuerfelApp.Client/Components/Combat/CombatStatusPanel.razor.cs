@@ -15,6 +15,12 @@ public partial class CombatStatusPanel
     [Parameter] public int? CurrentLeP { get; set; }
     [Parameter] public int? CurrentAuP { get; set; }
     [Parameter] public int? CurrentInitiative { get; set; }
+    [Parameter] public bool IsCombatStarted { get; set; }
+    [Parameter] public bool CanStartCombat { get; set; }
+    [Parameter] public EventCallback StartCombatRequested { get; set; }
+    [Parameter] public bool CanUndo { get; set; }
+    [Parameter] public EventCallback UndoRequested { get; set; }
+    [Parameter] public string? PersistenceWarning { get; set; }
     [Parameter] public IReadOnlyDictionary<CombatWoundZone, int?> Wounds { get; set; } =
         new Dictionary<CombatWoundZone, int?>();
     [Parameter] public IReadOnlyList<string> Effects { get; set; } = Array.Empty<string>();

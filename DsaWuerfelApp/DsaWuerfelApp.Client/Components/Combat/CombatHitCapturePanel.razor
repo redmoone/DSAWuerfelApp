@@ -1,0 +1,76 @@
+@using DsaWuerfelApp.Client.Components
+@using DsaWuerfelApp.Shared
+
+<section class="combat-hit-capture" role="dialog" aria-modal="false" aria-labelledby="combat-hit-capture-title">
+    <div class="combat-panel-heading">
+        <div>
+            <p class="combat-kicker">Treffer erfassen</p>
+            <h2 id="combat-hit-capture-title">Manuelle Erfassung</h2>
+        </div>
+        <span class="combat-muted">Keine Regelberechnung</span>
+    </div>
+
+    <p class="combat-hit-capture-intro">
+        Übernimm einen am Tisch bereits ausgewerteten Treffer. LeP-Verlust und Wundstand werden nur am ausgewählten Heldenzustand gebucht.
+    </p>
+
+    <div class="combat-hit-capture-grid">
+        <label class="combat-hit-field">
+            <span class="combat-field-label">Getroffene Zone</span>
+            <select class="combat-select" value="@SelectedZone" @onchange="HandleZoneChanged">
+                @foreach (var zone in Enum.GetValues<CombatWoundZone>())
+                {
+                    <option value="@zone">@GetZoneLabel(zone)</option>
+                }
+            </select>
+        </label>
+
+        <div class="combat-hit-field">
+            <span class="combat-field-label">LeP-Verlust</span>
+            <TextPill Value="@LePLossText"
+                      ValueChanged="LePLossTextChanged"
+                      InputType="number"
+                      Label="LEP"
+                      Placeholder="0" />
+        </div>
+
+        <div class="combat-hit-field">
+            <span class="combat-field-label">Neuer Wundstand</span>
+            <ModifierPill Value="@NewWounds"
+                          ValueChanged="NewWoundsChanged"
+                          LabelOverride="WUNDEN" />
+        </div>
+
+        <div class="combat-hit-field combat-hit-note-field">
+            <span class="combat-field-label">Notiz</span>
+            <TextPill Value="@Note"
+                      ValueChanged="NoteChanged"
+                      Label="NOTIZ"
+                      Placeholder="Optional" />
+        </div>
+    </div>
+
+    <div class="combat-hit-preview" aria-live="polite">
+        <div>
+            <span>Vorher LeP</span>
+            <strong>@FormatValue(CurrentLeP)</strong>
+        </div>
+        <div>
+            <span>Nachher LeP</span>
+            <strong>@FormatValue(PreviewLeP)</strong>
+        </div>
+        <div>
+            <span>Wunden</span>
+            <strong>@(CurrentWounds.HasValue ? $"{CurrentWounds} → {NewWounds}" : $"nicht erfasst → {NewWounds}")</strong>
+        </div>
+    </div>
+
+    <div class="combat-hit-actions">
+        <button type="button" class="combat-header-button primary" disabled="@(!CanApply || IsBusy)" @onclick="ApplyRequested">
+            Übernehmen
+        </button>
+        <button type="button" class="combat-header-button" disabled="@IsBusy" @onclick="CancelRequested">
+            Abbrechen
+        </button>
+    </div>
+</section>

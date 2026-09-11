@@ -21,7 +21,8 @@
                 <button type="button"
                         class="combat-header-button primary"
                         disabled="@(!HasCombatContext)"
-                        title="Treffererfassung wird mit dem laufenden Kampfzustand verfügbar">
+                        title="Treffererfassung wird mit dem laufenden Kampfzustand verfügbar"
+                        @onclick="OpenHitCapture">
                     Treffer erfassen
                 </button>
             </div>
@@ -36,19 +37,44 @@
             <CombatStatusPanel HeroName="@HeroDisplayName"
                                SessionName="@SessionState.ActiveSession?.Name"
                                Profile="@Profile"
-                               IsLoading="@_profileLoading"
-                               ErrorMessage="@_profileError"
+                               IsLoading="@ProfileLoading"
+                               ErrorMessage="@ProfileError"
                                SelectedSet="@SelectedSet"
                                CurrentLeP="@CurrentLeP"
                                CurrentAuP="@CurrentAuP"
                                CurrentInitiative="@CurrentInitiative"
+                               IsCombatStarted="@CombatState.IsStarted"
+                               CanStartCombat="@HasCombatContext"
+                               StartCombatRequested="StartCombatAsync"
+                               CanUndo="@CombatState.CanUndo"
+                               UndoRequested="UndoLastChangeAsync"
+                               PersistenceWarning="@CombatState.PersistenceError"
                                Wounds="@Wounds"
                                Effects="@Effects" />
         </section>
 
+        @if (_hitCaptureOpen)
+        {
+            <CombatHitCapturePanel SelectedZone="@_hitZone"
+                                   SelectedZoneChanged="HandleHitZoneChanged"
+                                   LePLossText="@_hitLePLossText"
+                                   LePLossTextChanged="HandleHitLePLossChanged"
+                                   NewWounds="@_hitWounds"
+                                   NewWoundsChanged="HandleHitWoundsChanged"
+                                   Note="@_hitNote"
+                                   NoteChanged="HandleHitNoteChanged"
+                                   CurrentLeP="@CurrentLeP"
+                                   PreviewLeP="@HitPreviewLeP"
+                                   CurrentWounds="@CurrentHitWounds"
+                                   CanApply="@CanApplyHit"
+                                   IsBusy="@_hitBusy"
+                                   ApplyRequested="ApplyHitAsync"
+                                   CancelRequested="CloseHitCapture" />
+        }
+
         <main class="combat-main panel-surface">
             <CombatActionPanel Sets="@Sets"
-                               IsLoading="@_profileLoading"
+                               IsLoading="@ProfileLoading"
                                SelectedSetId="@SelectedSetId"
                                SetSelected="HandleSetSelected"
                                Weapons="@Weapons"
@@ -133,6 +159,17 @@
                     </div>
                     <span class="combat-side-meta">@(CurrentInitiative.HasValue ? $"INI {CurrentInitiative}" : "nicht geführt")</span>
                 </div>
+                @if (CombatState.IsStarted)
+                {
+                    <div class="combat-initiative-editor">
+                        <TextPill Value="@_initiativeText"
+                                  ValueChanged="HandleInitiativeTextChanged"
+                                  InputType="number"
+                                  Label="INI"
+                                  Placeholder="aktuelle INI" />
+                        <button type="button" class="combat-header-button" @onclick="ApplyInitiativeAsync">INI setzen</button>
+                    </div>
+                }
                 @if (InitiativeEntries.Count == 0)
                 {
                     <p class="combat-side-empty">Noch keine Teilnehmer oder laufende Initiative vorhanden.</p>

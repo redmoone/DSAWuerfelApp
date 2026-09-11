@@ -179,6 +179,20 @@
     margin: 0;
 }
 
+.combat-initiative-editor {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 0.65rem;
+}
+
+.combat-initiative-editor ::deep .text-pill {
+    flex: 1 1 10rem;
+    width: auto;
+    max-width: none;
+}
+
 .combat-information-content {
     display: flex;
     flex-direction: column;

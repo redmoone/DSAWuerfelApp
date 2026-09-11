@@ -20,6 +20,8 @@ builder.Services.AddScoped<IWuerfelApiClient, WuerfelApiClient>();
 builder.Services.AddScoped<AuthState>();
 builder.Services.AddScoped<ActiveHeroState>();
 builder.Services.AddScoped<SessionState>();
+builder.Services.AddScoped<CombatStateStore>();
+builder.Services.AddScoped<CombatState>();
 builder.Services.AddScoped<WuerfelState>();
 builder.Services.AddScoped<WuerfelUiOperationRunner>();
 builder.Services.AddScoped<WuerfelSelectionService>();

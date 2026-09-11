@@ -9,11 +9,11 @@ Dieser Arbeitsstand folgt `DSA-Kampfseite-Luna-Max-Plan.md`, Revision 3. Der lok
 | Paket | Status | Nachweis |
 |---|---|---|
 | P0 | erledigt | Ausgangsbaum sauber auf `master`; Branchvergleich und Dateigrenzen geprüft. |
-| P1 | erledigt | Sichtbare UI-Überarbeitung, Komponentenwiederverwendung und Viewportprüfung abgeschlossen; lokaler Commit folgt nach dieser Dokumentation. |
-| P2 | erledigt | SourceXml-Projektion, geschützter Profilendpunkt, aktive-Held-Anbindung und reale Prüffälle abgeschlossen; lokaler Commit folgt nach dieser Dokumentation. |
-| P3 | erledigt | Aktionen, Suche, Auswahl-Details, Info, Initiative, Verlauf und ehrlicher Kampfwurf-Leerzustand geprüft; lokaler Commit folgt nach dieser Dokumentation. |
-| P4 | in Arbeit | Laufender lokaler Kampfzustand und Treffererfassung ausstehend. |
-| P5 | offen | Gesamtprüfung, Screenshots und Übergabedokumentation ausstehend. |
+| P1 | erledigt | Sichtbare UI-Überarbeitung, Komponentenwiederverwendung und Viewportprüfung abgeschlossen; Commit `6333d5f`. |
+| P2 | erledigt | SourceXml-Projektion, geschützter Profilendpunkt, aktive-Held-Anbindung und reale Prüffälle abgeschlossen; Commit `d8e48a0`. |
+| P3 | erledigt | Aktionen, Suche, Auswahl-Details, Info, Initiative, Verlauf und ehrlicher Kampfwurf-Leerzustand geprüft; Commit `0cf1159`. |
+| P4 | erledigt | Laufender lokaler Kampfzustand, Treffererfassung, Zonenbindung, Apply/Cancel/Undo und Reload-Persistenz abgeschlossen; Commit folgt nach dieser Dokumentation. |
+| P5 | in Arbeit | Gesamtprüfung, Screenshots und Übergabedokumentation laufen. |
 
 ## Baseline vor der Umsetzung
 
@@ -39,9 +39,25 @@ Dieser Arbeitsstand folgt `DSA-Kampfseite-Luna-Max-Plan.md`, Revision 3. Der lok
 - Browserprüfung `combat-revision-p1.cjs` gegen einen Release-Publish: 320, 390, 640, 900, 901, 1280 und 1600 Pixel ohne horizontalen Überlauf; je acht Zonen, zwei Front-/Rückseiten-Schalter, ein `DiceViewport`, eine gemeinsame `WuerfelActionBar` und eine gemeinsame `RollHistory`.
 - Vergleichsscreenshots liegen unter `artifacts/combat-revision-p1-screenshots/` für Kampf-, Würfel- und Heldenseite bei 390 und 1440 Pixeln.
 
+## P4 – laufender Zustand und Wundzonen
+
+- `CombatState` trennt importiertes Profil und laufenden Zustand. Der Schlüssel enthält Benutzer, Held und `SessionState.ActiveSessionId` beziehungsweise `solo`; Profilwechsel setzt keinen laufenden Verluststand zurück.
+- Der Start übernimmt importierte LeP/AuP-Maxima und legt sieben Wundbestände mit `0` an. Vor dem Start bleiben Werte als importiert gekennzeichnet; fehlende Stände bleiben von `0` unterscheidbar.
+- `CombatHitCapturePanel` setzt bestehende `TextPill` und `ModifierPill` zusammen. Zone, am Tisch ermittelter LeP-Verlust, Wundstand und Notiz werden als manueller Treffer mit Vorher/Nachher, Apply, Cancel und einer begrenzten Undo-Änderung geführt.
+- Brust und Rücken lesen denselben `CombatWoundZone.Torso`-Wert. Der Vorder-/Rückwechsel ändert nur die Ansicht. Setwechsel erhält laufende LeP und Wunden.
+- `CombatStateStore` speichert den laufenden Stand je Kontext in `localStorage`. Ein Speicherfehler lässt die UI weiterarbeiten und zeigt eine kurze Warnung.
+- Browserprüfung `combat-revision-p4.cjs` bestätigt Start, Treffer 5 LeP plus eine Torso-Wunde, Vorder-/Rückwechsel, Undo, Abbrechen und Reload-Wiederherstellung ohne Browserfehler; Screenshots liegen unter `artifacts/combat-revision-p5-p4-screenshots/`.
+
+## P5 – visuelle und funktionale Abnahme
+
+- `combat-revision-p5.cjs` prüft die Ansichten für Darian, Ardor und Cordula aus gespeicherten SourceXml-Projektionen sowie den fehlenden-SourceXml-Leerzustand. XML wird nicht in den Clienttext übernommen.
+- Der responsive Browserlauf prüft 320, 390, 640, 900, 901, 1280 und 1600 Pixel bei geringer Fensterhöhe ohne horizontalen Überlauf. P1-Screenshots enthalten den Vergleich von Kampf-, Würfel- und Heldenverwaltung bei 390 und 1440 Pixeln; P5-Screenshots liegen unter `artifacts/combat-revision-p5-screenshots/`.
+- `dotnet build DsaWuerfelApp.sln -c Release --no-restore -v minimal`: erfolgreich, 0 Warnungen, 0 Fehler.
+- `dotnet test DsaWuerfelApp.sln -c Release --no-restore -v minimal`: 97 erfolgreich, 8 bestehende fachliche Fehler in Talent-/Zauber-/RollHistory-Tests. `--filter "FullyQualifiedName~CombatProfile"`: 5 erfolgreich.
+
 ## Nächster Schritt
 
-P4: Den laufenden Zustand für Solo-/Sessionkontext einführen, Ressourcen/Wunden nach Reload erhalten und die manuelle Treffererfassung mit Apply/Cancel/Undo anschließen.
+P5 abschließen, Fortschrittsdatei und Browserartefakte committen und anschließend die noch nicht angebundene Kampfregelauswertung als separaten Folgeschritt übergeben.
 
 ## P2 – SourceXml und Importprojektion
 
