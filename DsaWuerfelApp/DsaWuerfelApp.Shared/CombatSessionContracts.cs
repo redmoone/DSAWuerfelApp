@@ -42,6 +42,8 @@ public sealed record CombatSessionParticipantDto
     public int? StartRoll { get; init; }
     public int InitiativeDiceCount { get; init; } = 1;
     public int InitiativeCorrection { get; init; }
+    public int InitiativeRuntimeModifier { get; init; }
+    public string[] InitiativeRuntimeNotes { get; init; } = [];
     public int RecoverableInitiativeLoss { get; init; }
     public int? CurrentInitiative { get; init; }
     public bool IsOnline { get; init; }
@@ -111,6 +113,7 @@ public sealed record CombatSessionMutationRequestDto
     public int? OrientationRelief { get; init; }
     public bool OrientationUninterrupted { get; init; } = true;
     public string? Announcement { get; init; }
+    public CombatRuntimeStateDto? RuntimeState { get; init; }
 }
 
 public sealed record CombatSessionMutationResultDto(

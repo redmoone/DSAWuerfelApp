@@ -114,23 +114,27 @@ public sealed class CombatSessionState : IDisposable
     public Task<CombatSessionMutationResultDto> RollInitiativeAsync(
         string? participantId = null,
         Guid? heroId = null,
+        CombatRuntimeStateDto? runtimeState = null,
         CancellationToken cancellationToken = default) => MutateAsync(new CombatSessionMutationRequestDto
         {
             Kind = CombatSessionMutationKind.RollInitiative,
             ParticipantId = participantId,
-            HeroId = heroId
+            HeroId = heroId,
+            RuntimeState = runtimeState
         }, cancellationToken);
 
     public Task<CombatSessionMutationResultDto> SetInitiativeAsync(
         int initiative,
         string? participantId = null,
         Guid? heroId = null,
+        CombatRuntimeStateDto? runtimeState = null,
         CancellationToken cancellationToken = default) => MutateAsync(new CombatSessionMutationRequestDto
         {
             Kind = CombatSessionMutationKind.SetInitiative,
             Initiative = initiative,
             ParticipantId = participantId,
-            HeroId = heroId
+            HeroId = heroId,
+            RuntimeState = runtimeState
         }, cancellationToken);
 
     public Task<CombatSessionMutationResultDto> CompleteActionAsync(
@@ -223,6 +227,7 @@ public sealed class CombatSessionState : IDisposable
         Guid? heroId = null,
         int? orientationRelief = null,
         bool orientationUninterrupted = true,
+        CombatRuntimeStateDto? runtimeState = null,
         CancellationToken cancellationToken = default) => MutateAsync(new CombatSessionMutationRequestDto
         {
             Kind = CombatSessionMutationKind.Orient,
@@ -230,19 +235,22 @@ public sealed class CombatSessionState : IDisposable
             OrientationRelief = orientationRelief,
             OrientationUninterrupted = orientationUninterrupted,
             ParticipantId = participantId,
-            HeroId = heroId
+            HeroId = heroId,
+            RuntimeState = runtimeState
         }, cancellationToken);
 
     public Task<CombatSessionMutationResultDto> ResolveOrientationAsync(
         string actionId,
         string? participantId = null,
         Guid? heroId = null,
+        CombatRuntimeStateDto? runtimeState = null,
         CancellationToken cancellationToken = default) => MutateAsync(new CombatSessionMutationRequestDto
         {
             Kind = CombatSessionMutationKind.ResolveOrientation,
             ActionId = actionId,
             ParticipantId = participantId,
-            HeroId = heroId
+            HeroId = heroId,
+            RuntimeState = runtimeState
         }, cancellationToken);
 
     public Task<CombatSessionMutationResultDto> AddActionAsync(

@@ -165,6 +165,41 @@ public sealed class CombatSessionStateTests
             current.State == CombatActionEntryState.Open && current.Round == nextRound.Snapshot.Round);
     }
 
+    [Fact]
+    public async Task Initiative_roll_applies_runtime_wounds_and_low_aup_before_the_first_round()
+    {
+        using var factory = new TestApplicationFactory();
+        var hero = await SeedHeroAsync(factory, "owner");
+        var session = CreateSession(factory, hero, "owner");
+        var state = factory.Services.GetRequiredService<CombatSessionStateService>();
+        var initial = await state.GetAsync(session.SessionId, "owner");
+        var wounds = Enum.GetValues<CombatWoundZone>()
+            .ToDictionary(zone => zone, _ => (int?)0);
+        wounds[CombatWoundZone.LeftLeg] = 1;
+
+        var rolled = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = initial.Revision,
+            Kind = CombatSessionMutationKind.RollInitiative,
+            HeroId = hero.Id,
+            RuntimeState = new CombatRuntimeStateDto
+            {
+                IsStarted = false,
+                CurrentLeP = 22,
+                CurrentAuP = 8,
+                Wounds = wounds
+            }
+        }, "owner");
+
+        var participant = Assert.Single(rolled.Snapshot.Participants, item => item.HeroId == hero.Id);
+        Assert.Equal(-3, participant.InitiativeRuntimeModifier);
+        Assert.Equal(participant.InitiativeBase + participant.StartRoll - 3, participant.CurrentInitiative);
+        Assert.Contains(participant.InitiativeRuntimeNotes, note => note.Contains("linkes Bein", StringComparison.Ordinal));
+        Assert.Contains(participant.InitiativeRuntimeNotes, note => note.Contains("AuP 8/28", StringComparison.Ordinal));
+    }
+
     private static GameSession CreateSession(TestApplicationFactory factory, Hero hero, string owner)
     {
         var sessions = factory.Services.GetRequiredService<SessionService>();

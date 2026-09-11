@@ -90,6 +90,8 @@ public sealed class CombatSessionStateService(
                 throw Validation("Unbekannte Kampfänderung.");
             }
 
+            ValidateRuntimeState(request.RuntimeState);
+
             var authorization = ResolveAuthorization(session, current, request, userId);
             if (!authorization.Allowed)
             {
@@ -206,8 +208,10 @@ public sealed class CombatSessionStateService(
             InitiativeDiceCount = initiativeInfo.DiceCount,
             StartRoll = rollTotal,
             InitiativeCorrection = 0,
+            InitiativeRuntimeModifier = initiativeInfo.RuntimeModifier,
+            InitiativeRuntimeNotes = initiativeInfo.RuntimeNotes,
             RecoverableInitiativeLoss = 0,
-            CurrentInitiative = initiativeInfo.BaseValue.Value + rollTotal,
+            CurrentInitiative = initiativeInfo.BaseValue.Value + rollTotal + initiativeInfo.RuntimeModifier,
             ActionAvailable = true,
             ReactionAvailable = true,
             IsOriented = false
@@ -239,19 +243,29 @@ public sealed class CombatSessionStateService(
             throw Validation("Bitte einen konkreten aktuellen Initiativewert eingeben.");
         }
 
+        var initiativeInfo = await ResolveInitiativeInfoAsync(participant, request, userId, cancellationToken);
         var baseValue = participant.InitiativeBase;
         if (!baseValue.HasValue && participant.Kind == CombatParticipantKind.Hero)
         {
-            baseValue = (await ResolveInitiativeInfoAsync(participant, request, userId, cancellationToken)).BaseValue;
+            baseValue = initiativeInfo.BaseValue;
         }
+
+        var runtimeModifier = request.RuntimeState is null
+            ? participant.InitiativeRuntimeModifier
+            : initiativeInfo.RuntimeModifier;
+        var runtimeNotes = request.RuntimeState is null
+            ? participant.InitiativeRuntimeNotes
+            : initiativeInfo.RuntimeNotes;
 
         var correction = baseValue.HasValue && participant.StartRoll.HasValue
             ? request.Initiative.Value -
-              (baseValue.Value + participant.StartRoll.Value - participant.RecoverableInitiativeLoss)
-            : request.Initiative.Value - (baseValue ?? 0);
+              (baseValue.Value + participant.StartRoll.Value + runtimeModifier - participant.RecoverableInitiativeLoss)
+            : request.Initiative.Value - (baseValue ?? 0) - runtimeModifier;
         var updatedParticipant = participant with
         {
             InitiativeBase = baseValue,
+            InitiativeRuntimeModifier = runtimeModifier,
+            InitiativeRuntimeNotes = runtimeNotes,
             CurrentInitiative = request.Initiative,
             InitiativeCorrection = correction,
             ActionAvailable = true,
@@ -379,7 +393,7 @@ public sealed class CombatSessionStateService(
             StartRoll = initiativeDiceMaximum,
             RecoverableInitiativeLoss = 0,
             CurrentInitiative = participant.InitiativeBase.Value + initiativeDiceMaximum +
-                                participant.InitiativeCorrection,
+                                participant.InitiativeRuntimeModifier + participant.InitiativeCorrection,
             IsOriented = true
         };
     }
@@ -635,17 +649,19 @@ public sealed class CombatSessionStateService(
     {
         if (participant.Kind == CombatParticipantKind.Opponent)
         {
-            return new InitiativeProfileInfo(
-                request.InitiativeBase ?? participant.InitiativeBase,
-                Math.Clamp(participant.InitiativeDiceCount, 1, 2),
-                request.HasAttention,
-                null,
-                null);
+        return new InitiativeProfileInfo(
+            request.InitiativeBase ?? participant.InitiativeBase,
+            Math.Clamp(participant.InitiativeDiceCount, 1, 2),
+            request.HasAttention,
+            null,
+            null,
+            0,
+            []);
         }
 
         if (!participant.HeroId.HasValue || string.IsNullOrWhiteSpace(participant.OwnerUserId))
         {
-            return new InitiativeProfileInfo(null, 1, false, null, null);
+            return new InitiativeProfileInfo(null, 1, false, null, null, 0, []);
         }
 
         var profile = await ReadCombatProfileAsync(participant, cancellationToken);
@@ -655,12 +671,15 @@ public sealed class CombatSessionStateService(
             .FirstOrDefault()
             ?? profile?.Sets.FirstOrDefault(set => set.IsDefault)
             ?? profile?.Sets.FirstOrDefault();
+        var runtime = CombatRuntimeModifierRules.ResolveInitiative(profile, selectedSet, request.RuntimeState);
         return new InitiativeProfileInfo(
             selectedSet?.Initiative,
             profile?.HasKlingentaenzer == true ? 2 : 1,
             profile?.HasAttention == true,
             profile?.KriegskunstValue,
-            profile);
+            profile,
+            runtime.Modifier,
+            runtime.RuleNotes);
     }
 
     private async Task<CombatProfileDto?> ReadCombatProfileAsync(
@@ -803,7 +822,8 @@ public sealed class CombatSessionStateService(
                 .Select(participant => participant with
                 {
                     InitiativeDiceCount = Math.Clamp(participant.InitiativeDiceCount, 1, 2),
-                    RecoverableInitiativeLoss = Math.Max(0, participant.RecoverableInitiativeLoss)
+                    RecoverableInitiativeLoss = Math.Max(0, participant.RecoverableInitiativeLoss),
+                    InitiativeRuntimeNotes = participant.InitiativeRuntimeNotes ?? []
                 })
                 .ToArray(),
             Actions = actions,
@@ -993,6 +1013,32 @@ public sealed class CombatSessionStateService(
     private static RequestRejectedException Validation(string message) =>
         new(RequestRejectionReason.Validation, message);
 
+    private static void ValidateRuntimeState(CombatRuntimeStateDto? state)
+    {
+        if (state is null)
+        {
+            return;
+        }
+
+        if (state.CurrentLeP is < -1_000_000 or > 1_000_000)
+        {
+            throw Validation("Der aktuelle LeP-Wert liegt außerhalb des zulässigen Bereichs.");
+        }
+
+        if (state.CurrentAuP is < 0 or > 1_000_000)
+        {
+            throw Validation("Der aktuelle AuP-Wert liegt außerhalb des zulässigen Bereichs.");
+        }
+
+        foreach (var wound in state.Wounds ?? [])
+        {
+            if (!Enum.IsDefined(wound.Key) || wound.Value is < 0 or > 3)
+            {
+                throw Validation("Der übertragene Wundstand ist ungültig.");
+            }
+        }
+    }
+
     private sealed record PersistedState(
         CombatSessionSnapshotDto Current,
         CombatSessionSnapshotDto? Undo,
@@ -1004,7 +1050,9 @@ public sealed class CombatSessionStateService(
         int DiceCount,
         bool HasAttention,
         int? KriegskunstValue,
-        CombatProfileDto? Profile);
+        CombatProfileDto? Profile,
+        int RuntimeModifier,
+        string[] RuntimeNotes);
 
     private sealed record AuthorizationResult(bool Allowed, string Message);
 }
