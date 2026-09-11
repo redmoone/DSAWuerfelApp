@@ -118,6 +118,17 @@ public sealed class SessionRecordStore(IServiceScopeFactory scopeFactory)
             .ToArray();
     }
 
+    public void SaveCombatState(string sessionId, string? combatStateJson)
+    {
+        using var scope = scopeFactory.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<HeroDbContext>();
+        var record = dbContext.SessionRecords.SingleOrDefault(current => current.Id == sessionId) ??
+                     throw new InvalidOperationException("Session wurde nicht gefunden.");
+
+        record.CombatStateJson = combatStateJson;
+        dbContext.SaveChanges();
+    }
+
     public PersistedLeaveSessionResult LeaveSession(string sessionId, string userId)
     {
         using var scope = scopeFactory.CreateScope();
@@ -272,6 +283,7 @@ public sealed class SessionRecordStore(IServiceScopeFactory scopeFactory)
             JoinCode = record.JoinCode,
             MasterUserId = record.MasterUserId,
             CreatedAt = record.CreatedAtUtc,
+            CombatStateJson = record.CombatStateJson,
             Players = record.Participants
                 .Select(ToPlayerInfo)
                 .ToArray()

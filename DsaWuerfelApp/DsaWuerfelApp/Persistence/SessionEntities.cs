@@ -7,6 +7,7 @@ public sealed class SessionRecord
     public string JoinCode { get; set; } = string.Empty;
     public string MasterUserId { get; set; } = string.Empty;
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+    public string? CombatStateJson { get; set; }
 
     public List<SessionParticipantRecord> Participants { get; set; } = [];
 }

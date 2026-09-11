@@ -13,7 +13,8 @@ public class GameHub(
     SessionService sessionService,
     HeroContextReader heroContextReader,
     DiceWorkflowService diceWorkflowService,
-    GameSessionRollPipeline gameSessionRollPipeline)
+    GameSessionRollPipeline gameSessionRollPipeline,
+    CombatSessionStateService combatSessionStateService)
     : Hub
 {
     public override async Task OnConnectedAsync()
@@ -195,6 +196,52 @@ public class GameHub(
         await NotifySessionsChangedAsync(affectedUserIds);
     }
 
+    public async Task<CombatSessionSnapshotDto> GetCombatSessionState(string sessionId)
+    {
+        var userId = GetRequiredUserId();
+        try
+        {
+            await ActivateSessionAsync(sessionId, userId);
+            return await combatSessionStateService.GetAsync(sessionId, userId, Context.ConnectionAborted);
+        }
+        catch (RequestRejectedException exception)
+        {
+            throw new HubException(exception.Message);
+        }
+        catch (InvalidOperationException exception)
+        {
+            throw new HubException(exception.Message);
+        }
+    }
+
+    public async Task<CombatSessionMutationResultDto> MutateCombatSession(
+        CombatSessionMutationRequestDto request)
+    {
+        var userId = GetRequiredUserId();
+        try
+        {
+            await ActivateSessionAsync(request.SessionId, userId);
+            var result = await combatSessionStateService.MutateAsync(
+                request,
+                userId,
+                Context.ConnectionAborted);
+            if (result.Applied)
+            {
+                await Clients.Group(request.SessionId).SendAsync("CombatStateChanged", result.Snapshot);
+            }
+
+            return result;
+        }
+        catch (RequestRejectedException exception)
+        {
+            throw new HubException(exception.Message);
+        }
+        catch (InvalidOperationException exception)
+        {
+            throw new HubException(exception.Message);
+        }
+    }
+
     public Task RollFree(FreeRollRequestDto request)
     {
         return ExecuteRollAsync(
@@ -229,6 +276,19 @@ public class GameHub(
             playerName => diceWorkflowService.RollBadTraitAsync(request, GetRequiredUserId(), playerName, Context.ConnectionAborted),
             result => result.HistoryEntry,
             (sessionId, result) => Clients.Group(sessionId).SendAsync("ShowBadTraitRollResult", result));
+    }
+
+    public Task RollCombat(CombatRollRequestDto request)
+    {
+        return ExecuteRollAsync(
+            request.SessionId,
+            playerName => diceWorkflowService.RollCombatAsync(
+                request,
+                GetRequiredUserId(),
+                playerName,
+                Context.ConnectionAborted),
+            result => result.HistoryEntry,
+            (sessionId, result) => Clients.Group(sessionId).SendAsync("ShowCombatRollResult", result));
     }
 
     private async Task ExecuteRollAsync<TResult>(

@@ -35,4 +35,8 @@ public interface IWuerfelApiClient
     Task<BadTraitRollResultDto> RollBadTraitAsync(
         BadTraitRollRequestDto request,
         CancellationToken cancellationToken = default);
+
+    Task<CombatRollResultDto> RollCombatAsync(
+        CombatRollRequestDto request,
+        CancellationToken cancellationToken = default);
 }

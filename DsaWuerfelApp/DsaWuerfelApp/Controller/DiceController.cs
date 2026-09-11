@@ -100,6 +100,23 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost("combat-roll")]
+    public async Task<ActionResult<CombatRollResultDto>> RollCombat(
+        [FromBody] CombatRollRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(request.SessionId))
+        {
+            throw new RequestRejectedException(
+                RequestRejectionReason.Validation,
+                "Kampfwürfe in einer Session laufen über die gemeinsame Verbindung.");
+        }
+
+        var playerName = User.Identity?.Name ?? "Unbekannt";
+        var result = await workflow.RollCombatAsync(request, UserId(), playerName, cancellationToken);
+        return Ok(result);
+    }
+
     private string UserId() => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new RequestRejectedException(RequestRejectionReason.Forbidden, "Benutzer ist nicht authentifiziert.");
 
     [HttpGet("debug-mode")]

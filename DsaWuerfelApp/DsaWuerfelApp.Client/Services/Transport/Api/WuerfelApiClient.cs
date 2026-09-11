@@ -123,6 +123,17 @@ public sealed class WuerfelApiClient(HttpClient httpClient) : IWuerfelApiClient
             cancellationToken);
     }
 
+    public Task<CombatRollResultDto> RollCombatAsync(
+        CombatRollRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        return PostJsonAsync<CombatRollResultDto>(
+            "api/dice/combat-roll",
+            request,
+            "Kampfwurf konnte nicht ausgeführt werden.",
+            cancellationToken);
+    }
+
     private async Task<T> GetJsonAsync<T>(string uri, string fallbackMessage, CancellationToken cancellationToken)
     {
         using var response = await httpClient.GetAsync(uri, cancellationToken);

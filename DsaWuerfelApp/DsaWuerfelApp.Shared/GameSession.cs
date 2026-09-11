@@ -8,4 +8,5 @@ public class GameSession
     public string MasterUserId { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public PlayerInfo[] Players { get; set; } = [];
+    public string? CombatStateJson { get; set; }
 }

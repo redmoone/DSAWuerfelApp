@@ -65,6 +65,7 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<SessionRuntimeState>();
 builder.Services.AddSingleton<SessionRecordStore>();
 builder.Services.AddSingleton<SessionService>();
+builder.Services.AddSingleton<CombatSessionStateService>();
 builder.Services.AddSingleton<DiceService>();
 builder.Services.AddSingleton<TalentProbeService>();
 builder.Services.AddSingleton<AttributeProbeService>();
@@ -97,6 +98,7 @@ builder.Services.AddScoped<RollAttributeHandler>();
 builder.Services.AddScoped<RollBadTraitHandler>();
 builder.Services.AddScoped<RollMasterTalentHandler>();
 builder.Services.AddScoped<RollMasterAttributeHandler>();
+builder.Services.AddScoped<RollCombatHandler>();
 builder.Services.AddScoped<DiceWorkflowService>();
 builder.Services.AddScoped<MagicLinkService>();
 builder.Services.AddSingleton<GameSessionRollPipeline>();
@@ -328,7 +330,8 @@ static void EnsureSessionSchema(HeroDbContext dbContext)
             Name TEXT NOT NULL,
             JoinCode TEXT NOT NULL,
             MasterUserId TEXT NOT NULL,
-            CreatedAtUtc TEXT NOT NULL
+            CreatedAtUtc TEXT NOT NULL,
+            CombatStateJson TEXT NULL
         );
         """);
 
@@ -380,7 +383,7 @@ static void EnsureSessionSchema(HeroDbContext dbContext)
     connection.Open();
 
     using var command = connection.CreateCommand();
-    command.CommandText = "PRAGMA table_info('SessionRollHistory');";
+    command.CommandText = "PRAGMA table_info('GameSessions');";
 
     using var reader = command.ExecuteReader();
     var existingColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -390,7 +393,28 @@ static void EnsureSessionSchema(HeroDbContext dbContext)
     }
 
     reader.Close();
-    if (!existingColumns.Contains("ContextJson"))
+    if (!existingColumns.Contains("CombatStateJson"))
+    {
+        dbContext.Database.ExecuteSqlRaw(
+            "ALTER TABLE GameSessions ADD COLUMN CombatStateJson TEXT NULL;");
+    }
+
+    connection.Close();
+
+    using var historyConnection = dbContext.Database.GetDbConnection();
+    historyConnection.Open();
+    using var historyCommand = historyConnection.CreateCommand();
+    historyCommand.CommandText = "PRAGMA table_info('SessionRollHistory');";
+
+    using var historyReader = historyCommand.ExecuteReader();
+    var historyColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    while (historyReader.Read())
+    {
+        historyColumns.Add(historyReader.GetString(1));
+    }
+
+    historyReader.Close();
+    if (!historyColumns.Contains("ContextJson"))
     {
         dbContext.Database.ExecuteSqlRaw(
             "ALTER TABLE SessionRollHistory ADD COLUMN ContextJson TEXT NULL;");

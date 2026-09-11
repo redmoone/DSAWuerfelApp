@@ -10,7 +10,8 @@ public sealed class DiceWorkflowService(
     RollAttributeHandler rollAttributeHandler,
     RollBadTraitHandler rollBadTraitHandler,
     RollMasterTalentHandler rollMasterTalentHandler,
-    RollMasterAttributeHandler rollMasterAttributeHandler)
+    RollMasterAttributeHandler rollMasterAttributeHandler,
+    RollCombatHandler rollCombatHandler)
 {
     public Task<DicePageContextDto> GetContextAsync(Guid? heroId, string? sessionId, string userId, CancellationToken cancellationToken = default)
     {
@@ -76,5 +77,14 @@ public sealed class DiceWorkflowService(
         CancellationToken cancellationToken = default)
     {
         return rollMasterAttributeHandler.HandleAsync(request, userId, cancellationToken);
+    }
+
+    public Task<CombatRollResultDto> RollCombatAsync(
+        CombatRollRequestDto request,
+        string userId,
+        string playerName = "Unbekannt",
+        CancellationToken cancellationToken = default)
+    {
+        return rollCombatHandler.HandleAsync(request, userId, playerName, cancellationToken);
     }
 }

@@ -17,7 +17,8 @@ public enum RollHistoryKind
     Talent,
     Spell,
     Attribute,
-    BadTrait
+    BadTrait,
+    Combat
 }
 
 public enum RollHistoryOutcome
@@ -52,6 +53,7 @@ public sealed record RollHistoryRequirementCheckDto(
 
 public sealed record RollHistorySnapshotDto
 {
+    public CombatRollSnapshotDto? Combat { get; init; }
     public string? Probe { get; init; }
     public string? HeroName { get; init; }
     public int? TalentValue { get; init; }

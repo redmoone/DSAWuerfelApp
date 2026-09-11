@@ -29,6 +29,10 @@ public class GameClient : IAsyncDisposable
             result => OnAttributeRollResultReceived?.Invoke(result));
         _hub.On<BadTraitRollResultDto>("ShowBadTraitRollResult",
             result => OnBadTraitRollResultReceived?.Invoke(result));
+        _hub.On<CombatRollResultDto>("ShowCombatRollResult",
+            result => OnCombatRollResultReceived?.Invoke(result));
+        _hub.On<CombatSessionSnapshotDto>("CombatStateChanged",
+            snapshot => OnCombatSessionStateReceived?.Invoke(snapshot));
     }
 
     public string? CurrentSessionId { get; private set; }
@@ -47,6 +51,8 @@ public class GameClient : IAsyncDisposable
     public event Action<TalentRollResultDto>? OnTalentRollResultReceived;
     public event Action<AttributeRollResultDto>? OnAttributeRollResultReceived;
     public event Action<BadTraitRollResultDto>? OnBadTraitRollResultReceived;
+    public event Action<CombatRollResultDto>? OnCombatRollResultReceived;
+    public event Action<CombatSessionSnapshotDto>? OnCombatSessionStateReceived;
     public event Action? SessionChanged;
     public event Action? SessionsChanged;
 
@@ -184,6 +190,21 @@ public class GameClient : IAsyncDisposable
     public async Task RollBadTrait(BadTraitRollRequestDto request)
     {
         await _hub.InvokeAsync("RollBadTrait", request);
+    }
+
+    public async Task RollCombat(CombatRollRequestDto request)
+    {
+        await _hub.InvokeAsync("RollCombat", request);
+    }
+
+    public Task<CombatSessionSnapshotDto> GetCombatSessionState(string sessionId)
+    {
+        return _hub.InvokeAsync<CombatSessionSnapshotDto>("GetCombatSessionState", sessionId);
+    }
+
+    public Task<CombatSessionMutationResultDto> MutateCombatSession(CombatSessionMutationRequestDto request)
+    {
+        return _hub.InvokeAsync<CombatSessionMutationResultDto>("MutateCombatSession", request);
     }
 
     private void HandleSessionRenamed(string sessionId, string _)

@@ -49,6 +49,7 @@ public sealed class WuerfelState
             LastAttributeRoll = null,
             LastBadTraitRoll = null,
             LastFreeRoll = null,
+            LastCombatRoll = null,
             LastMasterTalentRolls = Array.Empty<MasterTalentRollTargetResultDto>(),
             LastMasterAttributeRolls = Array.Empty<MasterAttributeRollTargetResultDto>(),
             PreviewVersion = Current.PreviewVersion + 1
@@ -279,6 +280,31 @@ public sealed class WuerfelState
         ApplyResult(result.Equation, result.HistoryEntry, null, null, result, null);
     }
 
+    public void ApplyCombatRollResult(CombatRollResultDto result)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        var history = Current.History.Any(entry =>
+                entry.Context?.Snapshot?.Combat?.EntryId == result.EntryId)
+            ? Current.History
+            : Current.History.Prepend(result.HistoryEntry).Take(100).ToArray();
+
+        Update(Current with
+        {
+            LastTalentRoll = null,
+            LastAttributeRoll = null,
+            LastBadTraitRoll = null,
+            LastFreeRoll = null,
+            LastCombatRoll = result,
+            LastMasterTalentRolls = Array.Empty<MasterTalentRollTargetResultDto>(),
+            LastMasterAttributeRolls = Array.Empty<MasterAttributeRollTargetResultDto>(),
+            History = history,
+            AnimatedDiceSides = result.Rolls.Select(roll => roll.Sides).ToArray(),
+            AnimatedDiceValues = result.Rolls.Select(roll => roll.Value).ToArray(),
+            ResultVersion = Current.ResultVersion + 1,
+            ErrorMessage = null
+        });
+    }
+
     public void ApplyMasterTalentRollResults(IReadOnlyList<MasterTalentRollTargetResultDto> results)
     {
         ApplyMasterResults(
@@ -311,6 +337,7 @@ public sealed class WuerfelState
             LastAttributeRoll = attributeRollResult,
             LastBadTraitRoll = badTraitRollResult,
             LastFreeRoll = freeRollResult,
+            LastCombatRoll = null,
             LastMasterTalentRolls = Array.Empty<MasterTalentRollTargetResultDto>(),
             LastMasterAttributeRolls = Array.Empty<MasterAttributeRollTargetResultDto>(),
             History = history,
@@ -350,6 +377,7 @@ public sealed class WuerfelState
             LastAttributeRoll = null,
             LastBadTraitRoll = null,
             LastFreeRoll = null,
+            LastCombatRoll = null,
             LastMasterTalentRolls = talentResults,
             LastMasterAttributeRolls = attributeResults,
             History = masterHistoryEntries.Concat(Current.History).Take(100).ToArray(),
@@ -485,6 +513,7 @@ public sealed record WuerfelViewState
     public AttributeRollResultDto? LastAttributeRoll { get; init; }
     public BadTraitRollResultDto? LastBadTraitRoll { get; init; }
     public FreeRollResultDto? LastFreeRoll { get; init; }
+    public CombatRollResultDto? LastCombatRoll { get; init; }
 
     public IReadOnlyList<MasterTalentRollTargetResultDto> LastMasterTalentRolls { get; init; } =
         Array.Empty<MasterTalentRollTargetResultDto>();
