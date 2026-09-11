@@ -117,6 +117,11 @@ public partial class Wuerfel : IDisposable
         return Facade.RemoveAttributeAsync(shortName);
     }
 
+    private Task RemoveAttributeAtAsync(int index)
+    {
+        return Facade.RemoveAttributeAtAsync(index);
+    }
+
     private Task HandleSelectedProbeChangedAsync(string selectedProbeValue)
     {
         return Facade.SetSelectedProbeAsync(selectedProbeValue);

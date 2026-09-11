@@ -17,11 +17,4 @@
         <div class="selection-badge">@(SelectionCount)x</div>
     }
 
-    @if (OnDecrease.HasDelegate && SelectionCount > 0)
-    {
-        <button type="button"
-                class="attribute-pill-decrease"
-                aria-label="Eine @ShortName-Auswahl entfernen"
-                @onclick="HandleDecreaseClick">−</button>
-    }
 </div>

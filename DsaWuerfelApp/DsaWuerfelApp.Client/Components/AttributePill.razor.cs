@@ -33,10 +33,4 @@ public partial class AttributePill : ComponentBase
             : Task.CompletedTask;
     }
 
-    private Task HandleDecreaseClick(MouseEventArgs e)
-    {
-        return OnDecrease.HasDelegate
-            ? OnDecrease.InvokeAsync(ShortName)
-            : Task.CompletedTask;
-    }
 }

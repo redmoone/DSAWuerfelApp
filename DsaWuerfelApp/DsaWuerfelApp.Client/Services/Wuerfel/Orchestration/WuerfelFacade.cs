@@ -82,6 +82,12 @@ public sealed class WuerfelFacade(
         return Task.CompletedTask;
     }
 
+    public Task RemoveAttributeAtAsync(int index)
+    {
+        selectionService.RemoveAttributeAt(index);
+        return Task.CompletedTask;
+    }
+
     public async Task SetSelectedProbeAsync(string selectedProbeValue)
     {
         selectionService.SetSelectedProbe(selectedProbeValue);

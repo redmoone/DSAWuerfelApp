@@ -32,3 +32,24 @@
                        OnIncrease="HandleIncrease" OnDecrease="HandleDecrease"/>
     </div>
 </div>
+
+<div class="attribute-selection-chips" aria-label="Ausgewählte Eigenschaften">
+    @if (SelectedAttributes.Count == 0)
+    {
+        <span class="attribute-selection-placeholder">Eigenschaften auswählen</span>
+    }
+    else
+    {
+        @for (var index = 0; index < SelectedAttributes.Count; index++)
+        {
+            var selectedIndex = index;
+            var attribute = SelectedAttributes[selectedIndex];
+            <span class="attribute-selection-chip">
+                @((string)attribute)
+                <button type="button"
+                        aria-label="@($"{attribute} aus Auswahl entfernen")"
+                        @onclick="() => HandleSelectionRemoved(selectedIndex)">×</button>
+            </span>
+        }
+    }
+</div>

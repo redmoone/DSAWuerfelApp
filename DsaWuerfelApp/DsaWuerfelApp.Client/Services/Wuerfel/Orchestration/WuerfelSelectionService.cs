@@ -111,6 +111,26 @@ public sealed class WuerfelSelectionService(WuerfelState state)
         state.SetSelectedAttributes(attributes, dice);
     }
 
+    public void RemoveAttributeAt(int index)
+    {
+        state.SwitchArea(WuerfelArea.Attributes);
+
+        var attributes = state.Current.SelectedAttributes.ToList();
+        var dice = state.Current.SelectedDiceSides.ToList();
+        if (index < 0 || index >= attributes.Count)
+        {
+            return;
+        }
+
+        attributes.RemoveAt(index);
+        if (index < dice.Count)
+        {
+            dice.RemoveAt(index);
+        }
+
+        state.SetSelectedAttributes(attributes, dice);
+    }
+
     public void SetSelectedProbe(string? selectedProbeValue)
     {
         if (!string.IsNullOrWhiteSpace(selectedProbeValue))

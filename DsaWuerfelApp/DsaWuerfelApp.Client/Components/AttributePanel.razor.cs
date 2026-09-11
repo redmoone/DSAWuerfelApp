@@ -8,6 +8,7 @@ public partial class AttributePanel
     [Parameter] public IReadOnlyList<string> SelectedAttributes { get; set; } = [];
     [Parameter] public EventCallback<string> OnAttributeAdded { get; set; }
     [Parameter] public EventCallback<string> OnAttributeRemoved { get; set; }
+    [Parameter] public EventCallback<int> OnAttributeRemovedAt { get; set; }
 
     private int GetCount(string shortName) => SelectedAttributes.Count(a => a == shortName);
 
@@ -16,4 +17,13 @@ public partial class AttributePanel
 
     private Task HandleIncrease(string shortName) => OnAttributeAdded.InvokeAsync(shortName);
     private Task HandleDecrease(string shortName) => OnAttributeRemoved.InvokeAsync(shortName);
+
+    private Task HandleSelectionRemoved(int index)
+    {
+        return OnAttributeRemovedAt.HasDelegate
+            ? OnAttributeRemovedAt.InvokeAsync(index)
+            : index >= 0 && index < SelectedAttributes.Count
+                ? OnAttributeRemoved.InvokeAsync(SelectedAttributes[index])
+                : Task.CompletedTask;
+    }
 }
