@@ -26,6 +26,7 @@ public sealed class HeroCombatMapper
         ArgumentNullException.ThrowIfNull(hero);
         ArgumentNullException.ThrowIfNull(source);
 
+        var specializations = MapSpecializations(source);
         return new CombatProfileDto(
             hero.Id,
             string.IsNullOrWhiteSpace(hero.Name) ? Text(source.Angaben.Name) ?? string.Empty : hero.Name,
@@ -34,8 +35,13 @@ public sealed class HeroCombatMapper
             ParseInt(source.Angaben.Wundschwelle),
             MapAttributes(source.Eigenschaften),
             source.Kampfsets.Select((set, index) => MapSet(hero.Id, source.Config, set, index)).ToArray(),
-            MapSpecializations(source),
-            MapBenefits(source));
+            specializations,
+            MapBenefits(source))
+        {
+            KriegskunstValue = FindTalentValue(hero, "Kriegskunst"),
+            HasAttention = HasLearnedSpecialization(specializations, "Aufmerksamkeit"),
+            HasKlingentaenzer = HasLearnedSpecialization(specializations, "Klingentänzer")
+        };
     }
 
     private static CombatResourcesDto MapResources(CombatXmlEigenschaftenDto source)
@@ -250,6 +256,33 @@ public sealed class HeroCombatMapper
 
         return learned.Concat(discounted).ToArray();
     }
+
+    private static int? FindTalentValue(Hero hero, string talentName)
+    {
+        foreach (var talent in hero.Talente)
+        {
+            if (CanonicalLabel(talent.Key) == CanonicalLabel(talentName))
+            {
+                return talent.Value.Wert;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool HasLearnedSpecialization(
+        IEnumerable<CombatSpecializationDto> specializations,
+        string specializationName) => specializations.Any(specialization =>
+        specialization.IsLearned &&
+        CanonicalLabel(specialization.Name) == CanonicalLabel(specializationName));
+
+    private static string CanonicalLabel(string? value) => (value ?? string.Empty)
+        .Trim()
+        .ToLowerInvariant()
+        .Replace("ä", "ae", StringComparison.Ordinal)
+        .Replace("ö", "oe", StringComparison.Ordinal)
+        .Replace("ü", "ue", StringComparison.Ordinal)
+        .Replace("ß", "ss", StringComparison.Ordinal);
 
     private static CombatSpecializationDto? MapSpecialization(CombatXmlSpecializationDto source, bool learned)
     {

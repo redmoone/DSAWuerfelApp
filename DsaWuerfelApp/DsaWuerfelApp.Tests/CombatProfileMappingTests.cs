@@ -12,7 +12,10 @@ public sealed class CombatProfileMappingTests
     [Fact]
     public void Maps_darian_values_and_keeps_zero_separate_from_missing()
     {
-        var profile = Map(DarianXml, "Darian Falkenstein");
+        var profile = Map(DarianXml, "Darian Falkenstein", new Dictionary<string, TalentData>
+        {
+            ["Kriegskunst"] = new TalentData { Wert = 7 }
+        });
 
         Assert.Equal(22, profile.Resources.LeP);
         Assert.Equal(28, profile.Resources.AuP);
@@ -34,6 +37,9 @@ public sealed class CombatProfileMappingTests
         Assert.Contains(profile.Specializations, specialization => specialization.Name == "Aufmerksamkeit" && specialization.IsLearned);
         Assert.Contains(profile.Specializations, specialization => specialization.Name == "Ausweichen II" && specialization.IsLearned);
         Assert.Contains(profile.Specializations, specialization => specialization.Name == "Binden" && !specialization.IsLearned);
+        Assert.True(profile.HasAttention);
+        Assert.False(profile.HasKlingentaenzer);
+        Assert.Equal(7, profile.KriegskunstValue);
     }
 
     [Fact]
@@ -85,7 +91,10 @@ public sealed class CombatProfileMappingTests
         Assert.Equal("Lederhelm", armor.Basis);
     }
 
-    private static CombatProfileDto Map(string xml, string name)
+    private static CombatProfileDto Map(
+        string xml,
+        string name,
+        Dictionary<string, TalentData>? talents = null)
     {
         var deserializer = new XmlHeroDeserializer();
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
@@ -95,6 +104,7 @@ public sealed class CombatProfileMappingTests
             Id = Guid.NewGuid(),
             Name = name,
             ImportVersion = 3,
+            Talente = talents ?? new Dictionary<string, TalentData>(),
             SourceXml = Encoding.UTF8.GetBytes(xml)
         }, source);
     }

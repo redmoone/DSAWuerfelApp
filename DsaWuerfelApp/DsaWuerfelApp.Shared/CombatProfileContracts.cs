@@ -53,7 +53,12 @@ public sealed record CombatProfileDto(
     CombatAttributeDto[] Attributes,
     CombatSetVariantDto[] Sets,
     CombatSpecializationDto[] Specializations,
-    CombatBenefitDto[] Benefits);
+    CombatBenefitDto[] Benefits)
+{
+    public int? KriegskunstValue { get; init; }
+    public bool HasAttention { get; init; }
+    public bool HasKlingentaenzer { get; init; }
+}
 
 public sealed record CombatResourcesDto(
     int? LeP,
