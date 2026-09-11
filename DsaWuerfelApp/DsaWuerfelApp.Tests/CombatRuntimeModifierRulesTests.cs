@@ -106,6 +106,43 @@ public sealed class CombatRuntimeModifierRulesTests
         Assert.Contains(result.RuleNotes, note => note.Contains("AuP oder AuP-Maximum nicht erfasst", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void Initiative_uses_zonal_wounds_and_low_aup_without_inventing_head_loss()
+    {
+        var profile = CreateProfile(40, 30);
+        var set = CreateSet(zonal: true);
+        var state = CreateState(
+            40,
+            9,
+            (CombatWoundZone.Head, 1),
+            (CombatWoundZone.Abdomen, 1),
+            (CombatWoundZone.LeftLeg, 2));
+
+        var result = CombatRuntimeModifierRules.ResolveInitiative(profile, set, state);
+
+        Assert.Equal(-8, result.Modifier);
+        Assert.Contains(result.RuleNotes, note => note.Contains("Kopfwunden", StringComparison.Ordinal));
+        Assert.Contains(result.RuleNotes, note => note.Contains("2W6-INI-Verlust", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Initiative_uses_general_wounds_and_low_aup_for_simple_armor()
+    {
+        var profile = CreateProfile(100, 100);
+        var set = CreateSet(zonal: false);
+        var state = CreateState(
+            100,
+            24,
+            (CombatWoundZone.Head, 1),
+            (CombatWoundZone.Torso, 1));
+
+        var result = CombatRuntimeModifierRules.ResolveInitiative(profile, set, state);
+
+        Assert.Equal(-6, result.Modifier);
+        Assert.Contains(result.RuleNotes, note => note.Contains("2 erfasste Wunde(n)", StringComparison.Ordinal));
+        Assert.Contains(result.RuleNotes, note => note.Contains("AuP 24/100", StringComparison.Ordinal));
+    }
+
     private static CombatProfileDto CreateProfile(int lep, int aup)
     {
         var set = CreateSet(zonal: true);

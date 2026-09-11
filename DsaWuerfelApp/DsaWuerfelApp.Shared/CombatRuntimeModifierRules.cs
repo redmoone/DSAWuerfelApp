@@ -52,6 +52,101 @@ public static class CombatRuntimeModifierRules
         return new CombatRuntimeModifierResult(modifiers.ToArray(), notes.ToArray());
     }
 
+    public static CombatRuntimeInitiativeResult ResolveInitiative(
+        CombatProfileDto? profile,
+        CombatSetVariantDto? set,
+        CombatRuntimeStateDto? state)
+    {
+        if (profile is null || set is null || state is null)
+        {
+            return new CombatRuntimeInitiativeResult(0,
+                ["Laufender Kampfzustand für INI nicht übertragen; automatische INI-Abzüge bleiben unbekannt."]);
+        }
+
+        var notes = new List<string>();
+        var wounds = NormalizeWounds(state.Wounds, notes);
+        var modifier = set.UsesZonalArmor
+            ? ResolveZonalInitiativeModifier(wounds, notes)
+            : ResolveGeneralInitiativeModifier(wounds, notes);
+
+        if (!profile.Resources.AuP.HasValue || !state.CurrentAuP.HasValue || profile.Resources.AuP <= 0)
+        {
+            notes.Add("WdS S. 83: AuP oder AuP-Maximum nicht erfasst; der INI-Abzug durch niedrige AuP bleibt unbekannt.");
+        }
+        else
+        {
+            var auPPenalty = GetLowAuPPenalty(state.CurrentAuP.Value, profile.Resources.AuP.Value);
+            if (auPPenalty > 0)
+            {
+                modifier -= auPPenalty;
+                notes.Add($"WdS S. 83: AuP {state.CurrentAuP}/{profile.Resources.AuP} · INI {FormatSigned(-auPPenalty)}.");
+            }
+
+            if (state.CurrentAuP == 0)
+            {
+                notes.Add("WdS S. 83: AuP 0 bedeutet Kampfunfähigkeit; als einzige Aktion/Reaktion bleibt Atem holen.");
+            }
+        }
+
+        if (wounds.Values.Any(value => !value.HasValue))
+        {
+            notes.Add("Wundstand nicht erfasst; bekannte Wunden wurden berücksichtigt, unbekannte nicht als 0 erfunden.");
+        }
+
+        return new CombatRuntimeInitiativeResult(modifier, notes.ToArray());
+    }
+
+    private static int ResolveGeneralInitiativeModifier(
+        IReadOnlyDictionary<CombatWoundZone, int?> wounds,
+        ICollection<string> notes)
+    {
+        var knownWounds = wounds.Values.Where(value => value.HasValue).Sum(value => value ?? 0);
+        if (knownWounds == 0)
+        {
+            return 0;
+        }
+
+        var modifier = -2 * knownWounds;
+        notes.Add($"{GeneralWoundSource}: {knownWounds} erfasste Wunde(n) senken die INI um {Math.Abs(modifier)}.");
+        return modifier;
+    }
+
+    private static int ResolveZonalInitiativeModifier(
+        IReadOnlyDictionary<CombatWoundZone, int?> wounds,
+        ICollection<string> notes)
+    {
+        var modifier = 0;
+        modifier += AddZonalInitiativePenalty(wounds, CombatWoundZone.Head, "Kopfwunden", -2, notes);
+        modifier += AddZonalInitiativePenalty(wounds, CombatWoundZone.Abdomen, "Bauchwunden", -1, notes);
+        modifier += AddZonalInitiativePenalty(wounds, CombatWoundZone.LeftLeg, "Wunden linkes Bein", -2, notes);
+        modifier += AddZonalInitiativePenalty(wounds, CombatWoundZone.RightLeg, "Wunden rechtes Bein", -2, notes);
+
+        if (GetKnownWoundCount(wounds, CombatWoundZone.Head) > 0)
+        {
+            notes.Add($"{ZoneWoundSource}: Kopfwunden verursachen zusätzlich einen nicht gespeicherten 2W6-INI-Verlust; bitte am Tisch würfeln.");
+        }
+
+        return modifier;
+    }
+
+    private static int AddZonalInitiativePenalty(
+        IReadOnlyDictionary<CombatWoundZone, int?> wounds,
+        CombatWoundZone zone,
+        string label,
+        int penaltyPerWound,
+        ICollection<string> notes)
+    {
+        var affectedWounds = Math.Min(GetKnownWoundCount(wounds, zone), 2);
+        if (affectedWounds == 0)
+        {
+            return 0;
+        }
+
+        var modifier = penaltyPerWound * affectedWounds;
+        notes.Add($"{ZoneWoundSource}: {label} {affectedWounds} · INI {FormatSigned(modifier)}.");
+        return modifier;
+    }
+
     private static Dictionary<CombatWoundZone, int?> NormalizeWounds(
         IReadOnlyDictionary<CombatWoundZone, int?>? source,
         ICollection<string> notes)

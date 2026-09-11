@@ -53,6 +53,10 @@ public sealed record CombatRuntimeModifierResult(
     CombatModifierDto[] Modifiers,
     string[] RuleNotes);
 
+public sealed record CombatRuntimeInitiativeResult(
+    int Modifier,
+    string[] RuleNotes);
+
 public sealed record CombatHelperRollRequestDto
 {
     public int DiceCount { get; init; } = 1;
