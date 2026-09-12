@@ -22,26 +22,41 @@
                           AllowDirectInput="@AllowDirectModifierInput"
                           ValueChanged="ModifierChanged" />
 
-            <span class="hidden-roll-hint"
-                  role="img"
-                  tabindex="0"
-                  aria-label="Verdeckte Würfe sind derzeit nicht verfügbar."
-                  data-tooltip="Verdeckte Würfe sind derzeit nicht verfügbar.">
-                <button class="dsa-btn-icon"
-                        disabled="true"
-                        aria-hidden="true"
-                        tabindex="-1">
-                    <img src="icons/eye-closed.svg" class="btn-icon" alt="" aria-hidden="true" />
-                </button>
-            </span>
+            @if (ShowHiddenRollHint)
+            {
+                <span class="hidden-roll-hint"
+                      role="img"
+                      tabindex="0"
+                      aria-label="Verdeckte Würfe sind derzeit nicht verfügbar."
+                      data-tooltip="Verdeckte Würfe sind derzeit nicht verfügbar.">
+                    <button class="dsa-btn-icon"
+                            disabled="true"
+                            aria-hidden="true"
+                            tabindex="-1">
+                        <img src="icons/eye-closed.svg" class="btn-icon" alt="" aria-hidden="true" />
+                    </button>
+                </span>
+            }
 
-            <MudIconButton Icon="@Icons.Material.Filled.Refresh"
-                           Variant="Variant.Filled"
-                           OnClick="ResetRequested"
-                           Disabled="@IsBusy"
-                           title="Tisch leeren"
-                           Class="rounded-circle reset-roll-button"
-                           Style="width: 48px; height: 48px; background-color: var(--pill-bg); color: var(--dsa-white); border: 1px solid var(--dsa-gold);" />
+            @if (string.IsNullOrWhiteSpace(ResetButtonText))
+            {
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                               Variant="Variant.Filled"
+                               OnClick="ResetRequested"
+                               Disabled="@IsBusy"
+                               title="Tisch leeren"
+                               Class="rounded-circle reset-roll-button"
+                               Style="width: 48px; height: 48px; background-color: var(--pill-bg); color: var(--dsa-white); border: 1px solid var(--dsa-gold);" />
+            }
+            else
+            {
+                <button type="button"
+                        class="reset-text-button"
+                        disabled="@IsBusy"
+                        @onclick="ResetRequested">
+                    @ResetButtonText
+                </button>
+            }
 
             <div class="right-actions">
                 <button type="button"

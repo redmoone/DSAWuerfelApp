@@ -23,13 +23,10 @@ public partial class Kampf : IDisposable
     private string? _notice;
     private string? _lastContextKey;
     private bool _rollBusy;
+    private bool _valueMutationBusy;
     private bool _attributeMode;
-    private CombatArea _activeArea = CombatArea.Wurf;
+    private CombatArea _activeArea = CombatArea.Kampf;
     private CombatDrawer _drawer;
-    private CombatResourceKind? _resourceKind;
-    private int? _resourceDraft;
-    private int? _woundDraft;
-    private int? _initiativeDraft;
     private int? _orientationReliefDraft;
     private bool _orientationUninterruptedDraft = true;
     private string? _initiativeParticipantId;
@@ -98,7 +95,6 @@ public partial class Kampf : IDisposable
         : CombatResult?.Rolls.Select(roll => roll.Value).ToArray() ?? Array.Empty<int>();
     private long ResultVersion => WuerfelState.Current.ResultVersion;
     private CombatArea ActiveArea => _activeArea;
-    private CombatWoundZone WoundDrawerZone => SelectedZone ?? CombatWoundZone.Torso;
     private bool IsAttributeMode => _attributeMode;
     private bool HasAttention => Profile?.HasAttention == true;
 
@@ -150,9 +146,37 @@ public partial class Kampf : IDisposable
     }
 
     private bool CanRoll => IsAttributeMode
-        ? HasCombatContext && !_rollBusy && SelectedAttributes.Count > 0
-        : HasCombatContext && !_rollBusy &&
+        ? HasCombatContext && !_rollBusy && !_valueMutationBusy && SelectedAttributes.Count > 0
+        : HasCombatContext && !_rollBusy && !_valueMutationBusy &&
           Actions.FirstOrDefault(action => action.Key == SelectedAction)?.IsAvailable == true;
+
+    private bool CanRollInitiative => HasCombatContext &&
+                                      SelectedSet?.Initiative.HasValue == true &&
+                                      !_rollBusy &&
+                                      !_valueMutationBusy;
+
+    private string? InitiativeDisabledReason
+    {
+        get
+        {
+            if (ProfileLoading)
+            {
+                return "Kampfprofil wird geladen.";
+            }
+
+            if (!HasCombatContext)
+            {
+                return "Zuerst einen aktiven Helden und ein Kampfset laden.";
+            }
+
+            if (SelectedSet?.Initiative.HasValue != true)
+            {
+                return "Für das Set ist kein INI-Basiswert importiert.";
+            }
+
+            return _rollBusy ? "Wurf läuft." : null;
+        }
+    }
 
     private bool CanConsumeReaction => IsSessionCombat &&
                                        OwnSessionParticipant?.ReactionAvailable == true &&
@@ -160,9 +184,6 @@ public partial class Kampf : IDisposable
 
     private string DrawerTitle => _drawer switch
     {
-        CombatDrawer.Resource => $"{GetResourceLabel(_resourceKind ?? CombatResourceKind.LeP)} setzen",
-        CombatDrawer.Wound => "Wundstand setzen",
-        CombatDrawer.Initiative => "Initiative",
         CombatDrawer.Orientation => "Orientieren",
         CombatDrawer.Participant => _participantDrawerMode == CombatParticipantDrawerMode.Opponent
             ? "Gegner hinzufügen"
@@ -246,7 +267,7 @@ public partial class Kampf : IDisposable
             CloseDrawer();
             _selectedHistoryEntry = null;
             _notice = null;
-            _activeArea = CombatArea.Wurf;
+            _activeArea = CombatArea.Kampf;
         }
 
         _ = InvokeAsync(StateHasChanged);
@@ -306,7 +327,7 @@ public partial class Kampf : IDisposable
 
     private Task HandleRollTextChanged(string text) => CombatState.SetRollTextAsync(text);
 
-    private Task ResetAction() => CombatState.ResetActionAsync();
+    private Task ResetAction() => CombatState.SetModifierAsync(0);
 
     private async Task HandleRollRequested()
     {
@@ -326,8 +347,7 @@ public partial class Kampf : IDisposable
         _notice = null;
         try
         {
-            var result = await CombatCoordinator.RollAsync(BuildRollRequest(action));
-            _notice = result.Snapshot.StatusLabel;
+            await CombatCoordinator.RollAsync(BuildRollRequest(action));
         }
         catch (Exception exception)
         {
@@ -352,9 +372,6 @@ public partial class Kampf : IDisposable
         try
         {
             await WuerfelFacade.RollAttributesAsync(SelectedAttributes, Modifier, ActiveHero?.Id);
-            _notice = AttributeResult is { Success: true }
-                ? "Eigenschaftsprobe gelungen."
-                : "Eigenschaftsprobe ausgewertet.";
         }
         catch (Exception exception)
         {
@@ -406,34 +423,256 @@ public partial class Kampf : IDisposable
     private async Task HandleZoneSelected(CombatWoundZone zone)
     {
         await CombatState.SetSelectedZoneAsync(zone);
-        OpenWoundDrawer();
     }
 
-    private void SetArea(CombatArea area) => _activeArea = area;
-
-    private void OpenResourceDrawer(CombatResourceKind resource)
+    private void SetArea(CombatArea area)
     {
-        _resourceKind = resource;
-        _resourceDraft = GetResourceValue(resource);
-        _drawer = CombatDrawer.Resource;
+        _activeArea = area;
+        if (area is CombatArea.Kampf or CombatArea.Eigenschaften)
+        {
+            _attributeMode = area == CombatArea.Eigenschaften;
+        }
     }
 
-    private void OpenWoundDrawer()
+    private async Task HandleResourceValueChanged(CombatStatusPanel.ResourceValueChange change)
     {
-        var zone = WoundDrawerZone;
-        _woundDraft = Wounds.TryGetValue(zone, out var wounds) ? wounds ?? 0 : 0;
-        _drawer = CombatDrawer.Wound;
+        if (_valueMutationBusy || GetResourceValue(change.Resource) == change.Value)
+        {
+            return;
+        }
+
+        _valueMutationBusy = true;
+        _notice = null;
+        try
+        {
+            await CombatState.SetResourceAsync(change.Resource, change.Value);
+            var result = await SyncSessionRuntimeStateAsync();
+            if (result?.Stale == true)
+            {
+                _notice = result.Message;
+            }
+        }
+        catch (Exception exception)
+        {
+            _notice = exception.Message;
+        }
+        finally
+        {
+            _valueMutationBusy = false;
+        }
     }
 
-    private void OpenInitiativeDrawer()
+    private async Task HandleRelativeResourceChanged(CombatStatusPanel.ResourceAdjustment change)
     {
-        _initiativeParticipantId = OwnSessionParticipant?.Id;
-        _initiativeHeroId = ActiveHero?.Id;
-        var runtimeModifier = Profile is null || SelectedSet is null
-            ? 0
-            : CombatRuntimeModifierRules.ResolveInitiative(Profile, SelectedSet, BuildRuntimeState()).Modifier;
-        _initiativeDraft = CurrentInitiative ?? (SelectedSet?.Initiative + runtimeModifier);
-        _drawer = CombatDrawer.Initiative;
+        var current = GetResourceValue(change.Resource);
+        if (!current.HasValue || change.Amount <= 0)
+        {
+            _notice = "Für die relative Änderung muss zuerst ein aktueller Wert erfasst sein.";
+            return;
+        }
+
+        var next = change.Increase
+            ? current.Value + change.Amount
+            : current.Value - change.Amount;
+        if (GetResourceMaximum(change.Resource) is { } maximum)
+        {
+            next = Math.Min(maximum, next);
+        }
+
+        await HandleResourceValueChanged(new CombatStatusPanel.ResourceValueChange(change.Resource, next));
+    }
+
+    private async Task HandleWoundChanged(CombatBodyPanel.WoundChange change)
+    {
+        if (!change.Value.HasValue || _valueMutationBusy)
+        {
+            if (!change.Value.HasValue)
+            {
+                _notice = "Bitte einen Wundstand von 0 bis 3 setzen.";
+            }
+
+            return;
+        }
+
+        _valueMutationBusy = true;
+        _notice = null;
+        try
+        {
+            await CombatState.SetWoundAsync(change.Zone, Math.Clamp(change.Value.Value, 0, 3));
+            var result = await SyncSessionRuntimeStateAsync();
+            if (result?.Stale == true)
+            {
+                _notice = result.Message;
+            }
+        }
+        catch (Exception exception)
+        {
+            _notice = exception.Message;
+        }
+        finally
+        {
+            _valueMutationBusy = false;
+        }
+    }
+
+    private async Task HandleInitiativeChanged(int? initiative)
+    {
+        if (!initiative.HasValue)
+        {
+            _notice = IsSessionCombat
+                ? "In einer Session kann die eigene INI nicht leer sein."
+                : "Bitte einen konkreten INI-Wert setzen.";
+            return;
+        }
+
+        if (_valueMutationBusy)
+        {
+            return;
+        }
+
+        _valueMutationBusy = true;
+        _notice = null;
+        try
+        {
+            if (IsSessionCombat)
+            {
+                var result = await CombatSessionState.SetInitiativeAsync(
+                    initiative.Value,
+                    OwnSessionParticipant?.Id,
+                    ActiveHero?.Id,
+                    BuildRuntimeState(),
+                    SelectedSet?.Id);
+                if (result.Stale || !result.Applied)
+                {
+                    _notice = result.Message;
+                }
+                else
+                {
+                    await CombatState.SetInitiativeAsync(initiative);
+                }
+            }
+            else
+            {
+                await CombatState.SetInitiativeAsync(initiative);
+            }
+        }
+        catch (Exception exception)
+        {
+            _notice = exception.Message;
+        }
+        finally
+        {
+            _valueMutationBusy = false;
+        }
+    }
+
+    private async Task RollInitiativeFromStatusAsync()
+    {
+        if (!CanRollInitiative)
+        {
+            _notice = InitiativeDisabledReason ?? "Der INI-Wurf ist derzeit nicht verfügbar.";
+            return;
+        }
+
+        _rollBusy = true;
+        _notice = null;
+        try
+        {
+            if (IsSessionCombat)
+            {
+                var sessionResult = await CombatSessionState.RollInitiativeAsync(
+                    OwnSessionParticipant?.Id,
+                    ActiveHero?.Id,
+                    BuildRuntimeState(),
+                    SelectedSet?.Id);
+                var initiative = sessionResult.Snapshot.Participants
+                    .FirstOrDefault(participant => participant.HeroId == ActiveHero?.Id)?.CurrentInitiative;
+                if (initiative.HasValue)
+                {
+                    await CombatState.SetInitiativeAsync(initiative);
+                }
+
+                if (sessionResult.Stale || !sessionResult.Applied)
+                {
+                    _notice = sessionResult.Message;
+                }
+
+                return;
+            }
+
+            var result = await CombatCoordinator.RollAsync(new CombatRollRequestDto
+            {
+                RequestId = Guid.NewGuid(),
+                SessionId = SessionState.ActiveSessionId,
+                HeroId = ActiveHero?.Id,
+                SetId = SelectedSet?.Id,
+                Action = CombatActionKind.InitiativeHelper,
+                RuntimeState = BuildRuntimeState(),
+                Helper = new CombatHelperRollRequestDto { DiceCount = 1, DiceSides = 6, Purpose = "INI-Startwurf" }
+            });
+            var baseInitiative = SelectedSet?.Initiative ?? 0;
+            var runtime = CombatRuntimeModifierRules.ResolveInitiative(Profile, SelectedSet, BuildRuntimeState());
+            await CombatState.SetInitiativeAsync(baseInitiative + result.Rolls.Sum(roll => roll.Value) + runtime.Modifier);
+        }
+        catch (Exception exception)
+        {
+            _notice = exception.Message;
+        }
+        finally
+        {
+            _rollBusy = false;
+        }
+    }
+
+    private async Task HandleParticipantInitiativeChanged(CombatSessionParticipantDto participant, int? initiative)
+    {
+        if (!initiative.HasValue)
+        {
+            _notice = "Bitte einen konkreten INI-Wert setzen.";
+            return;
+        }
+
+        if (!CanEditParticipantInitiative(participant) || _valueMutationBusy)
+        {
+            return;
+        }
+
+        _valueMutationBusy = true;
+        _notice = null;
+        try
+        {
+            var result = await CombatSessionState.SetInitiativeAsync(
+                initiative.Value,
+                participant.Id,
+                participant.HeroId,
+                BuildRuntimeState(),
+                participant.InitiativeSetId ?? SelectedSet?.Id);
+            if (result.Stale || !result.Applied)
+            {
+                _notice = result.Message;
+            }
+        }
+        catch (Exception exception)
+        {
+            _notice = exception.Message;
+        }
+        finally
+        {
+            _valueMutationBusy = false;
+        }
+    }
+
+    private bool CanEditParticipantInitiative(CombatSessionParticipantDto participant)
+    {
+        if (!IsSessionCombat || participant.HeroId == ActiveHero?.Id)
+        {
+            return false;
+        }
+
+        return IsSessionMaster || string.Equals(
+            participant.OwnerUserId,
+            AuthState.Current.User?.Id,
+            StringComparison.Ordinal);
     }
 
     private void OpenOrientationDrawer()
@@ -443,14 +682,6 @@ public partial class Kampf : IDisposable
             : 0;
         _orientationUninterruptedDraft = true;
         _drawer = CombatDrawer.Orientation;
-    }
-
-    private void OpenParticipantInitiativeDrawer(CombatSessionParticipantDto participant)
-    {
-        _initiativeParticipantId = participant.Id;
-        _initiativeHeroId = participant.HeroId;
-        _initiativeDraft = participant.CurrentInitiative;
-        _drawer = CombatDrawer.Initiative;
     }
 
     private void OpenOpponentDrawer()
@@ -477,7 +708,6 @@ public partial class Kampf : IDisposable
     private void CloseDrawer()
     {
         _drawer = CombatDrawer.None;
-        _resourceKind = null;
     }
 
     private async Task InitializeCombatStateAsync()
@@ -492,73 +722,6 @@ public partial class Kampf : IDisposable
         _notice = sessionResult?.Stale == true
             ? sessionResult.Message
             : "Laufende Kampfwerte mit den importierten Maximalwerten initialisiert.";
-    }
-
-    private async Task ApplyResourceAsync()
-    {
-        if (_resourceKind is not { } resource)
-        {
-            return;
-        }
-
-        await CombatState.SetResourceAsync(resource, _resourceDraft);
-        var sessionResult = await SyncSessionRuntimeStateAsync();
-        _notice = sessionResult?.Stale == true
-            ? sessionResult.Message
-            : $"{GetResourceLabel(resource)} gespeichert.";
-        CloseDrawer();
-    }
-
-    private async Task ApplyWoundAsync()
-    {
-        if (!Wounds.TryGetValue(WoundDrawerZone, out _) || !_woundDraft.HasValue)
-        {
-            _notice = "Bitte einen Wundstand von 0 bis 3 setzen.";
-            return;
-        }
-
-        await CombatState.SetWoundAsync(WoundDrawerZone, _woundDraft.Value);
-        var sessionResult = await SyncSessionRuntimeStateAsync();
-        _notice = sessionResult?.Stale == true
-            ? sessionResult.Message
-            : $"{GetWoundLabel(WoundDrawerZone)} gespeichert.";
-        CloseDrawer();
-    }
-
-    private async Task ApplyInitiativeAsync()
-    {
-        if (!_initiativeDraft.HasValue)
-        {
-            _notice = "Bitte einen konkreten INI-Wert setzen.";
-            return;
-        }
-
-        if (IsSessionCombat)
-        {
-            var result = await CombatSessionState.SetInitiativeAsync(
-                _initiativeDraft.Value,
-                _initiativeParticipantId,
-                _initiativeHeroId,
-                BuildRuntimeState(),
-                SelectedSet?.Id);
-            _notice = result.Message;
-            if (result.Applied)
-            {
-                if (_initiativeHeroId == ActiveHero?.Id)
-                {
-                    await CombatState.SetInitiativeAsync(_initiativeDraft);
-                }
-
-                CloseDrawer();
-            }
-            return;
-        }
-
-        if (await CombatState.SetInitiativeAsync(_initiativeDraft))
-        {
-            _notice = _initiativeDraft.HasValue ? $"INI {_initiativeDraft} gespeichert." : "Laufende Initiative entfernt.";
-            CloseDrawer();
-        }
     }
 
     private async Task ApplyParticipantDrawerAsync()
@@ -585,85 +748,6 @@ public partial class Kampf : IDisposable
         {
             CloseDrawer();
         }
-    }
-
-    private async Task RollInitiativeAsync()
-    {
-        if (!HasCombatContext)
-        {
-            _notice = "Für den INI-Hilfswurf fehlt ein importiertes Kampfprofil.";
-            return;
-        }
-
-        _rollBusy = true;
-        try
-        {
-            if (IsSessionCombat)
-            {
-                var sessionResult = await CombatSessionState.RollInitiativeAsync(
-                    _initiativeParticipantId,
-                    _initiativeHeroId,
-                    BuildRuntimeState(),
-                    SelectedSet?.Id);
-                _initiativeDraft = sessionResult.Snapshot.Participants
-                    .FirstOrDefault(participant => participant.Id == _initiativeParticipantId)?.CurrentInitiative;
-                _notice = sessionResult.Message;
-                if (sessionResult.Applied)
-                {
-                    if (_initiativeHeroId == ActiveHero?.Id && _initiativeDraft.HasValue)
-                    {
-                        await CombatState.SetInitiativeAsync(_initiativeDraft);
-                    }
-
-                    CloseDrawer();
-                }
-
-                return;
-            }
-
-            var result = await CombatCoordinator.RollAsync(new CombatRollRequestDto
-            {
-                RequestId = Guid.NewGuid(),
-                SessionId = SessionState.ActiveSessionId,
-                HeroId = ActiveHero?.Id,
-                SetId = SelectedSet?.Id,
-                Action = CombatActionKind.InitiativeHelper,
-                RuntimeState = BuildRuntimeState(),
-                Helper = new CombatHelperRollRequestDto { DiceCount = 1, DiceSides = 6, Purpose = "INI-Startwurf" }
-            });
-            var baseInitiative = SelectedSet?.Initiative ?? 0;
-            var runtime = CombatRuntimeModifierRules.ResolveInitiative(Profile, SelectedSet, BuildRuntimeState());
-            _initiativeDraft = baseInitiative + result.Rolls.Sum(roll => roll.Value) + runtime.Modifier;
-            _notice = runtime.Modifier == 0
-                ? $"INI-Hilfswurf: {_initiativeDraft} zum Anwenden bereit."
-                : $"INI-Hilfswurf: {_initiativeDraft} zum Anwenden bereit ({FormatSigned(runtime.Modifier)} laufend).";
-        }
-        catch (Exception exception)
-        {
-            _notice = exception.Message;
-        }
-        finally
-        {
-            _rollBusy = false;
-        }
-    }
-
-    private Task HandleResourceDraftChanged(int? value)
-    {
-        _resourceDraft = value;
-        return Task.CompletedTask;
-    }
-
-    private Task HandleWoundDraftChanged(int? value)
-    {
-        _woundDraft = value.HasValue ? Math.Clamp(value.Value, 0, 3) : null;
-        return Task.CompletedTask;
-    }
-
-    private Task HandleInitiativeDraftChanged(int? value)
-    {
-        _initiativeDraft = value;
-        return Task.CompletedTask;
     }
 
     private Task HandleOpponentNameChanged(string value)
@@ -1023,89 +1107,21 @@ public partial class Kampf : IDisposable
         _ => null
     };
 
-    private static int? GetResourceMinimum(CombatResourceKind resource) => resource == CombatResourceKind.LeP ? null : 0;
-
-    private static string GetResourceLabel(CombatResourceKind resource) => resource switch
-    {
-        CombatResourceKind.LeP => "LeP",
-        CombatResourceKind.AuP => "AuP",
-        CombatResourceKind.AeP => "AeP",
-        CombatResourceKind.KeP => "KE",
-        _ => "Wert"
-    };
-
-    private static string GetResourceDescription(CombatResourceKind resource) => resource switch
-    {
-        CombatResourceKind.LeP => "Lebenspunkte bleiben auch unter 0 sichtbar und werden nicht automatisch geheilt.",
-        CombatResourceKind.AuP => "Ausdauerpunkte dürfen nicht negativ gesetzt werden.",
-        CombatResourceKind.AeP => "Astralenergie wird nur angezeigt, wenn ein positives Maximum importiert wurde.",
-        CombatResourceKind.KeP => "Karmaenergie wird nur angezeigt, wenn ein positives Maximum importiert wurde.",
-        _ => string.Empty
-    };
-
-    private string GetWoundLabel(CombatWoundZone zone) => zone switch
-    {
-        CombatWoundZone.Head => "Kopf",
-        CombatWoundZone.Torso => "Torso",
-        CombatWoundZone.Abdomen => "Bauch",
-        CombatWoundZone.LeftArm => "Linker Arm",
-        CombatWoundZone.RightArm => "Rechter Arm",
-        CombatWoundZone.LeftLeg => "Linkes Bein",
-        CombatWoundZone.RightLeg => "Rechtes Bein",
-        _ => zone.ToString()
-    };
-
-    private string GetArmorFacingLabel()
-    {
-        var armorZone = WoundDrawerZone == CombatWoundZone.Torso
-            ? Facing == CombatFacing.Back ? CombatArmorZone.Back : CombatArmorZone.Chest
-            : WoundDrawerZone switch
-            {
-                CombatWoundZone.Head => CombatArmorZone.Head,
-                CombatWoundZone.Abdomen => CombatArmorZone.Abdomen,
-                CombatWoundZone.LeftArm => CombatArmorZone.LeftArm,
-                CombatWoundZone.RightArm => CombatArmorZone.RightArm,
-                CombatWoundZone.LeftLeg => CombatArmorZone.LeftLeg,
-                CombatWoundZone.RightLeg => CombatArmorZone.RightLeg,
-                _ => CombatArmorZone.Chest
-            };
-        return $"{(Facing == CombatFacing.Back ? "Rückseite" : "Vorderseite")} · RS {GetArmorValue(armorZone)?.ToString() ?? "—"}";
-    }
-
-    private int? GetArmorValue(CombatArmorZone zone)
-    {
-        var armor = SelectedSet?.ArmorZones;
-        return zone switch
-        {
-            CombatArmorZone.Head => armor?.Head,
-            CombatArmorZone.Chest => armor?.Chest,
-            CombatArmorZone.Back => armor?.Back,
-            CombatArmorZone.Abdomen => armor?.Abdomen,
-            CombatArmorZone.LeftArm => armor?.LeftArm,
-            CombatArmorZone.RightArm => armor?.RightArm,
-            CombatArmorZone.LeftLeg => armor?.LeftLeg,
-            CombatArmorZone.RightLeg => armor?.RightLeg,
-            _ => null
-        };
-    }
-
     private static string FormatActionValue(string label, int? value) => value.HasValue ? $"{label} {value}" : $"{label} —";
 
     private static string GetDamageText(CombatWeaponDto? weapon) => weapon?.CalculatedDamage ?? weapon?.BaseDamage ?? "—";
 
     private enum CombatArea
     {
-        Wurf,
-        Initiative,
-        Zonen
+        Kampf,
+        Zonen,
+        Runde,
+        Eigenschaften
     }
 
     private enum CombatDrawer
     {
         None,
-        Resource,
-        Wound,
-        Initiative,
         Orientation,
         Participant,
         History

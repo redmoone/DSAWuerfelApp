@@ -1,27 +1,34 @@
 @using Microsoft.AspNetCore.Components.Web
 
-<div class="number-control" aria-label="@Label">
-    <button type="button"
-            class="number-control-button"
-            aria-label="@($"{Label} verringern")"
-            disabled="@Disabled"
-            @onclick="() => StepAsync(-1)">−</button>
-    <label class="number-control-field">
-        <span class="number-control-label">@Label</span>
-        <input class="number-control-input"
-               type="number"
-               inputmode="numeric"
-               value="@_draft"
-               placeholder="@Placeholder"
-               aria-label="@Label"
-               disabled="@Disabled"
-               @oninput="HandleInput"
-               @onkeydown="HandleKeyDown"
-               @onblur="CommitAsync" />
-    </label>
-    <button type="button"
-            class="number-control-button"
-            aria-label="@($"{Label} erhöhen")"
-            disabled="@Disabled"
-            @onclick="() => StepAsync(1)">+</button>
+<div class="number-control-wrapper">
+    <div class="number-control" aria-label="@Label">
+        <button type="button"
+                class="number-control-button"
+                aria-label="@($"{Label} verringern")"
+                disabled="@IsDecrementDisabled"
+                @onclick="() => StepAsync(-1)">−</button>
+        <label class="number-control-field">
+            <span class="number-control-label">@Label</span>
+            <input class="number-control-input"
+                   type="number"
+                   inputmode="numeric"
+                   value="@_draft"
+                   placeholder="@Placeholder"
+                   aria-label="@Label"
+                   aria-invalid="@(!string.IsNullOrWhiteSpace(_validationMessage))"
+                   disabled="@Disabled"
+                   @oninput="HandleInput"
+                   @onkeydown="HandleKeyDown"
+                   @onblur="CommitAsync" />
+        </label>
+        <button type="button"
+                class="number-control-button"
+                aria-label="@($"{Label} erhöhen")"
+                disabled="@IsIncrementDisabled"
+                @onclick="() => StepAsync(1)">+</button>
+    </div>
+    @if (ShowValidationMessage && !string.IsNullOrWhiteSpace(_validationMessage))
+    {
+        <span class="number-control-validation" role="alert">@_validationMessage</span>
+    }
 </div>

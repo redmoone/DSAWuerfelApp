@@ -22,10 +22,25 @@
         </div>
     </div>
 
+    @if (SelectedSet?.ArmorModel == CombatArmorModel.Simple || SelectedSet?.SimpleArmor is not null)
+    {
+        <div class="combat-simple-armor-summary">
+            <div>
+                <span class="combat-field-label">Einfache Rüstung</span>
+                <strong>Gesamt-RS @FormatValue(SelectedSet?.SimpleArmor?.Total)</strong>
+            </div>
+            <span>BE @FormatValue(SelectedSet?.SimpleArmor?.Encumbrance)</span>
+        </div>
+    }
+    else if (SelectedSet?.ArmorZones is null)
+    {
+        <div class="combat-armor-missing">Für dieses Set sind keine zonalen Rüstungswerte importiert.</div>
+    }
+
     <div class="combat-body-layout">
         <button type="button"
                 class="combat-silhouette"
-                aria-label="Körperdetails öffnen"
+                aria-label="Körperdetails auswählen"
                 @onclick="() => ZoneSelected.InvokeAsync(SelectedZone ?? CombatWoundZone.Torso)">
             <svg viewBox="0 0 180 300" role="img" aria-label="Körper-Silhouette">
                 <circle cx="90" cy="34" r="22" />
@@ -37,31 +52,60 @@
                     <path class="silhouette-back-line" d="M90 73 V178" />
                 }
             </svg>
-            <span class="combat-silhouette-caption">@(Facing == CombatFacing.Front ? "Vorderseite" : "Rückseite") · antippen für Details</span>
+            <span class="combat-silhouette-caption">@(Facing == CombatFacing.Front ? "Vorderseite" : "Rückseite") · Zone auswählen</span>
         </button>
 
-        <div class="combat-zone-list" role="list" aria-label="Acht Rüstungsbereiche">
+        <div class="combat-zone-list" role="list" aria-label="Sieben Wundbereiche">
             @foreach (var zone in Zones)
             {
-                var woundZone = GetWoundZone(zone.Zone);
-                var isSelected = SelectedZone == woundZone;
-                <button type="button"
-                        class="combat-zone-row @(isSelected ? "active" : string.Empty)"
-                        role="listitem"
-                        aria-pressed="@isSelected"
-                        aria-label="@GetAccessibleLabel(zone, woundZone)"
-                        @onclick="() => ZoneSelected.InvokeAsync(woundZone)">
-                    <span class="combat-zone-name">@zone.Label</span>
-                    <span class="combat-zone-rs">RS @FormatValue(GetArmorValue(zone.Zone))</span>
-                    <span class="combat-zone-wounds">@GetWoundMarkers(woundZone)</span>
-                </button>
+                var isSelected = SelectedZone == zone.WoundZone;
+                <div class="combat-zone-row @(isSelected ? "active" : string.Empty) @(IsBusy ? "busy" : string.Empty)"
+                     role="listitem"
+                     aria-label="@GetAccessibleLabel(zone)">
+                    <button type="button"
+                            class="combat-zone-select"
+                            aria-pressed="@isSelected"
+                            disabled="@IsBusy"
+                            @onclick="() => ZoneSelected.InvokeAsync(zone.WoundZone)">
+                        <span class="combat-zone-name">@zone.Label</span>
+                        @if (UsesZonalArmor)
+                        {
+                            <span class="combat-zone-rs-list">
+                                @foreach (var armorZone in zone.ArmorZones)
+                                {
+                                    <span>@GetArmorLabel(armorZone) RS @FormatValue(GetArmorValue(armorZone))</span>
+                                }
+                            </span>
+                        }
+                        else if (SelectedSet?.ArmorModel == CombatArmorModel.Simple || SelectedSet?.SimpleArmor is not null)
+                        {
+                            <span class="combat-zone-rs-list">Gesamt-RS oben</span>
+                        }
+                        else
+                        {
+                            <span class="combat-zone-rs-list">RS nicht importiert</span>
+                        }
+                    </button>
+                    <div class="combat-wound-editor">
+                        <span class="combat-wound-label">Wunden</span>
+                        <NumberControl Label="@zone.Label"
+                                       Value="@GetWoundValue(zone.WoundZone)"
+                                       ValueChanged="value => WoundChanged.InvokeAsync(new WoundChange(zone.WoundZone, value))"
+                                       Minimum="0"
+                                       Maximum="3"
+                                       AllowEmpty="false"
+                                       DisableStepsWhenEmpty="true"
+                                       ShowValidationMessage="true"
+                                       Disabled="@IsBusy" />
+                    </div>
+                </div>
             }
         </div>
     </div>
 
     <div class="combat-body-footnote">
-        <span>8 RS-Bereiche</span>
-        <span>7 Wundbestände</span>
-        <span>Brust/Rücken teilen Wunden</span>
+        <span>8 RS-Werte bei Zonenrüstung</span>
+        <span>7 Wundstände</span>
+        <span>Brust und Rücken teilen den Torso-Wundstand</span>
     </div>
 </section>

@@ -7,65 +7,90 @@
 
 <div class="combat-page">
     <div class="combat-shell">
-        <header class="combat-header panel-surface">
-            <div class="combat-header-copy">
-                <p class="combat-kicker">Kampf</p>
-                <h1>@HeroDisplayName</h1>
-                <p class="combat-subtitle">@(string.IsNullOrWhiteSpace(SessionState.ActiveSession?.Name) ? "Kampfseite für den aktiven Helden" : $"Session · {SessionState.ActiveSession.Name}")</p>
-            </div>
-            <div class="combat-header-actions">
-                <span class="combat-profile-state">@ProfileStatus</span>
-                <button type="button" class="combat-header-button" @onclick="OpenHistoryDrawer">
-                    Historie (@History.Count)
-                </button>
-            </div>
-        </header>
-
-        @if (!string.IsNullOrWhiteSpace(_notice))
-        {
-            <p class="combat-notice" role="status">@_notice</p>
-        }
-
-        <section class="combat-status-surface panel-surface">
+        <section class="combat-status-surface panel-surface" aria-label="Kampfstatus">
             <CombatStatusPanel HeroName="@HeroDisplayName"
                                SessionName="@SessionState.ActiveSession?.Name"
                                Profile="@Profile"
                                IsLoading="@ProfileLoading"
                                ErrorMessage="@ProfileError"
                                SelectedSet="@SelectedSet"
+                               Sets="@Sets"
+                               SelectedSetId="@SelectedSetId"
+                               SetSelected="HandleSetSelected"
                                CurrentLeP="@CurrentLeP"
                                CurrentAuP="@CurrentAuP"
                                CurrentAeP="@CurrentAeP"
                                CurrentKeP="@CurrentKeP"
                                CurrentInitiative="@CurrentInitiative"
-                               IsCombatStarted="@CombatState.IsStarted"
-                               CanStartCombat="@(!CombatState.IsStarted)"
+                               IsCombatStarted="@IsCombatStarted"
+                               CanStartCombat="@(!IsCombatStarted)"
                                StartCombatRequested="InitializeCombatStateAsync"
-                               CanUndo="@CanUndoCombat"
-                               UndoRequested="UndoLastChangeAsync"
-                               ResourceEditRequested="OpenResourceDrawer"
-                               InitiativeRequested="OpenInitiativeDrawer"
-                               WoundsRequested="OpenWoundDrawer"
+                               ResourceValueChangedRequested="HandleResourceValueChanged"
+                               RelativeResourceChangedRequested="HandleRelativeResourceChanged"
+                               InitiativeChangedRequested="HandleInitiativeChanged"
+                               InitiativeRollRequested="RollInitiativeFromStatusAsync"
+                               CanRollInitiative="@CanRollInitiative"
+                               InitiativeDisabledReason="@InitiativeDisabledReason"
+                               WoundsRequested="() => SetArea(CombatArea.Zonen)"
+                               ShowUndo="false"
                                PersistenceWarning="@CombatState.PersistenceError"
                                Wounds="@Wounds"
-                               Effects="@Effects" />
+                               Effects="@Effects"
+                               InlineEditing="true"
+                               IsMutationBusy="@_valueMutationBusy" />
         </section>
 
-        <nav class="combat-area-switcher" aria-label="Kampfbereiche">
-            <button type="button" class="@(ActiveArea == CombatArea.Wurf ? "active" : string.Empty)" aria-pressed="@(ActiveArea == CombatArea.Wurf)" @onclick="() => SetArea(CombatArea.Wurf)">Wurf</button>
-            <button type="button" class="@(ActiveArea == CombatArea.Initiative ? "active" : string.Empty)" aria-pressed="@(ActiveArea == CombatArea.Initiative)" @onclick="() => SetArea(CombatArea.Initiative)">Initiative</button>
-            <button type="button" class="@(ActiveArea == CombatArea.Zonen ? "active" : string.Empty)" aria-pressed="@(ActiveArea == CombatArea.Zonen)" @onclick="() => SetArea(CombatArea.Zonen)">Zonen</button>
+        @if (!string.IsNullOrWhiteSpace(_notice))
+        {
+            <p class="combat-notice" role="status">@_notice</p>
+        }
+
+        <nav class="combat-tabs" role="tablist" aria-label="Kampfflächen">
+            <button type="button"
+                    role="tab"
+                    class="@(ActiveArea == CombatArea.Kampf ? "active" : string.Empty)"
+                    aria-selected="@(ActiveArea == CombatArea.Kampf)"
+                    aria-controls="combat-tab-kampf"
+                    @onclick="() => SetArea(CombatArea.Kampf)">
+                Kampf
+            </button>
+            <button type="button"
+                    role="tab"
+                    class="@(ActiveArea == CombatArea.Zonen ? "active" : string.Empty)"
+                    aria-selected="@(ActiveArea == CombatArea.Zonen)"
+                    aria-controls="combat-tab-ruestung"
+                    @onclick="() => SetArea(CombatArea.Zonen)">
+                Rüstung &amp; Wunden
+            </button>
+            <button type="button"
+                    role="tab"
+                    class="@(ActiveArea == CombatArea.Runde ? "active" : string.Empty)"
+                    aria-selected="@(ActiveArea == CombatArea.Runde)"
+                    aria-controls="combat-tab-runde"
+                    @onclick="() => SetArea(CombatArea.Runde)">
+                Rundenübersicht
+            </button>
+            <button type="button"
+                    role="tab"
+                    class="@(ActiveArea == CombatArea.Eigenschaften ? "active" : string.Empty)"
+                    aria-selected="@(ActiveArea == CombatArea.Eigenschaften)"
+                    aria-controls="combat-tab-eigenschaften"
+                    @onclick="() => SetArea(CombatArea.Eigenschaften)">
+                Eigenschaften
+            </button>
         </nav>
 
-        <main class="combat-content">
-            <div class="combat-left-column">
-                <section class="combat-area-panel combat-wurf-area @(ActiveArea == CombatArea.Wurf ? "active" : string.Empty)" aria-label="Kampfwurf">
+        <main class="combat-main-area">
+            @if (ActiveArea is CombatArea.Kampf or CombatArea.Eigenschaften)
+            {
+                <section id="@(ActiveArea == CombatArea.Kampf ? "combat-tab-kampf" : "combat-tab-eigenschaften")"
+                         class="combat-tab-panel panel-surface"
+                         role="tabpanel"
+                         aria-label="@(ActiveArea == CombatArea.Kampf ? "Kampf" : "Eigenschaften")">
                     <CombatActionPanel Sets="@Sets"
                                        IsLoading="@ProfileLoading"
                                        SelectedSetId="@SelectedSetId"
-                                       SetSelected="HandleSetSelected"
                                        AttributeMode="@IsAttributeMode"
-                                       AttributeModeChanged="HandleAttributeModeChanged"
                                        Weapons="@Weapons"
                                        SelectedWeaponId="@SelectedWeaponId"
                                        WeaponSelected="HandleWeaponSelected"
@@ -87,8 +112,11 @@
                                        RollRequested="HandleRollRequested"
                                        CanRoll="@CanRoll"
                                        IsBusy="@_rollBusy"
+                                       BaseTarget="@GetActionBaseValue()"
                                        EffectiveTarget="@EffectiveTarget"
                                        TargetSource="@TargetSource"
+                                       Facing="@Facing"
+                                       FacingChanged="HandleFacingChanged"
                                        CombatResult="@CombatResult"
                                        AttributeResult="@AttributeResult"
                                        CanConsumeReaction="@CanConsumeReaction"
@@ -96,28 +124,36 @@
                                        ResultDiceSides="@ResultDiceSides"
                                        ResultDiceValues="@ResultDiceValues"
                                        ResultVersion="@ResultVersion"
+                                       History="@History"
+                                       HistoryEntrySelected="HandleHistorySelected"
+                                       HistoryRequested="OpenHistoryDrawer"
                                        ResultDetailsRequested="OpenLastResultDetails" />
                 </section>
-
-                <section class="combat-area-panel combat-zones-area @(ActiveArea == CombatArea.Zonen ? "active" : string.Empty)" aria-label="Rüstung und Wunden">
+            }
+            else if (ActiveArea == CombatArea.Zonen)
+            {
+                <section id="combat-tab-ruestung" class="combat-tab-panel panel-surface" role="tabpanel" aria-label="Rüstung und Wunden">
                     <CombatBodyPanel SelectedSet="@SelectedSet"
                                      Facing="@Facing"
                                      FacingChanged="HandleFacingChanged"
                                      SelectedZone="@SelectedZone"
                                      ZoneSelected="HandleZoneSelected"
-                                     Wounds="@Wounds" />
+                                     Wounds="@Wounds"
+                                     WoundChanged="HandleWoundChanged"
+                                     IsBusy="@_valueMutationBusy" />
                 </section>
-            </div>
-
-            <aside class="combat-side">
-                <section class="combat-area-panel combat-initiative-area @(ActiveArea == CombatArea.Initiative ? "active" : string.Empty)" aria-labelledby="initiative-title">
+            }
+            else
+            {
+                <section id="combat-tab-runde" class="combat-tab-panel panel-surface" role="tabpanel" aria-labelledby="round-title">
                     <div class="combat-section-heading">
                         <div>
                             <p class="combat-kicker">Initiative</p>
-                            <h2 id="initiative-title">Rundenübersicht</h2>
+                            <h2 id="round-title">Rundenübersicht</h2>
                         </div>
-                        <button type="button" class="combat-header-button" @onclick="OpenInitiativeDrawer">INI bearbeiten</button>
+                        <span class="combat-round-state">@(IsSessionCombat ? "Gemeinsamer Sessionstand" : "Solo-Kampf")</span>
                     </div>
+
                     <div class="combat-initiative-summary">
                         @if (IsSessionCombat && SessionCombat is { } sessionCombat)
                         {
@@ -130,17 +166,20 @@
                             <span>Importierter Setwert: @(SelectedSet?.Initiative?.ToString() ?? "—") · Startwurf @GetInitiativeDiceLabel()</span>
                         }
                     </div>
+
                     @if (!IsSessionCombat && HasRuntimeInitiativeNotes())
                     {
                         <p class="combat-initiative-runtime">@GetRuntimeInitiativeSummary()</p>
                     }
+
                     @if (!IsSessionCombat)
                     {
-                        <div class="combat-initiative-row current">
-                            <strong>@HeroDisplayName</strong>
-                            <button type="button" class="combat-initiative-value" @onclick="OpenInitiativeDrawer">
-                                @(CurrentInitiative.HasValue ? $"INI {CurrentInitiative}" : "INI —")
-                            </button>
+                        <div class="combat-solo-round-card">
+                            <div>
+                                <span class="combat-turn-label">Aktiver Held</span>
+                                <strong>@HeroDisplayName</strong>
+                            </div>
+                            <span class="combat-initiative-readonly">@(CurrentInitiative.HasValue ? $"INI {CurrentInitiative}" : "INI —")</span>
                         </div>
                     }
                     else if (InitiativeParticipants.Count == 0)
@@ -158,9 +197,24 @@
                                         <strong>@participant.Name</strong>
                                         <span>@(string.IsNullOrWhiteSpace(participant.Affiliation) ? participant.Kind == CombatParticipantKind.Hero ? "Held" : "Gegner" : participant.Affiliation)</span>
                                     </div>
-                                    <button type="button" class="combat-initiative-value" @onclick="() => OpenParticipantInitiativeDrawer(participant)">
-                                        @(participant.CurrentInitiative.HasValue ? $"INI {participant.CurrentInitiative}" : "INI —")
-                                    </button>
+                                    @if (participant.HeroId == ActiveHero?.Id)
+                                    {
+                                        <span class="combat-initiative-readonly">@(participant.CurrentInitiative.HasValue ? $"INI {participant.CurrentInitiative}" : "INI —")</span>
+                                    }
+                                    else if (CanEditParticipantInitiative(participant))
+                                    {
+                                        <NumberControl Label="INI"
+                                                       Value="@participant.CurrentInitiative"
+                                                       ValueChanged="value => HandleParticipantInitiativeChanged(participant, value)"
+                                                       AllowEmpty="true"
+                                                       DisableStepsWhenEmpty="true"
+                                                       ShowValidationMessage="true"
+                                                       Disabled="@_valueMutationBusy" />
+                                    }
+                                    else
+                                    {
+                                        <span class="combat-initiative-readonly">@(participant.CurrentInitiative.HasValue ? $"INI {participant.CurrentInitiative}" : "INI —")</span>
+                                    }
                                     <div class="combat-initiative-flags">
                                         <span class="combat-action-flag @(participant.ActionAvailable ? "available" : string.Empty)">@(participant.ActionAvailable ? "A" : "A✓")</span>
                                         <button type="button" class="combat-reaction-button @(participant.ReactionAvailable ? "available" : string.Empty)"
@@ -206,98 +260,28 @@
                                 </div>
                             }
                         </div>
-                        <div class="combat-initiative-actions">
-                            <button type="button" class="combat-header-button" @onclick="OpenInitiativeDrawer">Eigene INI</button>
-                            <button type="button" class="combat-header-button" disabled="@(!(SessionCombat?.IsStarted ?? false))" @onclick="NewRoundAsync">Neue Runde</button>
-                            <button type="button" class="combat-header-button" disabled="@(OwnSessionParticipant?.CurrentInitiative is null)" @onclick="OpenOrientationDrawer">Orientieren</button>
+                    }
+
+                    <div class="combat-initiative-actions">
+                        <button type="button" class="combat-header-button" disabled="@(!(SessionCombat?.IsStarted ?? false))" @onclick="NewRoundAsync">Neue Runde</button>
+                        <button type="button" class="combat-header-button" disabled="@(OwnSessionParticipant?.CurrentInitiative is null)" @onclick="OpenOrientationDrawer">Orientieren</button>
+                        @if (IsSessionCombat)
+                        {
                             <button type="button" class="combat-header-button" @onclick="OpenAnnouncementDrawer">Rundenansage</button>
                             @if (IsSessionMaster)
                             {
                                 <button type="button" class="combat-header-button" @onclick="OpenOpponentDrawer">Gegner hinzufügen</button>
                             }
-                        </div>
-                    }
-                </section>
-
-                <section class="combat-history-surface panel-surface" aria-labelledby="combat-history-title">
-                    <div class="combat-side-heading">
-                        <div>
-                            <p class="combat-kicker">Verlauf</p>
-                            <h2 id="combat-history-title">Würfelhistorie</h2>
-                        </div>
-                        <span class="combat-side-meta">erste 5</span>
+                        }
                     </div>
-                    <RollHistory Entries="@History.Take(5).ToArray()" EntrySelected="HandleHistorySelected" />
-                    @if (History.Count > 5)
-                    {
-                        <button type="button" class="combat-more-button" @onclick="OpenHistoryDrawer">Weitere (@(History.Count - 5))</button>
-                    }
                 </section>
-            </aside>
+            }
         </main>
     </div>
 </div>
 
 <CombatDetailsDrawer Open="@(_drawer != CombatDrawer.None)" Title="@DrawerTitle" CloseRequested="CloseDrawer">
-    @if (_drawer == CombatDrawer.Resource && _resourceKind is { } resource)
-    {
-        <div class="combat-drawer-form">
-            <p class="combat-drawer-lead">@GetResourceDescription(resource)</p>
-            <NumberControl Label="@GetResourceLabel(resource)"
-                           Value="@_resourceDraft"
-                           ValueChanged="HandleResourceDraftChanged"
-                           Minimum="@GetResourceMinimum(resource)"
-                           StepMaximum="@GetResourceMaximum(resource)"
-                           AllowEmpty="true" />
-            <p class="combat-drawer-hint">LeP darf unter 0 fallen. Das Maximum begrenzt nur die Plus-Schritte; ein übermaximaler Wert bleibt erhalten.</p>
-            <div class="combat-drawer-actions">
-                <button type="button" class="combat-header-button primary" @onclick="ApplyResourceAsync">Anwenden</button>
-                <button type="button" class="combat-header-button" @onclick="CloseDrawer">Abbrechen</button>
-            </div>
-        </div>
-    }
-    else if (_drawer == CombatDrawer.Wound)
-    {
-        <div class="combat-drawer-form">
-            <p class="combat-drawer-lead">@GetWoundLabel(WoundDrawerZone) · @GetArmorFacingLabel()</p>
-            <div class="combat-wound-markers" aria-label="Wundmarker">
-                @for (var marker = 1; marker <= 3; marker++)
-                {
-                    <span class="combat-wound-marker @(((_woundDraft ?? 0) >= marker) ? "filled" : string.Empty)">@marker</span>
-                }
-            </div>
-            <NumberControl Label="Wunden"
-                           Value="@_woundDraft"
-                           ValueChanged="HandleWoundDraftChanged"
-                           Minimum="0"
-                           Maximum="3" />
-            <p class="combat-drawer-hint">Brust und Rücken teilen den Wundstand, behalten aber getrennte RS-Werte.</p>
-            <div class="combat-drawer-actions">
-                <button type="button" class="combat-header-button primary" @onclick="ApplyWoundAsync">Anwenden</button>
-                <button type="button" class="combat-header-button" @onclick="CloseDrawer">Abbrechen</button>
-            </div>
-        </div>
-    }
-    else if (_drawer == CombatDrawer.Initiative)
-    {
-        <div class="combat-drawer-form">
-            <p class="combat-drawer-lead">Der importierte Setwert wird einmal als Basis verwendet. Der Hilfswurf liefert den W6.</p>
-            @if (HasRuntimeInitiativeNotes())
-            {
-                <p class="combat-drawer-hint">@GetRuntimeInitiativeSummary()</p>
-            }
-            <NumberControl Label="INI"
-                           Value="@_initiativeDraft"
-                           ValueChanged="HandleInitiativeDraftChanged"
-                           AllowEmpty="true" />
-            <div class="combat-drawer-actions">
-                <button type="button" class="combat-header-button primary" disabled="@(!HasCombatContext || _rollBusy)" @onclick="RollInitiativeAsync">1W6 würfeln</button>
-                <button type="button" class="combat-header-button" @onclick="ApplyInitiativeAsync">Wert setzen</button>
-                <button type="button" class="combat-header-button" @onclick="CloseDrawer">Abbrechen</button>
-            </div>
-        </div>
-    }
-    else if (_drawer == CombatDrawer.Orientation)
+    @if (_drawer == CombatDrawer.Orientation)
     {
         <div class="combat-drawer-form">
             <p class="combat-drawer-lead">Orientieren ist erst nach dem ersten INI-Wurf möglich und braucht eine ungestörte Beobachtungsphase.</p>

@@ -225,6 +225,36 @@
     outline-offset: 3px;
 }
 
+.reset-text-button {
+    min-height: 48px;
+    padding: 0.55rem 0.8rem;
+    border: 1px solid var(--wuerfel-frame-color, rgba(212, 175, 55, 0.55));
+    border-radius: 8px;
+    background: var(--pill-bg);
+    color: var(--dsa-white);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.reset-text-button:hover:not(:disabled),
+.reset-text-button:focus-visible {
+    border-color: var(--dsa-gold);
+    background: var(--dsa-hover-background);
+}
+
+.reset-text-button:focus-visible {
+    outline: 2px solid var(--dsa-gold);
+    outline-offset: 2px;
+}
+
+.reset-text-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
 @media (min-width: 901px) {
     ::deep .modifier-pill {
         flex: 1 1 170px;

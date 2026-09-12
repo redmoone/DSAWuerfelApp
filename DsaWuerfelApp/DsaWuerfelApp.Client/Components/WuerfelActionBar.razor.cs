@@ -20,6 +20,8 @@ public partial class WuerfelActionBar
     [Parameter] public bool AllowDirectModifierInput { get; set; }
     [Parameter] public bool ShowRollText { get; set; } = true;
     [Parameter] public bool ShowTitle { get; set; } = true;
+    [Parameter] public bool ShowHiddenRollHint { get; set; } = true;
+    [Parameter] public string? ResetButtonText { get; set; }
 
     private int CurrentDisplayModifier => DisplayModifier ?? Modifier;
 

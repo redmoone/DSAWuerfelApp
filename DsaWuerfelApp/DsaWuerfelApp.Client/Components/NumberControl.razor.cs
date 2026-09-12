@@ -14,10 +14,16 @@ public partial class NumberControl
     [Parameter] public int? StepMaximum { get; set; }
     [Parameter] public bool AllowEmpty { get; set; }
     [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool DisableStepsWhenEmpty { get; set; }
+    [Parameter] public bool ShowValidationMessage { get; set; }
 
     private string _draft = string.Empty;
+    private string? _validationMessage;
     private int? _lastValue;
     private bool _editing;
+
+    private bool IsDecrementDisabled => Disabled || (DisableStepsWhenEmpty && !Value.HasValue);
+    private bool IsIncrementDisabled => Disabled || (DisableStepsWhenEmpty && !Value.HasValue);
 
     protected override void OnParametersSet()
     {
@@ -26,6 +32,7 @@ public partial class NumberControl
             _draft = Value?.ToString() ?? string.Empty;
             _lastValue = Value;
             _editing = false;
+            _validationMessage = null;
         }
     }
 
@@ -41,6 +48,7 @@ public partial class NumberControl
         {
             _draft = Value?.ToString() ?? string.Empty;
             _editing = false;
+            _validationMessage = null;
             return;
         }
 
@@ -59,23 +67,28 @@ public partial class NumberControl
 
         if (string.IsNullOrWhiteSpace(_draft))
         {
-            if (AllowEmpty && Value.HasValue)
+            if (AllowEmpty)
             {
                 _editing = false;
-                _lastValue = null;
-                await ValueChanged.InvokeAsync(null);
+                _validationMessage = null;
+                if (Value.HasValue)
+                {
+                    _lastValue = null;
+                    await ValueChanged.InvokeAsync(null);
+                }
+
                 return;
             }
 
-            _draft = Value?.ToString() ?? string.Empty;
             _editing = false;
+            _validationMessage = "Wert erforderlich.";
             return;
         }
 
         if (!int.TryParse(_draft, out var parsed))
         {
-            _draft = Value?.ToString() ?? string.Empty;
             _editing = false;
+            _validationMessage = "Gültige Zahl eingeben.";
             return;
         }
 
@@ -83,6 +96,7 @@ public partial class NumberControl
         normalized = Maximum.HasValue ? Math.Min(Maximum.Value, normalized) : normalized;
         _draft = normalized.ToString();
         _editing = false;
+        _validationMessage = null;
         if (Value != normalized)
         {
             _lastValue = normalized;
@@ -112,6 +126,7 @@ public partial class NumberControl
 
         _draft = next.ToString();
         _editing = false;
+        _validationMessage = null;
         if (Value != next)
         {
             _lastValue = next;
