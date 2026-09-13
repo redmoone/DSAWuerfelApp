@@ -123,7 +123,7 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.7rem 0.8rem;
-    border: 1px solid rgba(212, 175, 55, 0.68);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.68);
     border-radius: 8px;
     background: rgba(7, 17, 29, 0.72);
 }
@@ -190,7 +190,7 @@
     box-sizing: border-box;
     min-height: var(--ui-touch-target);
     padding: 0.55rem 0.85rem;
-    border: 1px solid var(--dsa-gold);
+    border: var(--ui-control-border-width) solid var(--dsa-gold);
     border-radius: 8px;
     background: var(--dsa-blue);
     color: var(--dsa-white);
@@ -263,7 +263,7 @@
     box-sizing: border-box;
     align-items: center;
     padding: 0.55rem 0.85rem;
-    border: 1px solid var(--dsa-gold);
+    border: var(--ui-control-border-width) solid var(--dsa-gold);
     border-radius: 8px;
     background: var(--dsa-blue);
     color: var(--dsa-white);
@@ -282,7 +282,7 @@
     min-height: var(--ui-touch-target);
     box-sizing: border-box;
     padding: 0.35rem;
-    border: 1px solid rgba(212, 175, 55, 0.68);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.68);
     border-radius: 8px;
     background: var(--dsa-blue);
     color: var(--dsa-white);
@@ -294,7 +294,7 @@
     min-height: 32px;
     margin-right: 0.5rem;
     padding: 0.3rem 0.6rem;
-    border: 1px solid var(--dsa-gold);
+    border: var(--ui-control-border-width) solid var(--dsa-gold);
     border-radius: 6px;
     background: var(--dsa-gold);
     color: #07111d;
@@ -333,7 +333,7 @@
 .selected-files li {
     min-width: 0;
     padding: 0.4rem 0.55rem;
-    border: 1px solid rgba(212, 175, 55, 0.55);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.55);
     border-radius: 6px;
     background: rgba(28, 46, 74, 0.72);
     color: var(--dsa-white);
@@ -345,7 +345,7 @@
 .alert-error,
 .alert-success {
     padding: 0.8rem;
-    border: 1px solid rgba(212, 175, 55, 0.5);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.5);
     border-radius: 8px;
     background: rgba(7, 17, 29, 0.7);
 }

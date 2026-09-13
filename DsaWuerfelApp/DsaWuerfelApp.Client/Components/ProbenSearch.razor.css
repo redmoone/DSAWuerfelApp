@@ -1,4 +1,4 @@
-﻿.proben-action-bar {
+.proben-action-bar {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -18,7 +18,7 @@
     display: flex;
     align-items: center;
     background-color: var(--pill-bg);
-    border: 1px solid var(--dsa-gold);
+    border: var(--ui-control-border-width) solid var(--dsa-gold);
     border-radius: 50px;
     padding: 4px 15px;
     box-shadow: none;
@@ -67,7 +67,7 @@
     left: 0;
     right: 0;
     background-color: var(--dsa-blue);
-    border: 1px solid var(--dsa-gold);
+    border: var(--ui-control-border-width) solid var(--dsa-gold);
     border-radius: 10px;
     overflow-x: hidden;
     overflow-y: auto;

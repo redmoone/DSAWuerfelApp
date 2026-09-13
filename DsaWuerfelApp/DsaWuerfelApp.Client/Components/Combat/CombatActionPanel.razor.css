@@ -69,7 +69,7 @@
 
 .combat-roll-column {
     padding: 0.8rem;
-    border: 1px solid rgba(212, 175, 55, 0.48);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.48);
     border-radius: var(--dsa-panel-radius);
     background: rgba(7, 17, 29, 0.52);
 }
@@ -87,7 +87,7 @@
 .combat-history-inline {
     min-width: 0;
     padding: 0.7rem;
-    border: 1px solid rgba(212, 175, 55, 0.28);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.28);
     border-radius: 9px;
     background: rgba(7, 17, 29, 0.38);
 }
@@ -98,7 +98,7 @@
     flex-direction: column;
     gap: 0.45rem;
     padding: 0.7rem;
-    border: 1px solid rgba(212, 175, 55, 0.42);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.42);
     border-radius: 0.9rem;
     background: rgba(21, 48, 78, 0.42);
 }
@@ -309,7 +309,7 @@
     height: clamp(10rem, 18vw, 12rem);
     min-height: 10rem;
     overflow: hidden;
-    border: 1px solid rgba(212, 175, 55, 0.26);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.26);
     border-radius: 0.9rem;
     background: rgba(3, 8, 16, 0.66);
 }
@@ -327,7 +327,7 @@
     flex-wrap: wrap;
     gap: 0.55rem;
     padding: 0.65rem;
-    border: 1px solid rgba(212, 175, 55, 0.52);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.52);
     border-radius: 9px;
     background: rgba(21, 48, 78, 0.5);
 }

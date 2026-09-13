@@ -7,7 +7,7 @@
     gap: 0.7rem;
     box-sizing: border-box;
     padding: 0.85rem;
-    border: 1px solid rgba(212, 175, 55, 0.62);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.62);
     border-radius: var(--dsa-panel-radius);
     background: rgba(7, 17, 29, 0.9);
     z-index: 2;
@@ -80,7 +80,7 @@
     align-items: start;
     gap: 0.45rem;
     padding: 0.58rem;
-    border: 1px solid rgba(212, 175, 55, 0.32);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.32);
     border-radius: 0.8rem;
     background: rgba(3, 8, 16, 0.42);
 }
@@ -201,7 +201,7 @@
     flex-direction: column;
     gap: 0.2rem;
     padding: 0.65rem;
-    border: 1px solid rgba(212, 175, 55, 0.28);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.28);
     border-radius: 0.8rem;
     background: rgba(3, 8, 16, 0.42);
 }

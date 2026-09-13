@@ -1,4 +1,4 @@
-﻿.die-selector {
+.die-selector {
     cursor: pointer;
     transition: transform 0.1s, filter 0.1s;
     display: flex;
@@ -60,7 +60,7 @@
 
 .modifier-container {
     background-color: var(--pill-bg);
-    border: 1px solid var(--dsa-gold);
+    border: var(--ui-control-border-width) solid var(--dsa-gold);
     border-radius: 50px;
     height: 45px;
     box-shadow: none;

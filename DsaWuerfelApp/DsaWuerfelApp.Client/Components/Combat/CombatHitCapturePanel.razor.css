@@ -52,7 +52,7 @@
     flex-direction: column;
     gap: 0.18rem;
     padding: 0.55rem 0.65rem;
-    border: 1px solid rgba(212, 175, 55, 0.55);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.55);
     border-radius: var(--dsa-panel-radius);
     background: rgba(7, 17, 29, 0.7);
 }

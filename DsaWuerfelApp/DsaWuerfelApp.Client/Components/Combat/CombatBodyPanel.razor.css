@@ -48,7 +48,7 @@
     justify-content: space-between;
     gap: 0.75rem;
     padding: 0.65rem 0.75rem;
-    border: 1px solid rgba(212, 175, 55, 0.48);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.48);
     border-radius: 9px;
     background: rgba(7, 17, 29, 0.46);
 }
@@ -93,7 +93,7 @@
     align-items: center;
     justify-content: center;
     padding: 0.25rem;
-    border: 1px solid rgba(212, 175, 55, 0.42);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.42);
     border-radius: var(--dsa-panel-radius);
     background: rgba(7, 17, 29, 0.55);
     color: var(--dsa-text-muted);
@@ -146,7 +146,7 @@
     align-items: stretch;
     gap: 0.45rem;
     padding: 0.4rem 0.5rem;
-    border: 1px solid rgba(212, 175, 55, 0.42);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.42);
     border-radius: 8px;
     background: rgba(7, 17, 29, 0.56);
 }

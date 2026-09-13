@@ -19,7 +19,7 @@
     left: 0.8rem;
     margin: 0;
     padding: 0.45rem 0.65rem;
-    border: 1px solid var(--dsa-gold-border);
+    border: var(--ui-control-border-width) solid var(--dsa-gold-border);
     border-radius: 0.7rem;
     background: rgba(7, 17, 29, 0.88);
     color: var(--dsa-gold);

@@ -82,8 +82,8 @@
     --pill-bg: rgba(28, 46, 74, 0.85); 
     --ui-touch-target: 44px;
     --ui-control-height: 44px;
-    --ui-pill-border-width: 3px;
-    --ui-control-border-width: 1px;
+    --ui-pill-border-width: 2px;
+    --ui-control-border-width: 2px;
     --ui-radius-pill: 999px;
     --ui-radius-tab: 8px;
     --ui-font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -91,7 +91,7 @@
     --dsa-panel-background: rgba(9, 25, 48, 0.88);
     --dsa-hover-background: rgba(212, 175, 55, 0.17);
     --dsa-text-muted: rgba(255, 248, 220, 0.78);
-    --dsa-border-width: 1px;
+    --dsa-border-width: 2px;
     --dsa-panel-radius: 10px;
 }
 

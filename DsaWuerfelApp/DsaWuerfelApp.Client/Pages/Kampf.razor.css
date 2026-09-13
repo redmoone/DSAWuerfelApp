@@ -68,7 +68,7 @@
 .combat-notice {
     margin: 0;
     padding: 0.65rem 0.8rem;
-    border: 1px solid rgba(212, 175, 55, 0.62);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.62);
     border-radius: var(--dsa-panel-radius);
     background: rgba(7, 17, 29, 0.72);
     color: var(--dsa-white);
@@ -116,7 +116,7 @@
     gap: 0.6rem;
     margin-bottom: 0.7rem;
     padding: 0.65rem 0.7rem;
-    border: 1px solid rgba(212, 175, 55, 0.42);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.42);
     border-radius: 8px;
     background: rgba(7, 17, 29, 0.55);
 }
@@ -149,7 +149,7 @@
     justify-content: space-between;
     gap: 0.7rem;
     padding: 0.7rem;
-    border: 1px solid rgba(212, 175, 55, 0.42);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.42);
     border-radius: 8px;
 }
 
@@ -196,7 +196,7 @@
     align-items: center;
     gap: 0.55rem;
     padding: 0.55rem 0.6rem;
-    border: 1px solid rgba(212, 175, 55, 0.42);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.42);
     border-radius: 8px;
 }
 
@@ -330,7 +330,7 @@
     width: 100%;
     min-height: 2.2rem;
     padding: 0.42rem 0.55rem;
-    border: 1px solid rgba(212, 175, 55, 0.55);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.55);
     border-radius: 7px;
     background: rgba(7, 17, 29, 0.82);
     color: var(--dsa-white);

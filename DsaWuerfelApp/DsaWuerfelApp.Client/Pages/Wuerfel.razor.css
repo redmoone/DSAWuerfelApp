@@ -23,7 +23,7 @@
     max-width: 1600px;
     margin: 0 auto;
     padding: 12px 14px;
-    border: 1px solid var(--wuerfel-frame-color);
+    border: var(--ui-control-border-width) solid var(--wuerfel-frame-color);
     border-radius: 10px;
     background: var(--wuerfel-panel-background);
 }
@@ -31,7 +31,7 @@
 .wuerfel-combat-notice {
     margin: 10px 0 0;
     padding: 8px 10px;
-    border: 1px solid rgba(212, 175, 55, 0.35);
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.35);
     border-radius: 8px;
     color: rgba(255, 248, 220, 0.88);
     font-size: 0.84rem;
@@ -78,7 +78,7 @@
     gap: 6px;
     min-width: 0;
     padding: 6px;
-    border: 1px solid var(--wuerfel-frame-color);
+    border: var(--ui-control-border-width) solid var(--wuerfel-frame-color);
     border-radius: 10px;
     background: var(--wuerfel-panel-background);
 }
@@ -99,7 +99,7 @@
 }
 
 .roll-setup-panel {
-    border: 1px solid var(--wuerfel-frame-color);
+    border: var(--ui-control-border-width) solid var(--wuerfel-frame-color);
     box-shadow: none;
 }
 
@@ -168,7 +168,7 @@
 
 .master-selection-details {
     min-width: 0;
-    border: 1px solid var(--wuerfel-frame-color);
+    border: var(--ui-control-border-width) solid var(--wuerfel-frame-color);
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.04);
 }
@@ -289,7 +289,7 @@
     width: 100%;
     height: 130px;
     min-width: 0;
-    border: 1px solid var(--wuerfel-frame-color);
+    border: var(--ui-control-border-width) solid var(--wuerfel-frame-color);
     border-radius: 8px;
     background: var(--wuerfel-panel-background);
     overflow: hidden;
@@ -307,7 +307,7 @@
     min-height: 0;
     max-height: 440px;
     padding: 12px 14px;
-    border: 1px solid var(--wuerfel-frame-color);
+    border: var(--ui-control-border-width) solid var(--wuerfel-frame-color);
 }
 
 .history-panel-heading {
@@ -342,7 +342,7 @@
 .roll-setup-panel ::deep .probe-info-details,
 .roll-setup-panel ::deep .probe-info-primary,
  .roll-setup-panel ::deep .probe-info-section {
-    border: 1px solid var(--wuerfel-frame-color) !important;
+    border: var(--ui-control-border-width) solid var(--wuerfel-frame-color) !important;
 }
 
 .roll-setup-panel ::deep .bad-trait-summary {

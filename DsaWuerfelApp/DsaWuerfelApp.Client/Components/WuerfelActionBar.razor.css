@@ -7,7 +7,7 @@
     box-sizing: border-box;
     gap: 12px;
     padding: 12px 14px;
-    border: 1px solid var(--wuerfel-frame-color, rgba(212, 175, 55, 0.55));
+    border: var(--ui-control-border-width) solid var(--wuerfel-frame-color, rgba(212, 175, 55, 0.55));
     border-radius: 10px;
     background: var(--wuerfel-panel-background, rgba(9, 25, 48, 0.88));
 }
@@ -89,7 +89,7 @@
     width: max-content;
     max-width: min(18rem, calc(100vw - 2rem));
     padding: 0.5rem 0.75rem;
-    border: 1px solid var(--wuerfel-frame-color, rgba(212, 175, 55, 0.55));
+    border: var(--ui-control-border-width) solid var(--wuerfel-frame-color, rgba(212, 175, 55, 0.55));
     border-radius: 6px;
     background-color: var(--dsa-blue);
     color: var(--dsa-white);
