@@ -24,6 +24,9 @@ public partial class Kampf : IDisposable
     private string? _lastContextKey;
     private bool _rollBusy;
     private bool _valueMutationBusy;
+    private CombatResourceKind? _resourceDrawerKind;
+    private int? _resourceDraft;
+    private int? _initiativeDraft;
     private bool _attributeMode;
     private CombatArea _activeArea = CombatArea.Kampf;
     private CombatDrawer _drawer;
@@ -189,6 +192,8 @@ public partial class Kampf : IDisposable
 
     private string DrawerTitle => _drawer switch
     {
+        CombatDrawer.Resource => $"{GetResourceLabel(_resourceDrawerKind ?? CombatResourceKind.LeP)} setzen",
+        CombatDrawer.Initiative => "Initiative",
         CombatDrawer.Orientation => "Orientieren",
         CombatDrawer.Participant => _participantDrawerMode == CombatParticipantDrawerMode.Opponent
             ? "Gegner hinzufügen"
@@ -467,26 +472,6 @@ public partial class Kampf : IDisposable
         }
     }
 
-    private async Task HandleRelativeResourceChanged(CombatStatusPanel.ResourceAdjustment change)
-    {
-        var current = GetResourceValue(change.Resource);
-        if (!current.HasValue || change.Amount <= 0)
-        {
-            _notice = "Für die relative Änderung muss zuerst ein aktueller Wert erfasst sein.";
-            return;
-        }
-
-        var next = change.Increase
-            ? current.Value + change.Amount
-            : current.Value - change.Amount;
-        if (GetResourceMaximum(change.Resource) is { } maximum)
-        {
-            next = Math.Min(maximum, next);
-        }
-
-        await HandleResourceValueChanged(new CombatStatusPanel.ResourceValueChange(change.Resource, next));
-    }
-
     private async Task HandleWoundChanged(CombatBodyPanel.WoundChange change)
     {
         if (!change.Value.HasValue || _valueMutationBusy)
@@ -680,6 +665,64 @@ public partial class Kampf : IDisposable
             StringComparison.Ordinal);
     }
 
+    private void OpenResourceDrawer(CombatResourceKind resource)
+    {
+        _resourceDrawerKind = resource;
+        _resourceDraft = GetResourceValue(resource);
+        _drawer = CombatDrawer.Resource;
+    }
+
+    private Task HandleResourceDraftChanged(int? value)
+    {
+        _resourceDraft = value;
+        return Task.CompletedTask;
+    }
+
+    private async Task ApplyResourceDrawerAsync()
+    {
+        if (_resourceDrawerKind is not { } resource)
+        {
+            return;
+        }
+
+        await HandleResourceValueChanged(new CombatStatusPanel.ResourceValueChange(resource, _resourceDraft));
+        if (!_valueMutationBusy)
+        {
+            CloseDrawer();
+        }
+    }
+
+    private void OpenInitiativeDrawer()
+    {
+        _initiativeDraft = CurrentInitiative ?? InitiativeBase;
+        _drawer = CombatDrawer.Initiative;
+    }
+
+    private Task HandleInitiativeDraftChanged(int? value)
+    {
+        _initiativeDraft = value;
+        return Task.CompletedTask;
+    }
+
+    private async Task ApplyInitiativeDrawerAsync()
+    {
+        await HandleInitiativeChanged(_initiativeDraft);
+        if (CurrentInitiative.HasValue)
+        {
+            CloseDrawer();
+        }
+    }
+
+    private async Task RollInitiativeFromDrawerAsync()
+    {
+        await RollInitiativeFromStatusAsync();
+        if (CurrentInitiative.HasValue)
+        {
+            _initiativeDraft = CurrentInitiative;
+            CloseDrawer();
+        }
+    }
+
     private void OpenOrientationDrawer()
     {
         _orientationReliefDraft = Profile?.KriegskunstValue is { } kriegskunst
@@ -713,6 +756,7 @@ public partial class Kampf : IDisposable
     private void CloseDrawer()
     {
         _drawer = CombatDrawer.None;
+        _resourceDrawerKind = null;
     }
 
     private async Task InitializeCombatStateAsync()
@@ -1114,6 +1158,17 @@ public partial class Kampf : IDisposable
 
     private static string FormatActionValue(string label, int? value) => value.HasValue ? $"{label} {value}" : $"{label} —";
 
+    private static string GetResourceLabel(CombatResourceKind resource) => resource switch
+    {
+        CombatResourceKind.LeP => "LeP",
+        CombatResourceKind.AuP => "AuP",
+        CombatResourceKind.AeP => "AeP",
+        CombatResourceKind.KeP => "KE",
+        _ => resource.ToString()
+    };
+
+    private static int? GetResourceMinimum(CombatResourceKind resource) => resource == CombatResourceKind.LeP ? null : 0;
+
     private static string GetDamageText(CombatWeaponDto? weapon) => weapon?.CalculatedDamage ?? weapon?.BaseDamage ?? "—";
 
     private enum CombatArea
@@ -1127,6 +1182,8 @@ public partial class Kampf : IDisposable
     private enum CombatDrawer
     {
         None,
+        Resource,
+        Initiative,
         Orientation,
         Participant,
         History

@@ -22,12 +22,11 @@
                     <div class="dropdown-item-content">
                         @if (probe.IsSelectable && !string.IsNullOrWhiteSpace(probe.Value))
                         {
-                            <button type="button"
-                                    class="dropdown-item-main"
-                                    @onfocus="HandleResultFocus"
-                                    @onclick="() => HandleEntryClick(probe)">
+                            <UiButton Variant="menu"
+                                      Class="dropdown-item-main"
+                                      OnClick="() => HandleEntryClick(probe)">
                                 @probe.DisplayLabel
-                            </button>
+                            </UiButton>
                         }
                         else
                         {
@@ -39,13 +38,11 @@
                             <div class="dropdown-item-alternatives">
                                 @foreach (var alternative in probe.Alternatives)
                                 {
-                                    <button type="button"
-                                            class="dropdown-alternative"
-                                            @onclick:stopPropagation="true"
-                                            @onfocus="HandleResultFocus"
-                                            @onclick="() => SelectProbe(alternative.Value)">
+                                    <UiButton Size="compact"
+                                              Class="dropdown-alternative"
+                                              OnClick="() => SelectProbe(alternative.Value)">
                                         @alternative.Label
-                                    </button>
+                                    </UiButton>
                                 }
                             </div>
                         }

@@ -81,28 +81,6 @@
     gap: 0.4rem;
 }
 
-.combat-tabs button {
-    min-width: 0;
-    min-height: var(--ui-touch-target);
-    padding: 0.45rem 0.65rem;
-    border: 1px solid rgba(212, 175, 55, 0.62);
-    border-radius: 8px;
-    background: rgba(7, 17, 29, 0.82);
-    color: var(--dsa-text-muted);
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.78rem;
-    font-weight: 800;
-    overflow-wrap: anywhere;
-}
-
-.combat-tabs button.active,
-.combat-tabs button:hover,
-.combat-tabs button:focus-visible {
-    background: var(--dsa-hover-background);
-    color: var(--dsa-gold);
-}
-
 .combat-main-area {
     min-width: 0;
 }
@@ -129,43 +107,6 @@
 .combat-side-empty {
     color: var(--dsa-text-muted);
     font-size: 0.76rem;
-}
-
-.combat-header-button {
-    display: inline-flex;
-    min-height: var(--ui-touch-target);
-    box-sizing: border-box;
-    align-items: center;
-    justify-content: center;
-    padding: 0.5rem 0.8rem;
-    border: 1px solid var(--dsa-gold);
-    border-radius: 999px;
-    background: var(--dsa-blue);
-    color: var(--dsa-white);
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.78rem;
-    text-decoration: none;
-}
-
-.combat-header-button:hover:not(:disabled),
-.combat-header-button:focus-visible {
-    background: var(--dsa-hover-background);
-}
-
-.combat-header-button.primary {
-    background: var(--dsa-gold);
-    color: #07111d;
-}
-
-.combat-header-button:disabled {
-    cursor: not-allowed;
-    opacity: 0.48;
-}
-
-.combat-header-button:focus-visible {
-    outline: 2px solid var(--dsa-gold);
-    outline-offset: 2px;
 }
 
 .combat-initiative-summary {
@@ -235,12 +176,7 @@
 
 .combat-initiative-readonly {
     display: inline-flex;
-    min-height: 2rem;
-    box-sizing: border-box;
     align-items: center;
-    padding: 0.3rem 0.5rem;
-    border: 1px solid rgba(212, 175, 55, 0.36);
-    border-radius: 999px;
     color: var(--dsa-white);
     font-size: 0.72rem;
     font-weight: 800;
@@ -295,10 +231,6 @@
     min-width: 8rem;
 }
 
-.combat-initiative-row ::deep .number-control {
-    border-radius: 999px;
-}
-
 .combat-initiative-row ::deep .number-control-label {
     display: none;
 }
@@ -313,33 +245,15 @@
     gap: 0.25rem;
 }
 
-.combat-action-flag,
-.combat-reaction-button {
-    min-height: 1.75rem;
-    padding: 0.22rem 0.35rem;
-    border: 1px solid rgba(212, 175, 55, 0.28);
-    border-radius: 999px;
-    background: transparent;
+.combat-action-flag {
     color: var(--dsa-text-muted);
-    font: inherit;
     font-size: 0.62rem;
     font-weight: 800;
     white-space: nowrap;
 }
 
-.combat-action-flag.available,
-.combat-reaction-button.available {
-    border-color: rgba(212, 175, 55, 0.68);
+.combat-action-flag.available {
     color: var(--dsa-gold);
-}
-
-.combat-reaction-button {
-    cursor: pointer;
-}
-
-.combat-reaction-button:disabled {
-    cursor: default;
-    opacity: 0.65;
 }
 
 .combat-initiative-announcement,
@@ -371,25 +285,6 @@
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 0.25rem;
-}
-
-.combat-inline-button {
-    min-height: 1.75rem;
-    padding: 0.22rem 0.38rem;
-    border: 1px solid rgba(212, 175, 55, 0.5);
-    border-radius: 999px;
-    background: rgba(7, 17, 29, 0.68);
-    color: var(--dsa-white);
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.62rem;
-    font-weight: 800;
-}
-
-.combat-inline-button:hover,
-.combat-inline-button:focus-visible {
-    border-color: var(--dsa-gold);
-    color: var(--dsa-gold);
 }
 
 .combat-initiative-actions {
@@ -496,10 +391,6 @@
 @media (max-width: 359px) {
     .combat-shell {
         padding: 0.55rem;
-    }
-
-    .combat-tabs button {
-        font-size: 0.7rem;
     }
 
     .combat-initiative-row ::deep .number-control-wrapper {

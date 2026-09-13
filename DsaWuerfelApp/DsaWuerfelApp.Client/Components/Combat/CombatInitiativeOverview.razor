@@ -1,4 +1,5 @@
 @using DsaWuerfelApp.Shared
+@using DsaWuerfelApp.Client.Components
 
 <aside class="combat-initiative-overview" aria-labelledby="combat-initiative-overview-title">
     <div class="combat-initiative-overview-heading">
@@ -62,12 +63,12 @@
                             <span class="combat-initiative-overview-flag @(participant.ActionAvailable ? "available" : string.Empty)">
                                 @(participant.ActionAvailable ? "Aktion" : "keine Aktion")
                             </span>
-                            <button type="button"
-                                    class="combat-initiative-overview-button"
-                                    disabled="@(!participant.ReactionAvailable)"
-                                    @onclick="() => ConsumeReactionRequested.InvokeAsync(participant)">
+                            <UiButton Size="compact"
+                                      Class="combat-initiative-overview-button"
+                                      Disabled="@(!participant.ReactionAvailable)"
+                                      OnClick="() => ConsumeReactionRequested.InvokeAsync(participant)">
                                 @(participant.ReactionAvailable ? "Reaktion" : "PA verbraucht")
-                            </button>
+                            </UiButton>
                         </div>
 
                         @if (!string.IsNullOrWhiteSpace(participant.Announcement))
@@ -84,18 +85,18 @@
                                     <span class="combat-initiative-overview-action-buttons">
                                         @if (IsOrientationAction?.Invoke(action) == true && action.RequiresCheck)
                                         {
-                                            <button type="button" class="combat-initiative-overview-button" @onclick="() => ResolveOrientationRequested.InvokeAsync(action)">IN-Probe würfeln</button>
+                                            <UiButton Size="compact" Class="combat-initiative-overview-button" OnClick="() => ResolveOrientationRequested.InvokeAsync(action)">IN-Probe würfeln</UiButton>
                                         }
                                         else
                                         {
-                                            <button type="button" class="combat-initiative-overview-button" @onclick="() => CompleteActionRequested.InvokeAsync(action)">@(IsOrientationAction?.Invoke(action) == true ? "Orientieren abschließen" : "Abschließen")</button>
+                                            <UiButton Size="compact" Class="combat-initiative-overview-button" OnClick="() => CompleteActionRequested.InvokeAsync(action)">@(IsOrientationAction?.Invoke(action) == true ? "Orientieren abschließen" : "Abschließen")</UiButton>
                                         }
-                                        <button type="button" class="combat-initiative-overview-button" @onclick="() => HoldActionRequested.InvokeAsync(action)">Warten</button>
+                                        <UiButton Size="compact" Class="combat-initiative-overview-button" OnClick="() => HoldActionRequested.InvokeAsync(action)">Warten</UiButton>
                                     </span>
                                 }
                                 else if (action.State == CombatActionEntryState.Held)
                                 {
-                                    <button type="button" class="combat-initiative-overview-button" @onclick="() => ExecuteHeldActionRequested.InvokeAsync(action)">Jetzt ausführen</button>
+                                    <UiButton Size="compact" Class="combat-initiative-overview-button" OnClick="() => ExecuteHeldActionRequested.InvokeAsync(action)">Jetzt ausführen</UiButton>
                                 }
                             </div>
                         }

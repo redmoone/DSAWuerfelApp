@@ -2,11 +2,12 @@
 
 <div class="number-control-wrapper">
     <div class="number-control" aria-label="@Label">
-        <button type="button"
-                class="number-control-button"
-                aria-label="@($"{Label} verringern")"
-                disabled="@IsDecrementDisabled"
-                @onclick="() => StepAsync(-1)">−</button>
+        <UiButton Variant="icon"
+                  Size="compact"
+                  Class="number-control-button"
+                  aria-label="@($"{Label} verringern")"
+                  Disabled="@IsDecrementDisabled"
+                  OnClick="() => StepAsync(-1)">−</UiButton>
         <label class="number-control-field">
             <span class="number-control-label">@Label</span>
             <input class="number-control-input"
@@ -21,11 +22,12 @@
                    @onkeydown="HandleKeyDown"
                    @onblur="CommitAsync" />
         </label>
-        <button type="button"
-                class="number-control-button"
-                aria-label="@($"{Label} erhöhen")"
-                disabled="@IsIncrementDisabled"
-                @onclick="() => StepAsync(1)">+</button>
+        <UiButton Variant="icon"
+                  Size="compact"
+                  Class="number-control-button"
+                  aria-label="@($"{Label} erhöhen")"
+                  Disabled="@IsIncrementDisabled"
+                  OnClick="() => StepAsync(1)">+</UiButton>
     </div>
     @if (ShowValidationMessage && !string.IsNullOrWhiteSpace(_validationMessage))
     {

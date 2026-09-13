@@ -54,13 +54,12 @@
            @onkeydown="HandleOverlayKeyDown">
         <div class="probe-info-details-header">
             <h3>@(SelectedHistoryEntry is null ? GetDetailsTitle(ProbeInfo!) : "Ergebnisdetails")</h3>
-            <button type="button"
-                    class="probe-info-close"
-                    @ref="_closeButton"
-                    aria-label="@GetCloseLabel()"
-                    @onclick="HandleCloseRequested">
+            <UiButton Size="compact"
+                      @ref="_closeButton"
+                      aria-label="@GetCloseLabel()"
+                      OnClick="HandleCloseRequested">
                 Schliessen
-            </button>
+            </UiButton>
         </div>
 
         <div class="probe-info-details-content">
@@ -118,7 +117,7 @@
     [Parameter] public bool ShowProbeInfoDetails { get; set; }
     [Parameter] public EventCallback CloseRequested { get; set; }
 
-    private ElementReference _closeButton;
+    private UiButton? _closeButton;
     private IJSObjectReference? _focusModule;
     private string? _focusedOverlayKey;
 
@@ -142,7 +141,10 @@
         }
 
         _focusedOverlayKey = overlayKey;
-        await _closeButton.FocusAsync();
+        if (_closeButton is not null)
+        {
+            await _closeButton.FocusAsync();
+        }
     }
 
     private async Task HandleOverlayKeyDown(KeyboardEventArgs args)

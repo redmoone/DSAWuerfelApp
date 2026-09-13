@@ -15,7 +15,6 @@ public partial class ModifierPill
 
     private int CurrentDisplayValue => DisplayValue ?? Value;
 
-    private string IconPath => CurrentDisplayValue <= 0 ? "feather.svg" : "weight.svg";
     private string LabelText => LabelOverride ?? (CurrentDisplayValue <= 0 ? "ERLEICH." : "ERSCHW.");
 
     private string FormattedValue =>

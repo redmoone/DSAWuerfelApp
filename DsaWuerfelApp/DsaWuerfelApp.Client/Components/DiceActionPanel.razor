@@ -4,14 +4,14 @@
 
         <ModifierPill Modifier="Modifier" ModifierChanged="ModifierChanged"/>
 
-        <button class="dsa-btn-icon @(IsHiddenRoll ? "active" : "")" @onclick="ToggleHiddenRoll">
+        <UiButton Variant="icon" Active="@IsHiddenRoll" OnClick="ToggleHiddenRoll">
             <img src="icons/eye-closed.svg" class="btn-icon" alt=""/>
-        </button>
+        </UiButton>
     </div>
 
     <div class="right-controls">
-        <button class="dsa-btn" @onclick="() => OnRoll.InvokeAsync()" disabled="@(!HasSelection)">
+        <UiButton Variant="dice" OnClick="() => OnRoll.InvokeAsync()" Disabled="@(!HasSelection)">
             Würfeln
-        </button>
+        </UiButton>
     </div>
 </div>

@@ -54,10 +54,8 @@
     min-width: 0;
     max-width: 100%;
     gap: 5px;
-    padding: 4px 8px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(212, 175, 55, 0.24);
+    padding: 0.1rem 0.35rem;
+    border-left: 2px solid rgba(212, 175, 55, 0.42);
 }
 
 .probe-info-summary-label {
@@ -98,21 +96,6 @@
 
 .probe-info-details-header h3 {
     font-size: 0.98rem;
-}
-
-.probe-info-close {
-    min-height: 44px;
-    padding: 7px 12px;
-    border: 1px solid rgba(212, 175, 55, 0.55);
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--dsa-white);
-    cursor: pointer;
-}
-
-.probe-info-close:hover,
-.probe-info-close:focus-visible {
-    background: rgba(212, 175, 55, 0.18);
 }
 
 .probe-info-details-content {
@@ -169,8 +152,7 @@
 }
 
 .probe-info-primary-title:focus-visible,
-.probe-info-section-label:focus-visible,
-.probe-info-close:focus-visible {
+.probe-info-section-label:focus-visible {
     outline: 2px solid var(--dsa-gold);
     outline-offset: 3px;
 }

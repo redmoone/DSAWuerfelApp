@@ -132,6 +132,23 @@ public partial class CombatActionPanel
         }
     }
 
+    private Task HandleSetChanged(ChangeEventArgs args)
+    {
+        var value = args.Value?.ToString();
+        return string.IsNullOrWhiteSpace(value) ? Task.CompletedTask : SetSelected.InvokeAsync(value);
+    }
+
+    private static string GetSetLabel(CombatSetVariantDto set)
+    {
+        var model = set.ArmorModel switch
+        {
+            CombatArmorModel.Zone => "Zonenrüstung",
+            CombatArmorModel.Simple => "Einfache Rüstung",
+            _ => "Rüstungsmodell unbekannt"
+        };
+        return $"Set {set.Number} · {model}";
+    }
+
     private static string GetWeaponLabel(CombatWeaponDto weapon)
     {
         var number = weapon.Number is { } value ? $" Nr. {value}" : string.Empty;

@@ -61,11 +61,4 @@ public partial class WuerfelProbePanel
         return $"spell-option-maximum-{groupIndex}-{optionIndex}";
     }
 
-    private string BuildInfoButtonStyle()
-    {
-        var backgroundColor = IsInfoExpanded ? "var(--dsa-gold)" : "var(--pill-bg)";
-        var foregroundColor = IsInfoExpanded ? "var(--dsa-bg)" : "var(--dsa-white)";
-        return
-            $"width: 48px; height: 48px; background-color: {backgroundColor}; color: {foregroundColor}; border: 2px solid var(--dsa-gold);";
-    }
 }

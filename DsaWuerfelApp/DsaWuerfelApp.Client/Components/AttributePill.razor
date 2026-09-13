@@ -1,21 +1,21 @@
-<div class="attribute-pill @((SelectionCount > 0 || IsSelected) ? "active" : "")">
-    <button type="button"
-            class="attribute-pill-main"
-            aria-label="@(IsAvailable ? (OnClick.HasDelegate ? $"{ShortName} auswählen" : $"{ShortName} hinzufügen") : $"{ShortName} nicht verfügbar")"
-            disabled="@(!IsAvailable)"
-            @onclick="HandleClick"
-            @oncontextmenu="HandleRightClick"
-            @oncontextmenu:preventDefault="true">
+<UiButton Variant="attribute"
+          Active="@(SelectionCount > 0 || IsSelected)"
+          Disabled="@(!IsAvailable)"
+          OnClick="HandleClick"
+          ContextMenuRequested="HandleRightClick"
+          PreventContextMenu="true"
+          aria-label="@(IsAvailable ? (OnClick.HasDelegate ? $"{ShortName} auswählen" : $"{ShortName} hinzufügen") : $"{ShortName} nicht verfügbar")">
+    <span class="ui-pill-edge-label">@ShortName</span>
+    @if (!string.IsNullOrWhiteSpace(IconPath))
+    {
         <div class="attribute-icon-container">
             <img src="icons/@IconPath" alt="@ShortName" class="attribute-icon" />
-            <span class="attribute-label">@ShortName</span>
         </div>
-        <div class="attribute-value">@(Value?.ToString() ?? "—")</div>
-    </button>
+    }
+    <span class="attribute-value">@(Value?.ToString() ?? "—")</span>
 
     @if (SelectionCount > 0)
     {
-        <div class="selection-badge">@(SelectionCount)x</div>
+        <span class="selection-badge">@(SelectionCount)x</span>
     }
-
-</div>
+</UiButton>

@@ -44,12 +44,12 @@
         {
             var selectedIndex = index;
             var attribute = SelectedAttributes[selectedIndex];
-            <span class="attribute-selection-chip">
-                @((string)attribute)
-                <button type="button"
-                        aria-label="@($"{attribute} aus Auswahl entfernen")"
-                        @onclick="() => HandleSelectionRemoved(selectedIndex)">×</button>
-            </span>
+            <UiButton Size="compact"
+                      Class="attribute-selection-chip"
+                      aria-label="@($"{attribute} aus Auswahl entfernen")"
+                      OnClick="() => HandleSelectionRemoved(selectedIndex)">
+                @((string)attribute) <span aria-hidden="true">×</span>
+            </UiButton>
         }
     }
 </div>

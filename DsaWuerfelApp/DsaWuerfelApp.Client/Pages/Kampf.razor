@@ -13,31 +13,21 @@
                                Profile="@Profile"
                                IsLoading="@ProfileLoading"
                                ErrorMessage="@ProfileError"
-                               SelectedSet="@SelectedSet"
-                               Sets="@Sets"
-                               SelectedSetId="@SelectedSetId"
-                               SetSelected="HandleSetSelected"
                                CurrentLeP="@CurrentLeP"
                                CurrentAuP="@CurrentAuP"
                                CurrentAeP="@CurrentAeP"
                                CurrentKeP="@CurrentKeP"
                                CurrentInitiative="@CurrentInitiative"
-                               InitiativeBase="@InitiativeBase"
                                IsCombatStarted="@IsCombatStarted"
                                CanStartCombat="@(!IsCombatStarted)"
                                StartCombatRequested="InitializeCombatStateAsync"
-                               ResourceValueChangedRequested="HandleResourceValueChanged"
-                               RelativeResourceChangedRequested="HandleRelativeResourceChanged"
-                               InitiativeChangedRequested="HandleInitiativeChanged"
-                               InitiativeRollRequested="RollInitiativeFromStatusAsync"
-                               CanRollInitiative="@CanRollInitiative"
-                               InitiativeDisabledReason="@InitiativeDisabledReason"
+                               ResourceEditRequested="OpenResourceDrawer"
+                               InitiativeRequested="OpenInitiativeDrawer"
                                WoundsRequested="() => SetArea(CombatArea.Zonen)"
                                ShowUndo="false"
                                PersistenceWarning="@CombatState.PersistenceError"
                                Wounds="@Wounds"
                                Effects="@Effects"
-                               InlineEditing="true"
                                IsMutationBusy="@_valueMutationBusy" />
         </section>
 
@@ -49,38 +39,38 @@
         }
 
         <nav class="combat-tabs" role="tablist" aria-label="Kampfflächen">
-            <button type="button"
-                    role="tab"
-                    class="@(ActiveArea == CombatArea.Kampf ? "active" : string.Empty)"
-                    aria-selected="@(ActiveArea == CombatArea.Kampf)"
-                    aria-controls="combat-tab-kampf"
-                    @onclick="() => SetArea(CombatArea.Kampf)">
+            <UiButton Variant="tab"
+                      Active="@(ActiveArea == CombatArea.Kampf)"
+                      role="tab"
+                      aria-selected="@(ActiveArea == CombatArea.Kampf)"
+                      aria-controls="combat-tab-kampf"
+                      OnClick="() => SetArea(CombatArea.Kampf)">
                 Kampf
-            </button>
-            <button type="button"
-                    role="tab"
-                    class="@(ActiveArea == CombatArea.Zonen ? "active" : string.Empty)"
-                    aria-selected="@(ActiveArea == CombatArea.Zonen)"
-                    aria-controls="combat-tab-ruestung"
-                    @onclick="() => SetArea(CombatArea.Zonen)">
+            </UiButton>
+            <UiButton Variant="tab"
+                      Active="@(ActiveArea == CombatArea.Zonen)"
+                      role="tab"
+                      aria-selected="@(ActiveArea == CombatArea.Zonen)"
+                      aria-controls="combat-tab-ruestung"
+                      OnClick="() => SetArea(CombatArea.Zonen)">
                 Rüstung &amp; Wunden
-            </button>
-            <button type="button"
-                    role="tab"
-                    class="@(ActiveArea == CombatArea.Runde ? "active" : string.Empty)"
-                    aria-selected="@(ActiveArea == CombatArea.Runde)"
-                    aria-controls="combat-tab-runde"
-                    @onclick="() => SetArea(CombatArea.Runde)">
+            </UiButton>
+            <UiButton Variant="tab"
+                      Active="@(ActiveArea == CombatArea.Runde)"
+                      role="tab"
+                      aria-selected="@(ActiveArea == CombatArea.Runde)"
+                      aria-controls="combat-tab-runde"
+                      OnClick="() => SetArea(CombatArea.Runde)">
                 Rundenübersicht
-            </button>
-            <button type="button"
-                    role="tab"
-                    class="@(ActiveArea == CombatArea.Eigenschaften ? "active" : string.Empty)"
-                    aria-selected="@(ActiveArea == CombatArea.Eigenschaften)"
-                    aria-controls="combat-tab-eigenschaften"
-                    @onclick="() => SetArea(CombatArea.Eigenschaften)">
+            </UiButton>
+            <UiButton Variant="tab"
+                      Active="@(ActiveArea == CombatArea.Eigenschaften)"
+                      role="tab"
+                      aria-selected="@(ActiveArea == CombatArea.Eigenschaften)"
+                      aria-controls="combat-tab-eigenschaften"
+                      OnClick="() => SetArea(CombatArea.Eigenschaften)">
                 Eigenschaften
-            </button>
+            </UiButton>
         </nav>
 
         <main class="combat-main-area">
@@ -220,11 +210,11 @@
                                     }
                                     <div class="combat-initiative-flags">
                                         <span class="combat-action-flag @(participant.ActionAvailable ? "available" : string.Empty)">@(participant.ActionAvailable ? "A" : "A✓")</span>
-                                        <button type="button" class="combat-reaction-button @(participant.ReactionAvailable ? "available" : string.Empty)"
-                                                disabled="@(!participant.ReactionAvailable)"
-                                                @onclick="() => ConsumeReactionAsync(participant)">
+                                        <UiButton Size="compact"
+                                                  Disabled="@(!participant.ReactionAvailable)"
+                                                  OnClick="() => ConsumeReactionAsync(participant)">
                                             @(participant.ReactionAvailable ? "Reaktion" : "PA verbraucht")
-                                        </button>
+                                        </UiButton>
                                     </div>
                                     @if (!string.IsNullOrWhiteSpace(participant.Announcement))
                                     {
@@ -245,18 +235,18 @@
                                                 <span class="combat-action-entry-buttons">
                                                     @if (IsOrientationAction(action) && action.RequiresCheck)
                                                     {
-                                                        <button type="button" class="combat-inline-button" @onclick="() => ResolveOrientationAsync(action)">IN-Probe würfeln</button>
+                                                        <UiButton Size="compact" OnClick="() => ResolveOrientationAsync(action)">IN-Probe würfeln</UiButton>
                                                     }
                                                     else
                                                     {
-                                                        <button type="button" class="combat-inline-button" @onclick="() => CompleteActionAsync(action)">@(IsOrientationAction(action) ? "Orientieren abschließen" : "Abschließen")</button>
+                                                        <UiButton Size="compact" OnClick="() => CompleteActionAsync(action)">@(IsOrientationAction(action) ? "Orientieren abschließen" : "Abschließen")</UiButton>
                                                     }
-                                                    <button type="button" class="combat-inline-button" @onclick="() => HoldActionAsync(action)">Warten</button>
+                                                <UiButton Size="compact" OnClick="() => HoldActionAsync(action)">Warten</UiButton>
                                                 </span>
                                             }
                                             else if (action.State == CombatActionEntryState.Held)
                                             {
-                                                <button type="button" class="combat-inline-button" @onclick="() => ExecuteHeldActionAsync(action)">Jetzt ausführen</button>
+                                                <UiButton Size="compact" OnClick="() => ExecuteHeldActionAsync(action)">Jetzt ausführen</UiButton>
                                             }
                                         </div>
                                     }
@@ -266,14 +256,14 @@
                     }
 
                     <div class="combat-initiative-actions">
-                        <button type="button" class="combat-header-button" disabled="@(!(SessionCombat?.IsStarted ?? false))" @onclick="NewRoundAsync">Neue Runde</button>
-                        <button type="button" class="combat-header-button" disabled="@(OwnSessionParticipant?.CurrentInitiative is null)" @onclick="OpenOrientationDrawer">Orientieren</button>
+                        <UiButton Disabled="@(!(SessionCombat?.IsStarted ?? false))" OnClick="NewRoundAsync">Neue Runde</UiButton>
+                        <UiButton Disabled="@(OwnSessionParticipant?.CurrentInitiative is null)" OnClick="OpenOrientationDrawer">Orientieren</UiButton>
                         @if (IsSessionCombat)
                         {
-                            <button type="button" class="combat-header-button" @onclick="OpenAnnouncementDrawer">Rundenansage</button>
+                            <UiButton OnClick="OpenAnnouncementDrawer">Rundenansage</UiButton>
                             @if (IsSessionMaster)
                             {
-                                <button type="button" class="combat-header-button" @onclick="OpenOpponentDrawer">Gegner hinzufügen</button>
+                                <UiButton OnClick="OpenOpponentDrawer">Gegner hinzufügen</UiButton>
                             }
                         }
                     </div>
@@ -304,7 +294,38 @@
 </div>
 
 <CombatDetailsDrawer Open="@(_drawer != CombatDrawer.None)" Title="@DrawerTitle" CloseRequested="CloseDrawer">
-    @if (_drawer == CombatDrawer.Orientation)
+    @if (_drawer == CombatDrawer.Resource && _resourceDrawerKind is { } resource)
+    {
+        <div class="combat-drawer-form">
+            <NumberControl Label="@GetResourceLabel(resource)"
+                           Value="@_resourceDraft"
+                           ValueChanged="HandleResourceDraftChanged"
+                           Minimum="@GetResourceMinimum(resource)"
+                           StepMaximum="@GetResourceMaximum(resource)"
+                           AllowEmpty="true"
+                           ShowValidationMessage="true" />
+            <div class="combat-drawer-actions">
+                <UiButton Variant="primary" OnClick="ApplyResourceDrawerAsync">Speichern</UiButton>
+                <UiButton OnClick="CloseDrawer">Abbrechen</UiButton>
+            </div>
+        </div>
+    }
+    else if (_drawer == CombatDrawer.Initiative)
+    {
+        <div class="combat-drawer-form">
+            <NumberControl Label="INI"
+                           Value="@_initiativeDraft"
+                           ValueChanged="HandleInitiativeDraftChanged"
+                           AllowEmpty="true"
+                           ShowValidationMessage="true" />
+            <div class="combat-drawer-actions">
+                <UiButton Variant="primary" Disabled="@(!CanRollInitiative || _rollBusy)" OnClick="RollInitiativeFromDrawerAsync">1W6 würfeln</UiButton>
+                <UiButton OnClick="ApplyInitiativeDrawerAsync">Wert setzen</UiButton>
+                <UiButton OnClick="CloseDrawer">Abbrechen</UiButton>
+            </div>
+        </div>
+    }
+    else if (_drawer == CombatDrawer.Orientation)
     {
         <div class="combat-drawer-form">
             <p class="combat-drawer-lead">Orientieren ist erst nach dem ersten INI-Wurf möglich und braucht eine ungestörte Beobachtungsphase.</p>
@@ -328,8 +349,8 @@
                 <span>Ungestört möglich</span>
             </label>
             <div class="combat-drawer-actions">
-                <button type="button" class="combat-header-button primary" disabled="@(OwnSessionParticipant?.CurrentInitiative is null)" @onclick="ApplyOrientationAsync">Handlung anlegen</button>
-                <button type="button" class="combat-header-button" @onclick="CloseDrawer">Abbrechen</button>
+                <UiButton Variant="primary" Disabled="@(OwnSessionParticipant?.CurrentInitiative is null)" OnClick="ApplyOrientationAsync">Handlung anlegen</UiButton>
+                <UiButton OnClick="CloseDrawer">Abbrechen</UiButton>
             </div>
         </div>
     }
@@ -359,8 +380,8 @@
                 </label>
             }
             <div class="combat-drawer-actions">
-                <button type="button" class="combat-header-button primary" @onclick="ApplyParticipantDrawerAsync">Anwenden</button>
-                <button type="button" class="combat-header-button" @onclick="CloseDrawer">Abbrechen</button>
+                <UiButton Variant="primary" OnClick="ApplyParticipantDrawerAsync">Anwenden</UiButton>
+                <UiButton OnClick="CloseDrawer">Abbrechen</UiButton>
             </div>
         </div>
     }

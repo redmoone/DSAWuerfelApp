@@ -6,13 +6,15 @@
                       SelectedProbe="@SelectedProbe"
                       SelectedProbeChanged="@SelectedProbeChanged"/>
     </div>
-    <MudIconButton Icon="@Icons.Material.Filled.Info"
-                   Variant="Variant.Filled"
-                   OnClick="InfoRequested"
-                   Disabled="@(!CanShowInfo || IsBusy)"
-                   title="Weitere Probeninformationen ein- oder ausblenden"
-                   Class="rounded-circle probe-info-button"
-                   Style="@BuildInfoButtonStyle()"/>
+    <UiButton Variant="icon"
+              Active="@IsInfoExpanded"
+              Class="probe-info-button"
+              OnClick="InfoRequested"
+              Disabled="@(!CanShowInfo || IsBusy)"
+              aria-label="Weitere Probeninformationen ein- oder ausblenden"
+              title="Weitere Probeninformationen ein- oder ausblenden">
+        <span aria-hidden="true">i</span>
+    </UiButton>
 </div>
 
 @if (ProbeInfo?.SpellSelection is { Groups.Length: > 0 } spellSelection)
@@ -44,14 +46,15 @@
                         var maximumHintId = GetMaximumHintId(groupIndex, optionIndex);
                         var maximumDisabled = IsMaximumDisabled(spellSelection, option);
                         <div class="spell-selection-option">
-                            <button type="button"
-                                    class="spell-selection-button @(option.IsSelected ? "active" : string.Empty)"
-                                    disabled="@option.IsDisabled"
-                                    aria-describedby="@(maximumDisabled ? maximumHintId : null)"
-                                    title="@option.Description"
-                                    @onclick='() => SpellOptionToggleRequested.InvokeAsync(option.Value)'>
+                            <UiButton Size="compact"
+                                      Active="@option.IsSelected"
+                                      Class="spell-selection-button"
+                                      Disabled="@option.IsDisabled"
+                                      aria-describedby="@(maximumDisabled ? maximumHintId : null)"
+                                      title="@option.Description"
+                                      OnClick='() => SpellOptionToggleRequested.InvokeAsync(option.Value)'>
                                 @option.Label
-                            </button>
+                            </UiButton>
                             @if (maximumDisabled)
                             {
                                 <span id="@maximumHintId" class="spell-option-disabled-hint">
@@ -76,18 +79,18 @@
                disabled="@IsBusy"
                placeholder="z. B. 20,20,5 oder 6"/>
         <div class="forced-rolls-actions">
-            <button type="button" class="forced-rolls-button" @onclick='() => PresetRequested.InvokeAsync("20,20,5")'
-                    disabled="@IsBusy">
+            <UiButton Size="compact" Class="forced-rolls-button" OnClick='() => PresetRequested.InvokeAsync("20,20,5")'
+                      Disabled="@IsBusy">
                 Patzer
-            </button>
-            <button type="button" class="forced-rolls-button" @onclick='() => PresetRequested.InvokeAsync("1,1,13")'
-                    disabled="@IsBusy">
+            </UiButton>
+            <UiButton Size="compact" Class="forced-rolls-button" OnClick='() => PresetRequested.InvokeAsync("1,1,13")'
+                      Disabled="@IsBusy">
                 Glück
-            </button>
-            <button type="button" class="forced-rolls-button muted" @onclick="ClearForcedRollsRequested"
-                    disabled="@IsBusy">
+            </UiButton>
+            <UiButton Size="compact" Class="forced-rolls-button muted" OnClick="ClearForcedRollsRequested"
+                      Disabled="@IsBusy">
                 Leer
-            </button>
+            </UiButton>
         </div>
     </div>
 }

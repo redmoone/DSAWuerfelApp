@@ -119,27 +119,10 @@
 }
 
 .dropdown-item-main {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    width: 100%;
     min-width: 0;
-    min-height: var(--ui-touch-target);
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: inherit;
-    font: inherit;
     line-height: 1.35;
     text-align: left;
     overflow-wrap: anywhere;
-    cursor: pointer;
-}
-
-.dropdown-item-main:focus-visible,
-.dropdown-alternative:focus-visible {
-    outline: 2px solid var(--dsa-white);
-    outline-offset: 2px;
 }
 
 .dropdown-item-alternatives {
@@ -149,91 +132,14 @@
 }
 
 .dropdown-alternative {
-    background-color: rgba(212, 175, 55, 0.12);
-    border: 1px solid rgba(212, 175, 55, 0.45);
-    border-radius: 999px;
-    color: var(--dsa-white);
-    cursor: pointer;
-    font: inherit;
     min-width: 0;
-    min-height: var(--ui-touch-target);
-    box-sizing: border-box;
-    padding: 6px 10px;
     text-align: left;
     overflow-wrap: anywhere;
-}
-
-.dropdown-alternative:hover {
-    background-color: rgba(212, 175, 55, 0.24);
 }
 
 .dropdown-item-note {
     color: rgba(245, 245, 245, 0.65);
     font-size: 0.9rem;
-}
-
-.dsa-btn {
-    background-color: var(--pill-bg);
-    border: 1px solid var(--dsa-gold);
-    color: var(--dsa-gold);
-    border-radius: 50px;
-    padding: 0 20px;
-    height: 45px;
-    font-weight: bold;
-    font-size: 1rem;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: transform 0.1s, background-color 0.2s;
-    user-select: none;
-    box-shadow: none;
-}
-
-.dsa-btn:hover:not(:disabled) {
-    background-color: rgba(212, 175, 55, 0.18);
-}
-
-.dsa-btn:active:not(:disabled) {
-    transform: scale(0.95);
-}
-
-.dsa-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    box-shadow: none;
-}
-
-.dsa-btn-icon {
-    background-color: var(--pill-bg);
-    border: 1px solid var(--dsa-gold);
-    border-radius: 50%;
-    width: 45px;
-    height: 45px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s;
-    box-shadow: none;
-}
-
-.dsa-btn:focus-visible,
-.dsa-btn-icon:focus-visible {
-    outline: 2px solid var(--dsa-gold);
-    outline-offset: 3px;
-}
-
-.dsa-btn-icon.active {
-    background-color: var(--dsa-gold);
-}
-
-.dsa-btn-icon.active .btn-icon {
-    filter: none;
-}
-
-.btn-icon {
-    width: 20px;
-    height: 20px;
-    filter: brightness(0) invert(1);
 }
 
 @media (max-width: 640px) {

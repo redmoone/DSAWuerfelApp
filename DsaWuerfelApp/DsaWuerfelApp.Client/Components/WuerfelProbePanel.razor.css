@@ -50,10 +50,7 @@
 
 .spell-selection-global-count {
     flex: 0 0 auto;
-    padding: 3px 7px;
-    border: 1px solid rgba(212, 175, 55, 0.42);
-    border-radius: 999px;
-    color: rgba(255, 248, 220, 0.88);
+    color: var(--dsa-text-muted);
     font-size: 0.74rem;
     font-weight: 700;
 }
@@ -108,8 +105,9 @@
 }
 
 .spell-selection-buttons {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+    display: flex;
+    align-items: stretch;
+    flex-wrap: wrap;
     gap: 6px;
     padding: 4px 6px 6px;
 }
@@ -120,45 +118,13 @@
 }
 
 .spell-selection-button {
-    display: block;
-    width: 100%;
-    min-width: 0;
-    background-color: rgba(212, 175, 55, 0.1);
-    border: 1px solid rgba(212, 175, 55, 0.42);
-    border-radius: 6px;
-    color: var(--dsa-white);
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.8rem;
-    line-height: 1.25;
-    min-height: 44px;
-    padding: 7px 8px;
+    max-width: 100%;
     text-align: left;
-    transition: background-color 0.15s ease, border-color 0.15s ease;
-}
-
-.spell-selection-button:hover {
-    background-color: rgba(212, 175, 55, 0.2);
-}
-
-.spell-selection-button:focus-visible {
-    outline: 2px solid var(--dsa-gold);
-    outline-offset: 2px;
-}
-
-.spell-selection-button.active {
-    background-color: rgba(212, 175, 55, 0.28);
-    border-color: rgba(212, 175, 55, 0.75);
-    color: var(--dsa-gold);
-}
-
-.spell-selection-button:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
+    overflow-wrap: anywhere;
 }
 
 .spell-option-disabled-hint {
-    color: rgba(255, 219, 103, 0.84);
+    color: var(--dsa-gold);
     font-size: 0.7rem;
     line-height: 1.3;
     overflow-wrap: anywhere;
@@ -189,10 +155,11 @@
 .forced-rolls-input {
     width: 100%;
     padding: 10px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(212, 175, 55, 0.4);
-    background-color: rgba(255, 255, 255, 0.08);
+    border: var(--ui-control-border-width) solid var(--dsa-gold-border);
+    border-radius: var(--ui-radius-pill);
+    background-color: var(--pill-bg);
     color: var(--dsa-white);
+    font: inherit;
     outline: none;
 }
 
@@ -201,7 +168,7 @@
 }
 
 .forced-rolls-input:focus {
-    border-color: rgba(255, 219, 103, 0.7);
+    border-color: var(--dsa-gold);
     box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.16);
 }
 
@@ -209,22 +176,6 @@
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
-}
-
-.forced-rolls-button {
-    padding: 7px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(212, 175, 55, 0.4);
-    background-color: rgba(255, 255, 255, 0.08);
-    color: var(--dsa-white);
-    cursor: pointer;
-    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-}
-
-.forced-rolls-button:hover {
-    background-color: rgba(212, 175, 55, 0.16);
-    border-color: rgba(255, 219, 103, 0.65);
-    transform: translateY(-1px);
 }
 
 .forced-rolls-button.muted {
@@ -239,10 +190,6 @@
 
     .spell-selection-panel {
         padding: 7px;
-    }
-
-    .spell-selection-buttons {
-        grid-template-columns: minmax(0, 1fr);
     }
 
     .spell-selection-heading {

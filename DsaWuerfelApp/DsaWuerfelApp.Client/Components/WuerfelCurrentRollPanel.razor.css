@@ -113,7 +113,7 @@
     max-width: 100%;
     padding: 5px 8px;
     border: 1px solid rgba(255, 248, 220, 0.28);
-    border-radius: 999px;
+    border-radius: 4px;
     color: rgba(255, 248, 220, 0.9);
     font-size: 0.85rem;
     font-weight: 700;
@@ -157,10 +157,8 @@
 
 .probe-evaluation-meta span {
     min-width: 0;
-    padding: 4px 9px;
-    border-radius: 999px;
-    background-color: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(212, 175, 55, 0.3);
+    padding: 0.1rem 0.35rem;
+    border-left: 2px solid rgba(212, 175, 55, 0.42);
     overflow-wrap: anywhere;
 }
 
@@ -191,9 +189,9 @@
 }
 
 .probe-roll-chip.compensated {
-    border-color: rgba(255, 219, 103, 0.72);
+    border-color: rgba(212, 175, 55, 0.72);
     background: rgba(111, 79, 11, 0.48);
-    box-shadow: inset 0 0 0 1px rgba(255, 219, 103, 0.2);
+    box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.2);
 }
 
 .probe-roll-chip.patzer {

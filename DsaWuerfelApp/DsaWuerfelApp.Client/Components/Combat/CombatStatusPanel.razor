@@ -1,57 +1,32 @@
 @using DsaWuerfelApp.Shared
 @using DsaWuerfelApp.Client.Services
 
-<section class="hero-status-bar combat-status-panel @(InlineEditing ? "combat-status-inline" : string.Empty)" aria-labelledby="combat-status-title">
+<section class="hero-status-bar combat-status-panel" aria-labelledby="combat-status-title">
     <div class="hero-status-topline">
         <div class="hero-status-identity">
-            @if (!InlineEditing)
-            {
-                <p class="combat-kicker">Heldenstatus</p>
-            }
+            <p class="combat-kicker">Heldenstatus</p>
             <h2 id="combat-status-title">@HeroName</h2>
             <span>@(string.IsNullOrWhiteSpace(SessionName) ? "Solo" : $"Session: {SessionName}")</span>
         </div>
 
-        @if (InlineEditing && Sets.Count > 0)
-        {
-            <div class="hero-status-set-picker">
-                <label for="combat-status-set-select">Kampfset</label>
-                <select id="combat-status-set-select"
-                        class="combat-status-set-select"
-                        aria-label="Kampfset auswählen"
-                        value="@SelectedSetId"
-                        disabled="@IsMutationBusy"
-                        @onchange="HandleSetChanged">
-                    @foreach (var group in Sets.GroupBy(set => set.Number).OrderBy(group => group.Key))
-                    {
-                        <optgroup label="Set @group.Key">
-                            @foreach (var set in group.OrderBy(set => set.ArmorModel))
-                            {
-                                <option value="@set.Id">@GetSetLabel(set)</option>
-                            }
-                        </optgroup>
-                    }
-                </select>
-            </div>
-        }
-        else if (!InlineEditing)
-        {
-            <div class="hero-status-actions">
-                <span class="hero-status-state">@(IsLoading ? "Profil wird geladen" : Profile is null ? "Profil fehlt" : IsCombatStarted ? "Zustand erfasst" : "Zustand offen")</span>
-                @if (!IsCombatStarted && CanStartCombat)
-                {
-                    <span class="hero-status-initialize-label">@MissingStateSummary</span>
-                    <div class="hero-status-initialize-actions">
-                        <button type="button" class="combat-compact-button primary" @onclick="StartCombatRequested">Mit Maximalwerten beginnen</button>
-                        <button type="button" class="combat-compact-button" @onclick="HandleCaptureRequested">Aktuelle Werte erfassen</button>
-                    </div>
-                }
-                @if (ShowUndo && CanUndo)
-                {
-                    <button type="button" class="combat-compact-button" @onclick="UndoRequested">Rückgängig</button>
-                }
-            </div>
-        }
+        <div class="hero-status-actions">
+            <span class="hero-status-state">@(IsLoading ? "Profil wird geladen" : Profile is null ? "Profil fehlt" : IsCombatStarted ? "Zustand erfasst" : "Zustand offen")</span>
+            @if (!IsCombatStarted && CanStartCombat && Profile is not null)
+            {
+                <div class="hero-status-initialize-actions">
+                    <UiButton Variant="primary" Size="compact" Disabled="@IsMutationBusy" OnClick="StartCombatRequested">
+                        Mit Maximalwerten beginnen
+                    </UiButton>
+                    <UiButton Size="compact" Disabled="@IsMutationBusy" OnClick="HandleCaptureRequested">
+                        Aktuelle Werte erfassen
+                    </UiButton>
+                </div>
+            }
+            @if (ShowUndo && CanUndo)
+            {
+                <UiButton Size="compact" Disabled="@IsMutationBusy" OnClick="UndoRequested">Rückgängig</UiButton>
+            }
+        </div>
     </div>
 
     @if (IsLoading)
@@ -62,270 +37,94 @@
     {
         <p class="hero-status-message">@(string.IsNullOrWhiteSpace(ErrorMessage) ? "Kein Kampfprofil verfügbar." : ErrorMessage)</p>
     }
-    else if (InlineEditing)
+    else
     {
-        <div class="combat-inline-status-grid combat-resource-strip" aria-label="Kampfstatus">
+        <div class="hero-status-resources" aria-label="Ressourcen und Kampfstatus">
             @if (ShouldShowResource(CombatResourceKind.LeP, Profile.Resources.LeP))
             {
-                <div class="combat-inline-resource hero-resource-lep @(CurrentLeP.HasValue ? string.Empty : "resource-unknown")">
-                    <div class="combat-inline-label-row">
-                        <strong>LeP</strong>
-                        <button type="button" class="combat-relative-button" disabled="@IsMutationBusy" @onclick="() => ToggleRelativeAmount(CombatResourceKind.LeP)">± Betrag</button>
-                    </div>
-                    <div class="combat-inline-value-row">
-                        <NumberControl Label="LeP"
-                                       Value="@CurrentLeP"
-                                       Placeholder="Wert setzen"
-                                       ValueChanged="value => ResourceValueChangedRequested.InvokeAsync(new ResourceValueChange(CombatResourceKind.LeP, value))"
-                                       Minimum="@GetResourceMinimum(CombatResourceKind.LeP)"
-                                       Maximum="@Profile.Resources.LeP"
-                                       StepMaximum="@Profile.Resources.LeP"
-                                       AllowEmpty="true"
-                                       DisableStepsWhenEmpty="@(!CurrentLeP.HasValue)"
-                                       ShowValidationMessage="true"
-                                       Disabled="@IsMutationBusy" />
-                        <span class="hero-resource-max">/ @FormatMaximum(Profile.Resources.LeP)</span>
-                    </div>
+                <UiButton Variant="resource"
+                          Class="ui-resource-pill ui-resource-pill--lep"
+                          OnClick="() => ResourceEditRequested.InvokeAsync(CombatResourceKind.LeP)"
+                          Disabled="@IsMutationBusy"
+                          aria-label="LeP bearbeiten">
+                    <span class="ui-pill-edge-label">LeP</span>
+                    <span class="ui-resource-value">@FormatResource(CurrentLeP, Profile.Resources.LeP)</span>
                     @if (CurrentLeP.HasValue)
                     {
-                        <span class="hero-resource-track" aria-hidden="true"><span style="width:@GetBarWidth(CurrentLeP, Profile.Resources.LeP)"></span></span>
+                        <span class="ui-resource-track" aria-hidden="true"><span style="width:@GetBarWidth(CurrentLeP, Profile.Resources.LeP)"></span></span>
                     }
-                    else
-                    {
-                        <span class="hero-resource-missing">Wert setzen</span>
-                    }
-                    @if (_relativeResource == CombatResourceKind.LeP)
-                    {
-                        <div class="combat-relative-editor">
-                            <NumberControl Label="Betrag" Value="@_relativeAmount" ValueChanged="HandleRelativeAmountChanged" Minimum="1" Maximum="999" Disabled="@IsMutationBusy" ShowValidationMessage="true" />
-                            <button type="button" class="combat-compact-button" disabled="@(IsMutationBusy || !CurrentLeP.HasValue || !_relativeAmount.HasValue)" @onclick="() => ApplyRelativeAsync(false)">Abziehen</button>
-                            <button type="button" class="combat-compact-button primary" disabled="@(IsMutationBusy || !CurrentLeP.HasValue || !_relativeAmount.HasValue)" @onclick="() => ApplyRelativeAsync(true)">Hinzufügen</button>
-                        </div>
-                    }
-                </div>
+                </UiButton>
             }
             @if (ShouldShowResource(CombatResourceKind.AuP, Profile.Resources.AuP))
             {
-                <div class="combat-inline-resource @(CurrentAuP.HasValue ? string.Empty : "resource-unknown")">
-                    <div class="combat-inline-label-row">
-                        <strong>AuP</strong>
-                        <button type="button" class="combat-relative-button" disabled="@IsMutationBusy" @onclick="() => ToggleRelativeAmount(CombatResourceKind.AuP)">± Betrag</button>
-                    </div>
-                    <div class="combat-inline-value-row">
-                        <NumberControl Label="AuP"
-                                       Value="@CurrentAuP"
-                                       Placeholder="Wert setzen"
-                                       ValueChanged="value => ResourceValueChangedRequested.InvokeAsync(new ResourceValueChange(CombatResourceKind.AuP, value))"
-                                       Minimum="@GetResourceMinimum(CombatResourceKind.AuP)"
-                                       Maximum="@Profile.Resources.AuP"
-                                       StepMaximum="@Profile.Resources.AuP"
-                                       AllowEmpty="true"
-                                       DisableStepsWhenEmpty="@(!CurrentAuP.HasValue)"
-                                       ShowValidationMessage="true"
-                                       Disabled="@IsMutationBusy" />
-                        <span class="hero-resource-max">/ @FormatMaximum(Profile.Resources.AuP)</span>
-                    </div>
+                <UiButton Variant="resource"
+                          Class="ui-resource-pill"
+                          OnClick="() => ResourceEditRequested.InvokeAsync(CombatResourceKind.AuP)"
+                          Disabled="@IsMutationBusy"
+                          aria-label="AuP bearbeiten">
+                    <span class="ui-pill-edge-label">AuP</span>
+                    <span class="ui-resource-value">@FormatResource(CurrentAuP, Profile.Resources.AuP)</span>
                     @if (CurrentAuP.HasValue)
                     {
-                        <span class="hero-resource-track" aria-hidden="true"><span style="width:@GetBarWidth(CurrentAuP, Profile.Resources.AuP)"></span></span>
+                        <span class="ui-resource-track" aria-hidden="true"><span style="width:@GetBarWidth(CurrentAuP, Profile.Resources.AuP)"></span></span>
                     }
-                    else
-                    {
-                        <span class="hero-resource-missing">Wert setzen</span>
-                    }
-                    @if (_relativeResource == CombatResourceKind.AuP)
-                    {
-                        <div class="combat-relative-editor">
-                            <NumberControl Label="Betrag" Value="@_relativeAmount" ValueChanged="HandleRelativeAmountChanged" Minimum="1" Maximum="999" Disabled="@IsMutationBusy" ShowValidationMessage="true" />
-                            <button type="button" class="combat-compact-button" disabled="@(IsMutationBusy || !CurrentAuP.HasValue || !_relativeAmount.HasValue)" @onclick="() => ApplyRelativeAsync(false)">Abziehen</button>
-                            <button type="button" class="combat-compact-button primary" disabled="@(IsMutationBusy || !CurrentAuP.HasValue || !_relativeAmount.HasValue)" @onclick="() => ApplyRelativeAsync(true)">Hinzufügen</button>
-                        </div>
-                    }
-                </div>
+                </UiButton>
             }
             @if (ShouldShowResource(CombatResourceKind.AeP, Profile.Resources.AeP))
             {
-                <div class="combat-inline-resource @(CurrentAeP.HasValue ? string.Empty : "resource-unknown")">
-                    <div class="combat-inline-label-row">
-                        <strong>AeP</strong>
-                        <button type="button" class="combat-relative-button" disabled="@IsMutationBusy" @onclick="() => ToggleRelativeAmount(CombatResourceKind.AeP)">± Betrag</button>
-                    </div>
-                    <div class="combat-inline-value-row">
-                        <NumberControl Label="AeP"
-                                       Value="@CurrentAeP"
-                                       Placeholder="Wert setzen"
-                                       ValueChanged="value => ResourceValueChangedRequested.InvokeAsync(new ResourceValueChange(CombatResourceKind.AeP, value))"
-                                       Minimum="@GetResourceMinimum(CombatResourceKind.AeP)"
-                                       Maximum="@Profile.Resources.AeP"
-                                       StepMaximum="@Profile.Resources.AeP"
-                                       AllowEmpty="true"
-                                       DisableStepsWhenEmpty="@(!CurrentAeP.HasValue)"
-                                       ShowValidationMessage="true"
-                                       Disabled="@IsMutationBusy" />
-                        <span class="hero-resource-max">/ @FormatMaximum(Profile.Resources.AeP)</span>
-                    </div>
+                <UiButton Variant="resource"
+                          Class="ui-resource-pill"
+                          OnClick="() => ResourceEditRequested.InvokeAsync(CombatResourceKind.AeP)"
+                          Disabled="@IsMutationBusy"
+                          aria-label="AeP bearbeiten">
+                    <span class="ui-pill-edge-label">AeP</span>
+                    <span class="ui-resource-value">@FormatResource(CurrentAeP, Profile.Resources.AeP)</span>
                     @if (CurrentAeP.HasValue)
                     {
-                        <span class="hero-resource-track" aria-hidden="true"><span style="width:@GetBarWidth(CurrentAeP, Profile.Resources.AeP)"></span></span>
+                        <span class="ui-resource-track" aria-hidden="true"><span style="width:@GetBarWidth(CurrentAeP, Profile.Resources.AeP)"></span></span>
                     }
-                    else
-                    {
-                        <span class="hero-resource-missing">Wert setzen</span>
-                    }
-                    @if (_relativeResource == CombatResourceKind.AeP)
-                    {
-                        <div class="combat-relative-editor">
-                            <NumberControl Label="Betrag" Value="@_relativeAmount" ValueChanged="HandleRelativeAmountChanged" Minimum="1" Maximum="999" Disabled="@IsMutationBusy" ShowValidationMessage="true" />
-                            <button type="button" class="combat-compact-button" disabled="@(IsMutationBusy || !CurrentAeP.HasValue || !_relativeAmount.HasValue)" @onclick="() => ApplyRelativeAsync(false)">Abziehen</button>
-                            <button type="button" class="combat-compact-button primary" disabled="@(IsMutationBusy || !CurrentAeP.HasValue || !_relativeAmount.HasValue)" @onclick="() => ApplyRelativeAsync(true)">Hinzufügen</button>
-                        </div>
-                    }
-                </div>
+                </UiButton>
             }
             @if (ShouldShowResource(CombatResourceKind.KeP, Profile.Resources.KeP))
             {
-                <div class="combat-inline-resource @(CurrentKeP.HasValue ? string.Empty : "resource-unknown")">
-                    <div class="combat-inline-label-row">
-                        <strong>KE</strong>
-                        <button type="button" class="combat-relative-button" disabled="@IsMutationBusy" @onclick="() => ToggleRelativeAmount(CombatResourceKind.KeP)">± Betrag</button>
-                    </div>
-                    <div class="combat-inline-value-row">
-                        <NumberControl Label="KE"
-                                       Value="@CurrentKeP"
-                                       Placeholder="Wert setzen"
-                                       ValueChanged="value => ResourceValueChangedRequested.InvokeAsync(new ResourceValueChange(CombatResourceKind.KeP, value))"
-                                       Minimum="@GetResourceMinimum(CombatResourceKind.KeP)"
-                                       Maximum="@Profile.Resources.KeP"
-                                       StepMaximum="@Profile.Resources.KeP"
-                                       AllowEmpty="true"
-                                       DisableStepsWhenEmpty="@(!CurrentKeP.HasValue)"
-                                       ShowValidationMessage="true"
-                                       Disabled="@IsMutationBusy" />
-                        <span class="hero-resource-max">/ @FormatMaximum(Profile.Resources.KeP)</span>
-                    </div>
+                <UiButton Variant="resource"
+                          Class="ui-resource-pill"
+                          OnClick="() => ResourceEditRequested.InvokeAsync(CombatResourceKind.KeP)"
+                          Disabled="@IsMutationBusy"
+                          aria-label="KE bearbeiten">
+                    <span class="ui-pill-edge-label">KE</span>
+                    <span class="ui-resource-value">@FormatResource(CurrentKeP, Profile.Resources.KeP)</span>
                     @if (CurrentKeP.HasValue)
                     {
-                        <span class="hero-resource-track" aria-hidden="true"><span style="width:@GetBarWidth(CurrentKeP, Profile.Resources.KeP)"></span></span>
+                        <span class="ui-resource-track" aria-hidden="true"><span style="width:@GetBarWidth(CurrentKeP, Profile.Resources.KeP)"></span></span>
                     }
-                    else
-                    {
-                        <span class="hero-resource-missing">Wert setzen</span>
-                    }
-                    @if (_relativeResource == CombatResourceKind.KeP)
-                    {
-                        <div class="combat-relative-editor">
-                            <NumberControl Label="Betrag" Value="@_relativeAmount" ValueChanged="HandleRelativeAmountChanged" Minimum="1" Maximum="999" Disabled="@IsMutationBusy" ShowValidationMessage="true" />
-                            <button type="button" class="combat-compact-button" disabled="@(IsMutationBusy || !CurrentKeP.HasValue || !_relativeAmount.HasValue)" @onclick="() => ApplyRelativeAsync(false)">Abziehen</button>
-                            <button type="button" class="combat-compact-button primary" disabled="@(IsMutationBusy || !CurrentKeP.HasValue || !_relativeAmount.HasValue)" @onclick="() => ApplyRelativeAsync(true)">Hinzufügen</button>
-                        </div>
-                    }
-                </div>
+                </UiButton>
             }
 
-            <div class="combat-inline-initiative">
-                <div class="combat-inline-label-row"><strong>INI</strong><span class="combat-inline-hint">@(CurrentInitiative.HasValue ? "laufend" : "noch nicht gewürfelt")</span></div>
-                <div class="combat-inline-initiative-row">
-                    <NumberControl Label="INI"
-                                   Value="@CurrentInitiative"
-                                   ValueChanged="InitiativeChangedRequested"
-                                   Placeholder="—"
-                                   AllowEmpty="true"
-                                   ShowValidationMessage="true"
-                                   Disabled="@IsMutationBusy" />
-                    <button type="button" class="combat-inline-action" disabled="@(IsMutationBusy || !CanRollInitiative)" @onclick="InitiativeRollRequested">INI würfeln</button>
-                </div>
-                <span class="combat-inline-hint">Basis @FormatValue(InitiativeBase) · @(CurrentInitiative.HasValue ? "laufender Wert" : "noch nicht gewürfelt")</span>
-                @if (!CanRollInitiative && !string.IsNullOrWhiteSpace(InitiativeDisabledReason))
-                {
-                    <span class="combat-inline-hint">@InitiativeDisabledReason</span>
-                }
-            </div>
+            <UiButton Variant="resource"
+                      Class="ui-resource-pill"
+                      OnClick="InitiativeRequested"
+                      Disabled="@IsMutationBusy"
+                      aria-label="Initiative bearbeiten">
+                <span class="ui-pill-edge-label">INI</span>
+                <span class="ui-resource-value">@FormatValue(CurrentInitiative)</span>
+            </UiButton>
 
-            <div class="combat-inline-wounds">
-                <span class="combat-inline-label-row"><strong>Wunden</strong><span class="combat-inline-hint">Körperzonen</span></span>
-                <span class="combat-inline-wound-value">@WoundSummary</span>
-                <button type="button" class="combat-inline-action combat-wounds-pill" @onclick="WoundsRequested">Körperzonen</button>
-            </div>
-        </div>
-
-        <div class="hero-inline-state-row">
-            @if (HasUnknownRequiredState)
-            {
-                <span class="hero-inline-state-warning">@MissingStateSummary</span>
-            }
-            else if (!IsCombatStarted)
-            {
-                <span class="hero-inline-state-warning">Aktuelle Werte noch nicht erfasst</span>
-            }
-            @if (!IsCombatStarted && CanStartCombat)
-            {
-                <button type="button" class="combat-compact-button primary" @onclick="StartCombatRequested">Mit Maximalwerten beginnen</button>
-            }
+            <UiButton Variant="resource"
+                      Class="ui-resource-pill"
+                      OnClick="WoundsRequested"
+                      Disabled="@IsMutationBusy"
+                      aria-label="Wunden bearbeiten">
+                <span class="ui-pill-edge-label">Wunden</span>
+                <span class="ui-resource-value">@WoundSummary</span>
+            </UiButton>
         </div>
 
         <div class="hero-status-footer">
-            <span>Set @(SelectedSet is null ? "—" : $"{SelectedSet.Number} · {GetArmorLabel()}")</span>
             <span>WS @FormatValue(Profile.WoundThreshold)</span>
             @foreach (var effect in Effects.Take(3))
             {
                 <span class="hero-effect-chip">@effect</span>
-            }
-        </div>
-    }
-    else
-    {
-        <div class="hero-status-resources combat-resource-strip" aria-label="Ressourcen">
-            @if (ShouldShowResource(CombatResourceKind.LeP, Profile.Resources.LeP))
-            {
-                <button type="button" class="hero-resource hero-resource-lep" @onclick="() => ResourceEditRequested.InvokeAsync(CombatResourceKind.LeP)">
-                    <span class="hero-resource-heading"><strong>LeP</strong><span>@FormatResource(CurrentLeP, Profile.Resources.LeP)</span></span>
-                    <span class="hero-resource-track" aria-hidden="true"><span style="width:@GetBarWidth(CurrentLeP, Profile.Resources.LeP)"></span></span>
-                    <small>Lebenspunkte · klicken zum Setzen</small>
-                </button>
-            }
-            @if (ShouldShowResource(CombatResourceKind.AuP, Profile.Resources.AuP))
-            {
-                <button type="button" class="hero-resource" @onclick="() => ResourceEditRequested.InvokeAsync(CombatResourceKind.AuP)">
-                    <span class="hero-resource-heading"><strong>AuP</strong><span>@FormatResource(CurrentAuP, Profile.Resources.AuP)</span></span>
-                    <span class="hero-resource-track" aria-hidden="true"><span style="width:@GetBarWidth(CurrentAuP, Profile.Resources.AuP)"></span></span>
-                    <small>Ausdauer · klicken zum Setzen</small>
-                </button>
-            }
-            @if (ShouldShowResource(CombatResourceKind.AeP, Profile.Resources.AeP))
-            {
-                <button type="button" class="hero-resource" @onclick="() => ResourceEditRequested.InvokeAsync(CombatResourceKind.AeP)">
-                    <span class="hero-resource-heading"><strong>AeP</strong><span>@FormatResource(CurrentAeP, Profile.Resources.AeP)</span></span>
-                    <span class="hero-resource-track" aria-hidden="true"><span style="width:@GetBarWidth(CurrentAeP, Profile.Resources.AeP)"></span></span>
-                    <small>Astralenergie · klicken zum Setzen</small>
-                </button>
-            }
-            @if (ShouldShowResource(CombatResourceKind.KeP, Profile.Resources.KeP))
-            {
-                <button type="button" class="hero-resource" @onclick="() => ResourceEditRequested.InvokeAsync(CombatResourceKind.KeP)">
-                    <span class="hero-resource-heading"><strong>KE</strong><span>@FormatResource(CurrentKeP, Profile.Resources.KeP)</span></span>
-                    <span class="hero-resource-track" aria-hidden="true"><span style="width:@GetBarWidth(CurrentKeP, Profile.Resources.KeP)"></span></span>
-                    <small>Karmaenergie · klicken zum Setzen</small>
-                </button>
-            }
-            <button type="button" class="hero-resource hero-resource-initiative" @onclick="InitiativeRequested">
-                <span class="hero-resource-heading"><strong>INI</strong><span>@FormatValue(CurrentInitiative)</span></span>
-                <small>@(CurrentInitiative.HasValue ? "laufender Wert · bearbeiten" : $"Basis {FormatValue(InitiativeBase)} · würfeln")</small>
-            </button>
-            <button type="button" class="hero-resource hero-resource-wounds" @onclick="WoundsRequested">
-                <span class="hero-resource-heading"><strong>Wunden</strong><span>@WoundSummary</span></span>
-                <small>@(HasUnknownWounds ? "Wundstand nicht erfasst · bearbeiten" : "7 Wundzonen · bearbeiten")</small>
-            </button>
-        </div>
-
-        <div class="hero-status-footer">
-            <span>Set @(SelectedSet is null ? "—" : $"{SelectedSet.Number} · {GetArmorLabel()}")</span>
-            <span>WS @FormatValue(Profile.WoundThreshold)</span>
-            @if (Effects.Count > 0)
-            {
-                @foreach (var effect in Effects.Take(3))
-                {
-                    <span class="hero-effect-chip">@effect</span>
-                }
             }
         </div>
     }

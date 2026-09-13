@@ -130,54 +130,33 @@
     gap: 0.4rem;
 }
 
-.combat-option {
+.combat-option-entry {
     display: inline-flex;
-    flex: 0 0 auto;
     min-width: 0;
     max-width: 100%;
-    min-height: 2.45rem;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 0.45rem;
-    padding: 0.45rem 0.8rem;
-    border: 1px solid rgba(212, 175, 55, 0.36);
-    border-radius: 999px;
-    background: rgba(7, 17, 29, 0.66);
-    color: var(--dsa-white);
-    cursor: pointer;
-    font: inherit;
-    text-align: left;
+    flex: 0 1 auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
 }
 
-.combat-option.active,
-.combat-option:hover:not(:disabled),
-.combat-option:focus-visible {
-    border-color: var(--dsa-gold);
-    background: var(--dsa-hover-background);
-}
-
-.combat-option:disabled {
-    cursor: not-allowed;
-    opacity: 0.45;
-}
-
-.combat-option-name {
-    overflow-wrap: anywhere;
-    font-size: 0.78rem;
-    font-weight: 800;
+.combat-option-entry .ui-button {
+    max-width: 100%;
 }
 
 .combat-option-meta {
+    padding-left: 0.2rem;
     color: var(--dsa-text-muted);
     font-size: 0.68rem;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
 }
 
 .combat-action-options.compact {
     gap: 0.35rem;
 }
 
-.combat-action-options.compact .combat-option {
+.combat-action-options.compact .ui-button--option {
     min-height: 2.3rem;
 }
 
@@ -214,54 +193,10 @@
     min-width: 0;
 }
 
-.combat-selected-chip {
-    border: 1px solid rgba(212, 175, 55, 0.54);
-    border-radius: 999px;
-    background: rgba(212, 175, 55, 0.12);
-    color: var(--dsa-white);
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.7rem;
-}
-
-.combat-selected-chip {
-    padding: 0.25rem 0.5rem;
-}
-
-.combat-selected-chip:hover,
-.combat-selected-chip:focus-visible {
-    border-color: var(--dsa-gold);
-    color: var(--dsa-white);
-}
-
-.combat-selected-chip:focus-visible {
-    outline: 2px solid var(--dsa-gold);
-    outline-offset: 2px;
-}
-
 .combat-zone-choice {
     align-items: center;
     justify-content: flex-start;
     flex-wrap: wrap;
-}
-
-.combat-facing-button {
-    min-height: 2rem;
-    padding: 0.25rem 0.55rem;
-    border: 1px solid rgba(212, 175, 55, 0.45);
-    border-radius: 999px;
-    background: rgba(7, 17, 29, 0.62);
-    color: var(--dsa-text-muted);
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.7rem;
-}
-
-.combat-facing-button.active,
-.combat-facing-button:hover,
-.combat-facing-button:focus-visible {
-    border-color: var(--dsa-gold);
-    color: var(--dsa-white);
 }
 
 .combat-attribute-strip {
@@ -272,7 +207,7 @@
     gap: 0.4rem;
 }
 
-.combat-attribute-strip ::deep .attribute-pill {
+.combat-attribute-strip ::deep .ui-button--attribute {
     flex: 0 0 auto;
     max-width: 100%;
 }
@@ -292,49 +227,12 @@
     font-size: 0.76rem;
 }
 
-.combat-selection-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    padding: 0.25rem 0.45rem;
-    border: 1px solid rgba(212, 175, 55, 0.5);
-    border-radius: 999px;
-    color: var(--dsa-white);
-    font-size: 0.72rem;
-}
-
-.combat-selection-chip button {
-    min-width: 1.2rem;
-    min-height: 1.2rem;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
-    color: var(--dsa-gold);
-    cursor: pointer;
-}
-
 .combat-mobile-field-label {
     display: none;
 }
 
 .combat-weapon-select {
     display: none;
-    box-sizing: border-box;
-    width: 100%;
-    min-height: var(--ui-touch-target);
-    padding: 0.45rem 0.8rem;
-    border: 1px solid rgba(212, 175, 55, 0.55);
-    border-radius: 999px;
-    background: var(--dsa-blue);
-    color: var(--dsa-white);
-    font: inherit;
-    font-size: 0.88rem;
-}
-
-.combat-weapon-select:focus-visible {
-    outline: 2px solid var(--dsa-gold);
-    outline-offset: 2px;
 }
 
 .combat-roll-completion-heading {
@@ -442,36 +340,8 @@
 }
 
 .combat-result-note {
-    color: #ffd27d;
+    color: var(--dsa-gold);
     font-size: 0.7rem;
-}
-
-.combat-result-details,
-.combat-result-reaction,
-.combat-more-button {
-    min-height: 2.2rem;
-    padding: 0.3rem 0.6rem;
-    border: 1px solid rgba(212, 175, 55, 0.58);
-    border-radius: 999px;
-    background: transparent;
-    color: var(--dsa-white);
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.72rem;
-}
-
-.combat-result-reaction {
-    background: rgba(212, 175, 55, 0.16);
-}
-
-.combat-result-details:hover,
-.combat-result-reaction:hover,
-.combat-more-button:hover,
-.combat-result-details:focus-visible,
-.combat-result-reaction:focus-visible,
-.combat-more-button:focus-visible {
-    border-color: var(--dsa-gold);
-    background: var(--dsa-hover-background);
 }
 
 .combat-history-inline {
@@ -515,17 +385,9 @@
     margin-left: auto;
 }
 
-.combat-roll-column ::deep .reset-text-button {
-    width: auto;
-    min-height: 2.75rem;
-    flex: 0 0 auto;
-    border-radius: 999px;
-}
-
-.combat-roll-column ::deep .right-actions .dsa-btn {
+.combat-roll-column ::deep .right-actions .ui-button--dice {
     width: auto;
     min-width: 0;
-    border-radius: 8px;
 }
 
 @media (max-width: 1100px) {
@@ -573,7 +435,7 @@
         margin-left: 0;
     }
 
-    .combat-roll-column ::deep .right-actions .dsa-btn {
+    .combat-roll-column ::deep .right-actions .ui-button--dice {
         width: auto;
     }
 }

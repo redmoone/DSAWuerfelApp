@@ -17,7 +17,7 @@
     <div class="combat-hit-capture-grid">
         <label class="combat-hit-field">
             <span class="combat-field-label">Getroffene Zone</span>
-            <select class="combat-select" value="@SelectedZone" @onchange="HandleZoneChanged">
+            <select class="ui-select" value="@SelectedZone" @onchange="HandleZoneChanged">
                 @foreach (var zone in Enum.GetValues<CombatWoundZone>())
                 {
                     <option value="@zone">@GetZoneLabel(zone)</option>
@@ -26,23 +26,20 @@
         </label>
 
         <div class="combat-hit-field">
-            <span class="combat-field-label">LeP-Verlust</span>
             <TextPill Value="@LePLossText"
                       ValueChanged="LePLossTextChanged"
                       InputType="number"
-                      Label="LEP"
+                      Label="LeP"
                       Placeholder="0" />
         </div>
 
         <div class="combat-hit-field">
-            <span class="combat-field-label">Neuer Wundstand</span>
             <ModifierPill Value="@NewWounds"
                           ValueChanged="NewWoundsChanged"
                           LabelOverride="WUNDEN" />
         </div>
 
         <div class="combat-hit-field combat-hit-note-field">
-            <span class="combat-field-label">Notiz</span>
             <TextPill Value="@Note"
                       ValueChanged="NoteChanged"
                       Label="NOTIZ"
@@ -66,11 +63,11 @@
     </div>
 
     <div class="combat-hit-actions">
-        <button type="button" class="combat-header-button primary" disabled="@(!CanApply || IsBusy)" @onclick="ApplyRequested">
+        <UiButton Variant="primary" Disabled="@(!CanApply || IsBusy)" OnClick="ApplyRequested">
             Übernehmen
-        </button>
-        <button type="button" class="combat-header-button" disabled="@IsBusy" @onclick="CancelRequested">
+        </UiButton>
+        <UiButton Disabled="@IsBusy" OnClick="CancelRequested">
             Abbrechen
-        </button>
+        </UiButton>
     </div>
 </section>

@@ -13,7 +13,7 @@ public partial class CombatDetailsDrawer : IAsyncDisposable
     [Parameter] public EventCallback CloseRequested { get; set; }
 
     private IJSObjectReference? _focusModule;
-    private ElementReference _closeButton;
+    private UiButton? _closeButton;
     private bool _wasOpen;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -22,7 +22,10 @@ public partial class CombatDetailsDrawer : IAsyncDisposable
         {
             _focusModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/focus-history.js");
             await _focusModule.InvokeVoidAsync("rememberActiveElement");
-            await _closeButton.FocusAsync();
+            if (_closeButton is not null)
+            {
+                await _closeButton.FocusAsync();
+            }
         }
         else if (!Open && _wasOpen && _focusModule is not null)
         {

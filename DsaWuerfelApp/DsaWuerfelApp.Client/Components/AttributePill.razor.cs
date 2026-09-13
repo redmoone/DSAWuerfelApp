@@ -15,7 +15,7 @@ public partial class AttributePill : ComponentBase
     [Parameter] public EventCallback<string> OnDecrease { get; set; }
     [Parameter] public EventCallback OnClick { get; set; }
 
-    private Task HandleClick(MouseEventArgs e)
+    private Task HandleClick()
     {
         if (!IsAvailable)
         {

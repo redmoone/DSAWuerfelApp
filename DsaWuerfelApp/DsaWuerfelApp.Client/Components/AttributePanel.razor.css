@@ -17,42 +17,13 @@
     margin-top: 0.5rem;
 }
 
-.attribute-selection-placeholder,
-.attribute-selection-chip {
+.attribute-selection-placeholder {
     min-height: 1.8rem;
     padding: 0.25rem 0.5rem;
-    border: 1px solid rgba(212, 175, 55, 0.42);
-    border-radius: 999px;
-    background: rgba(7, 17, 29, 0.48);
     color: var(--dsa-text-muted);
     font-size: 0.75rem;
 }
 
 .attribute-selection-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    color: var(--dsa-white);
-}
-
-.attribute-selection-chip button {
-    width: 1.35rem;
-    min-width: 1.35rem;
-    min-height: 1.35rem;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
-    color: inherit;
-    cursor: pointer;
-    font: inherit;
-    font-weight: 900;
-    line-height: 1;
-}
-
-.attribute-selection-chip button:hover,
-.attribute-selection-chip button:focus-visible {
-    background: var(--dsa-hover-background);
-    color: var(--dsa-gold);
-    outline: 0;
+    min-width: 0;
 }

@@ -7,18 +7,18 @@
             <h2 id="combat-body-title">Rüstung und Wunden</h2>
         </div>
         <div class="combat-facing-toggle" role="group" aria-label="Körperansicht">
-            <button type="button"
-                    class="combat-facing-button @(Facing == CombatFacing.Front ? "active" : string.Empty)"
-                    aria-pressed="@(Facing == CombatFacing.Front)"
-                    @onclick="() => FacingChanged.InvokeAsync(CombatFacing.Front)">
+            <UiButton Size="compact"
+                      Active="@(Facing == CombatFacing.Front)"
+                      aria-pressed="@(Facing == CombatFacing.Front)"
+                      OnClick="() => FacingChanged.InvokeAsync(CombatFacing.Front)">
                 Vorderseite
-            </button>
-            <button type="button"
-                    class="combat-facing-button @(Facing == CombatFacing.Back ? "active" : string.Empty)"
-                    aria-pressed="@(Facing == CombatFacing.Back)"
-                    @onclick="() => FacingChanged.InvokeAsync(CombatFacing.Back)">
+            </UiButton>
+            <UiButton Size="compact"
+                      Active="@(Facing == CombatFacing.Back)"
+                      aria-pressed="@(Facing == CombatFacing.Back)"
+                      OnClick="() => FacingChanged.InvokeAsync(CombatFacing.Back)">
                 Rückseite
-            </button>
+            </UiButton>
         </div>
     </div>
 
@@ -38,22 +38,24 @@
     }
 
     <div class="combat-body-layout">
-        <button type="button"
-                class="combat-silhouette"
-                aria-label="Körperdetails auswählen"
-                @onclick="() => ZoneSelected.InvokeAsync(SelectedZone ?? CombatWoundZone.Torso)">
-            <svg viewBox="0 0 180 300" role="img" aria-label="Körper-Silhouette">
-                <circle cx="90" cy="34" r="22" />
-                <path d="M66 62 C48 70 40 94 42 122 L53 178 L62 178 L68 126 L73 177 L60 258 L78 258 L90 190 L102 258 L120 258 L107 177 L102 126 L108 178 L127 178 L138 122 C140 94 132 70 114 62 Z" />
-                <path d="M43 92 L20 153 L32 158 L57 112 M137 92 L160 153 L148 158 L123 112" />
-                <path class="silhouette-highlight" d="M67 72 H113 V142 H67 Z" />
-                @if (Facing == CombatFacing.Back)
-                {
-                    <path class="silhouette-back-line" d="M90 73 V178" />
-                }
-            </svg>
+        <div class="combat-silhouette-wrap">
+            <button type="button"
+                    class="combat-silhouette"
+                    aria-label="Körperdetails auswählen"
+                    @onclick="() => ZoneSelected.InvokeAsync(SelectedZone ?? CombatWoundZone.Torso)">
+                <svg viewBox="0 0 180 300" role="img" aria-label="Körper-Silhouette">
+                    <circle cx="90" cy="34" r="22" />
+                    <path d="M66 62 C48 70 40 94 42 122 L53 178 L62 178 L68 126 L73 177 L60 258 L78 258 L90 190 L102 258 L120 258 L107 177 L102 126 L108 178 L127 178 L138 122 C140 94 132 70 114 62 Z" />
+                    <path d="M43 92 L20 153 L32 158 L57 112 M137 92 L160 153 L148 158 L123 112" />
+                    <path class="silhouette-highlight" d="M67 72 H113 V142 H67 Z" />
+                    @if (Facing == CombatFacing.Back)
+                    {
+                        <path class="silhouette-back-line" d="M90 73 V178" />
+                    }
+                </svg>
+            </button>
             <span class="combat-silhouette-caption">@(Facing == CombatFacing.Front ? "Vorderseite" : "Rückseite") · Zone auswählen</span>
-        </button>
+        </div>
 
         <div class="combat-zone-list" role="list" aria-label="Sieben Wundbereiche">
             @foreach (var zone in Zones)
@@ -62,12 +64,15 @@
                 <div class="combat-zone-row @(isSelected ? "active" : string.Empty) @(IsBusy ? "busy" : string.Empty)"
                      role="listitem"
                      aria-label="@GetAccessibleLabel(zone)">
-                    <button type="button"
-                            class="combat-zone-select"
-                            aria-pressed="@isSelected"
-                            disabled="@IsBusy"
-                            @onclick="() => ZoneSelected.InvokeAsync(zone.WoundZone)">
-                        <span class="combat-zone-name">@zone.Label</span>
+                    <div class="combat-zone-select-cell">
+                        <UiButton Variant="option"
+                                  Class="combat-zone-select"
+                                  Active="@isSelected"
+                                  aria-pressed="@isSelected"
+                                  Disabled="@IsBusy"
+                                  OnClick="() => ZoneSelected.InvokeAsync(zone.WoundZone)">
+                            <span class="combat-zone-name">@zone.Label</span>
+                        </UiButton>
                         @if (UsesZonalArmor)
                         {
                             <span class="combat-zone-rs-list">
@@ -85,7 +90,7 @@
                         {
                             <span class="combat-zone-rs-list">RS nicht importiert</span>
                         }
-                    </button>
+                    </div>
                     <div class="combat-wound-editor">
                         <span class="combat-wound-label">Wunden</span>
                         <NumberControl Label="@zone.Label"

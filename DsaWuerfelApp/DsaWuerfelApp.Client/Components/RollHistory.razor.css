@@ -136,33 +136,8 @@
 }
 
 .history-info-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 30px;
-    min-width: 30px;
-    height: 30px;
-    padding: 0;
-    border: 1px solid rgba(212, 175, 55, 0.55);
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--dsa-gold);
-    cursor: pointer;
-    font: inherit;
+    flex: 0 0 auto;
     font-size: 0.88rem;
-    font-weight: 800;
-}
-
-.history-info-button:hover,
-.history-info-button:focus-visible {
-    border-color: var(--dsa-gold);
-    background: rgba(212, 175, 55, 0.2);
-    color: var(--dsa-white);
-}
-
-.history-info-button:focus-visible {
-    outline: 2px solid var(--dsa-gold);
-    outline-offset: 2px;
 }
 
 .history-checks {
@@ -191,7 +166,7 @@
 }
 
 .history-check.compensated {
-    border-color: rgba(255, 219, 103, 0.72);
+    border-color: rgba(212, 175, 55, 0.72);
     background: rgba(111, 79, 11, 0.55);
 }
 
@@ -211,7 +186,7 @@
 }
 
 .history-check.compensated .history-check-difference {
-    color: #ffe7a0;
+    color: var(--dsa-gold);
 }
 
 .history-check.failed .history-check-difference,

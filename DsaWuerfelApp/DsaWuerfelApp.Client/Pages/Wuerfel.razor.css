@@ -83,34 +83,6 @@
     background: var(--wuerfel-panel-background);
 }
 
-.roll-mode-button {
-    min-width: 0;
-    min-height: 44px;
-    padding: 8px 10px;
-    border: 1px solid var(--wuerfel-frame-color);
-    border-radius: 7px;
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--dsa-white);
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.86rem;
-    font-weight: 700;
-    overflow-wrap: anywhere;
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-
-.roll-mode-button:hover,
-.roll-mode-button:focus-visible {
-    border-color: var(--wuerfel-frame-color);
-    background: rgba(212, 175, 55, 0.18);
-}
-
-.roll-mode-button.active {
-    background: var(--dsa-gold);
-    color: var(--dsa-white);
-    box-shadow: none;
-}
-
 .roll-workspace {
     display: grid;
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
@@ -250,42 +222,16 @@
 }
 
 .master-selection-actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 8px;
 }
 
 .master-selection-button {
-    min-height: 44px;
-    width: 100%;
-    padding: 8px 14px;
-    border: 1px solid var(--wuerfel-frame-color);
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--dsa-white);
-    cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
-}
-
-.master-selection-button:hover:not(:disabled),
-.master-selection-button:focus-visible,
-.master-target-chip:hover {
-    background: rgba(212, 175, 55, 0.16);
-    transform: translateY(-1px);
-}
-
-.master-target-chip:focus-visible {
-    outline: 2px solid var(--dsa-gold);
-    outline-offset: 2px;
-}
-
-.master-selection-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+    flex: 0 0 auto;
 }
 
 .master-selection-button.muted {
-    color: rgba(255, 248, 220, 0.74);
 }
 
 .master-selection-empty {
@@ -295,31 +241,14 @@
 }
 
 .master-target-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 8px;
 }
 
 .master-target-chip {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    gap: 4px;
-    padding: 10px 12px;
-    border: 1px solid var(--wuerfel-frame-color);
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--dsa-white);
-    cursor: pointer;
+    max-width: 100%;
     text-align: left;
-    transition: background-color 0.2s ease, transform 0.2s ease;
-}
-
-.master-target-chip.active {
-    background: var(--dsa-gold);
-    color: var(--dsa-white);
-    border-color: var(--dsa-gold);
-    box-shadow: none;
 }
 
 .master-target-name {
@@ -366,12 +295,6 @@
     overflow: hidden;
 }
 
-.dice-3d-box.is-empty {
-    height: 130px;
-    border-color: var(--wuerfel-frame-color);
-    background: var(--wuerfel-panel-background);
-}
-
 .dice-3d-box.has-selection {
     border-color: var(--wuerfel-frame-color);
 }
@@ -409,102 +332,17 @@
     padding-top: 2px;
 }
 
-.roll-setup-panel ::deep .attribute-pill,
 .roll-setup-panel ::deep .search-wrapper,
 .roll-setup-panel ::deep .forced-rolls-input,
-.roll-setup-panel ::deep .probe-info-button,
-.roll-setup-panel ::deep .bad-trait-chip,
-.roll-setup-panel ::deep .bad-trait-chip-meta,
-.roll-setup-panel ::deep .bad-trait-summary span,
 .roll-setup-panel ::deep .spell-selection-panel,
 .roll-setup-panel ::deep .spell-selection-global-count,
 .roll-setup-panel ::deep .spell-selection-group,
-.roll-setup-panel ::deep .spell-selection-button,
 .roll-setup-panel ::deep .forced-rolls-panel,
-.roll-setup-panel ::deep .forced-rolls-button,
 .roll-setup-panel ::deep .probe-info-summary,
-.roll-setup-panel ::deep .probe-info-summary-field,
 .roll-setup-panel ::deep .probe-info-details,
-.roll-setup-panel ::deep .probe-info-close,
 .roll-setup-panel ::deep .probe-info-primary,
-.roll-setup-panel ::deep .probe-info-section,
-.roll-setup-panel ::deep .dsa-btn,
-.roll-setup-panel ::deep .dsa-btn-icon {
-    border-width: 1px !important;
-    border-color: var(--wuerfel-frame-color) !important;
-    box-shadow: none !important;
-}
-
-.roll-setup-panel ::deep .probe-info-button {
+ .roll-setup-panel ::deep .probe-info-section {
     border: 1px solid var(--wuerfel-frame-color) !important;
-}
-
-.roll-setup-panel ::deep .dsa-btn {
-    border-radius: 999px !important;
-}
-
-.roll-setup-panel ::deep .bad-trait-chip,
-.roll-setup-panel ::deep .spell-selection-button {
-    background: var(--pill-bg) !important;
-    color: var(--dsa-white) !important;
-}
-
-.roll-setup-panel ::deep .bad-trait-chip.active,
-.roll-setup-panel ::deep .spell-selection-button.active {
-    background: var(--dsa-gold) !important;
-    border-color: var(--dsa-gold) !important;
-    color: var(--dsa-white) !important;
-}
-
-.roll-setup-panel ::deep .attribute-pill.active {
-    background: var(--dsa-gold) !important;
-    border-color: var(--dsa-gold) !important;
-    color: var(--dsa-white) !important;
-}
-
-.roll-setup-panel ::deep .attribute-pill.active .attribute-icon {
-    filter: brightness(0) invert(1);
-}
-
-.roll-setup-panel ::deep .attribute-pill.active .attribute-value,
-.roll-setup-panel ::deep .attribute-pill.active .attribute-label,
-.roll-setup-panel ::deep .attribute-pill.active .selection-badge {
-    color: var(--dsa-white) !important;
-}
-
-.roll-setup-panel ::deep .attribute-pill.active .attribute-label,
-.roll-setup-panel ::deep .attribute-pill.active .selection-badge {
-    filter: none;
-}
-
-.roll-mode-button:not(.active):hover:not(:disabled),
-.master-selection-button:hover:not(:disabled),
-.master-target-chip:not(.active):hover:not(:disabled),
-.roll-setup-panel ::deep .attribute-pill:not(.active):hover,
-.roll-setup-panel ::deep .bad-trait-chip:not(.active):hover,
-.roll-setup-panel ::deep .spell-selection-button:not(.active):hover,
-.roll-setup-panel ::deep .die-selector:hover:not(:disabled),
-.roll-setup-panel ::deep .probe-info-button:hover:not(:disabled),
-.roll-setup-panel ::deep .forced-rolls-button:hover:not(:disabled) {
-    background: rgba(212, 175, 55, 0.18) !important;
-}
-
-.roll-setup-panel ::deep .probe-info-button:hover:not(:disabled) {
-    color: var(--dsa-white) !important;
-}
-
-.roll-setup-panel ::deep .bad-trait-chip:hover {
-    transform: none;
-}
-
-.roll-setup-panel ::deep .bad-trait-chip-meta {
-    border: 0 !important;
-    background: transparent !important;
-    color: inherit;
-    font-size: 0.95rem;
-    font-weight: 700;
-    line-height: 1.2;
-    padding: 2px 6px;
 }
 
 .roll-setup-panel ::deep .bad-trait-summary {
@@ -518,18 +356,6 @@
     border-radius: 0;
     background: transparent !important;
     color: rgba(255, 248, 220, 0.9);
-}
-
-.roll-setup-panel ::deep .spell-selection-button {
-    border-radius: 999px !important;
-    width: auto !important;
-    min-width: 0;
-    min-height: 36px;
-    max-width: 100%;
-    padding: 6px 12px;
-    font-size: 0.78rem;
-    line-height: 1.2;
-    text-align: center;
 }
 
 .roll-setup-panel ::deep .spell-selection-buttons {
@@ -614,12 +440,6 @@
     .roll-mode-selector {
         gap: 4px;
         padding: 4px;
-    }
-
-    .roll-mode-button {
-        min-height: 44px;
-        padding: 7px 6px;
-        font-size: 0.75rem;
     }
 
     .master-selection-actions {

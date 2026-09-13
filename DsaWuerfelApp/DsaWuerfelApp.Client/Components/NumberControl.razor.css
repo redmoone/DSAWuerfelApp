@@ -11,9 +11,9 @@
     min-width: 0;
     box-sizing: border-box;
     padding: 0.12rem;
-    border: 1px solid rgba(212, 175, 55, 0.68);
-    border-radius: 999px;
-    background: rgba(7, 17, 29, 0.72);
+    border: var(--ui-control-border-width) solid var(--dsa-gold-border);
+    border-radius: var(--ui-radius-pill);
+    background: var(--pill-bg);
     color: var(--dsa-white);
 }
 
@@ -30,32 +30,9 @@
 }
 
 .number-control-button {
-    width: var(--ui-touch-target);
-    min-width: var(--ui-touch-target);
-    min-height: var(--ui-touch-target);
-    border: 0;
-    background: transparent;
     color: var(--dsa-gold);
-    cursor: pointer;
-    font: inherit;
     font-size: 1.25rem;
     font-weight: 800;
-    border-radius: 50%;
-}
-
-.number-control-button:hover:not(:disabled),
-.number-control-button:focus-visible {
-    background: rgba(212, 175, 55, 0.16);
-}
-
-.number-control-button:focus-visible {
-    outline: 2px solid var(--dsa-gold);
-    outline-offset: -2px;
-}
-
-.number-control-button:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
 }
 
 .number-control-field {

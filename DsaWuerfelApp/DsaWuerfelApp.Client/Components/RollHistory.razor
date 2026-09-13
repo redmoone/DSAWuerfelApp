@@ -23,14 +23,15 @@
                         </div>
                         <div class="history-entry-actions">
                             <time class="history-time">@log.Timestamp.ToLocalTime().ToString("HH:mm")</time>
-                            <button type="button"
-                                    class="history-info-button"
+                            <UiButton Variant="icon"
+                                      Size="compact"
+                                      Class="history-info-button"
                                     data-history-entry-id="@GetHistoryEntryId(log)"
-                                    aria-label="Details zu @GetDisplayName(log) öffnen"
+                                      aria-label="@($"Details zu {GetDisplayName(log)} öffnen")"
                                     title="Ergebnisdetails öffnen"
-                                    @onclick="() => EntrySelected.InvokeAsync(log)">
+                                    OnClick="() => EntrySelected.InvokeAsync(log)">
                                 i
-                            </button>
+                            </UiButton>
                         </div>
                     </header>
 

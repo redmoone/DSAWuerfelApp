@@ -43,12 +43,12 @@
                             {
                                 var selectedIndex = index;
                                 var attribute = SelectedAttributes[selectedIndex];
-                                <span class="combat-selection-chip">
-                                    @((string)attribute)
-                                    <button type="button"
-                                            aria-label="@($"{attribute} aus Auswahl entfernen")"
-                                            @onclick="() => AttributeRemoved.InvokeAsync(selectedIndex)">×</button>
-                                </span>
+                                <UiButton Size="compact"
+                                          Class="combat-selection-chip"
+                                          aria-label="@($"{attribute} aus Auswahl entfernen")"
+                                          OnClick="() => AttributeRemoved.InvokeAsync(selectedIndex)">
+                                    @((string)attribute) <span aria-hidden="true">×</span>
+                                </UiButton>
                             }
                         }
                     </div>
@@ -63,6 +63,32 @@
             }
             else
             {
+                @if (Sets.Count > 0)
+                {
+                    <div class="combat-choice-block combat-set-choice">
+                        <div class="combat-block-heading">
+                            <span class="combat-field-label">Kampfset</span>
+                            <span class="combat-muted">Wertebasis</span>
+                        </div>
+                        <select id="combat-set-select"
+                                class="ui-select combat-set-select"
+                                aria-label="Kampfset auswählen"
+                                value="@SelectedSetId"
+                                disabled="@IsBusy"
+                                @onchange="HandleSetChanged">
+                            @foreach (var group in Sets.GroupBy(set => set.Number).OrderBy(group => group.Key))
+                            {
+                                <optgroup label="Set @group.Key">
+                                    @foreach (var set in group.OrderBy(set => set.ArmorModel))
+                                    {
+                                        <option value="@set.Id">@GetSetLabel(set)</option>
+                                    }
+                                </optgroup>
+                            }
+                        </select>
+                    </div>
+                }
+
                 <div class="combat-choice-block">
                     <div class="combat-block-heading">
                         <span class="combat-field-label">Waffe oder Abwehr</span>
@@ -76,7 +102,7 @@
                     {
                         <label class="combat-mobile-field-label" for="combat-weapon-select">Waffe oder Abwehr</label>
                         <select id="combat-weapon-select"
-                                class="combat-select combat-weapon-select"
+                                class="ui-select combat-weapon-select"
                                 aria-label="Waffe oder Abwehr auswählen"
                                 value="@SelectedWeaponId"
                                 disabled="@IsBusy"
@@ -89,15 +115,17 @@
                         <div class="combat-option-list combat-desktop-weapon-list" role="listbox" aria-label="Waffen und Abwehr">
                             @foreach (var weapon in Weapons)
                             {
-                                <button type="button"
-                                        class="combat-option @(weapon.Id == SelectedWeaponId ? "active" : string.Empty)"
-                                        role="option"
-                                        aria-selected="@(weapon.Id == SelectedWeaponId)"
-                                        disabled="@(IsBusy || weapon.IsAvailable == false)"
-                                        @onclick="() => WeaponSelected.InvokeAsync(weapon.Id)">
-                                    <span class="combat-option-name">@GetWeaponLabel(weapon)</span>
+                                <div class="combat-option-entry">
+                                    <UiButton Variant="option"
+                                              Active="@(weapon.Id == SelectedWeaponId)"
+                                              role="option"
+                                              aria-selected="@(weapon.Id == SelectedWeaponId)"
+                                              Disabled="@(IsBusy || weapon.IsAvailable == false)"
+                                              OnClick="() => WeaponSelected.InvokeAsync(weapon.Id)">
+                                        <span class="ui-button-label">@GetWeaponLabel(weapon)</span>
+                                    </UiButton>
                                     <span class="combat-option-meta">@GetWeaponValue(weapon)</span>
-                                </button>
+                                </div>
                             }
                         </div>
                     }
@@ -111,15 +139,17 @@
                     <div class="combat-action-options" role="listbox" aria-label="Hauptaktionen">
                         @foreach (var action in MainActions)
                         {
-                            <button type="button"
-                                    class="combat-option action-option @(action.Key == SelectedAction ? "active" : string.Empty)"
-                                    role="option"
-                                    aria-selected="@(action.Key == SelectedAction)"
-                                    disabled="@(IsBusy || !action.IsAvailable)"
-                                    @onclick="() => ActionSelected.InvokeAsync(action.Key)">
-                                <span class="combat-option-name">@action.Label</span>
+                            <div class="combat-option-entry">
+                                <UiButton Variant="option"
+                                          Active="@(action.Key == SelectedAction)"
+                                          role="option"
+                                          aria-selected="@(action.Key == SelectedAction)"
+                                          Disabled="@(IsBusy || !action.IsAvailable)"
+                                          OnClick="() => ActionSelected.InvokeAsync(action.Key)">
+                                    <span class="ui-button-label">@action.Label</span>
+                                </UiButton>
                                 <span class="combat-option-meta">@action.Detail</span>
-                            </button>
+                            </div>
                         }
                     </div>
                 </div>
@@ -129,15 +159,17 @@
                     <div class="combat-action-options compact" role="listbox" aria-label="Weitere Würfe">
                         @foreach (var action in AdditionalActions)
                         {
-                            <button type="button"
-                                    class="combat-option action-option @(action.Key == SelectedAction ? "active" : string.Empty)"
-                                    role="option"
-                                    aria-selected="@(action.Key == SelectedAction)"
-                                    disabled="@(IsBusy || !action.IsAvailable)"
-                                    @onclick="() => ActionSelected.InvokeAsync(action.Key)">
-                                <span class="combat-option-name">@action.Label</span>
+                            <div class="combat-option-entry">
+                                <UiButton Variant="option"
+                                          Active="@(action.Key == SelectedAction)"
+                                          role="option"
+                                          aria-selected="@(action.Key == SelectedAction)"
+                                          Disabled="@(IsBusy || !action.IsAvailable)"
+                                          OnClick="() => ActionSelected.InvokeAsync(action.Key)">
+                                    <span class="ui-button-label">@action.Label</span>
+                                </UiButton>
                                 <span class="combat-option-meta">@action.Detail</span>
-                            </button>
+                            </div>
                         }
                     </div>
                 </div>
@@ -147,15 +179,17 @@
                     <div class="combat-action-options compact" role="listbox" aria-label="Hilfswürfe">
                         @foreach (var action in HelperActions)
                         {
-                            <button type="button"
-                                    class="combat-option action-option @(action.Key == SelectedAction ? "active" : string.Empty)"
-                                    role="option"
-                                    aria-selected="@(action.Key == SelectedAction)"
-                                    disabled="@(IsBusy || !action.IsAvailable)"
-                                    @onclick="() => ActionSelected.InvokeAsync(action.Key)">
-                                <span class="combat-option-name">@action.Label</span>
+                            <div class="combat-option-entry">
+                                <UiButton Variant="option"
+                                          Active="@(action.Key == SelectedAction)"
+                                          role="option"
+                                          aria-selected="@(action.Key == SelectedAction)"
+                                          Disabled="@(IsBusy || !action.IsAvailable)"
+                                          OnClick="() => ActionSelected.InvokeAsync(action.Key)">
+                                    <span class="ui-button-label">@action.Label</span>
+                                </UiButton>
                                 <span class="combat-option-meta">@action.Detail</span>
-                            </button>
+                            </div>
                         }
                     </div>
                 </details>
@@ -168,9 +202,9 @@
                         </div>
                         @if (!string.IsNullOrWhiteSpace(SelectedProbe))
                         {
-                            <button type="button" class="combat-selected-chip" @onclick="() => ProbeSelected.InvokeAsync(string.Empty)">
+                            <UiButton Size="compact" OnClick="() => ProbeSelected.InvokeAsync(string.Empty)">
                                 @SelectedProbe <span aria-hidden="true">×</span>
-                            </button>
+                            </UiButton>
                         }
                     </div>
                     <ProbenSearch AvailableProben="Maneuvers"
@@ -184,8 +218,8 @@
                 {
                     <div class="combat-zone-choice" role="group" aria-label="Trefferzonenseite">
                         <span class="combat-field-label">Trefferzone</span>
-                        <button type="button" class="combat-facing-button @(Facing == CombatFacing.Front ? "active" : string.Empty)" @onclick="() => FacingChanged.InvokeAsync(CombatFacing.Front)">Vorderseite</button>
-                        <button type="button" class="combat-facing-button @(Facing == CombatFacing.Back ? "active" : string.Empty)" @onclick="() => FacingChanged.InvokeAsync(CombatFacing.Back)">Rückseite</button>
+                        <UiButton Size="compact" Active="@(Facing == CombatFacing.Front)" OnClick="() => FacingChanged.InvokeAsync(CombatFacing.Front)">Vorderseite</UiButton>
+                        <UiButton Size="compact" Active="@(Facing == CombatFacing.Back)" OnClick="() => FacingChanged.InvokeAsync(CombatFacing.Back)">Rückseite</UiButton>
                     </div>
                 }
             }
@@ -256,7 +290,7 @@
                             <strong>@(AttributeResult.Success ? "Eigenschaftsprobe gelungen" : "Eigenschaftsprobe misslungen")</strong>
                             <span>@AttributeResult.SuccessCount von @AttributeResult.Details.Length Eigenschaften gelungen</span>
                         </div>
-                        <button type="button" class="combat-result-details" @onclick="ResultDetailsRequested">Details</button>
+                        <UiButton Size="compact" Class="combat-result-details" OnClick="ResultDetailsRequested">Details</UiButton>
                     </div>
                 }
                 else if (CombatResult is not null)
@@ -271,10 +305,10 @@
                                 <small class="combat-result-note">Nur TP gewürfelt; LeP und Wunden bleiben unverändert.</small>
                             }
                         </div>
-                        <button type="button" class="combat-result-details" @onclick="ResultDetailsRequested">Details</button>
+                        <UiButton Size="compact" Class="combat-result-details" OnClick="ResultDetailsRequested">Details</UiButton>
                         @if (CanConsumeReaction && CombatResult.Snapshot.Action is CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge)
                         {
-                            <button type="button" class="combat-result-reaction" @onclick="ConsumeReactionRequested">Reaktion verbrauchen</button>
+                            <UiButton Variant="primary" Size="compact" Class="combat-result-reaction" OnClick="ConsumeReactionRequested">Reaktion verbrauchen</UiButton>
                         }
                     </div>
                 }
@@ -297,7 +331,7 @@
                     <RollHistory Entries="@History.Take(3).ToArray()" EntrySelected="HistoryEntrySelected" />
                     @if (History.Count > 3)
                     {
-                        <button type="button" class="combat-more-button" @onclick="HistoryRequested">Alle Ergebnisse öffnen</button>
+                        <UiButton Size="compact" Class="combat-more-button" OnClick="HistoryRequested">Alle Ergebnisse öffnen</UiButton>
                     }
                 </details>
             }

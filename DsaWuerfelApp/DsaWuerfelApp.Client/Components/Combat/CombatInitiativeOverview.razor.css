@@ -133,20 +133,14 @@
 
 .combat-initiative-value {
     display: inline-flex;
-    min-height: 1.75rem;
     align-items: center;
-    box-sizing: border-box;
-    padding: 0.2rem 0.45rem;
-    border: 1px solid rgba(212, 175, 55, 0.36);
-    border-radius: 999px;
     color: var(--dsa-white);
-    font-size: 0.7rem;
+    font-size: 0.78rem;
     font-weight: 800;
     white-space: nowrap;
 }
 
 .combat-initiative-overview-row.current .combat-initiative-value {
-    border-color: var(--dsa-gold);
     color: var(--dsa-gold);
 }
 
@@ -158,43 +152,22 @@
     gap: 0.25rem;
 }
 
-.combat-initiative-overview-flag,
-.combat-initiative-overview-button {
+.combat-initiative-overview-flag {
     display: inline-flex;
-    min-height: 1.8rem;
     align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    padding: 0.22rem 0.48rem;
-    border: 1px solid rgba(212, 175, 55, 0.32);
-    border-radius: 999px;
-    background: transparent;
     color: var(--dsa-text-muted);
-    font: inherit;
     font-size: 0.62rem;
     font-weight: 800;
     white-space: nowrap;
 }
 
-.combat-initiative-overview-flag.available,
-.combat-initiative-overview-button:not(:disabled):hover,
-.combat-initiative-overview-button:not(:disabled):focus-visible {
-    border-color: rgba(212, 175, 55, 0.72);
+.combat-initiative-overview-flag.available {
     color: var(--dsa-gold);
 }
 
 .combat-initiative-overview-button {
-    cursor: pointer;
-}
-
-.combat-initiative-overview-button:disabled {
-    cursor: default;
-    opacity: 0.62;
-}
-
-.combat-initiative-overview-button:focus-visible {
-    outline: 2px solid var(--dsa-gold);
-    outline-offset: 2px;
+    font-size: 0.62rem;
+    white-space: nowrap;
 }
 
 .combat-initiative-overview-announcement,
