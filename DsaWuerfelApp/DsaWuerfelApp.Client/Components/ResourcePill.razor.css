@@ -87,24 +87,6 @@
     display: none;
 }
 
-.resource-pill .ui-resource-track {
-    position: absolute;
-    right: 0.8rem;
-    bottom: 0.38rem;
-    left: 0.8rem;
-    height: 0.22rem;
-    overflow: hidden;
-    border-radius: 999px;
-    background: rgb(255 255 255 / 12%);
-}
-
-.resource-pill .ui-resource-track > span {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-    background: var(--dsa-gold);
-}
-
 @media (max-width: 680px) {
     .resource-pill {
         min-width: 0;

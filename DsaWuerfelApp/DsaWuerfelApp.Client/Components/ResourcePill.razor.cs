@@ -11,17 +11,4 @@ public partial class ResourcePill
     [Parameter] public bool Disabled { get; set; }
     [Parameter] public EventCallback<int?> ValueChanged { get; set; }
     [Parameter] public string? Class { get; set; }
-
-    private string BarWidth
-    {
-        get
-        {
-            if (!Value.HasValue || !Maximum.HasValue || Maximum.Value <= 0)
-            {
-                return "0%";
-            }
-
-            return $"{Math.Clamp((double)Value.Value / Maximum.Value, 0d, 1d):P0}";
-        }
-    }
 }

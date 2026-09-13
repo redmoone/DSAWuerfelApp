@@ -343,21 +343,6 @@ body {
     overflow-wrap: anywhere;
 }
 
-.ui-resource-track {
-    display: block;
-    height: 0.28rem;
-    overflow: hidden;
-    border-radius: var(--ui-radius-pill);
-    background: rgba(255, 248, 220, 0.14);
-}
-
-.ui-resource-track > span {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-    background: var(--dsa-gold);
-}
-
 .ui-button--icon {
     width: var(--ui-control-height);
     min-width: var(--ui-control-height);
