@@ -16,6 +16,7 @@ public partial class NumberControl
     [Parameter] public bool Disabled { get; set; }
     [Parameter] public bool DisableStepsWhenEmpty { get; set; }
     [Parameter] public bool ShowValidationMessage { get; set; }
+    [Parameter] public string? Class { get; set; }
 
     private string _draft = string.Empty;
     private string? _validationMessage;

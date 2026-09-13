@@ -22,6 +22,7 @@
                                CanStartCombat="@(!IsCombatStarted)"
                                StartCombatRequested="InitializeCombatStateAsync"
                                ResourceEditRequested="OpenResourceDrawer"
+                               ResourceValueChangedRequested="HandleResourceValueChanged"
                                InitiativeRequested="OpenInitiativeDrawer"
                                WoundsRequested="() => SetArea(CombatArea.Zonen)"
                                ShowUndo="false"

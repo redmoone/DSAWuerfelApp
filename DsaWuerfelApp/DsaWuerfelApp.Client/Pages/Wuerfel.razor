@@ -23,8 +23,10 @@
                            CanUndo="@CombatCanUndo"
                            UndoRequested="UndoCombatChangeAsync"
                            ResourceEditRequested="OpenCombatResourceDrawer"
+                           ResourceValueChangedRequested="HandleCombatResourceValueChanged"
                            InitiativeRequested="OpenCombatInitiativeDrawer"
                            WoundsRequested="OpenCombatWoundDrawer"
+                           IsMutationBusy="@_combatResourceBusy"
                            PersistenceWarning="@CombatState.PersistenceError"
                            Wounds="@CombatWounds"
                            Effects="@CombatEffects" />

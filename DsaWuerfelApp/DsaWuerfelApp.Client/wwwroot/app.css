@@ -285,15 +285,16 @@ body {
 
 .ui-pill-edge-label {
     position: absolute;
-    top: -0.52rem;
+    bottom: -0.52rem;
     left: 0.8rem;
-    padding: 0 0.3rem;
-    background: var(--pill-bg);
-    color: var(--dsa-gold);
+    padding: 0.14rem 0.42rem;
+    border-radius: 0.2rem;
+    background: var(--dsa-gold);
+    color: var(--dsa-blue);
     font-size: 0.62rem;
     font-weight: 800;
     letter-spacing: 0.05em;
-    line-height: 1;
+    line-height: 1.05;
     text-transform: uppercase;
 }
 
@@ -322,7 +323,7 @@ body {
     align-items: flex-start;
     justify-content: center;
     min-height: 3.45rem;
-    padding: 0.58rem 0.75rem 0.48rem;
+    padding: 0.58rem 0.75rem 0.78rem;
     border-width: var(--ui-pill-border-width);
     flex-direction: column;
     gap: 0.2rem;

@@ -23,13 +23,26 @@
     padding: 0 0.45rem;
 }
 
-.modifier-button {
+.modifier-pill ::deep .modifier-button {
+    border-color: transparent;
+    background: transparent;
     color: var(--dsa-gold);
     font-size: 1.35rem;
     font-weight: 800;
 }
 
-.modifier-button:active:not(:disabled) {
+.modifier-pill ::deep .modifier-button:hover:not(:disabled),
+.modifier-pill ::deep .modifier-button:focus-visible {
+    border-color: transparent;
+    background: transparent;
+}
+
+.modifier-pill ::deep .modifier-button:focus-visible {
+    outline: 2px solid var(--dsa-gold);
+    outline-offset: -2px;
+}
+
+.modifier-pill ::deep .modifier-button:active:not(:disabled) {
     transform: scale(0.9);
 }
 

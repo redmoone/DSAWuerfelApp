@@ -1,0 +1,29 @@
+<div class="resource-pill ui-resource-pill @Class"
+     role="group"
+     aria-label="@($"{Label} bearbeiten")">
+    <span class="ui-pill-edge-label">@Label</span>
+
+    <div class="resource-pill-control">
+        <NumberControl Class="resource-number-control"
+                       Label="@Label"
+                       Value="@Value"
+                       ValueChanged="@ValueChanged"
+                       Placeholder="—"
+                       Minimum="@Minimum"
+                       StepMaximum="@Maximum"
+                       AllowEmpty="true"
+                       DisableStepsWhenEmpty="true"
+                       Disabled="@Disabled" />
+        @if (Maximum.HasValue)
+        {
+            <span class="resource-maximum">/ @Maximum</span>
+        }
+    </div>
+
+    @if (Value.HasValue && Maximum is > 0)
+    {
+        <span class="ui-resource-track" aria-hidden="true">
+            <span style="width:@BarWidth"></span>
+        </span>
+    }
+</div>

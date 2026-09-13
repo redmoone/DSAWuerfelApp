@@ -21,6 +21,7 @@ public partial class CombatStatusPanel
     [Parameter] public bool CanStartCombat { get; set; }
     [Parameter] public EventCallback StartCombatRequested { get; set; }
     [Parameter] public EventCallback<CombatResourceKind> ResourceEditRequested { get; set; }
+    [Parameter] public EventCallback<ResourceValueChange> ResourceValueChangedRequested { get; set; }
     [Parameter] public EventCallback InitiativeRequested { get; set; }
     [Parameter] public EventCallback WoundsRequested { get; set; }
     [Parameter] public bool ShowUndo { get; set; } = true;
@@ -41,27 +42,7 @@ public partial class CombatStatusPanel
     private static bool ShouldShowResource(CombatResourceKind resource, int? maximum) =>
         resource == CombatResourceKind.LeP ? !maximum.HasValue || maximum.Value > 0 : maximum is > 0;
 
-    private static string FormatResource(int? current, int? maximum)
-    {
-        if (!current.HasValue)
-        {
-            return maximum.HasValue ? $"— / {maximum.Value}" : "—";
-        }
-
-        return maximum.HasValue ? $"{current.Value} / {maximum.Value}" : current.Value.ToString();
-    }
-
     private static string FormatValue(int? value) => value?.ToString() ?? "—";
-
-    private static string GetBarWidth(int? current, int? maximum)
-    {
-        if (!current.HasValue || !maximum.HasValue || maximum.Value <= 0)
-        {
-            return "0%";
-        }
-
-        return $"{Math.Clamp((double)current.Value / maximum.Value, 0d, 1d):P0}";
-    }
 
     private Task HandleCaptureRequested()
     {

@@ -1,3 +1,4 @@
+using DsaWuerfelApp.Client.Components.Combat;
 using DsaWuerfelApp.Client.Services;
 using DsaWuerfelApp.Shared;
 using DsaWuerfelApp.Shared.Models;
@@ -31,6 +32,7 @@ public partial class Wuerfel : IDisposable
     private int? _combatResourceDraft;
     private int? _combatWoundDraft;
     private int? _combatInitiativeDraft;
+    private bool _combatResourceBusy;
     private bool _combatInitiativeBusy;
     private string? _combatNotice;
 
@@ -322,6 +324,34 @@ public partial class Wuerfel : IDisposable
                 BuildCombatRuntimeState()).Modifier;
         _combatInitiativeDraft = CombatCurrentInitiative ?? (CombatInitiativeBase + runtimeModifier);
         _combatDrawer = WuerfelCombatDrawer.Initiative;
+    }
+
+    private async Task HandleCombatResourceValueChanged(CombatStatusPanel.ResourceValueChange change)
+    {
+        if (_combatResourceBusy || CombatProfile is null || GetCombatResourceValue(change.Resource) == change.Value)
+        {
+            return;
+        }
+
+        _combatResourceBusy = true;
+        _combatNotice = null;
+        try
+        {
+            await CombatState.SetResourceAsync(change.Resource, change.Value);
+            var sessionResult = await SyncCombatSessionRuntimeStateAsync();
+            if (sessionResult?.Stale == true)
+            {
+                _combatNotice = sessionResult.Message;
+            }
+        }
+        catch (Exception exception)
+        {
+            _combatNotice = exception.Message;
+        }
+        finally
+        {
+            _combatResourceBusy = false;
+        }
     }
 
     private void CloseCombatDrawer()

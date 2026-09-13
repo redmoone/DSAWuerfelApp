@@ -29,10 +29,23 @@
     line-height: 1.25;
 }
 
-.number-control-button {
+.number-control ::deep .number-control-button {
+    border-color: transparent;
+    background: transparent;
     color: var(--dsa-gold);
     font-size: 1.25rem;
     font-weight: 800;
+}
+
+.number-control ::deep .number-control-button:hover:not(:disabled),
+.number-control ::deep .number-control-button:focus-visible {
+    border-color: transparent;
+    background: transparent;
+}
+
+.number-control ::deep .number-control-button:focus-visible {
+    outline: 2px solid var(--dsa-gold);
+    outline-offset: -2px;
 }
 
 .number-control-field {
