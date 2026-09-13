@@ -41,16 +41,24 @@
     gap: 6px;
 }
 
-.bad-trait-chip {
+.bad-trait-entry ::deep .bad-trait-chip {
     max-width: 100%;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.65rem;
     text-align: left;
 }
 
-.bad-trait-entry-meta {
-    padding-left: 0.2rem;
-    color: var(--dsa-text-muted);
-    font-size: 0.68rem;
-    line-height: 1.3;
+.bad-trait-chip-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.bad-trait-chip-value {
+    flex: 0 0 auto;
+    color: var(--dsa-gold);
+    font-size: 0.75rem;
+    font-weight: 800;
 }
 
 .bad-trait-panel.compact .bad-trait-chip {

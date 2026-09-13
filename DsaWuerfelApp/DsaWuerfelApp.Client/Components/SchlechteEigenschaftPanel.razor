@@ -23,9 +23,9 @@ else
                           Active="@IsSelected(eigenschaft.Name)"
                           OnClick='() => HandleSelectionChanged(eigenschaft.Name)'
                           Disabled="@IsBusy">
-                    @eigenschaft.Name
+                    <span class="bad-trait-chip-name">@eigenschaft.Name</span>
+                    <span class="bad-trait-chip-value">@GetChipMeta(eigenschaft)</span>
                 </UiButton>
-                <span class="bad-trait-entry-meta">@GetChipMeta(eigenschaft)</span>
 
                 @if (IsAggregatedSelection && owners.Count > 0)
                 {
