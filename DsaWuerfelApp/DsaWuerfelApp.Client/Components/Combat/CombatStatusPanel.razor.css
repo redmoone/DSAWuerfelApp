@@ -72,7 +72,7 @@
 .hero-status-set-picker {
     display: flex;
     min-width: min(24rem, 100%);
-    flex: 0 1 24rem;
+    flex: 0 1 20rem;
     flex-direction: column;
     gap: 0.25rem;
 }
@@ -91,7 +91,7 @@
     min-height: var(--ui-touch-target);
     padding: 0.45rem 0.7rem;
     border: 1px solid rgba(212, 175, 55, 0.55);
-    border-radius: 8px;
+    border-radius: 999px;
     background: var(--dsa-blue);
     color: var(--dsa-white);
     font: inherit;
@@ -108,7 +108,7 @@
     min-height: 2.25rem;
     padding: 0.35rem 0.7rem;
     border: 1px solid rgba(212, 175, 55, 0.68);
-    border-radius: 8px;
+    border-radius: 999px;
     background: rgba(7, 17, 29, 0.65);
     color: var(--dsa-white);
     cursor: pointer;
@@ -250,14 +250,10 @@
 }
 
 .combat-inline-status-grid {
-    display: grid;
-    grid-template-columns: repeat(8, minmax(0, 1fr));
-    gap: 0.8rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem 0.9rem;
     align-items: start;
-}
-
-.combat-inline-resource.hero-resource-lep {
-    grid-column: span 1;
 }
 
 .combat-inline-resource,
@@ -268,8 +264,15 @@
 
 .combat-inline-resource {
     display: flex;
+    max-width: 22rem;
+    flex: 1 1 10rem;
     flex-direction: column;
     gap: 0.3rem;
+}
+
+.combat-inline-resource.hero-resource-lep {
+    flex-basis: 13rem;
+    flex-grow: 1.25;
 }
 
 .combat-inline-label-row {
@@ -283,18 +286,19 @@
 
 .combat-inline-value-row {
     justify-content: flex-start;
+    flex-wrap: wrap;
     gap: 0.4rem;
 }
 
 .combat-inline-value-row ::deep .number-control-wrapper,
 .combat-inline-initiative-row ::deep .number-control-wrapper {
     min-width: 0;
-    flex: 1 1 auto;
+    flex: 0 0 auto;
 }
 
 .combat-inline-value-row ::deep .number-control,
 .combat-inline-initiative-row ::deep .number-control {
-    width: 100%;
+    width: auto;
     min-width: 0;
     border-color: rgba(212, 175, 55, 0.42);
     border-radius: 999px;
@@ -314,7 +318,7 @@
 
 .combat-inline-value-row ::deep .number-control-input,
 .combat-inline-initiative-row ::deep .number-control-input {
-    width: 4.4rem;
+    width: 4.2rem;
     min-height: 2rem;
     font-size: 1.05rem;
 }
@@ -332,11 +336,11 @@
 }
 
 .combat-relative-button {
-    min-width: 5.2rem;
+    min-width: 0;
     min-height: 2rem;
-    padding: 0.2rem 0.4rem;
-    border: 0;
-    border-radius: 6px;
+    padding: 0.2rem 0.55rem;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    border-radius: 999px;
     background: transparent;
     color: var(--dsa-text-muted);
     cursor: pointer;
@@ -357,11 +361,16 @@
 }
 
 .combat-relative-editor {
-    display: grid;
-    grid-template-columns: minmax(5rem, 0.7fr) minmax(0, 1fr) minmax(0, 1fr);
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
     gap: 0.35rem;
     align-items: end;
     padding-top: 0.25rem;
+}
+
+.combat-relative-editor ::deep .number-control-wrapper {
+    flex: 0 1 7rem;
 }
 
 .combat-relative-editor ::deep .number-control {
@@ -370,24 +379,29 @@
     border-color: rgba(212, 175, 55, 0.4);
 }
 
+.combat-relative-editor .combat-compact-button {
+    flex: 0 1 auto;
+    max-width: 100%;
+}
+
 .combat-relative-editor ::deep .number-control-label {
     font-size: 0.58rem;
 }
 
 .combat-inline-initiative {
-    grid-column: span 2;
+    max-width: 24rem;
+    flex: 1 1 15rem;
 }
 
 .combat-inline-initiative-row {
     align-items: stretch;
 }
 
-.combat-inline-action,
-.combat-inline-wounds {
+.combat-inline-action {
     box-sizing: border-box;
     min-height: var(--ui-touch-target);
     border: 1px solid rgba(212, 175, 55, 0.42);
-    border-radius: 8px;
+    border-radius: 999px;
     background: var(--dsa-blue);
     color: var(--dsa-white);
     cursor: pointer;
@@ -396,14 +410,12 @@
 }
 
 .combat-inline-action {
-    flex: 0 1 11rem;
+    flex: 0 0 auto;
     padding: 0.45rem 0.75rem;
 }
 
 .combat-inline-action:hover:not(:disabled),
-.combat-inline-action:focus-visible,
-.combat-inline-wounds:hover,
-.combat-inline-wounds:focus-visible {
+.combat-inline-action:focus-visible {
     border-color: var(--dsa-gold);
     background: var(--dsa-hover-background);
 }
@@ -415,13 +427,13 @@
 
 .combat-inline-wounds {
     display: flex;
-    min-width: 0;
-    grid-column: span 2;
+    flex: 0 1 auto;
+    min-width: min(12rem, 100%);
+    max-width: 100%;
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
     justify-content: center;
-    padding: 0.45rem 0.75rem;
-    text-align: left;
+    gap: 0.35rem;
 }
 
 .combat-inline-wounds .combat-inline-label-row {
@@ -432,6 +444,24 @@
     color: var(--dsa-white);
     font-size: 0.94rem;
     font-weight: 800;
+}
+
+.combat-wounds-pill {
+    min-height: 2.1rem;
+}
+
+.hero-resource-missing {
+    display: inline-flex;
+    width: fit-content;
+    padding: 0.18rem 0.5rem;
+    border: 1px dashed rgba(212, 175, 55, 0.42);
+    border-radius: 999px;
+    color: var(--dsa-text-muted);
+    font-size: 0.72rem;
+}
+
+.combat-inline-resource.resource-unknown .combat-inline-label-row strong {
+    color: var(--dsa-text-muted);
 }
 
 .hero-inline-state-row {
@@ -449,14 +479,6 @@
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
-    .combat-inline-status-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-
-    .combat-inline-initiative,
-    .combat-inline-wounds {
-        grid-column: span 2;
-    }
 }
 
 @media (max-width: 680px) {
@@ -491,7 +513,8 @@
     }
 
     .hero-status-initialize-actions .combat-compact-button {
-        flex: 1 1 12rem;
+        flex: 0 1 auto;
+        max-width: 100%;
     }
 
     .hero-status-resources {
@@ -502,27 +525,25 @@
         grid-column: 1 / -1;
     }
 
-    .combat-inline-status-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.65rem;
+    .hero-status-set-picker {
+        flex-basis: auto;
     }
 
+    .combat-inline-resource,
     .combat-inline-resource.hero-resource-lep,
     .combat-inline-initiative,
     .combat-inline-wounds {
-        grid-column: 1 / -1;
+        width: 100%;
+        max-width: none;
+        flex-basis: 100%;
     }
 
     .combat-inline-initiative-row {
         align-items: stretch;
     }
 
-    .combat-inline-action {
-        flex: 1 1 10rem;
-    }
-
     .combat-relative-editor {
-        grid-template-columns: minmax(5rem, 0.7fr) repeat(2, minmax(0, 1fr));
+        width: 100%;
     }
 }
 
@@ -531,20 +552,15 @@
         grid-template-columns: 1fr;
     }
 
-    .combat-inline-resource,
-    .combat-inline-resource.hero-resource-lep,
-    .combat-inline-initiative,
-    .combat-inline-wounds {
-        grid-column: 1;
-    }
-
     .combat-inline-initiative-row,
     .combat-relative-editor {
-        display: grid;
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
     }
 
     .combat-inline-action {
-        width: 100%;
+        width: auto;
+        justify-self: start;
     }
 }

@@ -22,6 +22,7 @@
                                CurrentAeP="@CurrentAeP"
                                CurrentKeP="@CurrentKeP"
                                CurrentInitiative="@CurrentInitiative"
+                               InitiativeBase="@InitiativeBase"
                                IsCombatStarted="@IsCombatStarted"
                                CanStartCombat="@(!IsCombatStarted)"
                                StartCombatRequested="InitializeCombatStateAsync"
@@ -40,6 +41,8 @@
                                IsMutationBusy="@_valueMutationBusy" />
         </section>
 
+        <div class="combat-content-grid">
+            <div class="combat-work-area">
         @if (!string.IsNullOrWhiteSpace(_notice))
         {
             <p class="combat-notice" role="status">@_notice</p>
@@ -277,6 +280,26 @@
                 </section>
             }
         </main>
+            </div>
+
+            <div class="combat-initiative-column">
+                <CombatInitiativeOverview IsSessionCombat="@IsSessionCombat"
+                                          SessionCombat="@SessionCombat"
+                                          HeroName="@HeroDisplayName"
+                                          CurrentInitiative="@CurrentInitiative"
+                                          InitiativeBase="@InitiativeBase"
+                                          Participants="@InitiativeParticipants"
+                                          TurnLabel="GetParticipantTurnLabel"
+                                          IsCurrentParticipant="IsCurrentParticipant"
+                                          ParticipantActions="participant => GetParticipantActions(participant.Id)"
+                                          IsOrientationAction="IsOrientationAction"
+                                          ConsumeReactionRequested="ConsumeReactionAsync"
+                                          CompleteActionRequested="CompleteActionAsync"
+                                          HoldActionRequested="HoldActionAsync"
+                                          ExecuteHeldActionRequested="ExecuteHeldActionAsync"
+                                          ResolveOrientationRequested="ResolveOrientationAsync" />
+            </div>
+        </div>
     </div>
 </div>
 

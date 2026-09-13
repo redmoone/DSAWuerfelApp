@@ -50,8 +50,13 @@ public partial class Wuerfel : IDisposable
     private CombatSessionSnapshotDto? CombatSession => CombatSessionState.Current;
     private CombatSessionParticipantDto? OwnCombatParticipant => CombatSession?.Participants
         .FirstOrDefault(participant => participant.HeroId == CombatHero?.Id);
-    private int? CombatCurrentInitiative => OwnCombatParticipant?.CurrentInitiative ?? CombatState.CurrentInitiative;
     private bool CombatIsSession => !string.IsNullOrWhiteSpace(SessionState.ActiveSessionId);
+    private int? CombatCurrentInitiative => CombatIsSession
+        ? OwnCombatParticipant?.CurrentInitiative
+        : CombatState.CurrentInitiative;
+    private int? CombatInitiativeBase => CombatIsSession
+        ? OwnCombatParticipant?.InitiativeBase
+        : CombatSelectedSet?.Initiative;
     private bool CombatIsStarted => CombatIsSession ? CombatSession?.IsStarted == true : CombatState.IsStarted;
     private bool CombatCanUndo => CombatIsSession ? CombatSessionState.CanUndo : CombatState.CanUndo;
     private string CombatHeroDisplayName => CombatHero?.Name ?? "Kein aktiver Held";
@@ -315,7 +320,7 @@ public partial class Wuerfel : IDisposable
                 CombatProfile,
                 CombatSelectedSet,
                 BuildCombatRuntimeState()).Modifier;
-        _combatInitiativeDraft = CombatCurrentInitiative ?? (CombatSelectedSet?.Initiative + runtimeModifier);
+        _combatInitiativeDraft = CombatCurrentInitiative ?? (CombatInitiativeBase + runtimeModifier);
         _combatDrawer = WuerfelCombatDrawer.Initiative;
     }
 

@@ -1,0 +1,107 @@
+@using DsaWuerfelApp.Shared
+
+<aside class="combat-initiative-overview" aria-labelledby="combat-initiative-overview-title">
+    <div class="combat-initiative-overview-heading">
+        <div>
+            <p class="combat-kicker">Zugstatus</p>
+            <h2 id="combat-initiative-overview-title">Initiative</h2>
+        </div>
+        @if (IsSessionCombat && SessionCombat is { } headingSnapshot)
+        {
+            <span class="combat-initiative-overview-round">Runde @headingSnapshot.Round</span>
+        }
+    </div>
+
+    @if (!IsSessionCombat)
+    {
+        <div class="combat-initiative-solo-summary">
+            <span class="combat-initiative-turn-label">Solo · keine gemeinsame Zugfolge</span>
+            <strong>@HeroName</strong>
+            <span>@(CurrentInitiative.HasValue ? $"Laufend INI {CurrentInitiative}" : "Noch nicht gewürfelt")</span>
+            <span>Basis @FormatInitiative(InitiativeBase)</span>
+        </div>
+    }
+    else if (SessionCombat is not { } snapshot)
+    {
+        <p class="combat-initiative-overview-empty">Sessionstand wird geladen.</p>
+    }
+    else
+    {
+        <div class="combat-initiative-overview-meta">
+            <strong>@(snapshot.IsStarted ? "Gemeinsame Zugfolge" : "Vorbereitung")</strong>
+            <span>@(snapshot.IsStarted ? "Aktuelle Reihenfolge" : "Noch kein gemeinsamer Startwurf")</span>
+        </div>
+
+        @if (Participants.Count == 0)
+        {
+            <p class="combat-initiative-overview-empty">Teilnehmer erscheinen nach ihrem ersten Initiativewurf.</p>
+        }
+        else
+        {
+            <div class="combat-initiative-overview-list" aria-label="Initiativereihenfolge">
+                @foreach (var participant in Participants)
+                {
+                    var isCurrent = IsCurrentParticipant?.Invoke(participant) == true;
+                    var actions = GetVisibleActions(participant);
+                    <article class="combat-initiative-overview-row @(isCurrent ? "current" : string.Empty) @GetTurnClass(participant)"
+                             aria-current="@(isCurrent ? "step" : null)">
+                        <div class="combat-initiative-overview-person">
+                            <div class="combat-initiative-overview-topline">
+                                <span class="combat-initiative-turn-label">@GetTurnLabel(participant)</span>
+                                <span class="combat-initiative-value">@FormatInitiative(participant.CurrentInitiative)</span>
+                            </div>
+                            <strong>@participant.Name</strong>
+                            <span>@GetAffiliation(participant)</span>
+                            @if (participant.CurrentInitiative.HasValue && participant.InitiativeBase.HasValue && participant.CurrentInitiative != participant.InitiativeBase)
+                            {
+                                <small>Basis @participant.InitiativeBase</small>
+                            }
+                        </div>
+
+                        <div class="combat-initiative-overview-flags">
+                            <span class="combat-initiative-overview-flag @(participant.ActionAvailable ? "available" : string.Empty)">
+                                @(participant.ActionAvailable ? "Aktion" : "keine Aktion")
+                            </span>
+                            <button type="button"
+                                    class="combat-initiative-overview-button"
+                                    disabled="@(!participant.ReactionAvailable)"
+                                    @onclick="() => ConsumeReactionRequested.InvokeAsync(participant)">
+                                @(participant.ReactionAvailable ? "Reaktion" : "PA verbraucht")
+                            </button>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(participant.Announcement))
+                        {
+                            <span class="combat-initiative-overview-announcement">Ansage: @participant.Announcement</span>
+                        }
+
+                        @foreach (var action in actions)
+                        {
+                            <div class="combat-initiative-overview-action @(action.State.ToString().ToLowerInvariant())">
+                                <span>@action.Label · @(action.ActionCost == 1 ? "1 Aktion" : $"{action.ActionCost} Aktionen")</span>
+                                @if (action.State == CombatActionEntryState.Open)
+                                {
+                                    <span class="combat-initiative-overview-action-buttons">
+                                        @if (IsOrientationAction?.Invoke(action) == true && action.RequiresCheck)
+                                        {
+                                            <button type="button" class="combat-initiative-overview-button" @onclick="() => ResolveOrientationRequested.InvokeAsync(action)">IN-Probe würfeln</button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="combat-initiative-overview-button" @onclick="() => CompleteActionRequested.InvokeAsync(action)">@(IsOrientationAction?.Invoke(action) == true ? "Orientieren abschließen" : "Abschließen")</button>
+                                        }
+                                        <button type="button" class="combat-initiative-overview-button" @onclick="() => HoldActionRequested.InvokeAsync(action)">Warten</button>
+                                    </span>
+                                }
+                                else if (action.State == CombatActionEntryState.Held)
+                                {
+                                    <button type="button" class="combat-initiative-overview-button" @onclick="() => ExecuteHeldActionRequested.InvokeAsync(action)">Jetzt ausführen</button>
+                                }
+                            </div>
+                        }
+                    </article>
+                }
+            </div>
+        }
+    }
+</aside>

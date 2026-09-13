@@ -4,13 +4,13 @@
     min-width: 0;
     box-sizing: border-box;
     background-color: var(--pill-bg);
-    border: 3px solid var(--dsa-gold);
-    border-radius: 50px;
-    padding: 2px 6px;
+    border: 1px solid var(--dsa-gold);
+    border-radius: 999px;
+    padding: 0.12rem 0.18rem;
     color: var(--dsa-white);
     box-shadow: 0 0 10px var(--dsa-gold-glow);
-    min-width: 140px;
-    height: 45px;
+    min-width: 9rem;
+    min-height: 2.75rem;
     user-select: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
@@ -109,6 +109,25 @@
 }
 
 .modifier-direct-input:focus-visible {
+    outline: 0;
+}
+
+.modifier-pill:focus-within {
     outline: 2px solid var(--dsa-gold);
     outline-offset: 2px;
+}
+
+.mod-btn:focus-visible {
+    outline: 2px solid var(--dsa-gold);
+    outline-offset: -2px;
+}
+
+.modifier-direct-input::-webkit-outer-spin-button,
+.modifier-direct-input::-webkit-inner-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
+}
+
+.modifier-direct-input {
+    -moz-appearance: textfield;
 }

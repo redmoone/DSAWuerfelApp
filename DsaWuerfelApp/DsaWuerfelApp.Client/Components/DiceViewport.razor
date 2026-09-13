@@ -1,1 +1,7 @@
-<Dice3D @ref="_dice3d" OnDiceRemoved="OnDiceRemoved"/>
+<div class="dice-viewport">
+    <Dice3D @ref="_dice3d" OnDiceRemoved="OnDiceRemoved" ErrorOccurred="HandleError" />
+    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <p class="dice-viewport-error" role="alert">@_errorMessage</p>
+    }
+</div>

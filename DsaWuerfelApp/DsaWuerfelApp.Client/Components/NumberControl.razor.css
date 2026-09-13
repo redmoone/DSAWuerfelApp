@@ -9,10 +9,17 @@
     display: inline-flex;
     align-items: center;
     min-width: 0;
+    box-sizing: border-box;
+    padding: 0.12rem;
     border: 1px solid rgba(212, 175, 55, 0.68);
-    border-radius: 8px;
+    border-radius: 999px;
     background: rgba(7, 17, 29, 0.72);
     color: var(--dsa-white);
+}
+
+.number-control:focus-within {
+    outline: 2px solid var(--dsa-gold);
+    outline-offset: 2px;
 }
 
 .number-control-validation {
@@ -33,11 +40,17 @@
     font: inherit;
     font-size: 1.25rem;
     font-weight: 800;
+    border-radius: 50%;
 }
 
 .number-control-button:hover:not(:disabled),
 .number-control-button:focus-visible {
     background: rgba(212, 175, 55, 0.16);
+}
+
+.number-control-button:focus-visible {
+    outline: 2px solid var(--dsa-gold);
+    outline-offset: -2px;
 }
 
 .number-control-button:disabled {
@@ -73,9 +86,20 @@
     font: inherit;
     font-weight: 800;
     text-align: center;
+    -moz-appearance: textfield;
+}
+
+.number-control-input::-webkit-outer-spin-button,
+.number-control-input::-webkit-inner-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
 }
 
 .number-control-input:focus-visible {
-    outline: 2px solid var(--dsa-gold);
-    outline-offset: 2px;
+    outline: 0;
+}
+
+.number-control-input::placeholder {
+    color: var(--dsa-text-muted);
+    opacity: 1;
 }

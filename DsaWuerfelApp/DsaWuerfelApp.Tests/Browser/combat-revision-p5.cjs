@@ -15,7 +15,6 @@ const profiles = [
       assert.match(text, /22/);
       assert.match(text, /AT 19/);
       assert.match(text, /PA 14/);
-      assert.equal(await page.locator('.combat-zone-row').count(), 8);
     })
   },
   {
@@ -24,7 +23,6 @@ const profiles = [
     expected: page => page.locator('.combat-page').innerText().then(text => {
       assert.match(text, /40/);
       assert.match(text, /AT 21/);
-      assert.match(text, /RS 5/);
       assert.match(text, /Nr\. 2/);
     })
   },
@@ -51,8 +49,14 @@ const profiles = [
       await page.goto(`${origin}/kampf`, { waitUntil: 'domcontentloaded' });
       await page.locator('.combat-page').waitFor();
       await page.locator('.combat-resource-strip').waitFor();
-      await page.locator('.combat-zone-row').first().waitFor();
       await profile.expected(page);
+      await page.getByRole('tab', { name: 'Rüstung & Wunden', exact: true }).click();
+      await page.locator('.combat-zone-row').first().waitFor();
+      assert.equal(await page.locator('.combat-zone-row').count(), 7);
+      if (profile.name === 'Ardor') {
+        assert.match(await page.locator('.combat-page').innerText(), /RS 5/);
+      }
+      await page.getByRole('tab', { name: 'Kampf', exact: true }).click();
 
       const geometry = await page.evaluate(() => ({
         clientWidth: document.body.clientWidth,
@@ -78,6 +82,7 @@ const profiles = [
     await page.setViewportSize({ width: 390, height: 900 });
     await page.goto(`${origin}/kampf`, { waitUntil: 'domcontentloaded' });
     await page.locator('.combat-status-panel').waitFor();
+    await page.waitForFunction(() => /Kampfprofil|Kampfdaten|fehlen/i.test(document.querySelector('.combat-status-panel')?.textContent ?? ''));
     const emptyText = await page.locator('.combat-status-panel').innerText();
     assert.match(emptyText, /Kampfprofil|Kampfdaten|fehlen/i);
     assert.equal(await page.locator('.combat-resource-strip').count(), 0);
@@ -95,12 +100,14 @@ const profiles = [
       await page.setViewportSize({ width, height: 520 });
       await page.goto(`${origin}/kampf`, { waitUntil: 'domcontentloaded' });
       await page.locator('.combat-resource-strip').waitFor();
+      await page.getByRole('tab', { name: 'Rüstung & Wunden', exact: true }).click();
+      await page.locator('.combat-zone-row').first().waitFor();
       const geometry = await page.evaluate(() => ({
         clientWidth: document.body.clientWidth,
         scrollWidth: document.body.scrollWidth,
         zoneRows: document.querySelectorAll('.combat-zone-row').length
       }));
-      assert.equal(geometry.zoneRows, 8);
+      assert.equal(geometry.zoneRows, 7);
       assert.ok(geometry.scrollWidth <= geometry.clientWidth + 1,
         `horizontal overflow at ${width}px: ${geometry.scrollWidth} > ${geometry.clientWidth}`);
     }

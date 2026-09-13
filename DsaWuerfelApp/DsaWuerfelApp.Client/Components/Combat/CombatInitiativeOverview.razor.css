@@ -1,0 +1,276 @@
+.combat-initiative-overview {
+    position: sticky;
+    top: 1rem;
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.7rem;
+    box-sizing: border-box;
+    padding: 0.85rem;
+    border: 1px solid rgba(212, 175, 55, 0.62);
+    border-radius: var(--dsa-panel-radius);
+    background: rgba(7, 17, 29, 0.9);
+    z-index: 2;
+}
+
+.combat-initiative-overview-heading,
+.combat-initiative-overview-meta,
+.combat-initiative-overview-topline {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.55rem;
+}
+
+.combat-initiative-overview .combat-kicker {
+    margin: 0 0 0.2rem;
+    color: var(--dsa-gold);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.combat-initiative-overview h2 {
+    margin: 0;
+    color: var(--dsa-gold);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.05rem;
+}
+
+.combat-initiative-overview-round,
+.combat-initiative-overview-meta span,
+.combat-initiative-overview-empty,
+.combat-initiative-solo-summary > span:not(.combat-initiative-turn-label),
+.combat-initiative-overview-person > span,
+.combat-initiative-overview-person small,
+.combat-initiative-overview-announcement {
+    color: var(--dsa-text-muted);
+    font-size: 0.7rem;
+}
+
+.combat-initiative-overview-meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding-bottom: 0.55rem;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.combat-initiative-overview-meta strong {
+    color: var(--dsa-white);
+    font-size: 0.78rem;
+}
+
+.combat-initiative-overview-list {
+    display: flex;
+    max-height: calc(100vh - 10rem);
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.45rem;
+    overflow-y: auto;
+    padding-right: 0.15rem;
+}
+
+.combat-initiative-overview-row {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.45rem;
+    padding: 0.58rem;
+    border: 1px solid rgba(212, 175, 55, 0.32);
+    border-radius: 0.8rem;
+    background: rgba(3, 8, 16, 0.42);
+}
+
+.combat-initiative-overview-row.current {
+    border-color: var(--dsa-gold);
+    background: rgba(21, 48, 78, 0.62);
+    box-shadow: inset 3px 0 0 var(--dsa-gold);
+}
+
+.combat-initiative-overview-row.turn-next {
+    border-color: rgba(212, 175, 55, 0.7);
+}
+
+.combat-initiative-overview-row.turn-held,
+.combat-initiative-overview-row.turn-completed,
+.combat-initiative-overview-row.turn-unknown {
+    opacity: 0.78;
+}
+
+.combat-initiative-overview-person {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.12rem;
+}
+
+.combat-initiative-overview-person strong {
+    color: var(--dsa-white);
+    font-size: 0.8rem;
+    overflow-wrap: anywhere;
+}
+
+.combat-initiative-overview-person small {
+    overflow-wrap: anywhere;
+}
+
+.combat-initiative-turn-label {
+    color: var(--dsa-text-muted);
+    font-size: 0.6rem;
+    font-weight: 900;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.combat-initiative-overview-row.current .combat-initiative-turn-label,
+.combat-initiative-overview-row.turn-next .combat-initiative-turn-label {
+    color: var(--dsa-gold);
+}
+
+.combat-initiative-value {
+    display: inline-flex;
+    min-height: 1.75rem;
+    align-items: center;
+    box-sizing: border-box;
+    padding: 0.2rem 0.45rem;
+    border: 1px solid rgba(212, 175, 55, 0.36);
+    border-radius: 999px;
+    color: var(--dsa-white);
+    font-size: 0.7rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.combat-initiative-overview-row.current .combat-initiative-value {
+    border-color: var(--dsa-gold);
+    color: var(--dsa-gold);
+}
+
+.combat-initiative-overview-flags,
+.combat-initiative-overview-action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.25rem;
+}
+
+.combat-initiative-overview-flag,
+.combat-initiative-overview-button {
+    display: inline-flex;
+    min-height: 1.8rem;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 0.22rem 0.48rem;
+    border: 1px solid rgba(212, 175, 55, 0.32);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--dsa-text-muted);
+    font: inherit;
+    font-size: 0.62rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.combat-initiative-overview-flag.available,
+.combat-initiative-overview-button:not(:disabled):hover,
+.combat-initiative-overview-button:not(:disabled):focus-visible {
+    border-color: rgba(212, 175, 55, 0.72);
+    color: var(--dsa-gold);
+}
+
+.combat-initiative-overview-button {
+    cursor: pointer;
+}
+
+.combat-initiative-overview-button:disabled {
+    cursor: default;
+    opacity: 0.62;
+}
+
+.combat-initiative-overview-button:focus-visible {
+    outline: 2px solid var(--dsa-gold);
+    outline-offset: 2px;
+}
+
+.combat-initiative-overview-announcement,
+.combat-initiative-overview-action {
+    grid-column: 1 / -1;
+    overflow-wrap: anywhere;
+}
+
+.combat-initiative-overview-announcement {
+    color: var(--dsa-gold);
+}
+
+.combat-initiative-overview-action {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid rgba(212, 175, 55, 0.18);
+    color: var(--dsa-text-muted);
+    font-size: 0.66rem;
+}
+
+.combat-initiative-overview-action.completed {
+    opacity: 0.55;
+}
+
+.combat-initiative-solo-summary {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.65rem;
+    border: 1px solid rgba(212, 175, 55, 0.28);
+    border-radius: 0.8rem;
+    background: rgba(3, 8, 16, 0.42);
+}
+
+.combat-initiative-solo-summary strong {
+    color: var(--dsa-white);
+    font-size: 0.82rem;
+    overflow-wrap: anywhere;
+}
+
+.combat-initiative-overview-empty {
+    margin: 0;
+    line-height: 1.4;
+}
+
+@media (max-width: 1100px) {
+    .combat-initiative-overview {
+        position: sticky;
+        top: 0.55rem;
+    }
+
+    .combat-initiative-overview-list {
+        max-height: none;
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 0.15rem;
+    }
+
+    .combat-initiative-overview-row {
+        flex: 0 0 min(17rem, 82vw);
+    }
+}
+
+@media (max-width: 520px) {
+    .combat-initiative-overview {
+        padding: 0.7rem;
+    }
+
+    .combat-initiative-overview-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+}

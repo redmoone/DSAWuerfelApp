@@ -64,6 +64,10 @@ const threeRoot = path.resolve(path.dirname(require.resolve('three')), '..');
         const other = right[index];
         return ['x', 'y', 'z', 'scale'].every(key => Math.abs(die[key] - other[key]) < 0.0001);
       });
+      const snapshotsWithRotationEqual = (left, right) => snapshotsEqual(left, right) && left.every((die, index) => {
+        const other = right[index];
+        return ['x', 'y', 'z'].every(key => Math.abs(die.rotation[key] - other.rotation[key]) < 0.0001);
+      });
       const waitFrames = async count => {
         for (let i = 0; i < count; i++) await new Promise(resolve => requestAnimationFrame(resolve));
       };
@@ -116,6 +120,10 @@ const threeRoot = path.resolve(path.dirname(require.resolve('three')), '..');
       const sameWidthUpdate = snapshotDice(layoutScene);
       check(sameWidthUpdate.length === 6, 'same-width update lost dice');
       check(new Set(sameWidthUpdate.map(die => die.z)).size === 2, 'same-width update skipped layout');
+      layoutDice.restoreDice([1, 2, 3, 4, 5, 6]);
+      const restoredSnapshot = snapshotDice(layoutScene);
+      await waitFrames(6);
+      check(snapshotsWithRotationEqual(restoredSnapshot, snapshotDice(layoutScene)), 'static result restore animated or changed the dice');
       layoutDice.rollDice([1, 2, 3, 4, 5, 6]);
       const beforeRoll = snapshotDice(layoutScene);
       await waitFrames(4);

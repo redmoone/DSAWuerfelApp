@@ -26,7 +26,7 @@ const combatXml = `
     await page.locator('.combat-resource-strip').waitFor();
 
     await page.locator('.combat-option').filter({ hasText: 'Magierstab als Stab Nr. 2' }).click();
-    await page.getByText('Waffe oder Abwehr', { exact: true }).waitFor();
+    await page.locator('.combat-choice-block .combat-field-label').filter({ hasText: 'Waffe oder Abwehr' }).waitFor();
     let infoText = await page.locator('.combat-action-panel').innerText();
     assert.match(infoText, /Nr\. 2/);
     assert.match(infoText, /AT 19/);
@@ -47,10 +47,13 @@ const combatXml = `
     await discountedEntry.getByText('Binden (vergünstigt)', { exact: true }).waitFor();
     assert.equal(await discountedEntry.locator('button').count(), 0);
 
-    const rollButton = page.getByRole('button', { name: 'Kampfwurf ausführen', exact: true });
+    const rollButton = page.getByRole('button', { name: 'Attacke würfeln', exact: true });
     assert.equal(await rollButton.isDisabled(), false);
-    assert.equal(await page.locator('.roll-history').count(), 1);
-    assert.equal(await page.locator('.combat-zone-row').count(), 8);
+    assert.equal(await page.locator('.roll-history').count(), 0);
+    await page.getByRole('tab', { name: 'Rüstung & Wunden', exact: true }).click();
+    await page.locator('.combat-zone-row').first().waitFor();
+    assert.equal(await page.locator('.combat-zone-row').count(), 7);
+    await page.getByRole('tab', { name: 'Kampf', exact: true }).click();
 
     const geometry = await page.evaluate(() => ({
       clientWidth: document.body.clientWidth,

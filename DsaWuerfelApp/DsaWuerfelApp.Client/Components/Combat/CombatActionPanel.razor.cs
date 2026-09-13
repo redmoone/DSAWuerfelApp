@@ -77,6 +77,12 @@ public partial class CombatActionPanel
         ? $"{TargetSource}; Basis {FormatNumber(BaseTarget)}"
         : TargetSource;
 
+    private string TargetHeadline => EffectiveTarget.HasValue
+        ? $"{ActiveRollTitle} auf {EffectiveTargetText}"
+        : ActiveRollTitle;
+
+    private bool HasResultDice => ResultDiceSides.Count > 0;
+
     private string ActiveRollTitle => AttributeMode
         ? "Eigenschaftsprobe"
         : SelectedActionOption?.Label ?? "Kampfwurf";

@@ -15,6 +15,7 @@ let canvasElement = null;
 let disposed = false;
 let ready = false;
 let pendingDice = null;
+let pendingRestore = null;
 let pendingRoll = null;
 let modelRoot = null;
 let lastLayoutWidth = null;
@@ -88,8 +89,9 @@ async function init(canvas) {
 
     ready = true;
     if (pendingDice) updateDice(pendingDice);
+    if (pendingRestore) restoreDice(pendingRestore);
     if (pendingRoll) rollDice(pendingRoll);
-    pendingDice = pendingRoll = null;
+    pendingDice = pendingRestore = pendingRoll = null;
     animate(canvas);
 }
 
@@ -203,7 +205,7 @@ function addEdgeOverlay(root) {
 
 function updateDice(sidesArray) {
     if (disposed) return;
-    if (!ready) { pendingDice = [...sidesArray]; pendingRoll = null; return; }
+    if (!ready) { pendingDice = [...sidesArray]; pendingRestore = null; pendingRoll = null; return; }
     cancelAnimationFrame(rollAnimationFrameId);
     activeDice.forEach((mesh) => {
         scene.remove(mesh);
@@ -253,7 +255,7 @@ function updateDice(sidesArray) {
 
 function rollDice(resultsArray) {
     if (disposed) return;
-    if (!ready) { pendingRoll = [...resultsArray]; return; }
+    if (!ready) { pendingRestore = null; pendingRoll = [...resultsArray]; return; }
     cancelAnimationFrame(rollAnimationFrameId);
     const start = performance.now();
     const duration = 1000;
@@ -298,6 +300,19 @@ function rollDice(resultsArray) {
     rollAnimationFrameId = requestAnimationFrame(loop);
 }
 
+function restoreDice(resultsArray) {
+    if (disposed) return;
+    if (!ready) { pendingRestore = [...resultsArray]; pendingRoll = null; return; }
+
+    cancelAnimationFrame(rollAnimationFrameId);
+    activeDice.forEach((mesh, index) => {
+        const sides = mesh.userData.sides;
+        const value = resultsArray[index];
+        const faceTarget = diceRotations["d" + sides]?.[value];
+        if (faceTarget) mesh.rotation.set(faceTarget.x, faceTarget.y, faceTarget.z);
+    });
+}
+
 function dispose() {
     if (disposed) return;
     disposed = true;
@@ -310,7 +325,7 @@ function dispose() {
     diceModels.clear();
     renderer?.dispose();
     renderer = scene = camera = modelRoot = dotNetRef = canvasElement = null;
-    pendingDice = pendingRoll = null;
+    pendingDice = pendingRestore = pendingRoll = null;
     lastLayoutWidth = null;
     layoutNeedsUpdate = true;
 }
@@ -330,5 +345,5 @@ function releaseResources(roots) {
     materials.forEach(resource => resource.dispose());
     geometries.forEach(resource => resource.dispose());
 }
-return { init, setDotNetRef, updateDice, rollDice, dispose };
+return { init, setDotNetRef, updateDice, restoreDice, rollDice, dispose };
 }

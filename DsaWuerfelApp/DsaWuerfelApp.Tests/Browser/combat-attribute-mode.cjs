@@ -22,7 +22,7 @@ const combatXml = `
     await page.getByRole('tab', { name: 'Eigenschaften', exact: true }).click();
     assert.equal(await page.locator('.combat-set-row').count(), 0);
     assert.equal(await page.locator('.combat-maneuver-block').count(), 0);
-    assert.match(await page.locator('.combat-attribute-block').innerText(), /Eigenschaftsprobe/i);
+    assert.match(await page.locator('.combat-action-panel').innerText(), /Eigenschaftsprobe/i);
 
     const unavailableAttribute = page.locator('.combat-attribute-strip .attribute-pill').filter({ hasText: 'KO' });
     assert.equal(await unavailableAttribute.locator('button.attribute-pill-main').isDisabled(), true);
@@ -42,7 +42,7 @@ const combatXml = `
     assert.match(await page.locator('.combat-selection-chips').innerText(), /Eigenschaften auswählen/);
 
     await page.getByRole('tab', { name: 'Kampf', exact: true }).click();
-    await page.locator('.combat-set-row').waitFor();
+    await page.locator('.combat-choice-block').waitFor();
     assert.equal(await page.locator('.combat-attribute-block').count(), 0);
     assert.equal(errors.length, 0, `browser errors: ${errors.join(' | ')}`);
     console.log(JSON.stringify({ attributeMode: true, result: true }));

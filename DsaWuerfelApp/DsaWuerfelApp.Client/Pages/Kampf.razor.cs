@@ -66,7 +66,12 @@ public partial class Kampf : IDisposable
     private CombatSessionSnapshotDto? SessionCombat => CombatSessionState.Current;
     private CombatSessionParticipantDto? OwnSessionParticipant => SessionCombat?.Participants
         .FirstOrDefault(participant => participant.HeroId == ActiveHero?.Id);
-    private int? CurrentInitiative => OwnSessionParticipant?.CurrentInitiative ?? CombatState.CurrentInitiative;
+    private int? CurrentInitiative => IsSessionCombat
+        ? OwnSessionParticipant?.CurrentInitiative
+        : CombatState.CurrentInitiative;
+    private int? InitiativeBase => IsSessionCombat
+        ? OwnSessionParticipant?.InitiativeBase
+        : SelectedSet?.Initiative;
     private IReadOnlyDictionary<CombatWoundZone, int?> Wounds => CombatState.Wounds;
     private bool HasCombatContext => ActiveHero is not null && Profile is not null && SelectedSet is not null;
     private bool IsSessionCombat => !string.IsNullOrWhiteSpace(SessionState.ActiveSessionId);

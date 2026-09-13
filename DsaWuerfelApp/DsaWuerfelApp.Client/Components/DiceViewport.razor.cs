@@ -7,6 +7,7 @@ public partial class DiceViewport
     private Dice3D _dice3d = null!;
     private long _lastPreviewVersion = -1;
     private long _lastResultVersion = -1;
+    private string? _errorMessage;
 
     [Parameter] public IReadOnlyList<int> SelectedDice { get; set; } = Array.Empty<int>();
     [Parameter] public IReadOnlyList<int> ResultDiceSides { get; set; } = Array.Empty<int>();
@@ -22,7 +23,15 @@ public partial class DiceViewport
             _lastPreviewVersion = PreviewVersion;
             _lastResultVersion = ResultVersion;
 
-            if (SelectedDice.Count > 0)
+            if (ResultDiceSides.Count > 0)
+            {
+                await _dice3d.UpdateDice(ResultDiceSides);
+                if (ResultDiceValues.Count > 0)
+                {
+                    await _dice3d.RestoreResult(ResultDiceValues.ToArray());
+                }
+            }
+            else if (SelectedDice.Count > 0)
             {
                 await _dice3d.UpdateDice(SelectedDice);
             }
@@ -34,10 +43,7 @@ public partial class DiceViewport
         {
             _lastResultVersion = ResultVersion;
 
-            if (ResultDiceSides.Count > 0)
-            {
-                await _dice3d.UpdateDice(ResultDiceSides);
-            }
+            await _dice3d.UpdateDice(ResultDiceSides);
 
             if (ResultDiceValues.Count > 0)
             {
@@ -52,5 +58,11 @@ public partial class DiceViewport
             _lastPreviewVersion = PreviewVersion;
             await _dice3d.UpdateDice(SelectedDice);
         }
+    }
+
+    private Task HandleError(string message)
+    {
+        _errorMessage = message;
+        return InvokeAsync(StateHasChanged);
     }
 }

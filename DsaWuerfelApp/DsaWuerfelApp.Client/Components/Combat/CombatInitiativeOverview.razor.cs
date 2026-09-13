@@ -1,0 +1,54 @@
+using DsaWuerfelApp.Shared;
+
+using Microsoft.AspNetCore.Components;
+
+namespace DsaWuerfelApp.Client.Components.Combat;
+
+public partial class CombatInitiativeOverview
+{
+    [Parameter] public bool IsSessionCombat { get; set; }
+    [Parameter] public CombatSessionSnapshotDto? SessionCombat { get; set; }
+    [Parameter] public string HeroName { get; set; } = "Kein aktiver Held";
+    [Parameter] public int? CurrentInitiative { get; set; }
+    [Parameter] public int? InitiativeBase { get; set; }
+    [Parameter] public IReadOnlyList<CombatSessionParticipantDto> Participants { get; set; } = Array.Empty<CombatSessionParticipantDto>();
+    [Parameter] public Func<CombatSessionParticipantDto, string>? TurnLabel { get; set; }
+    [Parameter] public Func<CombatSessionParticipantDto, bool>? IsCurrentParticipant { get; set; }
+    [Parameter] public Func<CombatSessionParticipantDto, IReadOnlyList<CombatSessionActionDto>>? ParticipantActions { get; set; }
+    [Parameter] public Func<CombatSessionActionDto, bool>? IsOrientationAction { get; set; }
+    [Parameter] public EventCallback<CombatSessionParticipantDto> ConsumeReactionRequested { get; set; }
+    [Parameter] public EventCallback<CombatSessionActionDto> CompleteActionRequested { get; set; }
+    [Parameter] public EventCallback<CombatSessionActionDto> HoldActionRequested { get; set; }
+    [Parameter] public EventCallback<CombatSessionActionDto> ExecuteHeldActionRequested { get; set; }
+    [Parameter] public EventCallback<CombatSessionActionDto> ResolveOrientationRequested { get; set; }
+
+    private string GetTurnLabel(CombatSessionParticipantDto participant) =>
+        TurnLabel?.Invoke(participant) ?? "Offen";
+
+    private IReadOnlyList<CombatSessionActionDto> GetVisibleActions(CombatSessionParticipantDto participant) =>
+        ParticipantActions?.Invoke(participant)
+            .Where(action => action.State != CombatActionEntryState.Completed)
+            .Take(2)
+            .ToArray() ?? Array.Empty<CombatSessionActionDto>();
+
+    private static string GetTurnClass(CombatSessionParticipantDto participant, string? label = null) =>
+        (label ?? string.Empty) switch
+        {
+            "Jetzt" => "turn-now",
+            "Als Nächstes" => "turn-next",
+            "Wartet" => "turn-held",
+            "Bereits gehandelt" => "turn-completed",
+            "INI fehlt" => "turn-unknown",
+            _ => participant.CurrentInitiative.HasValue ? "turn-open" : "turn-unknown"
+        };
+
+    private string GetTurnClass(CombatSessionParticipantDto participant) =>
+        GetTurnClass(participant, GetTurnLabel(participant));
+
+    private static string FormatInitiative(int? initiative) => initiative?.ToString() ?? "INI —";
+
+    private static string GetAffiliation(CombatSessionParticipantDto participant) =>
+        string.IsNullOrWhiteSpace(participant.Affiliation)
+            ? participant.Kind == CombatParticipantKind.Hero ? "Held" : "Gegner"
+            : participant.Affiliation;
+}

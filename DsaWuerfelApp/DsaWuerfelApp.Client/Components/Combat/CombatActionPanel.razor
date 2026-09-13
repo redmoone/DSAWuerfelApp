@@ -178,15 +178,6 @@
                                   Placeholder="Sonderfertigkeit oder Manöver suchen …"
                                   SelectedProbe="@SelectedProbe"
                                   SelectedProbeChanged="ProbeSelected" />
-                    @if (Maneuvers.Count > 0)
-                    {
-                        <div class="combat-maneuver-quick-list" aria-label="Schnellauswahl Manöver">
-                            @foreach (var maneuver in Maneuvers.Where(entry => entry.IsSelectable).Take(4))
-                            {
-                                <button type="button" class="combat-quick-chip" @onclick="() => ProbeSelected.InvokeAsync(maneuver.Value ?? string.Empty)">@maneuver.DisplayLabel</button>
-                            }
-                        </div>
-                    }
                 </div>
 
                 @if (SelectedAction == "zone")
@@ -209,22 +200,24 @@
                 <span class="combat-muted">@(AttributeMode ? "W20 je Eigenschaft" : "Serverwert")</span>
             </div>
 
-            <div class="combat-active-roll" aria-live="polite">
-                <span class="combat-field-label">@(AttributeMode ? "Eigenschaftswurf" : "Aktive Auswahl")</span>
-                <strong>@ActiveRollTitle</strong>
-                <span>@ActiveRollSubtitle</span>
-            </div>
-
-            @if (!AttributeMode && (BaseTarget.HasValue || EffectiveTarget.HasValue || GetActionKind() is CombatActionKind.Damage or CombatActionKind.HitZone or CombatActionKind.WoundHelper or CombatActionKind.FumbleHelper))
-            {
-                <div class="combat-target-preview" aria-live="polite">
-                    <div>
-                        <span class="combat-field-label">Effektives Ziel</span>
-                        <strong>@EffectiveTargetText</strong>
-                    </div>
-                    <span>@TargetSourceText</span>
+            <div class="combat-roll-summary" aria-live="polite">
+                <div class="combat-active-roll">
+                    <span class="combat-field-label">@(AttributeMode ? "Eigenschaftswurf" : "Auswahl")</span>
+                    <strong>@ActiveRollTitle</strong>
+                    <span>@ActiveRollSubtitle</span>
                 </div>
-            }
+
+                @if (!AttributeMode && (BaseTarget.HasValue || EffectiveTarget.HasValue || GetActionKind() is CombatActionKind.Damage or CombatActionKind.HitZone or CombatActionKind.WoundHelper or CombatActionKind.FumbleHelper))
+                {
+                    <div class="combat-target-preview">
+                        <div>
+                            <span class="combat-field-label">Abschluss</span>
+                            <strong>@TargetHeadline</strong>
+                        </div>
+                        <span>@TargetSourceText</span>
+                    </div>
+                }
+            </div>
 
             @if (!AttributeMode)
             {
@@ -239,14 +232,6 @@
             }
 
             <div class="combat-dice-area">
-                <div class="combat-dice-viewport" data-testid="combat-dice-viewport" title="3D-Ansicht der Kampf-Würfel">
-                    <DiceViewport SelectedDice="@EmptyDice"
-                                  ResultDiceSides="@ResultDiceSides"
-                                  ResultDiceValues="@ResultDiceValues"
-                                  PreviewVersion="@ResultVersion"
-                                  ResultVersion="@ResultVersion" />
-                </div>
-
                 <WuerfelActionBar RollText="@RollText"
                                  RollTextChanged="RollTextChanged"
                                  Modifier="@Modifier"
@@ -291,6 +276,16 @@
                         {
                             <button type="button" class="combat-result-reaction" @onclick="ConsumeReactionRequested">Reaktion verbrauchen</button>
                         }
+                    </div>
+                }
+
+                @if (HasResultDice)
+                {
+                    <div class="combat-dice-viewport" data-testid="combat-dice-viewport" title="3D-Ansicht der Kampf-Würfel">
+                        <DiceViewport SelectedDice="@EmptyDice"
+                                      ResultDiceSides="@ResultDiceSides"
+                                      ResultDiceValues="@ResultDiceValues"
+                                      ResultVersion="@ResultVersion" />
                     </div>
                 }
             </div>

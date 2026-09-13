@@ -36,7 +36,7 @@ const combatXml = `
 
     await page.goto(`${origin}/kampf`, { waitUntil: 'domcontentloaded' });
     await page.locator('.combat-resource-strip').waitFor();
-    assert.match(await page.locator('.hero-resource-lep').innerText(), /-3 \/ 22/);
+    assert.equal(await page.locator('.hero-resource-lep input[aria-label="LeP"]').inputValue(), '-3');
 
     await page.goto(`${origin}/wuerfel`, { waitUntil: 'domcontentloaded' });
     await page.locator('.wuerfel-status-surface .combat-resource-strip').waitFor();

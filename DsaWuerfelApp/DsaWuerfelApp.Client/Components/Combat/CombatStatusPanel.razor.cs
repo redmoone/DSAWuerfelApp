@@ -21,6 +21,7 @@ public partial class CombatStatusPanel
     [Parameter] public int? CurrentAeP { get; set; }
     [Parameter] public int? CurrentKeP { get; set; }
     [Parameter] public int? CurrentInitiative { get; set; }
+    [Parameter] public int? InitiativeBase { get; set; }
     [Parameter] public bool IsCombatStarted { get; set; }
     [Parameter] public bool CanStartCombat { get; set; }
     [Parameter] public EventCallback StartCombatRequested { get; set; }
@@ -56,8 +57,6 @@ public partial class CombatStatusPanel
     private string WoundSummary => HasUnknownWounds
         ? TotalWounds > 0 ? $"{TotalWounds} · nicht vollständig erfasst" : "Nicht erfasst"
         : $"{TotalWounds} · Körperzonen";
-    private int? DisplayedInitiative => CurrentInitiative ?? SelectedSet?.Initiative;
-
     private static bool ShouldShowResource(CombatResourceKind resource, int? maximum) =>
         resource == CombatResourceKind.LeP ? !maximum.HasValue || maximum.Value > 0 : maximum is > 0;
 

@@ -65,23 +65,22 @@ async function assertViewportRect(page, selector, viewport, label) {
       await page.goto(`${origin}/kampf`, { waitUntil: 'domcontentloaded' });
       await page.locator('.combat-resource-strip').waitFor();
       await page.locator('.combat-action-panel').waitFor();
+      await page.locator('.combat-initiative-overview').waitFor();
       await assertNoHorizontalOverflow(page, viewport.name);
       await assertNoClippedControls(page, viewport.name);
+
+      assert.ok(await page.locator('.combat-initiative-overview').isVisible(),
+        `${viewport.name}: initiative overview is not visible`);
 
       if (viewport.width === 1440) {
         await assertViewportRect(page, '.combat-action-panel .right-actions .dsa-btn', viewport, 'desktop combat roll');
       }
 
       if (viewport.width === 390) {
-        const resource = page.locator('.hero-resource-lep');
-        await resource.click();
-        const drawer = page.locator('.combat-details-drawer');
-        await drawer.waitFor();
-        const drawerRect = await drawer.boundingBox();
-        assert.ok(drawerRect && drawerRect.width <= viewport.width + 1 && drawerRect.x >= -1,
-          `phone drawer is clipped ${JSON.stringify(drawerRect)}`);
-        await drawer.locator('.combat-details-close').click();
-        await drawer.waitFor({ state: 'detached' });
+        assert.equal(await page.locator('.combat-details-drawer').count(), 0,
+          'phone combat status should use inline controls');
+        assert.ok(await page.locator('.combat-inline-resource .number-control').first().isVisible(),
+          'phone resource control is not visible');
       }
 
       await page.screenshot({
@@ -95,17 +94,11 @@ async function assertViewportRect(page, selector, viewport, label) {
     await page.goto(`${origin}/kampf`, { waitUntil: 'domcontentloaded' });
     await page.locator('.combat-resource-strip').waitFor();
     await page.locator('.combat-action-panel').waitFor();
+    await page.locator('.combat-initiative-overview').waitFor();
     await assertNoHorizontalOverflow(page, '200-percent-zoom-equivalent');
     await assertNoClippedControls(page, '200-percent-zoom-equivalent');
-    const zoomResource = page.locator('.hero-resource-lep');
-    await zoomResource.click();
-    const zoomDrawer = page.locator('.combat-details-drawer');
-    await zoomDrawer.waitFor();
-    const zoomDrawerRect = await zoomDrawer.boundingBox();
-    assert.ok(zoomDrawerRect && zoomDrawerRect.width <= 720 + 1 && zoomDrawerRect.x >= -1,
-      `200-percent drawer is clipped ${JSON.stringify(zoomDrawerRect)}`);
-    await zoomDrawer.locator('.combat-details-close').click();
-    await zoomDrawer.waitFor({ state: 'detached' });
+    assert.equal(await page.locator('.combat-details-drawer').count(), 0,
+      'zoom-equivalent combat status should use inline controls');
     await page.screenshot({
       path: path.join(screenshotDirectory, 'combat-200-percent-equivalent.png'),
       fullPage: true
