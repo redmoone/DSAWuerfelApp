@@ -84,6 +84,7 @@
                     <CombatActionPanel Sets="@Sets"
                                        IsLoading="@ProfileLoading"
                                        SelectedSetId="@SelectedSetId"
+                                       SetSelected="HandleSetSelected"
                                        AttributeMode="@IsAttributeMode"
                                        Weapons="@Weapons"
                                        SelectedWeaponId="@SelectedWeaponId"
@@ -108,7 +109,6 @@
                                        IsBusy="@_rollBusy"
                                        BaseTarget="@GetActionBaseValue()"
                                        EffectiveTarget="@EffectiveTarget"
-                                       TargetSource="@TargetSource"
                                        Facing="@Facing"
                                        FacingChanged="HandleFacingChanged"
                                        CombatResult="@CombatResult"
@@ -157,7 +157,7 @@
                         else
                         {
                             <strong>@(CurrentInitiative.HasValue ? $"INI {CurrentInitiative}" : "Noch kein laufender INI-Wert")</strong>
-                            <span>Importierter Setwert: @(SelectedSet?.Initiative?.ToString() ?? "—") · Startwurf @GetInitiativeDiceLabel()</span>
+                            <span>Basis-INI: @(SelectedSet?.Initiative?.ToString() ?? "—") · Startwurf @GetInitiativeDiceLabel()</span>
                         }
                     </div>
 
@@ -342,7 +342,7 @@
                                    ValueChanged="HandleOrientationReliefChanged"
                                    Minimum="0"
                                    Maximum="20" />
-                    <p class="combat-drawer-hint">Importierter Kriegskunst-TaW: @(orientationProfile.KriegskunstValue?.ToString() ?? "nicht vorhanden"). Je zwei TaW-Punkte ergeben eine Erleichterung von 1.</p>
+                    <p class="combat-drawer-hint">Kriegskunst-TaW: @(orientationProfile.KriegskunstValue?.ToString() ?? "nicht vorhanden"). Je zwei TaW-Punkte ergeben eine Erleichterung von 1.</p>
                 }
             }
             <label class="combat-drawer-check">

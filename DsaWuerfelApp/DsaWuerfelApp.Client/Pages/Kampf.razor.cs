@@ -107,13 +107,6 @@ public partial class Kampf : IDisposable
     private bool HasAttention => Profile?.HasAttention == true;
 
     private string HeroDisplayName => ActiveHero?.Name ?? "Kein aktiver Held";
-    private string ProfileStatus => ActiveHero is null
-        ? "Aktiven Helden wählen"
-        : ProfileLoading
-            ? "Kampfprofil wird geladen"
-            : Profile is not null
-                ? "Importierte Kampfwerte geladen"
-                : "Kampfprofil fehlt";
 
     private IReadOnlyList<CombatActionPanel.ActionOption> Actions =>
     [
@@ -135,23 +128,6 @@ public partial class Kampf : IDisposable
     private bool HasDamage => SelectedWeapon is not null && !string.IsNullOrWhiteSpace(SelectedWeapon.CalculatedDamage ?? SelectedWeapon.BaseDamage);
 
     private int? EffectiveTarget => CombatRollRules.ResolveEffectiveTarget(GetActionBaseValue(), GetCurrentModifiers());
-
-    private string TargetSource
-    {
-        get
-        {
-            var source = GetActionKind() switch
-            {
-                CombatActionKind.Damage => "TP werden separat aus der importierten Formel berechnet.",
-                CombatActionKind.MeleeAttack or CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge or CombatActionKind.RangedAttack => "Importierter Zielwert",
-                _ => "Hilfswurf ohne Zielwert"
-            };
-            var automatic = GetAutomaticModifiers();
-            return automatic.Count == 0
-                ? source
-                : $"{source}; automatisch {string.Join(", ", automatic.Select(FormatModifier))}";
-        }
-    }
 
     private bool CanRoll => IsAttributeMode
         ? HasCombatContext && !_rollBusy && !_valueMutationBusy && SelectedAttributes.Count > 0
@@ -179,7 +155,7 @@ public partial class Kampf : IDisposable
 
             if (SelectedSet?.Initiative.HasValue != true)
             {
-                return "Für das Set ist kein INI-Basiswert importiert.";
+                return "Für das Set ist kein INI-Basiswert hinterlegt.";
             }
 
             return _rollBusy ? "Wurf läuft." : null;
@@ -349,7 +325,7 @@ public partial class Kampf : IDisposable
 
         if (!CanRoll || GetActionKind() is not { } action)
         {
-            _notice = "Bitte zuerst ein importiertes Set, eine passende Waffe und eine verfügbare Aktion wählen.";
+            _notice = "Bitte zuerst ein Kampfset, eine passende Waffe und eine verfügbare Aktion wählen.";
             return;
         }
 
@@ -763,14 +739,14 @@ public partial class Kampf : IDisposable
     {
         if (!await CombatState.StartCombatAsync())
         {
-            _notice = "Für die Initialisierung fehlt ein importiertes Kampfprofil.";
+            _notice = "Für die Initialisierung fehlen die Kampfdaten.";
             return;
         }
 
         var sessionResult = await SyncSessionRuntimeStateAsync();
         _notice = sessionResult?.Stale == true
             ? sessionResult.Message
-            : "Laufende Kampfwerte mit den importierten Maximalwerten initialisiert.";
+            : "Laufende Kampfwerte mit den Maximalwerten initialisiert.";
     }
 
     private async Task ApplyParticipantDrawerAsync()

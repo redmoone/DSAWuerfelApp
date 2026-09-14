@@ -68,7 +68,7 @@ public partial class CombatBodyPanel
     private string GetAccessibleLabel(ZoneRow zone)
     {
         var armorText = !UsesZonalArmor
-            ? SelectedSet?.SimpleArmor is not null ? "Gesamtrüstung" : "nicht importiert"
+            ? SelectedSet?.SimpleArmor is not null ? "Gesamtrüstung" : "nicht hinterlegt"
             : string.Join(", ", zone.ArmorZones.Select(armorZone => $"{GetArmorLabel(armorZone)} RS {FormatValue(GetArmorValue(armorZone))}"));
         var woundText = GetWoundValue(zone.WoundZone)?.ToString() ?? "nicht gesetzt";
         return $"{zone.Label}, {armorText}, Wunden {woundText}";

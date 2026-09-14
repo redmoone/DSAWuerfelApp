@@ -7,7 +7,6 @@
             <p class="combat-kicker">@(AttributeMode ? "Eigenschaften" : "Kampfwurf")</p>
             <h2 id="combat-actions-title">@(AttributeMode ? "Eigenschaftsprobe vorbereiten" : "Wurf vorbereiten")</h2>
         </div>
-        <span class="combat-action-state">@ActionAvailabilityText</span>
     </div>
 
     <div class="combat-action-workspace">
@@ -63,73 +62,77 @@
             }
             else
             {
-                @if (Sets.Count > 0)
-                {
-                    <div class="combat-choice-block combat-set-choice">
-                        <div class="combat-block-heading">
-                            <span class="combat-field-label">Kampfset</span>
-                            <span class="combat-muted">Wertebasis</span>
-                        </div>
-                        <select id="combat-set-select"
-                                class="ui-select combat-set-select"
-                                aria-label="Kampfset auswählen"
-                                value="@SelectedSetId"
-                                disabled="@IsBusy"
-                                @onchange="HandleSetChanged">
-                            @foreach (var group in Sets.GroupBy(set => set.Number).OrderBy(group => group.Key))
-                            {
-                                <optgroup label="Set @group.Key">
-                                    @foreach (var set in group.OrderBy(set => set.ArmorModel))
-                                    {
-                                        <option value="@set.Id">@GetSetLabel(set)</option>
-                                    }
-                                </optgroup>
-                            }
-                        </select>
-                    </div>
-                }
+                <details class="combat-loadout-details">
+                    <summary>
+                        <span class="combat-field-label">Kampfausrüstung</span>
+                        <span class="combat-loadout-summary">@SelectedSetSummary · @SelectedWeaponSummary</span>
+                    </summary>
 
-                <div class="combat-choice-block">
-                    <div class="combat-block-heading">
-                        <span class="combat-field-label">Waffe oder Abwehr</span>
-                        <span class="combat-muted">Importierte Werte</span>
-                    </div>
-                    @if (Weapons.Count == 0)
-                    {
-                        <p class="combat-inline-empty">Für dieses Set sind keine Waffen importiert.</p>
-                    }
-                    else
-                    {
-                        <label class="combat-mobile-field-label" for="combat-weapon-select">Waffe oder Abwehr</label>
-                        <select id="combat-weapon-select"
-                                class="ui-select combat-weapon-select"
-                                aria-label="Waffe oder Abwehr auswählen"
-                                value="@SelectedWeaponId"
-                                disabled="@IsBusy"
-                                @onchange="HandleWeaponChanged">
-                            @foreach (var weapon in Weapons)
+                    <div class="combat-loadout-form">
+                        <div class="combat-choice-block combat-set-choice">
+                            <div class="combat-block-heading">
+                                <span class="combat-field-label">Kampfset</span>
+                            </div>
+                            <select id="combat-set-select"
+                                    class="ui-select combat-set-select"
+                                    aria-label="Kampfset auswählen"
+                                    value="@SelectedSetId"
+                                    disabled="@IsBusy"
+                                    @onchange="HandleSetChanged">
+                                @foreach (var group in Sets.GroupBy(set => set.Number).OrderBy(group => group.Key))
+                                {
+                                    <optgroup label="Set @group.Key">
+                                        @foreach (var set in group.OrderBy(set => set.ArmorModel))
+                                        {
+                                            <option value="@set.Id">@GetSetLabel(set)</option>
+                                        }
+                                    </optgroup>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="combat-choice-block">
+                            <div class="combat-block-heading">
+                                <span class="combat-field-label">Waffe oder Abwehr</span>
+                            </div>
+                            @if (Weapons.Count == 0)
                             {
-                                <option value="@weapon.Id" disabled="@(weapon.IsAvailable == false)">@GetWeaponLabel(weapon) · @GetWeaponValue(weapon)</option>
+                                <p class="combat-inline-empty">Für dieses Set sind keine Waffen hinterlegt.</p>
                             }
-                        </select>
-                        <div class="combat-option-list combat-desktop-weapon-list" role="listbox" aria-label="Waffen und Abwehr">
-                            @foreach (var weapon in Weapons)
+                            else
                             {
-                                <div class="combat-option-entry">
-                                    <UiButton Variant="option"
-                                              Active="@(weapon.Id == SelectedWeaponId)"
-                                              role="option"
-                                              aria-selected="@(weapon.Id == SelectedWeaponId)"
-                                              Disabled="@(IsBusy || weapon.IsAvailable == false)"
-                                              OnClick="() => WeaponSelected.InvokeAsync(weapon.Id)">
-                                        <span class="ui-button-label">@GetWeaponLabel(weapon)</span>
-                                    </UiButton>
-                                    <span class="combat-option-meta">@GetWeaponValue(weapon)</span>
+                                <label class="combat-mobile-field-label" for="combat-weapon-select">Waffe oder Abwehr</label>
+                                <select id="combat-weapon-select"
+                                        class="ui-select combat-weapon-select"
+                                        aria-label="Waffe oder Abwehr auswählen"
+                                        value="@SelectedWeaponId"
+                                        disabled="@IsBusy"
+                                        @onchange="HandleWeaponChanged">
+                                    @foreach (var weapon in Weapons)
+                                    {
+                                        <option value="@weapon.Id" disabled="@(weapon.IsAvailable == false)">@GetWeaponLabel(weapon) · @GetWeaponValue(weapon)</option>
+                                    }
+                                </select>
+                                <div class="combat-option-list combat-desktop-weapon-list" role="listbox" aria-label="Waffen und Abwehr">
+                                    @foreach (var weapon in Weapons)
+                                    {
+                                        <div class="combat-option-entry">
+                                            <UiButton Variant="option"
+                                                      Active="@(weapon.Id == SelectedWeaponId)"
+                                                      role="option"
+                                                      aria-selected="@(weapon.Id == SelectedWeaponId)"
+                                                      Disabled="@(IsBusy || weapon.IsAvailable == false)"
+                                                      OnClick="() => WeaponSelected.InvokeAsync(weapon.Id)">
+                                                <span class="ui-button-label">@GetWeaponLabel(weapon)</span>
+                                            </UiButton>
+                                            <span class="combat-option-meta">@GetWeaponValue(weapon)</span>
+                                        </div>
+                                    }
                                 </div>
                             }
                         </div>
-                    }
-                </div>
+                    </div>
+                </details>
 
                 <div class="combat-action-choice-group">
                     <div class="combat-block-heading">
@@ -231,7 +234,6 @@
                     <p class="combat-kicker">Ergebnis</p>
                     <h3>Wurf abschließen</h3>
                 </div>
-                <span class="combat-muted">@(AttributeMode ? "W20 je Eigenschaft" : "Serverwert")</span>
             </div>
 
             <div class="combat-roll-summary" aria-live="polite">
@@ -248,7 +250,6 @@
                             <span class="combat-field-label">Abschluss</span>
                             <strong>@TargetHeadline</strong>
                         </div>
-                        <span>@TargetSourceText</span>
                     </div>
                 }
             </div>
@@ -258,9 +259,8 @@
                 <details class="combat-calculation-details">
                     <summary>Berechnung anzeigen</summary>
                     <div class="combat-calculation-grid">
-                        <span>Basisziel</span><strong>@FormatNumber(BaseTarget)</strong>
-                        <span>Automatik</span><strong>@TargetSourceText</strong>
-                        <span>Situativ</span><strong>@FormatModifier(Modifier)</strong>
+                        <span>Grundwert</span><strong>@FormatNumber(BaseTarget)</strong>
+                        <span>Eigener Modifikator</span><strong>@FormatModifier(Modifier)</strong>
                     </div>
                 </details>
             }

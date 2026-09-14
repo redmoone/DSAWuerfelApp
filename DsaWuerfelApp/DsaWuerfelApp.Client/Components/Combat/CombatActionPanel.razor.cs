@@ -10,8 +10,6 @@ public partial class CombatActionPanel
 {
     private static readonly int[] EmptyDice = [];
 
-    // These set parameters remain available for the shared component contract. The Kampf page
-    // renders the set selector in the status panel so that context is shown exactly once.
     [Parameter] public IReadOnlyList<CombatSetVariantDto> Sets { get; set; } = Array.Empty<CombatSetVariantDto>();
     [Parameter] public bool IsLoading { get; set; }
     [Parameter] public string? SelectedSetId { get; set; }
@@ -41,7 +39,6 @@ public partial class CombatActionPanel
     [Parameter] public bool IsBusy { get; set; }
     [Parameter] public int? BaseTarget { get; set; }
     [Parameter] public int? EffectiveTarget { get; set; }
-    [Parameter] public string TargetSource { get; set; } = "Importierter Zielwert";
     [Parameter] public CombatFacing Facing { get; set; }
     [Parameter] public EventCallback<CombatFacing> FacingChanged { get; set; }
     [Parameter] public CombatRollResultDto? CombatResult { get; set; }
@@ -61,21 +58,21 @@ public partial class CombatActionPanel
     private IEnumerable<ActionOption> HelperActions => Actions.Where(action => action.Key is "wound-helper" or "fumble-helper");
     private ActionOption? SelectedActionOption => Actions.FirstOrDefault(action => action.Key == SelectedAction);
 
-    private string ActionAvailabilityText => IsLoading
-        ? "Profil wird geladen"
-        : Sets.Count == 0 ? "Profil wird erwartet" : CanRoll ? "Auswahl bereit" : "Auswahl vervollständigen";
-
     private string EmptyStateTitle => IsLoading ? "Kampfprofil wird geladen." : "Noch kein Kampfprofil geladen.";
 
     private string EmptyStateText => IsLoading
-        ? "Die Werte werden aus dem gespeicherten Heldenimport gelesen."
-        : "Waffen, Zielwerte und Sonderfertigkeiten werden aus dem gespeicherten Heldenimport übernommen.";
+        ? "Das Kampfprofil wird geladen."
+        : "Lade ein Kampfprofil, um Kampfwürfe vorzubereiten.";
+
+    private string SelectedSetSummary => Sets.FirstOrDefault(set => set.Id == SelectedSetId) is { } set
+        ? GetSetLabel(set)
+        : "Kein Kampfset";
+
+    private string SelectedWeaponSummary => Weapons.FirstOrDefault(weapon => weapon.Id == SelectedWeaponId) is { } weapon
+        ? GetWeaponLabel(weapon)
+        : "Keine Waffe";
 
     private string EffectiveTargetText => EffectiveTarget?.ToString(CultureInfo.InvariantCulture) ?? "—";
-
-    private string TargetSourceText => EffectiveTarget.HasValue
-        ? $"{TargetSource}; Basis {FormatNumber(BaseTarget)}"
-        : TargetSource;
 
     private string TargetHeadline => EffectiveTarget.HasValue
         ? $"{ActiveRollTitle} auf {EffectiveTargetText}"
