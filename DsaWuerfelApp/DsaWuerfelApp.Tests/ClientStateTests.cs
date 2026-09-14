@@ -250,6 +250,31 @@ public class ClientStateTests
         Assert.Null(state.Current.LastBadTraitRoll);
     }
 
+    [Fact]
+    public void Combat_history_deduplicates_repeated_request_or_entry_identity()
+    {
+        var requestId = Guid.NewGuid();
+        var first = CreateCombatHistoryResult(requestId, Guid.NewGuid(), "exchange-1", 8);
+        var repeatedRequest = CreateCombatHistoryResult(requestId, Guid.NewGuid(), "exchange-1", 12);
+        var state = new WuerfelState();
+
+        state.ApplyCombatRollResult(first);
+        state.ApplyCombatRollResult(repeatedRequest);
+
+        Assert.Single(state.Current.History);
+        Assert.Same(first, state.Current.LastCombatRoll);
+        Assert.Equal(1, state.Current.ResultVersion);
+
+        var repeatedEntry = CreateCombatHistoryResult(Guid.NewGuid(), first.EntryId, "exchange-1", 12);
+        var entryState = new WuerfelState();
+        entryState.ApplyCombatRollResult(first);
+        entryState.ApplyCombatRollResult(repeatedEntry);
+
+        Assert.Single(entryState.Current.History);
+        Assert.Same(first, entryState.Current.LastCombatRoll);
+        Assert.Equal(1, entryState.Current.ResultVersion);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-3)]
@@ -403,5 +428,50 @@ public class ClientStateTests
         Assert.Empty(state.Current.SelectedDiceSides);
         Assert.Null(state.Current.SelectedProbeValue);
         Assert.Empty(state.Current.SelectedSpellOptionValues);
+    }
+
+    private static CombatRollResultDto CreateCombatHistoryResult(
+        Guid requestId,
+        Guid entryId,
+        string exchangeId,
+        int rollValue)
+    {
+        var roll = new DiceRollDto(20, rollValue);
+        var snapshot = new CombatRollSnapshotDto
+        {
+            EntryId = entryId,
+            RequestId = requestId,
+            SessionId = "session-1",
+            ExchangeId = exchangeId,
+            Action = CombatActionKind.MeleeAttack,
+            ActionLabel = "Attacke",
+            Outcome = CombatOutcome.Success,
+            StatusLabel = "Attacke gelungen",
+            LabeledRolls = [new CombatLabeledRollDto("AT", 20, rollValue)]
+        };
+        var historyEntry = new RollHistoryEntryDto(
+            "Spieler",
+            DateTime.UtcNow,
+            [roll],
+            0,
+            rollValue,
+            new RollHistoryContextDto(
+                RollHistoryKind.Combat,
+                "Attacke",
+                RollHistoryOutcome.Success,
+                null,
+                [],
+                new RollHistorySnapshotDto { Combat = snapshot }));
+        return new CombatRollResultDto(
+            entryId,
+            requestId,
+            "session-1",
+            "user-1",
+            "Spieler",
+            "Held",
+            CombatOutcome.Success,
+            snapshot,
+            [roll],
+            historyEntry);
     }
 }

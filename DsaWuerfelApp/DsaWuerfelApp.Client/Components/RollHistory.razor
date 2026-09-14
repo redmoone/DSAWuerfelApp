@@ -10,7 +10,7 @@
         <div class="roll-history-list">
             @foreach (var log in Entries)
             {
-                <article class="history-entry @GetEntryClass(log)">
+                <article @key="GetHistoryEntryId(log)" class="history-entry @GetEntryClass(log)">
                     <header class="history-entry-header">
                         <div class="history-entry-title">
                             @if (!IsInitiativeEntry(log))

@@ -11,6 +11,17 @@ public partial class RollHistory
 
     private static string GetHistoryEntryId(RollHistoryEntryDto entry)
     {
+        var combat = entry.Context?.Snapshot?.Combat;
+        if (combat?.EntryId is { } entryId && entryId != Guid.Empty)
+        {
+            return $"combat-{entryId:N}";
+        }
+
+        if (combat?.RequestId is { } requestId && requestId != Guid.Empty)
+        {
+            return $"combat-request-{requestId:N}";
+        }
+
         return entry.Timestamp.Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture);
     }
 

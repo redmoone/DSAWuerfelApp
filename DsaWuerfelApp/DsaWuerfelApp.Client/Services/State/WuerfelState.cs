@@ -283,6 +283,12 @@ public sealed class WuerfelState
     public void ApplyCombatRollResult(CombatRollResultDto result)
     {
         ArgumentNullException.ThrowIfNull(result);
+        if (IsSameCombatRoll(Current.LastCombatRoll?.Snapshot, result.Snapshot) ||
+            Current.History.Any(entry => IsSameCombatHistory(entry, result.Snapshot)))
+        {
+            return;
+        }
+
         var history = Current.History.Any(entry =>
                 entry.Context?.Snapshot?.Combat?.EntryId == result.EntryId)
             ? Current.History
@@ -308,13 +314,30 @@ public sealed class WuerfelState
     public void AppendHistoryEntry(RollHistoryEntryDto historyEntry)
     {
         ArgumentNullException.ThrowIfNull(historyEntry);
-        var entryId = historyEntry.Context?.Snapshot?.Combat?.EntryId;
-        var history = entryId.HasValue && Current.History.Any(entry =>
-                entry.Context?.Snapshot?.Combat?.EntryId == entryId)
+        var combat = historyEntry.Context?.Snapshot?.Combat;
+        var history = combat is not null && Current.History.Any(entry =>
+                IsSameCombatHistory(entry, combat))
             ? Current.History
             : Current.History.Prepend(historyEntry).Take(100).ToArray();
 
         Update(Current with { History = history });
+    }
+
+    private static bool IsSameCombatRoll(
+        CombatRollSnapshotDto? existing,
+        CombatRollSnapshotDto incoming)
+    {
+        return existing is not null &&
+               ((incoming.EntryId != Guid.Empty && existing.EntryId == incoming.EntryId) ||
+                (incoming.RequestId != Guid.Empty && existing.RequestId == incoming.RequestId));
+    }
+
+    private static bool IsSameCombatHistory(
+        RollHistoryEntryDto entry,
+        CombatRollSnapshotDto incoming)
+    {
+        return entry.Context?.Snapshot?.Combat is { } existing &&
+               IsSameCombatRoll(existing, incoming);
     }
 
     public void ApplyMasterTalentRollResults(IReadOnlyList<MasterTalentRollTargetResultDto> results)
