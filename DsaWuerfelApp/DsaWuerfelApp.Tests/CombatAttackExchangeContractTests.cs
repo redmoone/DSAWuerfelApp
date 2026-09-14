@@ -27,7 +27,12 @@ public sealed class CombatAttackExchangeContractTests
         Assert.Equal(exchange.TargetParticipantId, restored.ActiveExchange.TargetParticipantId);
         Assert.Equal(exchange.Status, restored.ActiveExchange.Status);
         Assert.Equal(exchange.AllowedDefenseActions, restored.ActiveExchange.AllowedDefenseActions);
-        Assert.Equal(exchange.AttackResult, restored.ActiveExchange.AttackResult);
+        Assert.Equal(exchange.AttackResult!.Action, restored.ActiveExchange.AttackResult!.Action);
+        Assert.Equal(exchange.AttackResult.EffectiveTarget, restored.ActiveExchange.AttackResult.EffectiveTarget);
+        Assert.Equal(exchange.AttackResult.MainRoll, restored.ActiveExchange.AttackResult.MainRoll);
+        Assert.Equal(exchange.AttackResult.StatusLabel, restored.ActiveExchange.AttackResult.StatusLabel);
+        Assert.Equal(exchange.AttackResult.Modifiers, restored.ActiveExchange.AttackResult.Modifiers);
+        Assert.Equal(exchange.AttackResult.RuleNotes, restored.ActiveExchange.AttackResult.RuleNotes);
     }
 
     [Fact]

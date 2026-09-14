@@ -165,7 +165,7 @@ public static class CombatAttackExchangeRules
         (current, next) switch
         {
             (CombatExchangeStatus.Declared, CombatExchangeStatus.AttackOpen or CombatExchangeStatus.Cancelled) => true,
-            (CombatExchangeStatus.AttackOpen, CombatExchangeStatus.DefenseOpen or CombatExchangeStatus.Completed or CombatExchangeStatus.Cancelled) => true,
+            (CombatExchangeStatus.AttackOpen, CombatExchangeStatus.DefenseOpen or CombatExchangeStatus.Hit or CombatExchangeStatus.Completed or CombatExchangeStatus.Cancelled) => true,
             (CombatExchangeStatus.DefenseOpen, CombatExchangeStatus.Hit or CombatExchangeStatus.Avoided or CombatExchangeStatus.Cancelled) => true,
             (CombatExchangeStatus.Hit, CombatExchangeStatus.DamageOpen or CombatExchangeStatus.Completed or CombatExchangeStatus.Cancelled) => true,
             (CombatExchangeStatus.DamageOpen, CombatExchangeStatus.Completed or CombatExchangeStatus.Cancelled) => true,
@@ -211,6 +211,7 @@ public sealed record CombatRollSnapshotDto
     public Guid EntryId { get; init; }
     public Guid RequestId { get; init; }
     public string? SessionId { get; init; }
+    public string? ExchangeId { get; init; }
     public Guid? HeroId { get; init; }
     public CombatActionKind Action { get; init; }
     public string? ActionLabel { get; init; }
@@ -240,7 +241,10 @@ public sealed record CombatRollResultDto(
     CombatOutcome Outcome,
     CombatRollSnapshotDto Snapshot,
     DiceRollDto[] Rolls,
-    RollHistoryEntryDto HistoryEntry);
+    RollHistoryEntryDto HistoryEntry)
+{
+    public CombatSessionSnapshotDto? CombatSessionSnapshot { get; init; }
+}
 
 public sealed record CombatRollEvaluationDto(
     bool IsValid,

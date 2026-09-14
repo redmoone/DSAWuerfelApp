@@ -60,6 +60,12 @@ public sealed class CombatSessionStateService(
             return;
         }
 
+        if (IsAttackAction(request.Action))
+        {
+            await EnsureAttackRollAvailabilityAsync(request, userId, cancellationToken);
+            return;
+        }
+
         var snapshot = await GetAsync(request.SessionId, userId, cancellationToken);
         var participant = FindParticipant(snapshot, null, request.HeroId)
                           ?? throw Validation("Der eigene Kampfteilnehmer wurde nicht gefunden.");
@@ -72,6 +78,153 @@ public sealed class CombatSessionStateService(
         if (CombatActionBudgetRules.RequiresReaction(request.Action) && !budget.HasReaction)
         {
             throw Validation($"Für {participant.Name} ist keine Reaktion mehr verfügbar.");
+        }
+    }
+
+    public async Task EnsureAttackRollAvailabilityAsync(
+        CombatRollRequestDto request,
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (string.IsNullOrWhiteSpace(request.SessionId) || !IsAttackAction(request.Action))
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(request.ExchangeId))
+        {
+            throw Validation("Ein Session-AT-Wurf braucht eine offene ExchangeId.");
+        }
+
+        var snapshot = await GetAsync(request.SessionId, userId, cancellationToken);
+        var exchange = snapshot.ActiveExchange;
+        if (exchange is null || !string.Equals(exchange.ExchangeId, request.ExchangeId.Trim(), StringComparison.Ordinal))
+        {
+            throw Validation("Für diesen AT-Wurf gibt es keinen passenden offenen Angriffsaustausch.");
+        }
+
+        if (exchange.Status != CombatExchangeStatus.Declared || exchange.AttackResult is not null)
+        {
+            throw Validation("Der AT-Wurf für diesen Angriff wurde bereits ausgeführt oder ist nicht mehr offen.");
+        }
+
+        if (exchange.AttackKind != request.Action ||
+            !string.Equals(exchange.SetId, request.SetId, StringComparison.Ordinal) ||
+            !string.Equals(exchange.WeaponId, request.WeaponId, StringComparison.Ordinal))
+        {
+            throw Validation("Der AT-Wurf passt nicht zur deklarierten Attacke.");
+        }
+
+        var attacker = snapshot.Participants.FirstOrDefault(participant =>
+            string.Equals(participant.Id, exchange.AttackerParticipantId, StringComparison.Ordinal));
+        if (attacker is null || attacker.HeroId != request.HeroId)
+        {
+            throw Validation("Der AT-Wurf gehört nicht zum deklarierten Angreifer.");
+        }
+
+        var session = runtimeState.GetMemberSession(request.SessionId, userId);
+        if (!string.Equals(session.MasterUserId, userId, StringComparison.Ordinal) &&
+            !string.Equals(attacker.OwnerUserId, userId, StringComparison.Ordinal))
+        {
+            throw new RequestRejectedException(RequestRejectionReason.Forbidden,
+                "Du darfst nur den eigenen Angriff würfeln.");
+        }
+    }
+
+    public async Task<CombatSessionSnapshotDto> BindAttackRollAsync(
+        CombatRollRequestDto request,
+        CombatRollResultDto result,
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(result);
+        if (string.IsNullOrWhiteSpace(request.SessionId) || !IsAttackAction(request.Action))
+        {
+            throw Validation("Nur ein Session-AT-Wurf kann an einen Angriffsaustausch gebunden werden.");
+        }
+
+        await _stateLock.WaitAsync(cancellationToken);
+        try
+        {
+            var session = runtimeState.GetMemberSession(request.SessionId, userId);
+            var persisted = Load(session);
+            var current = Normalize(session, persisted.Current, userId) with
+            {
+                UndoAvailable = persisted.Undo is not null && !string.IsNullOrWhiteSpace(persisted.UndoOwnerUserId)
+            };
+            var exchange = current.ActiveExchange;
+            if (exchange is null || !string.Equals(exchange.ExchangeId, request.ExchangeId?.Trim(), StringComparison.Ordinal))
+            {
+                throw Validation("Für diesen AT-Wurf gibt es keinen passenden Angriffsaustausch.");
+            }
+
+            if (exchange.AttackResult is not null)
+            {
+                return current;
+            }
+
+            if (exchange.Status != CombatExchangeStatus.Declared ||
+                exchange.AttackKind != request.Action ||
+                result.RequestId != request.RequestId ||
+                result.Snapshot.ExchangeId != request.ExchangeId)
+            {
+                throw Validation("Der AT-Wurf passt nicht zum aktuellen Angriffsaustausch.");
+            }
+
+            var attacker = current.Participants.FirstOrDefault(participant =>
+                string.Equals(participant.Id, exchange.AttackerParticipantId, StringComparison.Ordinal));
+            if (attacker is null ||
+                (attacker.OwnerUserId != userId && !string.Equals(session.MasterUserId, userId, StringComparison.Ordinal)))
+            {
+                throw new RequestRejectedException(RequestRejectionReason.Forbidden,
+                    "Du darfst nur den eigenen Angriff würfeln.");
+            }
+
+            var evaluation = CreateAttackEvaluation(result.Snapshot);
+            var decision = CombatRollRules.ResolveAttackDecision(
+                evaluation,
+                exchange.AllowedDefenseActions,
+                allowUnopposedHit: true);
+            var nextStatus = decision.IsValid ? decision.Status : CombatExchangeStatus.Cancelled;
+            if (!CombatAttackExchangeRules.CanTransition(exchange.Status, CombatExchangeStatus.AttackOpen) ||
+                !CombatAttackExchangeRules.CanTransition(CombatExchangeStatus.AttackOpen, nextStatus))
+            {
+                throw Validation("Der Angriffsaustausch kann dieses AT-Ergebnis nicht mehr aufnehmen.");
+            }
+
+            var nextRevision = current.Revision + 1;
+            var updatedExchange = exchange with
+            {
+                Revision = nextRevision,
+                Status = nextStatus,
+                AttackResult = evaluation,
+                HistoryEntryIds = exchange.HistoryEntryIds
+                    .Append(result.Snapshot.EntryId)
+                    .Distinct()
+                    .ToArray(),
+                RuleNote = decision.ValidationMessage ?? decision.StatusLabel
+            };
+            var next = FinalizeSnapshot(current with
+            {
+                Revision = nextRevision,
+                ActiveExchange = updatedExchange,
+                LastMutationId = request.RequestId,
+                LastMutationDescription = $"AT-Wurf für {exchange.ExchangeId} gespeichert",
+                LastMutationUserId = userId
+            });
+            var appliedRequestIds = persisted.AppliedRequestIds
+                .Append(request.RequestId)
+                .TakeLast(MaxAppliedRequestIds)
+                .ToArray();
+            next = next with { UndoAvailable = true };
+            Save(session, new PersistedState(next, current, userId, appliedRequestIds));
+            return next;
+        }
+        finally
+        {
+            _stateLock.Release();
         }
     }
 
@@ -1366,6 +1519,40 @@ public sealed class CombatSessionStateService(
             ? participant.InitiativeBase ?? int.MinValue
             : int.MinValue;
     }
+
+    private static CombatRollEvaluationDto CreateAttackEvaluation(CombatRollSnapshotDto snapshot)
+    {
+        var mainRoll = snapshot.LabeledRolls
+            .FirstOrDefault(roll => string.Equals(roll.Role, "Hauptwurf", StringComparison.Ordinal))?.Value ?? 0;
+        var controlRoll = snapshot.LabeledRolls
+            .FirstOrDefault(roll => string.Equals(roll.Role, "Kontrollwurf", StringComparison.Ordinal))?.Value;
+        var isSuccessful = snapshot.Outcome is CombatOutcome.Success or CombatOutcome.Lucky or CombatOutcome.Critical;
+        var isFumble = snapshot.Outcome == CombatOutcome.Fumble;
+
+        return new CombatRollEvaluationDto(
+            true,
+            null,
+            snapshot.Action,
+            snapshot.BaseValue,
+            snapshot.EffectiveTarget,
+            snapshot.ControlTarget,
+            mainRoll,
+            controlRoll,
+            snapshot.Outcome,
+            isSuccessful,
+            snapshot.Outcome == CombatOutcome.Critical,
+            isFumble,
+            IsAttackAction(snapshot.Action) && isSuccessful,
+            snapshot.StatusLabel)
+        {
+            Modifiers = snapshot.Modifiers ?? [],
+            RuleNotes = snapshot.RuleNotes ?? [],
+            ValuesSource = snapshot.ValuesSource ?? "Unbekannt"
+        };
+    }
+
+    private static bool IsAttackAction(CombatActionKind action) => action is
+        CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack;
 
     private static CombatSessionActionDto CreateNormalAction(
         CombatSessionParticipantDto participant,

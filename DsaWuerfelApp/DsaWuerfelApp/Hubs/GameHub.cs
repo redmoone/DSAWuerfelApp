@@ -292,7 +292,17 @@ public class GameHub(
                 playerName,
                 Context.ConnectionAborted),
             result => result.HistoryEntry,
-            (sessionId, result) => Clients.Group(sessionId).SendAsync("ShowCombatRollResult", result));
+            BroadcastCombatRollAsync);
+    }
+
+    private async Task BroadcastCombatRollAsync(string sessionId, CombatRollResultDto result)
+    {
+        if (result.CombatSessionSnapshot is not null)
+        {
+            await Clients.Group(sessionId).SendAsync("CombatStateChanged", result.CombatSessionSnapshot);
+        }
+
+        await Clients.Group(sessionId).SendAsync("ShowCombatRollResult", result);
     }
 
     private async Task ExecuteRollAsync<TResult>(

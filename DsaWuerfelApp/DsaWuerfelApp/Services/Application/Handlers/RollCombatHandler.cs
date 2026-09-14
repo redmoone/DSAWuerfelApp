@@ -46,7 +46,7 @@ public sealed partial class RollCombatHandler(
         var set = ResolveSet(profile, request.SetId);
         var resolvedPlayerName = string.IsNullOrWhiteSpace(playerName) ? "Unbekannt" : playerName.Trim();
 
-        return request.Action switch
+        var result = request.Action switch
         {
             CombatActionKind.MeleeAttack or
             CombatActionKind.WeaponParry or
@@ -60,6 +60,19 @@ public sealed partial class RollCombatHandler(
             CombatActionKind.FumbleHelper => RollHelper(request, hero, resolvedPlayerName, userId),
             _ => throw Validation("Diese Kampfwurfart wird nicht unterstützt.")
         };
+
+        if (!string.IsNullOrWhiteSpace(request.SessionId) && request.Action is
+            CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack)
+        {
+            var sessionSnapshot = await combatSessionStateService.BindAttackRollAsync(
+                request,
+                result,
+                userId,
+                cancellationToken);
+            return result with { CombatSessionSnapshot = sessionSnapshot };
+        }
+
+        return result;
     }
 
     private CombatRollResultDto RollCheck(
@@ -128,6 +141,7 @@ public sealed partial class RollCombatHandler(
             EntryId = Guid.NewGuid(),
             RequestId = request.RequestId,
             SessionId = request.SessionId,
+            ExchangeId = request.ExchangeId,
             HeroId = hero.Id,
             Action = request.Action,
             ActionLabel = GetActionLabel(request.Action),

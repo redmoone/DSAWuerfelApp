@@ -228,6 +228,90 @@ public sealed class CombatSessionStateTests
     }
 
     [Fact]
+    public async Task Attack_roll_is_bound_to_the_declared_exchange_and_cannot_be_rolled_twice()
+    {
+        using var factory = new TestApplicationFactory();
+        var hero = await SeedHeroAsync(factory, "owner");
+        var session = CreateSession(factory, hero, "owner");
+        var state = factory.Services.GetRequiredService<CombatSessionStateService>();
+        var handler = factory.Services.GetRequiredService<RollCombatHandler>();
+        var profile = await factory.Services.GetRequiredService<HeroCombatProfileReader>().ReadAsync(hero.Id, "owner");
+        var set = Assert.Single(profile!.Sets, item => item.ArmorModel == CombatArmorModel.Zone);
+        var weapon = Assert.Single(set.Weapons, item => item.Name == "Schwert");
+
+        var initial = await state.GetAsync(session.SessionId, "owner");
+        var rolled = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = initial.Revision,
+            Kind = CombatSessionMutationKind.RollInitiative,
+            HeroId = hero.Id
+        }, "owner");
+        var attacker = Assert.Single(rolled.Snapshot.Participants, item => item.HeroId == hero.Id);
+        var action = Assert.Single(rolled.Snapshot.Actions, item => item.ParticipantId == attacker.Id);
+        var added = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = rolled.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.AddOpponent,
+            Name = "Übungsgegner",
+            InitiativeBase = 1,
+            Initiative = 1,
+            OpponentProfile = new CombatOpponentProfileDto(10, 8, 7, 2, 20)
+        }, "owner");
+        var target = Assert.Single(added.Snapshot.Participants, item => item.Kind == CombatParticipantKind.Opponent);
+        var declaration = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = added.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.DeclareAttack,
+            ParticipantId = attacker.Id,
+            TargetParticipantId = target.Id,
+            ActionId = action.Id,
+            ExchangeId = "exchange-roll",
+            SetId = set.Id,
+            WeaponId = weapon.Id,
+            ActionKind = CombatActionKind.MeleeAttack
+        }, "owner");
+
+        var rollRequest = new CombatRollRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            HeroId = hero.Id,
+            ExchangeId = "exchange-roll",
+            SetId = set.Id,
+            WeaponId = weapon.Id,
+            WeaponName = weapon.Name,
+            Action = CombatActionKind.MeleeAttack
+        };
+        var result = await handler.HandleAsync(rollRequest, "owner", "Besitzer");
+
+        Assert.NotNull(result.CombatSessionSnapshot);
+        Assert.Equal(rollRequest.ExchangeId, result.Snapshot.ExchangeId);
+        Assert.Equal(result.Snapshot.EntryId, result.CombatSessionSnapshot!.ActiveExchange!.HistoryEntryIds.Single());
+        Assert.NotEqual(CombatExchangeStatus.Declared, result.CombatSessionSnapshot.ActiveExchange.Status);
+        Assert.NotNull(result.CombatSessionSnapshot.ActiveExchange.AttackResult);
+        var stored = await state.GetAsync(session.SessionId, "owner");
+        Assert.Equal(result.CombatSessionSnapshot.Revision, stored.Revision);
+        Assert.Equal(result.CombatSessionSnapshot.ActiveExchange.Status, stored.ActiveExchange!.Status);
+
+        await Assert.ThrowsAsync<RequestRejectedException>(() => handler.HandleAsync(
+            rollRequest with { RequestId = Guid.NewGuid() },
+            "owner",
+            "Besitzer"));
+        var unchanged = await state.GetAsync(session.SessionId, "owner");
+        Assert.Equal(stored.Revision, unchanged.Revision);
+        Assert.Equal(stored.ActiveExchange!.AttackResult!.MainRoll,
+            unchanged.ActiveExchange!.AttackResult!.MainRoll);
+        Assert.Equal(stored.ActiveExchange.Status, unchanged.ActiveExchange.Status);
+        Assert.Equal(declaration.Snapshot.Revision + 1, stored.Revision);
+    }
+
+    [Fact]
     public async Task Held_action_moves_to_the_next_round_without_rerolling_initiative()
     {
         using var factory = new TestApplicationFactory();
