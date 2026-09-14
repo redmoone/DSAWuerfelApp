@@ -275,6 +275,7 @@ public sealed partial class RollCombatHandler(
             Action = request.Action,
             ActionLabel = GetActionLabel(request.Action),
             ValuesSource = "Regelhilfe",
+            Modifiers = request.Modifiers ?? [],
             RuleOptions = request.Options ?? new CombatRuleOptionsDto(),
             Outcome = CombatOutcome.Neutral,
             StatusLabel = $"Hilfswurf · {purpose}",

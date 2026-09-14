@@ -116,13 +116,15 @@ public sealed class CombatSessionState : IDisposable
         Guid? heroId = null,
         CombatRuntimeStateDto? runtimeState = null,
         string? setId = null,
+        int initiativeCorrection = 0,
         CancellationToken cancellationToken = default) => MutateAsync(new CombatSessionMutationRequestDto
         {
             Kind = CombatSessionMutationKind.RollInitiative,
             ParticipantId = participantId,
             HeroId = heroId,
             RuntimeState = runtimeState,
-            SetId = setId
+            SetId = setId,
+            InitiativeCorrection = initiativeCorrection
         }, cancellationToken);
 
     public Task<CombatSessionMutationResultDto> SetInitiativeAsync(

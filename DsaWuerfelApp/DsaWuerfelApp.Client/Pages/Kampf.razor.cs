@@ -550,7 +550,8 @@ public partial class Kampf : IDisposable
                     OwnSessionParticipant?.Id,
                     ActiveHero?.Id,
                     BuildRuntimeState(),
-                    SelectedSet?.Id);
+                    SelectedSet?.Id,
+                    Modifier);
                 var initiative = sessionResult.Snapshot.Participants
                     .FirstOrDefault(participant => participant.HeroId == ActiveHero?.Id)?.CurrentInitiative;
                 if (initiative.HasValue)
@@ -574,6 +575,9 @@ public partial class Kampf : IDisposable
                 SetId = SelectedSet?.Id,
                 Action = CombatActionKind.InitiativeHelper,
                 RuntimeState = BuildRuntimeState(),
+                Modifiers = Modifier == 0
+                    ? Array.Empty<CombatModifierDto>()
+                    : [new CombatModifierDto("Situativ", Modifier, "Kampfseite")],
                 Helper = new CombatHelperRollRequestDto
                 {
                     DiceCount = Profile?.HasKlingentaenzer == true ? 2 : 1,
@@ -583,7 +587,7 @@ public partial class Kampf : IDisposable
             });
             var baseInitiative = SelectedSet?.Initiative ?? 0;
             var runtime = CombatRuntimeModifierRules.ResolveInitiative(Profile, SelectedSet, BuildRuntimeState());
-            await CombatState.SetInitiativeAsync(baseInitiative + result.Rolls.Sum(roll => roll.Value) + runtime.Modifier);
+            await CombatState.SetInitiativeAsync(baseInitiative + result.Rolls.Sum(roll => roll.Value) + runtime.Modifier + Modifier);
         }
         catch (Exception exception)
         {

@@ -108,6 +108,7 @@ public sealed record CombatSessionMutationRequestDto
     public string? Affiliation { get; init; }
     public int? InitiativeBase { get; init; }
     public int? Initiative { get; init; }
+    public int InitiativeCorrection { get; init; }
     public string? Label { get; init; }
     public CombatActionKind? ActionKind { get; init; }
     public int ActionCost { get; init; } = 1;
