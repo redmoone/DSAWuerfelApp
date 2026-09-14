@@ -700,7 +700,6 @@ public sealed class CombatState : IDisposable
         {
             ContextKey = contextKey,
             ProfileRevision = profileRevision,
-            CurrentInitiative = snapshot.CurrentInitiative == 0 ? null : snapshot.CurrentInitiative,
             Wounds = wounds,
             Effects = snapshot.Effects ?? [],
             SelectedAction = string.IsNullOrWhiteSpace(snapshot.SelectedAction) ? "attack" : snapshot.SelectedAction,

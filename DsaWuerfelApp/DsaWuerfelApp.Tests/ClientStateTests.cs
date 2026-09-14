@@ -250,6 +250,37 @@ public class ClientStateTests
         Assert.Null(state.Current.LastBadTraitRoll);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-3)]
+    public void Combat_runtime_normalization_preserves_explicit_initiative_values(int initiative)
+    {
+        var snapshot = new CombatRuntimeSnapshot(
+            1,
+            "user:hero:solo",
+            1,
+            true,
+            22,
+            18,
+            initiative,
+            Enum.GetValues<CombatWoundZone>().ToDictionary(zone => zone, _ => (int?)0),
+            1,
+            [],
+            null,
+            DateTimeOffset.UtcNow);
+
+        var normalize = typeof(CombatState).GetMethod(
+            "NormalizeSnapshot",
+            BindingFlags.Static | BindingFlags.NonPublic);
+        var normalized = Assert.IsType<CombatRuntimeSnapshot>(normalize!.Invoke(
+            null,
+            [snapshot, "user:hero:solo", 2]));
+
+        Assert.Equal(initiative, normalized.CurrentInitiative);
+        Assert.Equal("user:hero:solo", normalized.ContextKey);
+        Assert.Equal(2, normalized.ProfileRevision);
+    }
+
     [Fact]
     public void ApplyMasterTalentRollResults_keeps_each_target_reachable_in_history()
     {

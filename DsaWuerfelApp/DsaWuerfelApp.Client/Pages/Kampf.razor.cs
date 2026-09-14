@@ -68,9 +68,9 @@ public partial class Kampf : IDisposable
     private CombatSessionSnapshotDto? SessionCombat => CombatSessionState.Current;
     private CombatSessionParticipantDto? OwnSessionParticipant => SessionCombat?.Participants
         .FirstOrDefault(participant => participant.HeroId == ActiveHero?.Id);
-    private int? CurrentInitiative => NormalizeInitiative(IsSessionCombat
+    private int? CurrentInitiative => IsSessionCombat
         ? OwnSessionParticipant?.CurrentInitiative
-        : CombatState.CurrentInitiative);
+        : CombatState.CurrentInitiative;
     private int? InitiativeBase => IsSessionCombat
         ? OwnSessionParticipant?.InitiativeBase
         : SelectedSet?.Initiative;
@@ -82,8 +82,6 @@ public partial class Kampf : IDisposable
     private bool IsSessionMaster => IsSessionCombat &&
                                     string.Equals(SessionState.ActiveSession?.MasterUserId,
                                         AuthState.Current.User?.Id, StringComparison.Ordinal);
-
-    private static int? NormalizeInitiative(int? initiative) => initiative == 0 ? null : initiative;
 
     private string? SelectedSetId => CombatState.SelectedSetId;
     private string? SelectedWeaponId => CombatState.SelectedWeaponId;
