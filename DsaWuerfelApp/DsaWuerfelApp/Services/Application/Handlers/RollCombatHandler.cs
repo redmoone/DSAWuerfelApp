@@ -242,7 +242,7 @@ public sealed partial class RollCombatHandler(
         string userId)
     {
         var d20 = RollSingleD20();
-        var mapped = MapHitZone(d20, request.Zone);
+        var mapped = CombatZoneRules.ResolveHitZone(d20, request.Zone);
         var armorRating = GetArmorValue(set, mapped.ArmorZone);
         var snapshot = new CombatRollSnapshotDto
         {
@@ -533,38 +533,6 @@ public sealed partial class RollCombatHandler(
         CombatActionKind.FumbleHelper => "Patzer-Hilfswurf",
         _ => "Kampfwurf"
     };
-
-    private static (CombatArmorZone ArmorZone, CombatWoundZone WoundZone) MapHitZone(
-        int value,
-        CombatZoneRollRequestDto? request)
-    {
-        var facing = request?.Facing ?? CombatFacing.Front;
-        var shieldArm = request?.ShieldArm is CombatArmorZone.LeftArm or CombatArmorZone.RightArm
-            ? request.ShieldArm
-            : CombatArmorZone.LeftArm;
-        var swordArm = request?.SwordArm is CombatArmorZone.LeftArm or CombatArmorZone.RightArm
-            ? request.SwordArm
-            : CombatArmorZone.RightArm;
-        var armor = value switch
-        {
-            <= 6 => value % 2 == 1 ? CombatArmorZone.LeftLeg : CombatArmorZone.RightLeg,
-            <= 8 => CombatArmorZone.Abdomen,
-            <= 14 => value % 2 == 1 ? shieldArm : swordArm,
-            <= 18 => facing == CombatFacing.Front ? CombatArmorZone.Chest : CombatArmorZone.Back,
-            _ => CombatArmorZone.Head
-        };
-        var wound = armor switch
-        {
-            CombatArmorZone.Head => CombatWoundZone.Head,
-            CombatArmorZone.Chest or CombatArmorZone.Back => CombatWoundZone.Torso,
-            CombatArmorZone.Abdomen => CombatWoundZone.Abdomen,
-            CombatArmorZone.LeftArm => CombatWoundZone.LeftArm,
-            CombatArmorZone.RightArm => CombatWoundZone.RightArm,
-            CombatArmorZone.LeftLeg => CombatWoundZone.LeftLeg,
-            _ => CombatWoundZone.RightLeg
-        };
-        return (armor, wound);
-    }
 
     private static int? GetArmorValue(CombatSetVariantDto set, CombatArmorZone zone)
     {
