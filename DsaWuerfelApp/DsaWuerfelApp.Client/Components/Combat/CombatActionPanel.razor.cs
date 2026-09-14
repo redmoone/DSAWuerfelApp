@@ -37,6 +37,10 @@ public partial class CombatActionPanel
     [Parameter] public EventCallback RollRequested { get; set; }
     [Parameter] public bool CanRoll { get; set; }
     [Parameter] public bool IsBusy { get; set; }
+    [Parameter] public int? CurrentInitiative { get; set; }
+    [Parameter] public bool CanRollInitiative { get; set; }
+    [Parameter] public string InitiativeRollText { get; set; } = "1W6 würfeln";
+    [Parameter] public EventCallback InitiativeRollRequested { get; set; }
     [Parameter] public int? BaseTarget { get; set; }
     [Parameter] public int? EffectiveTarget { get; set; }
     [Parameter] public CombatFacing Facing { get; set; }

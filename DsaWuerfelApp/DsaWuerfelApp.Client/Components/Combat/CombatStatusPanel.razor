@@ -77,14 +77,11 @@
                               ValueChanged="value => ResourceValueChangedRequested.InvokeAsync(new ResourceValueChange(CombatResourceKind.KeP, value))" />
             }
 
-            <UiButton Variant="resource"
-                      Class="ui-resource-pill"
-                      OnClick="InitiativeRequested"
-                      Disabled="@IsMutationBusy"
-                      aria-label="Initiative bearbeiten">
-                <span class="ui-pill-edge-label">INI</span>
-                <span class="ui-resource-value">@FormatValue(CurrentInitiative)</span>
-            </UiButton>
+            <ResourcePill Label="INI"
+                          Class="ui-resource-pill--initiative"
+                          Value="@CurrentInitiative"
+                          Disabled="@IsMutationBusy"
+                          ValueChanged="InitiativeValueChangedRequested" />
 
             <UiButton Variant="resource"
                       Class="ui-resource-pill"

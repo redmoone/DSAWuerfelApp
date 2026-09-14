@@ -24,7 +24,7 @@
                            UndoRequested="UndoCombatChangeAsync"
                            ResourceEditRequested="OpenCombatResourceDrawer"
                            ResourceValueChangedRequested="HandleCombatResourceValueChanged"
-                           InitiativeRequested="OpenCombatInitiativeDrawer"
+                           InitiativeValueChangedRequested="HandleCombatInitiativeChanged"
                            WoundsRequested="OpenCombatWoundDrawer"
                            IsMutationBusy="@_combatResourceBusy"
                            PersistenceWarning="@CombatState.PersistenceError"
@@ -312,21 +312,6 @@
             <p class="combat-drawer-hint">Brust und Rücken teilen den Wundstand, behalten aber getrennte RS-Werte.</p>
             <div class="combat-drawer-actions">
                 <UiButton Variant="primary" OnClick="ApplyCombatWoundAsync">Anwenden</UiButton>
-                <UiButton OnClick="CloseCombatDrawer">Abbrechen</UiButton>
-            </div>
-        </div>
-    }
-    else if (_combatDrawer == WuerfelCombatDrawer.Initiative)
-    {
-        <div class="wuerfel-combat-drawer-form">
-            <p class="combat-drawer-lead">Der importierte Setwert wird einmal als Basis verwendet. Der Hilfswurf liefert den W6-Anteil.</p>
-            <NumberControl Label="INI"
-                           Value="@_combatInitiativeDraft"
-                           ValueChanged="HandleCombatInitiativeDraftChanged"
-                           AllowEmpty="true" />
-            <div class="combat-drawer-actions">
-                <UiButton Variant="primary" Disabled="@(CombatProfile is null || _combatInitiativeBusy)" OnClick="RollCombatInitiativeAsync">1W6 würfeln</UiButton>
-                <UiButton OnClick="ApplyCombatInitiativeAsync">Wert setzen</UiButton>
                 <UiButton OnClick="CloseCombatDrawer">Abbrechen</UiButton>
             </div>
         </div>

@@ -23,7 +23,7 @@
                                StartCombatRequested="InitializeCombatStateAsync"
                                ResourceEditRequested="OpenResourceDrawer"
                                ResourceValueChangedRequested="HandleResourceValueChanged"
-                               InitiativeRequested="OpenInitiativeDrawer"
+                               InitiativeValueChangedRequested="HandleInitiativeChanged"
                                WoundsRequested="() => SetArea(CombatArea.Zonen)"
                                ShowUndo="false"
                                PersistenceWarning="@CombatState.PersistenceError"
@@ -107,6 +107,10 @@
                                        RollRequested="HandleRollRequested"
                                        CanRoll="@CanRoll"
                                        IsBusy="@_rollBusy"
+                                       CurrentInitiative="@CurrentInitiative"
+                                       CanRollInitiative="@CanRollInitiative"
+                                       InitiativeRollText="@($"{GetInitiativeDiceLabel()} würfeln")"
+                                       InitiativeRollRequested="RollInitiativeFromStatusAsync"
                                        BaseTarget="@GetActionBaseValue()"
                                        EffectiveTarget="@EffectiveTarget"
                                        Facing="@Facing"
@@ -307,21 +311,6 @@
                            ShowValidationMessage="true" />
             <div class="combat-drawer-actions">
                 <UiButton Variant="primary" OnClick="ApplyResourceDrawerAsync">Speichern</UiButton>
-                <UiButton OnClick="CloseDrawer">Abbrechen</UiButton>
-            </div>
-        </div>
-    }
-    else if (_drawer == CombatDrawer.Initiative)
-    {
-        <div class="combat-drawer-form">
-            <NumberControl Label="INI"
-                           Value="@_initiativeDraft"
-                           ValueChanged="HandleInitiativeDraftChanged"
-                           AllowEmpty="true"
-                           ShowValidationMessage="true" />
-            <div class="combat-drawer-actions">
-                <UiButton Variant="primary" Disabled="@(!CanRollInitiative || _rollBusy)" OnClick="RollInitiativeFromDrawerAsync">1W6 würfeln</UiButton>
-                <UiButton OnClick="ApplyInitiativeDrawerAsync">Wert setzen</UiButton>
                 <UiButton OnClick="CloseDrawer">Abbrechen</UiButton>
             </div>
         </div>

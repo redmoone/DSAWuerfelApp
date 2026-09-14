@@ -22,7 +22,7 @@ public partial class CombatStatusPanel
     [Parameter] public EventCallback StartCombatRequested { get; set; }
     [Parameter] public EventCallback<CombatResourceKind> ResourceEditRequested { get; set; }
     [Parameter] public EventCallback<ResourceValueChange> ResourceValueChangedRequested { get; set; }
-    [Parameter] public EventCallback InitiativeRequested { get; set; }
+    [Parameter] public EventCallback<int?> InitiativeValueChangedRequested { get; set; }
     [Parameter] public EventCallback WoundsRequested { get; set; }
     [Parameter] public bool ShowUndo { get; set; } = true;
     [Parameter] public bool CanUndo { get; set; }

@@ -26,7 +26,6 @@ public partial class Kampf : IDisposable
     private bool _valueMutationBusy;
     private CombatResourceKind? _resourceDrawerKind;
     private int? _resourceDraft;
-    private int? _initiativeDraft;
     private bool _attributeMode;
     private CombatArea _activeArea = CombatArea.Kampf;
     private CombatDrawer _drawer;
@@ -169,7 +168,6 @@ public partial class Kampf : IDisposable
     private string DrawerTitle => _drawer switch
     {
         CombatDrawer.Resource => $"{GetResourceLabel(_resourceDrawerKind ?? CombatResourceKind.LeP)} setzen",
-        CombatDrawer.Initiative => "Initiative",
         CombatDrawer.Orientation => "Orientieren",
         CombatDrawer.Participant => _participantDrawerMode == CombatParticipantDrawerMode.Opponent
             ? "Gegner hinzufügen"
@@ -574,7 +572,12 @@ public partial class Kampf : IDisposable
                 SetId = SelectedSet?.Id,
                 Action = CombatActionKind.InitiativeHelper,
                 RuntimeState = BuildRuntimeState(),
-                Helper = new CombatHelperRollRequestDto { DiceCount = 1, DiceSides = 6, Purpose = "INI-Startwurf" }
+                Helper = new CombatHelperRollRequestDto
+                {
+                    DiceCount = Profile?.HasKlingentaenzer == true ? 2 : 1,
+                    DiceSides = 6,
+                    Purpose = "INI-Startwurf"
+                }
             });
             var baseInitiative = SelectedSet?.Initiative ?? 0;
             var runtime = CombatRuntimeModifierRules.ResolveInitiative(Profile, SelectedSet, BuildRuntimeState());
@@ -664,37 +667,6 @@ public partial class Kampf : IDisposable
         await HandleResourceValueChanged(new CombatStatusPanel.ResourceValueChange(resource, _resourceDraft));
         if (!_valueMutationBusy)
         {
-            CloseDrawer();
-        }
-    }
-
-    private void OpenInitiativeDrawer()
-    {
-        _initiativeDraft = CurrentInitiative ?? InitiativeBase;
-        _drawer = CombatDrawer.Initiative;
-    }
-
-    private Task HandleInitiativeDraftChanged(int? value)
-    {
-        _initiativeDraft = value;
-        return Task.CompletedTask;
-    }
-
-    private async Task ApplyInitiativeDrawerAsync()
-    {
-        await HandleInitiativeChanged(_initiativeDraft);
-        if (CurrentInitiative.HasValue)
-        {
-            CloseDrawer();
-        }
-    }
-
-    private async Task RollInitiativeFromDrawerAsync()
-    {
-        await RollInitiativeFromStatusAsync();
-        if (CurrentInitiative.HasValue)
-        {
-            _initiativeDraft = CurrentInitiative;
             CloseDrawer();
         }
     }
@@ -1159,7 +1131,6 @@ public partial class Kampf : IDisposable
     {
         None,
         Resource,
-        Initiative,
         Orientation,
         Participant,
         History

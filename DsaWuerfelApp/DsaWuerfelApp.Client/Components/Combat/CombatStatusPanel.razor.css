@@ -87,6 +87,10 @@
     min-width: 11rem;
 }
 
+.hero-status-resources ::deep .ui-resource-pill--initiative {
+    min-width: 7rem;
+}
+
 .hero-status-footer {
     justify-content: flex-start;
     gap: 0.35rem 0.8rem;

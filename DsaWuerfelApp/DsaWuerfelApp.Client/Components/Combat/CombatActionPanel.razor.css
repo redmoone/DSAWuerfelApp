@@ -74,6 +74,30 @@
     background: rgba(7, 17, 29, 0.52);
 }
 
+.combat-initiative-start {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.65rem 0.7rem;
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.42);
+    border-radius: var(--dsa-panel-radius);
+    background: rgba(21, 48, 78, 0.42);
+}
+
+.combat-initiative-start-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.16rem;
+}
+
+.combat-initiative-start-copy strong {
+    color: var(--dsa-white);
+    font-size: 0.9rem;
+}
+
 .combat-choice-block,
 .combat-action-choice-group,
 .combat-secondary-actions,
@@ -470,6 +494,11 @@
     .combat-target-preview > span {
         max-width: none;
         text-align: left;
+    }
+
+    .combat-initiative-start {
+        align-items: flex-start;
+        flex-direction: column;
     }
 }
 

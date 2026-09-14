@@ -229,6 +229,22 @@
         </div>
 
         <div class="combat-roll-column">
+            @if (!AttributeMode && !CurrentInitiative.HasValue)
+            {
+                <div class="combat-initiative-start" role="group" aria-label="Ersten Initiativewurf ausführen">
+                    <div class="combat-initiative-start-copy">
+                        <span class="combat-field-label">Initiative</span>
+                        <strong>Noch nicht gewürfelt</strong>
+                    </div>
+                    <UiButton Variant="primary"
+                              Size="compact"
+                              Disabled="@(!CanRollInitiative || IsBusy)"
+                              OnClick="InitiativeRollRequested">
+                        @InitiativeRollText
+                    </UiButton>
+                </div>
+            }
+
             <div class="combat-roll-completion-heading">
                 <div>
                     <p class="combat-kicker">Ergebnis</p>
