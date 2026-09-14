@@ -21,6 +21,39 @@ public sealed record CombatOpponentProfileDto(
         LeP.HasValue;
 }
 
+public sealed record CombatActionBudgetDto
+{
+    public int NormalActionsRemaining { get; init; } = 1;
+    public int ReactionsRemaining { get; init; } = 1;
+    public bool FreeActionAvailable { get; init; } = true;
+    public string? HeldActionId { get; init; }
+    public int? HeldActionRound { get; init; }
+
+    public bool HasNormalAction => NormalActionsRemaining > 0;
+    public bool HasReaction => ReactionsRemaining > 0;
+
+    public CombatActionBudgetDto ConsumeNormalAction(int cost = 1) => this with
+    {
+        NormalActionsRemaining = Math.Max(0, NormalActionsRemaining - Math.Max(1, cost)),
+        HeldActionId = null,
+        HeldActionRound = null
+    };
+
+    public CombatActionBudgetDto ConsumeReaction() => this with
+    {
+        ReactionsRemaining = Math.Max(0, ReactionsRemaining - 1)
+    };
+
+    public CombatActionBudgetDto ResetForRound() => this with
+    {
+        NormalActionsRemaining = 1,
+        ReactionsRemaining = 1,
+        FreeActionAvailable = true,
+        HeldActionId = null,
+        HeldActionRound = null
+    };
+}
+
 public enum CombatActionEntryState
 {
     Open,
@@ -56,6 +89,7 @@ public sealed record CombatSessionParticipantDto
     public string? OwnerUserId { get; init; }
     public string? Affiliation { get; init; }
     public CombatOpponentProfileDto? OpponentProfile { get; init; }
+    public CombatActionBudgetDto? ActionBudget { get; init; }
     public int? InitiativeBase { get; init; }
     public string? InitiativeSetId { get; init; }
     public int? StartRoll { get; init; }

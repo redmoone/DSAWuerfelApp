@@ -237,6 +237,7 @@ public sealed class CombatSessionStateService(
             RuntimeState = request.RuntimeState ?? participant.RuntimeState,
             RecoverableInitiativeLoss = 0,
             CurrentInitiative = finalInitiative,
+            ActionBudget = new CombatActionBudgetDto(),
             ActionAvailable = true,
             ReactionAvailable = true,
             IsOriented = false
@@ -331,7 +332,8 @@ public sealed class CombatSessionStateService(
             CurrentInitiative = request.Initiative,
             InitiativeCorrection = correction,
             ActionAvailable = true,
-            ReactionAvailable = participant.ReactionAvailable
+            ReactionAvailable = participant.ReactionAvailable,
+            ActionBudget = participant.ActionBudget ?? new CombatActionBudgetDto()
         };
         var actions = current.Actions;
         if (actions.All(action => action.ParticipantId != participant.Id || action.Round != current.Round))
@@ -385,6 +387,11 @@ public sealed class CombatSessionStateService(
 
         var participant = current.Participants.FirstOrDefault(item => item.Id == action.ParticipantId)
                           ?? throw Validation("Der Teilnehmer für die Handlung wurde nicht gefunden.");
+        var budget = participant.ActionBudget ?? new CombatActionBudgetDto();
+        if (!action.IsAdditional && !budget.HasNormalAction)
+        {
+            throw Validation($"Für {participant.Name} ist keine normale Aktion mehr verfügbar.");
+        }
         if (request.RuntimeState is not null || !string.IsNullOrWhiteSpace(request.SetId))
         {
             var initiativeInfo = await ResolveInitiativeInfoAsync(
@@ -402,11 +409,15 @@ public sealed class CombatSessionStateService(
             CompletedAt = DateTimeOffset.UtcNow
         });
         var participants = current.Participants;
+        var completedParticipant = action.IsAdditional
+            ? participant
+            : participant with { ActionBudget = budget.ConsumeNormalAction(action.ActionCost) };
         if (action.Label.Equals("Orientieren", StringComparison.OrdinalIgnoreCase) &&
             action.OrientationUninterrupted)
         {
-            participants = ReplaceParticipant(participants, ApplyOrientation(participant));
+            completedParticipant = ApplyOrientation(completedParticipant);
         }
+        participants = ReplaceParticipant(participants, completedParticipant);
 
         var description = action.Label.Equals("Orientieren", StringComparison.OrdinalIgnoreCase) &&
                           !action.OrientationUninterrupted
@@ -544,9 +555,19 @@ public sealed class CombatSessionStateService(
             throw Validation($"Für {participant.Name} ist keine Reaktion mehr verfügbar.");
         }
 
+        var budget = participant.ActionBudget ?? new CombatActionBudgetDto();
+        if (!budget.HasReaction)
+        {
+            throw Validation($"Für {participant.Name} ist keine Reaktion mehr verfügbar.");
+        }
+
         return (current with
         {
-            Participants = ReplaceParticipant(current.Participants, participant with { ReactionAvailable = false })
+            Participants = ReplaceParticipant(current.Participants, participant with
+            {
+                ActionBudget = budget.ConsumeReaction(),
+                ReactionAvailable = false
+            })
         }, $"Reaktion von {participant.Name} verbraucht");
     }
 
@@ -568,8 +589,20 @@ public sealed class CombatSessionStateService(
             throw Validation("Nur eine gehaltene Handlung kann ausgeführt werden.");
         }
 
-        return (current with { Actions = ReplaceAction(current.Actions, action with { State = state }) },
-            $"{action.Label}: {description}");
+        var participant = current.Participants.FirstOrDefault(item => item.Id == action.ParticipantId);
+        var budget = participant?.ActionBudget ?? new CombatActionBudgetDto();
+        var nextBudget = state == CombatActionEntryState.Held
+            ? budget with { HeldActionId = action.Id, HeldActionRound = current.Round }
+            : budget with { HeldActionId = null, HeldActionRound = null };
+        var nextParticipants = participant is null
+            ? current.Participants
+            : ReplaceParticipant(current.Participants, participant with { ActionBudget = nextBudget });
+
+        return (current with
+        {
+            Actions = ReplaceAction(current.Actions, action with { State = state }),
+            Participants = nextParticipants
+        }, $"{action.Label}: {description}");
     }
 
     private static (CombatSessionSnapshotDto Snapshot, string Description) AddAction(
@@ -630,6 +663,7 @@ public sealed class CombatSessionStateService(
             InitiativeCorrection = request.Initiative.HasValue && request.InitiativeBase.HasValue
                 ? request.Initiative.Value - request.InitiativeBase.Value
                 : 0,
+            ActionBudget = new CombatActionBudgetDto(),
             ActionAvailable = initiative.HasValue,
             ReactionAvailable = true
         };
@@ -657,18 +691,11 @@ public sealed class CombatSessionStateService(
         }
 
         var round = current.Round + 1;
-        var participants = current.Participants
-            .Select(participant => participant with
-            {
-                ActionAvailable = participant.CurrentInitiative.HasValue,
-                ReactionAvailable = true,
-                IsOriented = false
-            })
-            .ToArray();
-        var participantsById = participants.ToDictionary(participant => participant.Id, StringComparer.Ordinal);
+        var currentParticipantsById = current.Participants
+            .ToDictionary(participant => participant.Id, StringComparer.Ordinal);
         var actions = current.Actions
             .Select(action => action.State == CombatActionEntryState.Held &&
-                              participantsById.TryGetValue(action.ParticipantId, out var participant)
+                              currentParticipantsById.TryGetValue(action.ParticipantId, out var participant)
                 ? action with
                 {
                     Round = round,
@@ -676,6 +703,29 @@ public sealed class CombatSessionStateService(
                 }
                 : action)
             .ToList();
+        var heldActions = actions
+            .Where(action => action.Round == round && action.State == CombatActionEntryState.Held)
+            .GroupBy(action => action.ParticipantId)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
+        var participants = current.Participants
+            .Select(participant =>
+            {
+                var budget = (participant.ActionBudget ?? new CombatActionBudgetDto()).ResetForRound();
+                if (heldActions.TryGetValue(participant.Id, out var heldAction))
+                {
+                    budget = budget with { HeldActionId = heldAction.Id, HeldActionRound = round };
+                }
+
+                return participant with
+                {
+                    ActionBudget = budget,
+                    ActionAvailable = participant.CurrentInitiative.HasValue,
+                    ReactionAvailable = true,
+                    IsOriented = false
+                };
+            })
+            .ToArray();
+        var participantsById = participants.ToDictionary(participant => participant.Id, StringComparer.Ordinal);
         foreach (var participant in participants.Where(item => item.CurrentInitiative.HasValue))
         {
             actions.Add(CreateNormalAction(participant, round));
@@ -971,7 +1021,11 @@ public sealed class CombatSessionStateService(
                 {
                     InitiativeDiceCount = Math.Clamp(participant.InitiativeDiceCount, 1, 2),
                     RecoverableInitiativeLoss = Math.Max(0, participant.RecoverableInitiativeLoss),
-                    InitiativeRuntimeNotes = participant.InitiativeRuntimeNotes ?? []
+                    InitiativeRuntimeNotes = participant.InitiativeRuntimeNotes ?? [],
+                    ActionBudget = NormalizeBudget(
+                        participant.ActionBudget,
+                        participant.ActionAvailable,
+                        participant.ReactionAvailable)
                 })
                 .ToArray(),
             Actions = actions,
@@ -1004,8 +1058,9 @@ public sealed class CombatSessionStateService(
         var participants = snapshot.Participants
             .Select(participant => participant with
             {
-                ActionAvailable = openActions.Any(action => action.ParticipantId == participant.Id),
-                ReactionAvailable = participant.ReactionAvailable
+                ActionAvailable = (participant.ActionBudget ?? new CombatActionBudgetDto()).HasNormalAction &&
+                                  openActions.Any(action => action.ParticipantId == participant.Id),
+                ReactionAvailable = (participant.ActionBudget ?? new CombatActionBudgetDto()).HasReaction
             })
             .ToArray();
 
@@ -1058,6 +1113,24 @@ public sealed class CombatSessionStateService(
             ActionCost = 1,
             State = CombatActionEntryState.Open
         };
+
+    private static CombatActionBudgetDto NormalizeBudget(
+        CombatActionBudgetDto? budget,
+        bool legacyActionAvailable,
+        bool legacyReactionAvailable)
+    {
+        budget ??= new CombatActionBudgetDto
+        {
+            NormalActionsRemaining = legacyActionAvailable ? 1 : 0,
+            ReactionsRemaining = legacyReactionAvailable ? 1 : 0
+        };
+        return budget with
+        {
+            NormalActionsRemaining = Math.Clamp(budget.NormalActionsRemaining, 0, 3),
+            ReactionsRemaining = Math.Clamp(budget.ReactionsRemaining, 0, 1),
+            HeldActionRound = budget.HeldActionId is null ? null : budget.HeldActionRound
+        };
+    }
 
     private static CombatSessionParticipantDto? FindParticipant(
         CombatSessionSnapshotDto snapshot,

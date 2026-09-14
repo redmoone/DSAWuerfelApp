@@ -190,10 +190,68 @@ public sealed class CombatSessionStateTests
         Assert.Equal(rolled.Snapshot.Round + 1, nextRound.Snapshot.Round);
         Assert.Equal(participant.CurrentInitiative, nextParticipant.CurrentInitiative);
         Assert.Equal(participant.StartRoll, nextParticipant.StartRoll);
+        Assert.Equal(action.Id, nextParticipant.ActionBudget?.HeldActionId);
+        Assert.Equal(nextRound.Snapshot.Round, nextParticipant.ActionBudget?.HeldActionRound);
         Assert.Contains(nextRound.Snapshot.Actions, current => current.Id == action.Id &&
             current.State == CombatActionEntryState.Held && current.Round == nextRound.Snapshot.Round);
         Assert.Contains(nextRound.Snapshot.Actions, current => current.ParticipantId == participant.Id &&
             current.State == CombatActionEntryState.Open && current.Round == nextRound.Snapshot.Round);
+    }
+
+    [Fact]
+    public async Task Normal_action_and_reaction_budgets_are_consumed_independently()
+    {
+        using var factory = new TestApplicationFactory();
+        var hero = await SeedHeroAsync(factory, "owner");
+        var session = CreateSession(factory, hero, "owner");
+        var state = factory.Services.GetRequiredService<CombatSessionStateService>();
+        var initial = await state.GetAsync(session.SessionId, "owner");
+
+        var rolled = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = initial.Revision,
+            Kind = CombatSessionMutationKind.RollInitiative,
+            HeroId = hero.Id
+        }, "owner");
+        var participant = Assert.Single(rolled.Snapshot.Participants, item => item.HeroId == hero.Id);
+        var action = Assert.Single(rolled.Snapshot.Actions, item => item.ParticipantId == participant.Id);
+
+        var completed = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = rolled.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.CompleteAction,
+            ActionId = action.Id,
+            ParticipantId = participant.Id
+        }, "owner");
+        var afterAction = Assert.Single(completed.Snapshot.Participants, item => item.Id == participant.Id);
+        Assert.Equal(0, afterAction.ActionBudget?.NormalActionsRemaining);
+        Assert.True(afterAction.ReactionAvailable);
+
+        var reaction = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = completed.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.ConsumeReaction,
+            ParticipantId = participant.Id
+        }, "owner");
+        var afterReaction = Assert.Single(reaction.Snapshot.Participants, item => item.Id == participant.Id);
+        Assert.Equal(0, afterReaction.ActionBudget?.ReactionsRemaining);
+        Assert.False(afterReaction.ActionAvailable);
+        Assert.False(afterReaction.ReactionAvailable);
+
+        await Assert.ThrowsAsync<RequestRejectedException>(() => state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = reaction.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.ConsumeReaction,
+            ParticipantId = participant.Id
+        }, "owner"));
     }
 
     [Fact]
