@@ -148,6 +148,13 @@ public sealed class CombatSessionStateService(
                 case CombatSessionMutationKind.SyncRuntimeState:
                     (next, description) = await SyncRuntimeStateAsync(current, request, userId, cancellationToken);
                     break;
+                case CombatSessionMutationKind.DeclareAttack:
+                    (next, description) = await DeclareAttackAsync(
+                        current,
+                        request,
+                        userId,
+                        cancellationToken);
+                    break;
                 case CombatSessionMutationKind.CompleteAction:
                     (next, description) = await CompleteActionAsync(current, request, userId, cancellationToken);
                     break;
@@ -393,6 +400,237 @@ public sealed class CombatSessionStateService(
             ? $"Laufender Kampfzustand von {participant.Name} gespeichert"
             : $"Laufender Kampfzustand von {participant.Name} gespeichert; INI {FormatSigned(initiativeDelta)} angepasst";
         return (current with { Participants = ReplaceParticipant(current.Participants, updatedParticipant) }, description);
+    }
+
+    private async Task<(CombatSessionSnapshotDto Snapshot, string Description)> DeclareAttackAsync(
+        CombatSessionSnapshotDto current,
+        CombatSessionMutationRequestDto request,
+        string userId,
+        CancellationToken cancellationToken)
+    {
+        if (!current.IsStarted)
+        {
+            throw Validation("Eine Attacke ist erst nach dem ersten Initiativewurf möglich.");
+        }
+
+        if (current.ActiveExchange is { Status: not CombatExchangeStatus.Completed and not CombatExchangeStatus.Cancelled })
+        {
+            throw Validation("Es ist bereits ein offener Angriffsaustausch vorhanden.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.ExchangeId))
+        {
+            throw Validation("Eine Attacke braucht eine ExchangeId.");
+        }
+
+        if (request.ActionKind is not (CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack))
+        {
+            throw Validation("Nur Nah- oder Fernkampfangriffe können deklariert werden.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.TargetParticipantId))
+        {
+            throw Validation("Für eine Attacke muss ein Ziel ausgewählt sein.");
+        }
+
+        var attacker = FindParticipant(current, request.ParticipantId, request.HeroId)
+                        ?? throw Validation("Der Angreifer wurde nicht gefunden.");
+        var target = current.Participants.FirstOrDefault(participant =>
+            string.Equals(participant.Id, request.TargetParticipantId, StringComparison.Ordinal))
+                    ?? throw Validation("Das ausgewählte Ziel gehört nicht zu diesem Kampf.");
+        if (!CombatTargetRules.IsValidTarget(attacker, target))
+        {
+            throw Validation("Das ausgewählte Ziel ist für diesen Angriff nicht gültig.");
+        }
+
+        if (!attacker.CurrentInitiative.HasValue)
+        {
+            throw Validation("Der Angreifer hat noch keinen laufenden Initiativewert.");
+        }
+
+        var action = FindAction(current, request.ActionId, attacker.Id)
+                     ?? throw Validation("Für den Angreifer ist keine offene normale Handlung vorhanden.");
+        if (action.Round != current.Round || action.IsReaction || action.State != CombatActionEntryState.Open)
+        {
+            throw Validation("Die angeforderte Handlung ist für diesen Angriff nicht offen.");
+        }
+
+        if (current.CurrentActionIds.Length > 0 && !current.CurrentActionIds.Contains(action.Id, StringComparer.Ordinal))
+        {
+            throw Validation("Der Angreifer ist in dieser Initiativephase nicht an der Reihe.");
+        }
+
+        var phaseInitiative = action.PhaseInitiative ?? attacker.CurrentInitiative;
+        if (request.PhaseInitiative.HasValue && request.PhaseInitiative != phaseInitiative)
+        {
+            throw Validation("Die angeforderte Initiativephase passt nicht zum aktuellen Kampfstand.");
+        }
+
+        var budget = attacker.ActionBudget ?? new CombatActionBudgetDto();
+        var actionCost = Math.Max(1, action.ActionCost);
+        if (!action.IsAdditional && budget.NormalActionsRemaining < actionCost)
+        {
+            throw Validation($"Für {attacker.Name} ist keine normale Aktion mehr verfügbar.");
+        }
+
+        var loadout = await ResolveAttackLoadoutAsync(attacker, request, cancellationToken);
+        var allowedDefenseActions = await ResolveAllowedDefenseActionsAsync(target, cancellationToken);
+        var exchangeId = request.ExchangeId.Trim();
+        var consumesNormalAction = !action.IsAdditional;
+        var updatedAttacker = attacker with
+        {
+            ActionBudget = consumesNormalAction ? budget.ConsumeNormalAction(actionCost) : budget
+        };
+        var updatedActions = ReplaceAction(current.Actions, action with
+        {
+            State = CombatActionEntryState.Completed,
+            CompletedAt = DateTimeOffset.UtcNow
+        });
+        var exchange = new CombatAttackExchangeDto
+        {
+            ExchangeId = exchangeId,
+            SessionId = current.SessionId,
+            RequestId = request.RequestId,
+            Revision = current.Revision + 1,
+            AttackerParticipantId = attacker.Id,
+            TargetParticipantId = target.Id,
+            Round = current.Round,
+            PhaseInitiative = phaseInitiative,
+            SetId = loadout.SetId,
+            WeaponId = loadout.WeaponId,
+            WeaponName = loadout.WeaponName,
+            AttackKind = request.ActionKind.Value,
+            Status = CombatExchangeStatus.Declared,
+            ActionConsumed = consumesNormalAction,
+            AllowedDefenseActions = allowedDefenseActions,
+            RuleNote = "Attacke deklariert; der AT-Wurf steht noch aus."
+        };
+
+        return (current with
+        {
+            Participants = ReplaceParticipant(current.Participants, updatedAttacker),
+            Actions = updatedActions,
+            ActiveExchange = exchange
+        }, $"Attacke von {attacker.Name} auf {target.Name} deklariert");
+    }
+
+    private async Task<AttackLoadout> ResolveAttackLoadoutAsync(
+        CombatSessionParticipantDto attacker,
+        CombatSessionMutationRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        if (attacker.Kind == CombatParticipantKind.Opponent)
+        {
+            if (attacker.OpponentProfile?.Attack is null)
+            {
+                throw Validation("Für diesen Gegner ist kein AT-Wert hinterlegt.");
+            }
+
+            return new AttackLoadout(
+                request.SetId,
+                request.WeaponId,
+                string.IsNullOrWhiteSpace(request.WeaponName) ? null : request.WeaponName.Trim());
+        }
+
+        var profile = await ReadCombatProfileAsync(attacker, cancellationToken)
+                      ?? throw Validation("Für den Angreifer ist kein importiertes Kampfprofil verfügbar.");
+        var set = ResolveParticipantSet(profile, attacker, request.SetId);
+        if (set is null)
+        {
+            throw Validation("Das ausgewählte Kampfset ist im importierten Profil nicht vorhanden.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.WeaponId))
+        {
+            throw Validation("Für die Attacke muss eine Waffe ausgewählt sein.");
+        }
+
+        var weapon = set.Weapons.FirstOrDefault(item =>
+            string.Equals(item.Id, request.WeaponId, StringComparison.Ordinal));
+        if (weapon is null)
+        {
+            throw Validation("Die ausgewählte Waffe gehört nicht zum Kampfset.");
+        }
+
+        if (weapon.IsAvailable == false)
+        {
+            throw Validation("Die ausgewählte Waffe ist im Kampfset nicht bereit.");
+        }
+
+        var validCategory = request.ActionKind == CombatActionKind.MeleeAttack
+            ? weapon.Category == CombatWeaponCategory.Melee && weapon.Attack.HasValue
+            : weapon.Category == CombatWeaponCategory.Ranged && weapon.RangedValue.HasValue;
+        if (!validCategory)
+        {
+            throw Validation("Waffe und Angriffsart passen nicht zusammen oder der AT-/FK-Wert fehlt.");
+        }
+
+        return new AttackLoadout(set.Id, weapon.Id, weapon.Name);
+    }
+
+    private async Task<CombatActionKind[]> ResolveAllowedDefenseActionsAsync(
+        CombatSessionParticipantDto target,
+        CancellationToken cancellationToken)
+    {
+        var targetBudget = target.ActionBudget ?? new CombatActionBudgetDto();
+        if (!targetBudget.HasReaction)
+        {
+            return [];
+        }
+
+        if (target.Kind == CombatParticipantKind.Opponent)
+        {
+            var profile = target.OpponentProfile;
+            return new[]
+                {
+                    profile?.Parry.HasValue == true ? CombatActionKind.WeaponParry : (CombatActionKind?)null,
+                    profile?.Dodge.HasValue == true ? CombatActionKind.Dodge : (CombatActionKind?)null
+                }
+                .Where(action => action.HasValue)
+                .Select(action => action!.Value)
+                .ToArray();
+        }
+
+        var combatProfile = await ReadCombatProfileAsync(target, cancellationToken);
+        var set = combatProfile is null ? null : ResolveParticipantSet(combatProfile, target, null);
+        if (set is null)
+        {
+            return [];
+        }
+
+        var actions = new List<CombatActionKind>();
+        if (set.Dodge.HasValue)
+        {
+            actions.Add(CombatActionKind.Dodge);
+        }
+
+        if (set.Weapons.Any(weapon => weapon.Category == CombatWeaponCategory.Melee && weapon.Parry.HasValue))
+        {
+            actions.Add(CombatActionKind.WeaponParry);
+        }
+
+        if (set.Weapons.Any(weapon => weapon.Category == CombatWeaponCategory.Shield && weapon.Parry.HasValue))
+        {
+            actions.Add(CombatActionKind.ShieldParry);
+        }
+
+        return actions.ToArray();
+    }
+
+    private static CombatSetVariantDto? ResolveParticipantSet(
+        CombatProfileDto profile,
+        CombatSessionParticipantDto participant,
+        string? requestedSetId)
+    {
+        if (!string.IsNullOrWhiteSpace(requestedSetId))
+        {
+            return profile.Sets.FirstOrDefault(set =>
+                string.Equals(set.Id, requestedSetId, StringComparison.Ordinal));
+        }
+
+        return profile.Sets.FirstOrDefault(set => set.Id == participant.InitiativeSetId)
+               ?? profile.Sets.FirstOrDefault(set => set.IsInUse)
+               ?? profile.Sets.FirstOrDefault(set => set.IsDefault);
     }
 
     private async Task<(CombatSessionSnapshotDto Snapshot, string Description)> CompleteActionAsync(
@@ -1321,6 +1559,11 @@ public sealed class CombatSessionStateService(
         string? SetId,
         int RuntimeModifier,
         string[] RuntimeNotes);
+
+    private sealed record AttackLoadout(
+        string? SetId,
+        string? WeaponId,
+        string? WeaponName);
 
     private sealed record AuthorizationResult(bool Allowed, string Message);
 }

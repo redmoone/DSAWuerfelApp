@@ -142,6 +142,92 @@ public sealed class CombatSessionStateTests
     }
 
     [Fact]
+    public async Task Attack_declaration_validates_target_and_loadout_before_consuming_the_action()
+    {
+        using var factory = new TestApplicationFactory();
+        var hero = await SeedHeroAsync(factory, "owner");
+        var session = CreateSession(factory, hero, "owner");
+        var state = factory.Services.GetRequiredService<CombatSessionStateService>();
+        var profile = await factory.Services.GetRequiredService<HeroCombatProfileReader>().ReadAsync(hero.Id, "owner");
+        var set = Assert.Single(profile!.Sets, item => item.ArmorModel == CombatArmorModel.Zone);
+        var weapon = Assert.Single(set.Weapons, item => item.Name == "Schwert");
+        var unavailableWeapon = Assert.Single(set.Weapons, item => item.Name == "Unbereites Schwert");
+
+        var initial = await state.GetAsync(session.SessionId, "owner");
+        var rolled = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = initial.Revision,
+            Kind = CombatSessionMutationKind.RollInitiative,
+            HeroId = hero.Id
+        }, "owner");
+        var attacker = Assert.Single(rolled.Snapshot.Participants, item => item.HeroId == hero.Id);
+        var action = Assert.Single(rolled.Snapshot.Actions, item => item.ParticipantId == attacker.Id);
+        var added = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = rolled.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.AddOpponent,
+            Name = "Übungsgegner",
+            InitiativeBase = 1,
+            Initiative = 1,
+            OpponentProfile = new CombatOpponentProfileDto(10, 8, 7, 2, 20)
+        }, "owner");
+        var target = Assert.Single(added.Snapshot.Participants, item => item.Kind == CombatParticipantKind.Opponent);
+
+        var invalidTarget = new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = added.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.DeclareAttack,
+            ParticipantId = attacker.Id,
+            TargetParticipantId = "opponent:not-in-session",
+            ActionId = action.Id,
+            ExchangeId = "exchange-invalid-target",
+            SetId = set.Id,
+            WeaponId = weapon.Id,
+            ActionKind = CombatActionKind.MeleeAttack
+        };
+        await Assert.ThrowsAsync<RequestRejectedException>(() => state.MutateAsync(invalidTarget, "owner"));
+
+        var invalidWeapon = invalidTarget with
+        {
+            RequestId = Guid.NewGuid(),
+            TargetParticipantId = target.Id,
+            ExchangeId = "exchange-unavailable-weapon",
+            WeaponId = unavailableWeapon.Id
+        };
+        await Assert.ThrowsAsync<RequestRejectedException>(() => state.MutateAsync(invalidWeapon, "owner"));
+        var unchanged = await state.GetAsync(session.SessionId, "owner");
+        Assert.Equal(added.Snapshot.Revision, unchanged.Revision);
+        Assert.Null(unchanged.ActiveExchange);
+
+        var declaration = await state.MutateAsync(invalidWeapon with
+        {
+            RequestId = Guid.NewGuid(),
+            ExchangeId = "exchange-valid",
+            WeaponId = weapon.Id
+        }, "owner");
+
+        Assert.True(declaration.Applied);
+        Assert.Equal(added.Snapshot.Revision + 1, declaration.Snapshot.Revision);
+        Assert.NotNull(declaration.Snapshot.ActiveExchange);
+        Assert.Equal("exchange-valid", declaration.Snapshot.ActiveExchange!.ExchangeId);
+        Assert.Equal(CombatExchangeStatus.Declared, declaration.Snapshot.ActiveExchange.Status);
+        Assert.Equal(attacker.Id, declaration.Snapshot.ActiveExchange.AttackerParticipantId);
+        Assert.Equal(target.Id, declaration.Snapshot.ActiveExchange.TargetParticipantId);
+        Assert.Equal([CombatActionKind.WeaponParry, CombatActionKind.Dodge],
+            declaration.Snapshot.ActiveExchange.AllowedDefenseActions);
+        Assert.Equal(0, Assert.Single(declaration.Snapshot.Participants, item => item.Id == attacker.Id)
+            .ActionBudget?.NormalActionsRemaining);
+        Assert.Equal(CombatActionEntryState.Completed,
+            Assert.Single(declaration.Snapshot.Actions, item => item.Id == action.Id).State);
+    }
+
+    [Fact]
     public async Task Held_action_moves_to_the_next_round_without_rerolling_initiative()
     {
         using var factory = new TestApplicationFactory();
@@ -513,7 +599,7 @@ public sealed class CombatSessionStateTests
                   <angaben><name>Kampftestheld</name><wundschwelle>4</wundschwelle></angaben>
                   <eigenschaften><intuition><akt>14</akt></intuition><lebensenergie><akt>22</akt></lebensenergie><ausdauer><akt>28</akt></ausdauer></eigenschaften>
                   <sonderfertigkeiten><sonderfertigkeit><name>Aufmerksamkeit</name><bezeichner>Aufmerksamkeit</bezeichner><bereich>Kampf</bereich></sonderfertigkeit></sonderfertigkeiten>
-                  <kampfsets><kampfset nr="1" tzm="true" inbenutzung="true"><ini>11</ini><ausweichen>13</ausweichen><ruestungzonen><kopf>0</kopf><brust>0</brust><ruecken>0</ruecken><bauch>0</bauch><linkerarm>0</linkerarm><rechterarm>0</rechterarm><linkesbein>0</linkesbein><rechtesbein>0</rechtesbein></ruestungzonen></kampfset><kampfset nr="2" tzm="false" inbenutzung="false"><ini>8</ini><ruestungeinfach><gesamt>0</gesamt><behinderung>0</behinderung></ruestungeinfach></kampfset></kampfsets>
+                  <kampfsets><kampfset nr="1" tzm="true" inbenutzung="true"><ini>11</ini><ausweichen>13</ausweichen><ruestungzonen><kopf>0</kopf><brust>0</brust><ruecken>0</ruecken><bauch>0</bauch><linkerarm>0</linkerarm><rechterarm>0</rechterarm><linkesbein>0</linkesbein><rechtesbein>0</rechtesbein></ruestungzonen><nahkampfwaffen><nahkampfwaffe><nummer>1</nummer><möglich>true</möglich><name>Schwert</name><at>14</at><pa>10</pa><tp>1W+4</tp></nahkampfwaffe><nahkampfwaffe><nummer>2</nummer><möglich>false</möglich><name>Unbereites Schwert</name><at>14</at><pa>10</pa><tp>1W+4</tp></nahkampfwaffe></nahkampfwaffen></kampfset><kampfset nr="2" tzm="false" inbenutzung="false"><ini>8</ini><ruestungeinfach><gesamt>0</gesamt><behinderung>0</behinderung></ruestungeinfach></kampfset></kampfsets>
                 </daten>
                 """)
         };
