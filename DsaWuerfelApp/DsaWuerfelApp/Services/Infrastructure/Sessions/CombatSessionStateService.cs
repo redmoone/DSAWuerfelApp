@@ -47,6 +47,34 @@ public sealed class CombatSessionStateService(
         }
     }
 
+    public async Task EnsureRollAvailabilityAsync(
+        CombatRollRequestDto request,
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (string.IsNullOrWhiteSpace(request.SessionId) ||
+            (!CombatActionBudgetRules.RequiresNormalAction(request.Action) &&
+             !CombatActionBudgetRules.RequiresReaction(request.Action)))
+        {
+            return;
+        }
+
+        var snapshot = await GetAsync(request.SessionId, userId, cancellationToken);
+        var participant = FindParticipant(snapshot, null, request.HeroId)
+                          ?? throw Validation("Der eigene Kampfteilnehmer wurde nicht gefunden.");
+        var budget = participant.ActionBudget ?? new CombatActionBudgetDto();
+        if (CombatActionBudgetRules.RequiresNormalAction(request.Action) && !budget.HasNormalAction)
+        {
+            throw Validation($"Für {participant.Name} ist keine normale Aktion mehr verfügbar.");
+        }
+
+        if (CombatActionBudgetRules.RequiresReaction(request.Action) && !budget.HasReaction)
+        {
+            throw Validation($"Für {participant.Name} ist keine Reaktion mehr verfügbar.");
+        }
+    }
+
     public async Task<CombatSessionMutationResultDto> MutateAsync(
         CombatSessionMutationRequestDto request,
         string userId,

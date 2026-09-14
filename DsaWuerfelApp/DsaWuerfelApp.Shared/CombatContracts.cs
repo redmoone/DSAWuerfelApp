@@ -47,6 +47,15 @@ public enum CombatExchangeStatus
     Cancelled
 }
 
+public static class CombatActionBudgetRules
+{
+    public static bool RequiresNormalAction(CombatActionKind action) => action is
+        CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack;
+
+    public static bool RequiresReaction(CombatActionKind action) => action is
+        CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge;
+}
+
 public sealed record CombatModifierDto(string Label, int Value, string? Source = null);
 
 public sealed record CombatRuleOptionsDto(

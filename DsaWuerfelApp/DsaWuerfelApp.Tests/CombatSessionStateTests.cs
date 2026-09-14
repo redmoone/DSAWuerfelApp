@@ -230,6 +230,14 @@ public sealed class CombatSessionStateTests
         var afterAction = Assert.Single(completed.Snapshot.Participants, item => item.Id == participant.Id);
         Assert.Equal(0, afterAction.ActionBudget?.NormalActionsRemaining);
         Assert.True(afterAction.ReactionAvailable);
+        await Assert.ThrowsAsync<RequestRejectedException>(() => state.EnsureRollAvailabilityAsync(
+            new CombatRollRequestDto
+            {
+                SessionId = session.SessionId,
+                HeroId = hero.Id,
+                Action = CombatActionKind.MeleeAttack
+            },
+            "owner"));
 
         var reaction = await state.MutateAsync(new CombatSessionMutationRequestDto
         {
@@ -243,6 +251,14 @@ public sealed class CombatSessionStateTests
         Assert.Equal(0, afterReaction.ActionBudget?.ReactionsRemaining);
         Assert.False(afterReaction.ActionAvailable);
         Assert.False(afterReaction.ReactionAvailable);
+        await Assert.ThrowsAsync<RequestRejectedException>(() => state.EnsureRollAvailabilityAsync(
+            new CombatRollRequestDto
+            {
+                SessionId = session.SessionId,
+                HeroId = hero.Id,
+                Action = CombatActionKind.Dodge
+            },
+            "owner"));
 
         await Assert.ThrowsAsync<RequestRejectedException>(() => state.MutateAsync(new CombatSessionMutationRequestDto
         {

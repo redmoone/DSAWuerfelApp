@@ -9,7 +9,8 @@ namespace DsaWuerfelApp.Services;
 public sealed partial class RollCombatHandler(
     HeroContextReader heroContextReader,
     HeroCombatProfileReader heroCombatProfileReader,
-    DiceService diceService)
+    DiceService diceService,
+    CombatSessionStateService combatSessionStateService)
 {
     private const int RuntimeValueLimit = 1_000_000;
 
@@ -21,6 +22,7 @@ public sealed partial class RollCombatHandler(
     {
         ArgumentNullException.ThrowIfNull(request);
         ValidateRequest(request);
+        await combatSessionStateService.EnsureRollAvailabilityAsync(request, userId, cancellationToken);
 
         var hero = await heroContextReader.LoadContextAsync(
             request.HeroId,

@@ -109,11 +109,11 @@ public partial class Kampf : IDisposable
 
     private IReadOnlyList<CombatActionPanel.ActionOption> Actions =>
     [
-        new("attack", "Attacke", FormatActionValue("AT", SelectedWeapon?.Attack), HasWeaponAttack),
-        new("parry", "Waffenparade", FormatActionValue("PA", SelectedWeapon?.Parry), HasWeaponParry),
-        new("shield-parry", "Schildparade", FormatActionValue("PA", SelectedWeapon?.Parry), HasShieldParry),
-        new("dodge", "Ausweichen", FormatActionValue("AW", SelectedSet?.Dodge), SelectedSet?.Dodge.HasValue == true),
-        new("ranged", "Fernkampf", FormatActionValue("FK", SelectedWeapon?.RangedValue), HasRangedValue),
+        new("attack", "Attacke", FormatActionValue("AT", SelectedWeapon?.Attack), HasWeaponAttack && CanUseActionBudget(CombatActionKind.MeleeAttack)),
+        new("parry", "Waffenparade", FormatActionValue("PA", SelectedWeapon?.Parry), HasWeaponParry && CanUseActionBudget(CombatActionKind.WeaponParry)),
+        new("shield-parry", "Schildparade", FormatActionValue("PA", SelectedWeapon?.Parry), HasShieldParry && CanUseActionBudget(CombatActionKind.ShieldParry)),
+        new("dodge", "Ausweichen", FormatActionValue("AW", SelectedSet?.Dodge), SelectedSet?.Dodge.HasValue == true && CanUseActionBudget(CombatActionKind.Dodge)),
+        new("ranged", "Fernkampf", FormatActionValue("FK", SelectedWeapon?.RangedValue), HasRangedValue && CanUseActionBudget(CombatActionKind.RangedAttack)),
         new("damage", "Trefferpunkte", $"TP {GetDamageText(SelectedWeapon)}", HasDamage),
         new("zone", "Trefferzone", "W20", HasCombatContext),
         new("wound-helper", "Wund-Hilfswurf", "W6", HasCombatContext),
@@ -134,6 +134,7 @@ public partial class Kampf : IDisposable
         : SelectedAction == "initiative"
             ? CanRollInitiative
         : HasCombatContext && !_rollBusy && !_valueMutationBusy &&
+          (GetActionKind() is not { } selectedKind || CanUseActionBudget(selectedKind)) &&
           Actions.FirstOrDefault(action => action.Key == SelectedAction)?.IsAvailable == true;
 
     private bool CanRollInitiative => HasCombatContext &&
@@ -167,6 +168,21 @@ public partial class Kampf : IDisposable
     private bool CanConsumeReaction => IsSessionCombat &&
                                        OwnSessionParticipant?.ReactionAvailable == true &&
                                        CombatResult?.Snapshot.Action is CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge;
+
+    private bool CanUseActionBudget(CombatActionKind action)
+    {
+        if (!IsSessionCombat)
+        {
+            return true;
+        }
+
+        var budget = OwnSessionParticipant?.ActionBudget;
+        return CombatActionBudgetRules.RequiresNormalAction(action)
+            ? budget?.HasNormalAction == true
+            : CombatActionBudgetRules.RequiresReaction(action)
+                ? budget?.HasReaction == true
+                : true;
+    }
 
     private string DrawerTitle => _drawer switch
     {
