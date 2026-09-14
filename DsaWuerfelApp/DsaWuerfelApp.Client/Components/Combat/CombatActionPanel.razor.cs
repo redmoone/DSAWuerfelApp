@@ -37,9 +37,6 @@ public partial class CombatActionPanel
     [Parameter] public EventCallback RollRequested { get; set; }
     [Parameter] public bool CanRoll { get; set; }
     [Parameter] public bool IsBusy { get; set; }
-    [Parameter] public bool CanRollInitiative { get; set; }
-    [Parameter] public string InitiativeRollText { get; set; } = "1W6";
-    [Parameter] public EventCallback InitiativeRollRequested { get; set; }
     [Parameter] public int? BaseTarget { get; set; }
     [Parameter] public int? EffectiveTarget { get; set; }
     [Parameter] public CombatFacing Facing { get; set; }
@@ -57,7 +54,7 @@ public partial class CombatActionPanel
     [Parameter] public EventCallback ResultDetailsRequested { get; set; }
 
     private IEnumerable<ActionOption> MainActions => Actions.Where(action => action.Key is "attack" or "parry" or "shield-parry" or "dodge" or "ranged");
-    private IEnumerable<ActionOption> AdditionalActions => Actions.Where(action => action.Key is "damage" or "zone");
+    private IEnumerable<ActionOption> AdditionalActions => Actions.Where(action => action.Key is "damage" or "zone" or "initiative");
     private IEnumerable<ActionOption> HelperActions => Actions.Where(action => action.Key is "wound-helper" or "fumble-helper");
     private ActionOption? SelectedActionOption => Actions.FirstOrDefault(action => action.Key == SelectedAction);
 
@@ -104,6 +101,7 @@ public partial class CombatActionPanel
             "zone" => "Trefferzone würfeln",
             "wound-helper" => "Wund-Hilfswurf",
             "fumble-helper" => "Patzer-Hilfswurf",
+            "initiative" => "Initiative würfeln",
             _ => "Wurf ausführen"
         };
 

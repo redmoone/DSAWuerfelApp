@@ -119,7 +119,8 @@ public partial class Kampf : IDisposable
         new("damage", "Trefferpunkte", $"TP {GetDamageText(SelectedWeapon)}", HasDamage),
         new("zone", "Trefferzone", "W20", HasCombatContext),
         new("wound-helper", "Wund-Hilfswurf", "W6", HasCombatContext),
-        new("fumble-helper", "Patzer-Hilfswurf", "W20", HasCombatContext)
+        new("fumble-helper", "Patzer-Hilfswurf", "W20", HasCombatContext),
+        new("initiative", "Initiative", GetInitiativeDiceLabel(), CanRollInitiative)
     ];
 
     private bool HasWeaponAttack => SelectedWeapon is { Category: CombatWeaponCategory.Melee or CombatWeaponCategory.Unarmed } && SelectedWeapon.Attack.HasValue;
@@ -132,6 +133,8 @@ public partial class Kampf : IDisposable
 
     private bool CanRoll => IsAttributeMode
         ? HasCombatContext && !_rollBusy && !_valueMutationBusy && SelectedAttributes.Count > 0
+        : SelectedAction == "initiative"
+            ? CanRollInitiative
         : HasCombatContext && !_rollBusy && !_valueMutationBusy &&
           Actions.FirstOrDefault(action => action.Key == SelectedAction)?.IsAvailable == true;
 
@@ -320,6 +323,12 @@ public partial class Kampf : IDisposable
         if (IsAttributeMode)
         {
             await HandleAttributeRollRequested();
+            return;
+        }
+
+        if (SelectedAction == "initiative")
+        {
+            await RollInitiativeFromStatusAsync();
             return;
         }
 
