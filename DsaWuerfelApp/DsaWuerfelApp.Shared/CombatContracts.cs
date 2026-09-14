@@ -197,7 +197,9 @@ public sealed record CombatDamageSnapshotDto(
     int Multiplier,
     int PostMultiplierModifier,
     int Total,
-    bool IsCritical);
+    bool IsCritical,
+    int? ArmorRating = null,
+    int? StructurePoints = null);
 
 public sealed record CombatZoneSnapshotDto(
     int? W20,
@@ -291,7 +293,9 @@ public sealed record CombatDamageCalculationDto(
     int Multiplier,
     int PostMultiplierModifier,
     int Total,
-    bool IsCritical);
+    bool IsCritical,
+    int? ArmorRating = null,
+    int? StructurePoints = null);
 
 public sealed record CombatWoundThresholdsDto(int? First, int? Second, int? Third);
 

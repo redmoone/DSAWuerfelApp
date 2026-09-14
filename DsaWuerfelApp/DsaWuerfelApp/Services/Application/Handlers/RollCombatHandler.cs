@@ -217,7 +217,9 @@ public sealed partial class RollCombatHandler(
                 calculation.Multiplier,
                 calculation.PostMultiplierModifier,
                 calculation.Total,
-                calculation.IsCritical),
+                calculation.IsCritical,
+                calculation.ArmorRating,
+                calculation.StructurePoints),
             RuleNotes = BuildRuleNotes(request, null)
                 .Append($"Importierter Schaden: {damageText ?? "unbekannt"}")
                 .ToArray()

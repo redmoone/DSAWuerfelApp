@@ -273,15 +273,24 @@ public static class CombatRollRules
         int preMultiplierModifier,
         int multiplier,
         int postMultiplierModifier,
-        bool isCritical = false)
+        bool isCritical = false,
+        int? armorRating = null)
     {
         if (diceTotal < 0 || multiplier < 1)
         {
             throw new ArgumentOutOfRangeException(nameof(diceTotal), "Schadensbestandteile müssen gültig sein.");
         }
 
+        if (armorRating < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(armorRating), "RS darf nicht negativ sein.");
+        }
+
         var total = Math.Max(0,
             (diceTotal + weaponBonus + preMultiplierModifier) * multiplier + postMultiplierModifier);
+        int? structurePoints = armorRating.HasValue
+            ? Math.Max(0, total - armorRating.Value)
+            : null;
         return new CombatDamageCalculationDto(
             diceTotal,
             weaponBonus,
@@ -289,7 +298,9 @@ public static class CombatRollRules
             multiplier,
             postMultiplierModifier,
             total,
-            isCritical);
+            isCritical,
+            armorRating,
+            structurePoints);
     }
 
     private static bool IsCheckAction(CombatActionKind action) => action is

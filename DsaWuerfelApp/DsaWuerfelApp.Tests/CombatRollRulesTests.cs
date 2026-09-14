@@ -204,4 +204,42 @@ public sealed class CombatRollRulesTests
         Assert.True(calculated.IsCritical);
         Assert.Equal(0, clamped.Total);
     }
+
+    [Theory]
+    [InlineData(4, 5, 0)]
+    [InlineData(5, 5, 0)]
+    [InlineData(9, 4, 5)]
+    public void Armor_reduces_damage_to_non_negative_structure_points(
+        int rawDamage,
+        int armorRating,
+        int expectedStructurePoints)
+    {
+        var calculated = CombatRollRules.CalculateDamage(
+            rawDamage,
+            weaponBonus: 0,
+            preMultiplierModifier: 0,
+            multiplier: 1,
+            postMultiplierModifier: 0,
+            armorRating: armorRating);
+
+        Assert.Equal(rawDamage, calculated.Total);
+        Assert.Equal(armorRating, calculated.ArmorRating);
+        Assert.Equal(expectedStructurePoints, calculated.StructurePoints);
+    }
+
+    [Fact]
+    public void Unknown_armor_keeps_structure_points_unknown()
+    {
+        var calculated = CombatRollRules.CalculateDamage(9, 0, 0, 1, 0);
+
+        Assert.Null(calculated.ArmorRating);
+        Assert.Null(calculated.StructurePoints);
+    }
+
+    [Fact]
+    public void Negative_armor_is_rejected()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            CombatRollRules.CalculateDamage(9, 0, 0, 1, 0, armorRating: -1));
+    }
 }
