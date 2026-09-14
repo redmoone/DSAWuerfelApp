@@ -18,6 +18,7 @@ public enum CombatSessionMutationKind
     RollInitiative,
     SetInitiative,
     SyncRuntimeState,
+    DeclareAttack,
     CompleteAction,
     ConsumeReaction,
     HoldAction,
@@ -92,6 +93,7 @@ public sealed record CombatSessionSnapshotDto
     public string? LastMutationDescription { get; init; }
     public string? LastMutationUserId { get; init; }
     public bool UndoAvailable { get; init; }
+    public CombatAttackExchangeDto? ActiveExchange { get; init; }
 }
 
 public sealed record CombatSessionMutationRequestDto
@@ -101,10 +103,14 @@ public sealed record CombatSessionMutationRequestDto
     public long? ExpectedRevision { get; init; }
     public CombatSessionMutationKind Kind { get; init; }
     public string? ParticipantId { get; init; }
+    public string? TargetParticipantId { get; init; }
+    public string? ExchangeId { get; init; }
     public string? ActionId { get; init; }
     public string? Name { get; init; }
     public Guid? HeroId { get; init; }
     public string? SetId { get; init; }
+    public string? WeaponId { get; init; }
+    public string? WeaponName { get; init; }
     public string? Affiliation { get; init; }
     public int? InitiativeBase { get; init; }
     public int? Initiative { get; init; }

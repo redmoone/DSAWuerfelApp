@@ -35,6 +35,18 @@ public enum CombatFollowUpKind
     FumbleTable
 }
 
+public enum CombatExchangeStatus
+{
+    Declared,
+    AttackOpen,
+    DefenseOpen,
+    Hit,
+    Avoided,
+    DamageOpen,
+    Completed,
+    Cancelled
+}
+
 public sealed record CombatModifierDto(string Label, int Value, string? Source = null);
 
 public sealed record CombatRuleOptionsDto(
@@ -86,6 +98,7 @@ public sealed record CombatRollRequestDto
     public string? SessionId { get; init; }
     public Guid? HeroId { get; init; }
     public string? SetId { get; init; }
+    public string? ExchangeId { get; init; }
     public CombatActionKind Action { get; init; }
     public string? WeaponId { get; init; }
     public string? WeaponName { get; init; }
@@ -102,6 +115,55 @@ public sealed record CombatRollRequestDto
 }
 
 public sealed record CombatLabeledRollDto(string Role, int Sides, int Value);
+
+public sealed record CombatAttackExchangeDto
+{
+    public string ExchangeId { get; init; } = string.Empty;
+    public string SessionId { get; init; } = string.Empty;
+    public Guid RequestId { get; init; }
+    public long Revision { get; init; }
+    public string AttackerParticipantId { get; init; } = string.Empty;
+    public string TargetParticipantId { get; init; } = string.Empty;
+    public int Round { get; init; } = 1;
+    public int? PhaseInitiative { get; init; }
+    public string? SetId { get; init; }
+    public string? WeaponId { get; init; }
+    public string? WeaponName { get; init; }
+    public CombatActionKind AttackKind { get; init; }
+    public CombatExchangeStatus Status { get; init; } = CombatExchangeStatus.Declared;
+    public bool ActionConsumed { get; init; }
+    public CombatRollEvaluationDto? AttackResult { get; init; }
+    public CombatActionKind[] AllowedDefenseActions { get; init; } = [];
+    public CombatActionKind? SelectedDefenseAction { get; init; }
+    public CombatRollEvaluationDto? DefenseResult { get; init; }
+    public CombatZoneSnapshotDto? Zone { get; init; }
+    public CombatDamageSnapshotDto? Damage { get; init; }
+    public Guid[] HistoryEntryIds { get; init; } = [];
+    public string? RuleNote { get; init; }
+}
+
+public static class CombatAttackExchangeRules
+{
+    public static bool HasValidIdentity(CombatAttackExchangeDto exchange) =>
+        !string.IsNullOrWhiteSpace(exchange.ExchangeId) &&
+        !string.IsNullOrWhiteSpace(exchange.SessionId) &&
+        exchange.RequestId != Guid.Empty &&
+        !string.IsNullOrWhiteSpace(exchange.AttackerParticipantId) &&
+        !string.IsNullOrWhiteSpace(exchange.TargetParticipantId) &&
+        !string.Equals(exchange.AttackerParticipantId, exchange.TargetParticipantId, StringComparison.Ordinal);
+
+    public static bool CanTransition(CombatExchangeStatus current, CombatExchangeStatus next) =>
+        (current, next) switch
+        {
+            (CombatExchangeStatus.Declared, CombatExchangeStatus.AttackOpen or CombatExchangeStatus.Cancelled) => true,
+            (CombatExchangeStatus.AttackOpen, CombatExchangeStatus.DefenseOpen or CombatExchangeStatus.Completed or CombatExchangeStatus.Cancelled) => true,
+            (CombatExchangeStatus.DefenseOpen, CombatExchangeStatus.Hit or CombatExchangeStatus.Avoided or CombatExchangeStatus.Cancelled) => true,
+            (CombatExchangeStatus.Hit, CombatExchangeStatus.DamageOpen or CombatExchangeStatus.Completed or CombatExchangeStatus.Cancelled) => true,
+            (CombatExchangeStatus.DamageOpen, CombatExchangeStatus.Completed or CombatExchangeStatus.Cancelled) => true,
+            (CombatExchangeStatus.Avoided, CombatExchangeStatus.Completed or CombatExchangeStatus.Cancelled) => true,
+            _ => false
+        };
+}
 
 public sealed record CombatDamageSnapshotDto(
     int DiceTotal,
