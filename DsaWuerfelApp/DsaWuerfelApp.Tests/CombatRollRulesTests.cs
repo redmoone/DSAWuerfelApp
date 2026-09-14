@@ -26,6 +26,81 @@ public sealed class CombatRollRulesTests
     }
 
     [Fact]
+    public void Missed_attack_completes_without_a_hit()
+    {
+        var attack = CombatRollRules.Evaluate(CombatActionKind.MeleeAttack, 10, [], 18);
+
+        var decision = CombatRollRules.ResolveAttackDecision(
+            attack,
+            [CombatActionKind.WeaponParry, CombatActionKind.Dodge]);
+
+        Assert.True(decision.IsValid);
+        Assert.Equal(CombatExchangeStatus.Completed, decision.Status);
+        Assert.False(decision.IsHit);
+    }
+
+    [Fact]
+    public void Successful_attack_opens_only_the_allowed_defense_actions()
+    {
+        var attack = CombatRollRules.Evaluate(CombatActionKind.MeleeAttack, 14, [], 10);
+
+        var decision = CombatRollRules.ResolveAttackDecision(
+            attack,
+            [CombatActionKind.WeaponParry, CombatActionKind.Dodge]);
+
+        Assert.Equal(CombatExchangeStatus.DefenseOpen, decision.Status);
+        Assert.Equal(
+            [CombatActionKind.WeaponParry, CombatActionKind.Dodge],
+            decision.AllowedDefenseActions);
+    }
+
+    [Fact]
+    public void Successful_and_failed_defense_resolve_to_avoided_or_hit()
+    {
+        var attack = CombatRollRules.ResolveAttackDecision(
+            CombatRollRules.Evaluate(CombatActionKind.MeleeAttack, 14, [], 10),
+            [CombatActionKind.WeaponParry, CombatActionKind.Dodge]);
+        var successfulParry = CombatRollRules.Evaluate(CombatActionKind.WeaponParry, 12, [], 8);
+        var failedDodge = CombatRollRules.Evaluate(CombatActionKind.Dodge, 8, [], 15);
+
+        var avoided = CombatRollRules.ResolveDefenseDecision(attack, successfulParry);
+        var hit = CombatRollRules.ResolveDefenseDecision(attack, failedDodge);
+
+        Assert.Equal(CombatExchangeStatus.Avoided, avoided.Status);
+        Assert.False(avoided.IsHit);
+        Assert.Equal(CombatExchangeStatus.Hit, hit.Status);
+        Assert.True(hit.IsHit);
+    }
+
+    [Fact]
+    public void Missing_reaction_can_be_resolved_by_the_explicit_rule_option()
+    {
+        var attack = CombatRollRules.Evaluate(CombatActionKind.MeleeAttack, 14, [], 10);
+
+        var hit = CombatRollRules.ResolveAttackDecision(attack, [], allowUnopposedHit: true);
+        var unresolved = CombatRollRules.ResolveAttackDecision(attack, [], allowUnopposedHit: false);
+
+        Assert.Equal(CombatExchangeStatus.Hit, hit.Status);
+        Assert.True(hit.IsHit);
+        Assert.Equal(CombatExchangeStatus.Completed, unresolved.Status);
+        Assert.False(unresolved.IsHit);
+    }
+
+    [Fact]
+    public void Defense_of_the_wrong_type_is_rejected()
+    {
+        var attack = CombatRollRules.ResolveAttackDecision(
+            CombatRollRules.Evaluate(CombatActionKind.MeleeAttack, 14, [], 10),
+            [CombatActionKind.WeaponParry]);
+        var dodge = CombatRollRules.Evaluate(CombatActionKind.Dodge, 12, [], 8);
+
+        var decision = CombatRollRules.ResolveDefenseDecision(attack, dodge);
+
+        Assert.False(decision.IsValid);
+        Assert.Equal(CombatExchangeStatus.Cancelled, decision.Status);
+    }
+
+    [Fact]
     public void Confirmed_attack_one_is_critical()
     {
         var evaluation = CombatRollRules.Evaluate(CombatActionKind.MeleeAttack, 14, [], 1, 12);

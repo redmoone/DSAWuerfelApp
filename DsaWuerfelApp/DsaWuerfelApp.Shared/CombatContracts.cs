@@ -258,6 +258,23 @@ public sealed record CombatRollEvaluationDto(
     bool RequiresDefenseDecision,
     string StatusLabel);
 
+public sealed record CombatAttackDecisionDto(
+    bool IsValid,
+    string? ValidationMessage,
+    CombatExchangeStatus Status,
+    CombatActionKind AttackAction,
+    CombatActionKind[] AllowedDefenseActions,
+    bool IsHit,
+    string StatusLabel);
+
+public sealed record CombatDefenseDecisionDto(
+    bool IsValid,
+    string? ValidationMessage,
+    CombatExchangeStatus Status,
+    CombatActionKind DefenseAction,
+    bool IsHit,
+    string StatusLabel);
+
 public sealed record CombatDamageCalculationDto(
     int DiceTotal,
     int WeaponBonus,

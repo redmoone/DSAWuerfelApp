@@ -2,6 +2,90 @@ namespace DsaWuerfelApp.Shared;
 
 public static class CombatRollRules
 {
+    public static CombatAttackDecisionDto ResolveAttackDecision(
+        CombatRollEvaluationDto attack,
+        IReadOnlyList<CombatActionKind>? allowedDefenseActions,
+        bool allowUnopposedHit = true)
+    {
+        ArgumentNullException.ThrowIfNull(attack);
+        allowedDefenseActions ??= Array.Empty<CombatActionKind>();
+
+        if (attack.Action is not (CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack))
+        {
+            return InvalidAttackDecision(attack.Action, "Nur AT- oder FK-Ergebnisse können einen Angriff eröffnen.");
+        }
+
+        if (!attack.IsValid)
+        {
+            return InvalidAttackDecision(attack.Action, attack.ValidationMessage ?? "Der Angriff ist nicht auswertbar.");
+        }
+
+        if (!attack.IsSuccessful)
+        {
+            return new CombatAttackDecisionDto(
+                true,
+                null,
+                CombatExchangeStatus.Completed,
+                attack.Action,
+                allowedDefenseActions.ToArray(),
+                false,
+                "Angriff misslungen");
+        }
+
+        if (allowedDefenseActions.Count == 0)
+        {
+            return new CombatAttackDecisionDto(
+                true,
+                null,
+                allowUnopposedHit ? CombatExchangeStatus.Hit : CombatExchangeStatus.Completed,
+                attack.Action,
+                [],
+                allowUnopposedHit,
+                allowUnopposedHit ? "Treffer ohne zulässige Reaktion" : "Keine zulässige Reaktion");
+        }
+
+        return new CombatAttackDecisionDto(
+            true,
+            null,
+            CombatExchangeStatus.DefenseOpen,
+            attack.Action,
+            allowedDefenseActions.Distinct().ToArray(),
+            false,
+            "Abwehrentscheidung offen");
+    }
+
+    public static CombatDefenseDecisionDto ResolveDefenseDecision(
+        CombatAttackDecisionDto attack,
+        CombatRollEvaluationDto defense)
+    {
+        ArgumentNullException.ThrowIfNull(attack);
+        ArgumentNullException.ThrowIfNull(defense);
+
+        if (!attack.IsValid || attack.Status != CombatExchangeStatus.DefenseOpen)
+        {
+            return InvalidDefenseDecision(defense.Action, "Für diesen Angriff ist keine Abwehrentscheidung offen.");
+        }
+
+        if (!CombatActionBudgetRules.RequiresReaction(defense.Action) ||
+            !attack.AllowedDefenseActions.Contains(defense.Action))
+        {
+            return InvalidDefenseDecision(defense.Action, "Diese Reaktion ist für den offenen Angriff nicht zulässig.");
+        }
+
+        if (!defense.IsValid)
+        {
+            return InvalidDefenseDecision(defense.Action, defense.ValidationMessage ?? "Die Abwehr ist nicht auswertbar.");
+        }
+
+        return new CombatDefenseDecisionDto(
+            true,
+            null,
+            defense.IsSuccessful ? CombatExchangeStatus.Avoided : CombatExchangeStatus.Hit,
+            defense.Action,
+            !defense.IsSuccessful,
+            defense.IsSuccessful ? "Angriff abgewehrt" : "Abwehr misslungen · Treffer");
+    }
+
     public static int? ResolveEffectiveTarget(
         int? baseValue,
         IReadOnlyList<CombatModifierDto>? modifiers)
@@ -262,4 +346,25 @@ public static class CombatRollRules
         false,
         false,
         "Nicht ausgewertet");
+
+    private static CombatAttackDecisionDto InvalidAttackDecision(
+        CombatActionKind action,
+        string message) => new(
+            false,
+            message,
+            CombatExchangeStatus.Cancelled,
+            action,
+            [],
+            false,
+            "Angriff nicht auswertbar");
+
+    private static CombatDefenseDecisionDto InvalidDefenseDecision(
+        CombatActionKind action,
+        string message) => new(
+            false,
+            message,
+            CombatExchangeStatus.Cancelled,
+            action,
+            false,
+            "Abwehr nicht auswertbar");
 }
