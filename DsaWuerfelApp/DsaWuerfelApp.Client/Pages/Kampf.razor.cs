@@ -40,6 +40,7 @@ public partial class Kampf : IDisposable
     private string _announcementDraft = string.Empty;
     private CombatParticipantDrawerMode _participantDrawerMode;
     private RollHistoryEntryDto? _selectedHistoryEntry;
+    private string? _selectedTargetParticipantId;
 
     private Hero? ActiveHero => ActiveHeroState.CurrentHero;
     private CombatProfileDto? Profile => CombatState.Profile;
@@ -134,8 +135,11 @@ public partial class Kampf : IDisposable
         : SelectedAction == "initiative"
             ? CanRollInitiative
         : HasCombatContext && !_rollBusy && !_valueMutationBusy &&
-          (GetActionKind() is not { } selectedKind || CanUseActionBudget(selectedKind)) &&
-          Actions.FirstOrDefault(action => action.Key == SelectedAction)?.IsAvailable == true;
+          (GetActionKind() is not { } selectedKind ||
+           CanUseActionBudget(selectedKind) ||
+           CanRollOpenSessionAttack(selectedKind)) &&
+          (GetActionKind() is { } activeKind && CanRollOpenSessionAttack(activeKind) ||
+           Actions.FirstOrDefault(action => action.Key == SelectedAction)?.IsAvailable == true);
 
     private bool CanRollInitiative => HasCombatContext &&
                                       SelectedSet?.Initiative.HasValue == true &&
@@ -201,6 +205,28 @@ public partial class Kampf : IDisposable
             .ThenByDescending(participant => participant.InitiativeBase ?? int.MinValue)
             .ThenBy(participant => participant.Name, StringComparer.OrdinalIgnoreCase)
             .ToArray() ?? Array.Empty<CombatSessionParticipantDto>();
+
+    private IReadOnlyList<CombatSessionParticipantDto> TargetParticipants =>
+        SessionCombat?.Participants
+            .Where(participant => participant.Id != OwnSessionParticipant?.Id)
+            .Where(participant => participant.Kind == CombatParticipantKind.Hero
+                ? participant.HeroId.HasValue
+                : participant.OpponentProfile?.HasBasicCombatValues == true)
+            .OrderBy(participant => participant.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray() ?? Array.Empty<CombatSessionParticipantDto>();
+
+    private string? SelectedTargetParticipantId =>
+        TargetParticipants.Any(participant => participant.Id == _selectedTargetParticipantId)
+            ? _selectedTargetParticipantId
+            : TargetParticipants.FirstOrDefault()?.Id;
+
+    private string? ActiveExchangeAttackerName => SessionCombat?.ActiveExchange is { } exchange
+        ? SessionCombat.Participants.FirstOrDefault(participant => participant.Id == exchange.AttackerParticipantId)?.Name
+        : null;
+
+    private string? ActiveExchangeTargetName => SessionCombat?.ActiveExchange is { } exchange
+        ? SessionCombat.Participants.FirstOrDefault(participant => participant.Id == exchange.TargetParticipantId)?.Name
+        : null;
 
     private IReadOnlyList<CombatSessionActionDto> CurrentSessionActions =>
         SessionCombat?.Actions
@@ -355,6 +381,11 @@ public partial class Kampf : IDisposable
         _notice = null;
         try
         {
+            if (!await EnsureSessionAttackDeclaredAsync(action))
+            {
+                return;
+            }
+
             await CombatCoordinator.RollAsync(BuildRollRequest(action));
         }
         catch (Exception exception)
@@ -402,6 +433,9 @@ public partial class Kampf : IDisposable
             SessionId = SessionState.ActiveSessionId,
             HeroId = ActiveHero?.Id,
             SetId = SelectedSet?.Id,
+            ExchangeId = IsSessionCombat && action is (CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack)
+                ? SessionCombat?.ActiveExchange?.ExchangeId
+                : null,
             Action = action,
             WeaponId = action is CombatActionKind.Dodge or CombatActionKind.HitZone or CombatActionKind.InitiativeHelper or CombatActionKind.WoundHelper or CombatActionKind.FumbleHelper
                 ? null
@@ -424,6 +458,81 @@ public partial class Kampf : IDisposable
             },
             Note = string.IsNullOrWhiteSpace(RollText) ? null : RollText.Trim()
         };
+    }
+
+    private async Task<bool> EnsureSessionAttackDeclaredAsync(CombatActionKind action)
+    {
+        if (!IsSessionCombat || action is not (CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack))
+        {
+            return true;
+        }
+
+        if (SessionCombat?.ActiveExchange is { } existing &&
+            existing.Status == CombatExchangeStatus.Declared &&
+            existing.AttackKind == action)
+        {
+            return true;
+        }
+
+        if (SessionCombat?.ActiveExchange is { Status: not (CombatExchangeStatus.Completed or CombatExchangeStatus.Cancelled or CombatExchangeStatus.Avoided) })
+        {
+            _notice = "Der offene Angriffsaustausch muss zuerst abgeschlossen werden.";
+            return false;
+        }
+
+        if (OwnSessionParticipant is not { } attacker ||
+            string.IsNullOrWhiteSpace(SelectedTargetParticipantId))
+        {
+            _notice = "Bitte zuerst ein gültiges Angriffsziel auswählen.";
+            return false;
+        }
+
+        var openAction = SessionCombat?.Actions.FirstOrDefault(current =>
+            current.ParticipantId == attacker.Id &&
+            current.Round == SessionCombat.Round &&
+            !current.IsReaction &&
+            current.State == CombatActionEntryState.Open);
+        if (openAction is null)
+        {
+            _notice = "Für den eigenen Teilnehmer ist keine offene normale Handlung vorhanden.";
+            return false;
+        }
+
+        var result = await CombatSessionState.DeclareAttackAsync(
+            attacker.Id,
+            SelectedTargetParticipantId,
+            openAction.Id,
+            action,
+            Guid.NewGuid().ToString("N"),
+            SelectedSet?.Id,
+            SelectedWeapon?.Id,
+            SelectedWeapon?.Name,
+            openAction.PhaseInitiative,
+            ActiveHero?.Id);
+        if (!result.Applied && !result.AlreadyApplied)
+        {
+            _notice = result.Message;
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool CanRollOpenSessionAttack(CombatActionKind action)
+    {
+        if (!IsSessionCombat || action is not (CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack))
+        {
+            return false;
+        }
+
+        return SessionCombat?.ActiveExchange is { Status: CombatExchangeStatus.Declared } exchange &&
+               exchange.AttackKind == action;
+    }
+
+    private Task HandleTargetSelected(string participantId)
+    {
+        _selectedTargetParticipantId = participantId;
+        return Task.CompletedTask;
     }
 
     private Task HandleFacingChanged(CombatFacing facing) => CombatState.SetFacingAsync(facing);

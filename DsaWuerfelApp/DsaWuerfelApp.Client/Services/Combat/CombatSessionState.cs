@@ -157,6 +157,32 @@ public sealed class CombatSessionState : IDisposable
             SetId = setId
         }, cancellationToken);
 
+    public Task<CombatSessionMutationResultDto> DeclareAttackAsync(
+        string participantId,
+        string targetParticipantId,
+        string actionId,
+        CombatActionKind action,
+        string? exchangeId = null,
+        string? setId = null,
+        string? weaponId = null,
+        string? weaponName = null,
+        int? phaseInitiative = null,
+        Guid? heroId = null,
+        CancellationToken cancellationToken = default) => MutateAsync(new CombatSessionMutationRequestDto
+        {
+            Kind = CombatSessionMutationKind.DeclareAttack,
+            ParticipantId = participantId,
+            TargetParticipantId = targetParticipantId,
+            ActionId = actionId,
+            ActionKind = action,
+            ExchangeId = string.IsNullOrWhiteSpace(exchangeId) ? Guid.NewGuid().ToString("N") : exchangeId,
+            SetId = setId,
+            WeaponId = weaponId,
+            WeaponName = weaponName,
+            PhaseInitiative = phaseInitiative,
+            HeroId = heroId
+        }, cancellationToken);
+
     public Task<CombatSessionMutationResultDto> CompleteActionAsync(
         string? actionId = null,
         string? participantId = null,

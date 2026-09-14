@@ -19,6 +19,10 @@ public partial class CombatActionPanel
     [Parameter] public IReadOnlyList<CombatWeaponDto> Weapons { get; set; } = Array.Empty<CombatWeaponDto>();
     [Parameter] public string? SelectedWeaponId { get; set; }
     [Parameter] public EventCallback<string> WeaponSelected { get; set; }
+    [Parameter] public bool IsSessionCombat { get; set; }
+    [Parameter] public IReadOnlyList<CombatSessionParticipantDto> TargetParticipants { get; set; } = Array.Empty<CombatSessionParticipantDto>();
+    [Parameter] public string? SelectedTargetParticipantId { get; set; }
+    [Parameter] public EventCallback<string> TargetSelected { get; set; }
     [Parameter] public string SelectedAction { get; set; } = "attack";
     [Parameter] public EventCallback<string> ActionSelected { get; set; }
     [Parameter] public IReadOnlyList<ActionOption> Actions { get; set; } = Array.Empty<ActionOption>();
@@ -48,6 +52,9 @@ public partial class CombatActionPanel
     [Parameter] public IReadOnlyList<int> ResultDiceSides { get; set; } = Array.Empty<int>();
     [Parameter] public IReadOnlyList<int> ResultDiceValues { get; set; } = Array.Empty<int>();
     [Parameter] public long ResultVersion { get; set; }
+    [Parameter] public CombatAttackExchangeDto? ActiveExchange { get; set; }
+    [Parameter] public string? ActiveExchangeAttackerName { get; set; }
+    [Parameter] public string? ActiveExchangeTargetName { get; set; }
 
     private IEnumerable<ActionOption> MainActions => Actions.Where(action => action.Key is "attack" or "parry" or "shield-parry" or "dodge" or "ranged");
     private IEnumerable<ActionOption> AdditionalActions => Actions.Where(action => action.Key is "damage" or "zone" or "initiative");
@@ -79,6 +86,23 @@ public partial class CombatActionPanel
     private string ActiveRollTitle => AttributeMode
         ? "Eigenschaftsprobe"
         : SelectedActionOption?.Label ?? "Kampfwurf";
+
+    private string ActiveExchangeStatusText => ActiveExchange?.Status switch
+    {
+        CombatExchangeStatus.Declared => "AT-Wurf offen",
+        CombatExchangeStatus.AttackOpen => "AT-Wurf offen",
+        CombatExchangeStatus.DefenseOpen => "Abwehrentscheidung offen",
+        CombatExchangeStatus.Hit => "Treffer bestätigt · Trefferfolge offen",
+        CombatExchangeStatus.DamageOpen => "Schaden offen",
+        CombatExchangeStatus.Avoided => "Angriff abgewehrt",
+        CombatExchangeStatus.Completed => "Austausch abgeschlossen",
+        CombatExchangeStatus.Cancelled => "Austausch abgebrochen",
+        _ => ""
+    };
+
+    private static string GetEvaluationText(CombatRollEvaluationDto evaluation) =>
+        $"{evaluation.StatusLabel} · {evaluation.MainRoll}" +
+        (evaluation.EffectiveTarget is { } target ? $" / {target}" : string.Empty);
 
     private string RollButtonText => AttributeMode
         ? "Eigenschaften würfeln"
@@ -121,6 +145,15 @@ public partial class CombatActionPanel
             await WeaponSelected.InvokeAsync(value);
         }
     }
+
+    private Task HandleTargetChanged(ChangeEventArgs args)
+    {
+        var value = args.Value?.ToString();
+        return string.IsNullOrWhiteSpace(value) ? Task.CompletedTask : TargetSelected.InvokeAsync(value);
+    }
+
+    private static string GetTargetKindLabel(CombatSessionParticipantDto participant) =>
+        participant.Kind == CombatParticipantKind.Hero ? "Held" : "Gegner";
 
     private Task HandleSetChanged(ChangeEventArgs args)
     {

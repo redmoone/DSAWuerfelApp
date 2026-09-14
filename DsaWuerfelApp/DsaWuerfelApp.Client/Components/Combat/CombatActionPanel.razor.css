@@ -34,6 +34,87 @@
     gap: 0.75rem;
 }
 
+.combat-exchange-card,
+.combat-target-choice {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.7rem;
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.42);
+    border-radius: 9px;
+    background: rgba(21, 48, 78, 0.42);
+}
+
+.combat-exchange-heading,
+.combat-exchange-meta,
+.combat-exchange-result {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.55rem;
+}
+
+.combat-exchange-heading > div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.combat-exchange-heading strong {
+    color: var(--dsa-white);
+    font-size: 0.86rem;
+    overflow-wrap: anywhere;
+}
+
+.combat-exchange-status {
+    flex: 0 0 auto;
+    color: var(--dsa-gold);
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-align: right;
+}
+
+.combat-exchange-meta,
+.combat-exchange-note {
+    color: var(--dsa-text-muted);
+    font-size: 0.72rem;
+}
+
+.combat-exchange-meta {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 0.25rem 0.7rem;
+}
+
+.combat-exchange-result {
+    padding-top: 0.4rem;
+    border-top: 1px solid rgba(212, 175, 55, 0.2);
+    color: var(--dsa-text-muted);
+    font-size: 0.72rem;
+}
+
+.combat-exchange-result strong {
+    color: var(--dsa-white);
+    font-size: 0.76rem;
+    text-align: right;
+}
+
+.combat-exchange-note {
+    margin: 0;
+    line-height: 1.35;
+}
+
+.combat-target-choice {
+    background: rgba(7, 17, 29, 0.38);
+}
+
+.combat-target-select {
+    width: 100%;
+}
+
 .combat-action-panel h2,
 .combat-roll-completion-heading h3 {
     margin: 0;
@@ -431,6 +512,15 @@
 
     .combat-target-preview > span {
         max-width: none;
+        text-align: left;
+    }
+
+    .combat-exchange-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .combat-exchange-status {
         text-align: left;
     }
 

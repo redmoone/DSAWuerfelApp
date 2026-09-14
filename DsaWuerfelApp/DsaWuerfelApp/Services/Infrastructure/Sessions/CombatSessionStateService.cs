@@ -985,7 +985,8 @@ public sealed class CombatSessionStateService(
             throw Validation("Eine Attacke ist erst nach dem ersten Initiativewurf möglich.");
         }
 
-        if (current.ActiveExchange is { Status: not CombatExchangeStatus.Completed and not CombatExchangeStatus.Cancelled })
+        if (current.ActiveExchange is
+            { Status: not (CombatExchangeStatus.Completed or CombatExchangeStatus.Cancelled or CombatExchangeStatus.Avoided) })
         {
             throw Validation("Es ist bereits ein offener Angriffsaustausch vorhanden.");
         }

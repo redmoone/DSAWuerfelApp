@@ -9,6 +9,45 @@
         </div>
     </div>
 
+    @if (IsSessionCombat && ActiveExchange is { } exchange)
+    {
+        <section class="combat-exchange-card" data-testid="combat-exchange" aria-label="Aktiver Angriffsaustausch">
+            <div class="combat-exchange-heading">
+                <div>
+                    <span class="combat-field-label">Angriffsaustausch</span>
+                    <strong>@ActiveExchangeAttackerName → @ActiveExchangeTargetName</strong>
+                </div>
+                <span class="combat-exchange-status">@ActiveExchangeStatusText</span>
+            </div>
+            <div class="combat-exchange-meta">
+                <span>@exchange.WeaponName</span>
+                <span>Runde @exchange.Round</span>
+                @if (exchange.PhaseInitiative is { } phaseInitiative)
+                {
+                    <span>INI @phaseInitiative</span>
+                }
+            </div>
+            @if (exchange.AttackResult is { } attackResult)
+            {
+                <div class="combat-exchange-result">
+                    <span>AT</span>
+                    <strong>@GetEvaluationText(attackResult)</strong>
+                </div>
+            }
+            @if (exchange.DefenseResult is { } defenseResult)
+            {
+                <div class="combat-exchange-result">
+                    <span>@(exchange.SelectedDefenseAction?.ToString() ?? "Abwehr")</span>
+                    <strong>@GetEvaluationText(defenseResult)</strong>
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(exchange.RuleNote))
+            {
+                <p class="combat-exchange-note">@exchange.RuleNote</p>
+            }
+        </section>
+    }
+
     <div class="combat-action-workspace">
         <div class="combat-setup-column">
             @if (AttributeMode)
@@ -62,6 +101,28 @@
             }
             else
             {
+                @if (IsSessionCombat)
+                {
+                    <div class="combat-target-choice">
+                        <label class="combat-field-label" for="combat-target-select">Ziel</label>
+                        <select id="combat-target-select"
+                                class="ui-select combat-target-select"
+                                aria-label="Angriffsziel auswählen"
+                                value="@SelectedTargetParticipantId"
+                                disabled="@IsBusy"
+                                @onchange="HandleTargetChanged">
+                            @if (TargetParticipants.Count == 0)
+                            {
+                                <option value="">Kein gültiges Ziel</option>
+                            }
+                            @foreach (var participant in TargetParticipants)
+                            {
+                                <option value="@participant.Id">@participant.Name · @GetTargetKindLabel(participant)</option>
+                            }
+                        </select>
+                    </div>
+                }
+
                 <details class="combat-loadout-details">
                     <summary>
                         <span class="combat-field-label">Kampfausrüstung</span>
