@@ -13,11 +13,14 @@
                        StepMaximum="@Maximum"
                        AllowEmpty="true"
                        DisableStepsWhenEmpty="true"
-                       Disabled="@Disabled" />
-        @if (Maximum.HasValue)
-        {
-            <span class="resource-maximum">/ @Maximum</span>
-        }
+                       Disabled="@Disabled">
+            <TrailingContent>
+                @if (Maximum.HasValue)
+                {
+                    <span class="resource-maximum">/@Maximum</span>
+                }
+            </TrailingContent>
+        </NumberControl>
     </div>
 
 </div>

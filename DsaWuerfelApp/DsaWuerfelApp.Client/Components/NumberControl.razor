@@ -22,6 +22,10 @@
                    @onkeydown="HandleKeyDown"
                    @onblur="CommitAsync" />
         </label>
+        @if (TrailingContent is not null)
+        {
+            @TrailingContent
+        }
         <UiButton Variant="icon"
                   Size="compact"
                   Class="number-control-button"
