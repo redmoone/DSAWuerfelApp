@@ -243,7 +243,7 @@ public sealed partial class RollCombatHandler(
     {
         var d20 = RollSingleD20();
         var mapped = CombatZoneRules.ResolveHitZone(d20, request.Zone);
-        var armorRating = GetArmorValue(set, mapped.ArmorZone);
+        var armorRating = CombatZoneRules.ResolveArmorRating(set, mapped.ArmorZone);
         var snapshot = new CombatRollSnapshotDto
         {
             EntryId = Guid.NewGuid(),
@@ -533,23 +533,6 @@ public sealed partial class RollCombatHandler(
         CombatActionKind.FumbleHelper => "Patzer-Hilfswurf",
         _ => "Kampfwurf"
     };
-
-    private static int? GetArmorValue(CombatSetVariantDto set, CombatArmorZone zone)
-    {
-        var armor = set.ArmorZones;
-        return zone switch
-        {
-            CombatArmorZone.Head => armor?.Head,
-            CombatArmorZone.Chest => armor?.Chest,
-            CombatArmorZone.Back => armor?.Back,
-            CombatArmorZone.Abdomen => armor?.Abdomen,
-            CombatArmorZone.LeftArm => armor?.LeftArm,
-            CombatArmorZone.RightArm => armor?.RightArm,
-            CombatArmorZone.LeftLeg => armor?.LeftLeg,
-            CombatArmorZone.RightLeg => armor?.RightLeg,
-            _ => null
-        };
-    }
 
     private static void ValidateRequest(CombatRollRequestDto request)
     {

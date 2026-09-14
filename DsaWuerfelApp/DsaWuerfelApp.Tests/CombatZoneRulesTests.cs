@@ -89,4 +89,111 @@ public sealed class CombatZoneRulesTests
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => CombatZoneRules.ResolveHitZone(roll, null));
     }
+
+    [Fact]
+    public void Simple_armor_uses_its_total_rating_for_every_zone()
+    {
+        var set = CreateSet(
+            CombatArmorModel.Simple,
+            usesZonalArmor: false,
+            simpleArmor: new CombatSimpleArmorDto(4, 2));
+
+        Assert.Equal(4, CombatZoneRules.ResolveArmorRating(set, CombatArmorZone.Head));
+        Assert.Equal(4, CombatZoneRules.ResolveArmorRating(set, CombatArmorZone.LeftLeg));
+    }
+
+    [Fact]
+    public void Zonal_armor_keeps_asymmetric_arm_and_leg_values()
+    {
+        var set = CreateSet(
+            CombatArmorModel.Zone,
+            usesZonalArmor: true,
+            armorZones: new CombatArmorZonesDto(
+                Head: 5,
+                Chest: 4,
+                Back: 3,
+                Abdomen: 2,
+                LeftArm: 6,
+                RightArm: 1,
+                LeftLeg: 7,
+                RightLeg: 0,
+                Total: 4,
+                TotalProtection: 4,
+                TotalZoneProtection: 4,
+                Encumbrance: 2));
+
+        Assert.Equal(6, CombatZoneRules.ResolveArmorRating(set, CombatArmorZone.LeftArm));
+        Assert.Equal(1, CombatZoneRules.ResolveArmorRating(set, CombatArmorZone.RightArm));
+        Assert.Equal(7, CombatZoneRules.ResolveArmorRating(set, CombatArmorZone.LeftLeg));
+        Assert.Equal(0, CombatZoneRules.ResolveArmorRating(set, CombatArmorZone.RightLeg));
+    }
+
+    [Fact]
+    public void Missing_armor_stays_unknown()
+    {
+        Assert.Null(CombatZoneRules.ResolveArmorRating(null, CombatArmorZone.Chest));
+        Assert.Null(CombatZoneRules.ResolveArmorRating(
+            CreateSet(CombatArmorModel.Zone, usesZonalArmor: true),
+            CombatArmorZone.Chest));
+        Assert.Null(CombatZoneRules.ResolveArmorRating(
+            CreateSet(CombatArmorModel.Simple, usesZonalArmor: false),
+            CombatArmorZone.Chest));
+    }
+
+    [Fact]
+    public void Resolved_zone_and_rs_can_be_stored_together_for_a_hit_snapshot()
+    {
+        var set = CreateSet(
+            CombatArmorModel.Zone,
+            usesZonalArmor: true,
+            armorZones: new CombatArmorZonesDto(
+                Head: 1,
+                Chest: 2,
+                Back: 3,
+                Abdomen: 4,
+                LeftArm: 5,
+                RightArm: 6,
+                LeftLeg: 7,
+                RightLeg: 8,
+                Total: 4,
+                TotalProtection: 4,
+                TotalZoneProtection: 4,
+                Encumbrance: 1));
+        var resolved = CombatZoneRules.ResolveHitZone(
+            10,
+            new CombatZoneRollRequestDto(CombatFacing.Front, CombatArmorZone.LeftArm, CombatArmorZone.RightArm));
+
+        var snapshot = new CombatZoneSnapshotDto(
+            10,
+            resolved.ArmorZone,
+            resolved.WoundZone,
+            CombatFacing.Front,
+            CombatZoneRules.ResolveArmorRating(set, resolved.ArmorZone));
+
+        Assert.Equal(CombatArmorZone.RightArm, snapshot.ArmorZone);
+        Assert.Equal(CombatWoundZone.RightArm, snapshot.WoundZone);
+        Assert.Equal(6, snapshot.ArmorRating);
+    }
+
+    private static CombatSetVariantDto CreateSet(
+        CombatArmorModel armorModel,
+        bool usesZonalArmor,
+        CombatArmorZonesDto? armorZones = null,
+        CombatSimpleArmorDto? simpleArmor = null) =>
+        new(
+            "set-1",
+            1,
+            armorModel,
+            IsInUse: true,
+            IsDefault: true,
+            UsesZonalArmor: usesZonalArmor,
+            Dodge: null,
+            SpeedWithArmor: null,
+            Initiative: null,
+            Raufen: null,
+            Ringen: null,
+            ArmorZones: armorZones,
+            SimpleArmor: simpleArmor,
+            Weapons: [],
+            ArmorPieces: []);
 }

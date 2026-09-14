@@ -43,4 +43,36 @@ public static class CombatZoneRules
 
         return (armor, wound);
     }
+
+    public static int? ResolveArmorRating(CombatSetVariantDto? set, CombatArmorZone zone)
+    {
+        if (set is null)
+        {
+            return null;
+        }
+
+        if (set.UsesZonalArmor || set.ArmorModel == CombatArmorModel.Zone)
+        {
+            var armor = set.ArmorZones;
+            return zone switch
+            {
+                CombatArmorZone.Head => armor?.Head,
+                CombatArmorZone.Chest => armor?.Chest,
+                CombatArmorZone.Back => armor?.Back,
+                CombatArmorZone.Abdomen => armor?.Abdomen,
+                CombatArmorZone.LeftArm => armor?.LeftArm,
+                CombatArmorZone.RightArm => armor?.RightArm,
+                CombatArmorZone.LeftLeg => armor?.LeftLeg,
+                CombatArmorZone.RightLeg => armor?.RightLeg,
+                _ => null
+            };
+        }
+
+        if (set.ArmorModel == CombatArmorModel.Simple || set.SimpleArmor is not null)
+        {
+            return set.SimpleArmor?.Total;
+        }
+
+        return null;
+    }
 }
