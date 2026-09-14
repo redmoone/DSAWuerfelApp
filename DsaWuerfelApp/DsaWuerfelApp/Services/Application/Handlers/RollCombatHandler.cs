@@ -62,13 +62,12 @@ public sealed partial class RollCombatHandler(
         };
 
         if (!string.IsNullOrWhiteSpace(request.SessionId) && request.Action is
-            CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack)
+            CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack or
+            CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge)
         {
-            var sessionSnapshot = await combatSessionStateService.BindAttackRollAsync(
-                request,
-                result,
-                userId,
-                cancellationToken);
+            var sessionSnapshot = request.Action is CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack
+                ? await combatSessionStateService.BindAttackRollAsync(request, result, userId, cancellationToken)
+                : await combatSessionStateService.BindDefenseRollAsync(request, result, userId, cancellationToken);
             return result with { CombatSessionSnapshot = sessionSnapshot };
         }
 
