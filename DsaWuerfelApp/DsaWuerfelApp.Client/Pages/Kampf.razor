@@ -118,11 +118,7 @@
                                        InitiativeResult="@InitiativeResult"
                                        ResultDiceSides="@ResultDiceSides"
                                        ResultDiceValues="@ResultDiceValues"
-                                       ResultVersion="@ResultVersion"
-                                       History="@History"
-                                       HistoryEntrySelected="HandleHistorySelected"
-                                       HistoryRequested="OpenHistoryDrawer"
-                                       ResultDetailsRequested="OpenLastResultDetails" />
+                                       ResultVersion="@ResultVersion" />
                 </section>
             }
             else if (ActiveArea == CombatArea.Zonen)
@@ -290,6 +286,18 @@
                                           HoldActionRequested="HoldActionAsync"
                                           ExecuteHeldActionRequested="ExecuteHeldActionAsync"
                                           ResolveOrientationRequested="ResolveOrientationAsync" />
+
+                @if (History.Count > 0)
+                {
+                    <details class="combat-history-sidebar">
+                        <summary>Verlauf (@History.Count)</summary>
+                        <RollHistory Entries="@History.Take(3).ToArray()" EntrySelected="HandleHistorySelected" />
+                        @if (History.Count > 3)
+                        {
+                            <UiButton Size="compact" Class="combat-more-button" OnClick="OpenHistoryDrawer">Alle Ergebnisse öffnen</UiButton>
+                        }
+                    </details>
+                }
             </div>
         </div>
     </div>

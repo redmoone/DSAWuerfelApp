@@ -48,10 +48,6 @@ public partial class CombatActionPanel
     [Parameter] public IReadOnlyList<int> ResultDiceSides { get; set; } = Array.Empty<int>();
     [Parameter] public IReadOnlyList<int> ResultDiceValues { get; set; } = Array.Empty<int>();
     [Parameter] public long ResultVersion { get; set; }
-    [Parameter] public IReadOnlyList<RollHistoryEntryDto> History { get; set; } = Array.Empty<RollHistoryEntryDto>();
-    [Parameter] public EventCallback<RollHistoryEntryDto> HistoryEntrySelected { get; set; }
-    [Parameter] public EventCallback HistoryRequested { get; set; }
-    [Parameter] public EventCallback ResultDetailsRequested { get; set; }
     [Parameter] public InitiativeRollDetails? InitiativeResult { get; set; }
 
     private IEnumerable<ActionOption> MainActions => Actions.Where(action => action.Key is "attack" or "parry" or "shield-parry" or "dodge" or "ranged");
@@ -84,10 +80,6 @@ public partial class CombatActionPanel
     private string ActiveRollTitle => AttributeMode
         ? "Eigenschaftsprobe"
         : SelectedActionOption?.Label ?? "Kampfwurf";
-
-    private string ActiveRollSubtitle => AttributeMode
-        ? $"{SelectedAttributes.Count} Eigenschaft{(SelectedAttributes.Count == 1 ? string.Empty : "en")} ausgewählt"
-        : SelectedActionOption?.Detail ?? "Noch keine Aktion ausgewählt";
 
     private string RollButtonText => AttributeMode
         ? "Eigenschaften würfeln"

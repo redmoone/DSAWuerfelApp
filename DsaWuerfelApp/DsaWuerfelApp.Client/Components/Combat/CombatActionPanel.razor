@@ -236,25 +236,17 @@
                 </div>
             </div>
 
-            <div class="combat-roll-summary" aria-live="polite">
-                <div class="combat-active-roll">
-                    <span class="combat-field-label">@(AttributeMode ? "Eigenschaftswurf" : "Auswahl")</span>
-                    <strong>@ActiveRollTitle</strong>
-                    <span>@ActiveRollSubtitle</span>
-                </div>
-
-                @if (!AttributeMode && (BaseTarget.HasValue || EffectiveTarget.HasValue || GetActionKind() is CombatActionKind.Damage or CombatActionKind.HitZone or CombatActionKind.WoundHelper or CombatActionKind.FumbleHelper))
-                {
-                    <div class="combat-target-preview">
-                        <div>
-                            <span class="combat-field-label">Abschluss</span>
-                            <strong>@TargetHeadline</strong>
-                        </div>
+            @if (!AttributeMode && (BaseTarget.HasValue || EffectiveTarget.HasValue || GetActionKind() is CombatActionKind.Damage or CombatActionKind.HitZone or CombatActionKind.WoundHelper or CombatActionKind.FumbleHelper))
+            {
+                <div class="combat-target-preview">
+                    <div>
+                        <span class="combat-field-label">Abschluss</span>
+                        <strong>@TargetHeadline</strong>
                     </div>
-                }
-            </div>
+                </div>
+            }
 
-            @if (!AttributeMode)
+            @if (!AttributeMode && SelectedAction != "initiative")
             {
                 <details class="combat-calculation-details">
                     <summary>Berechnung anzeigen</summary>
@@ -308,10 +300,6 @@
                                 </span>
                             </div>
                         </div>
-                        @if (CombatResult is not null)
-                        {
-                            <UiButton Size="compact" Class="combat-result-details" OnClick="ResultDetailsRequested">Details</UiButton>
-                        }
                     </div>
                 }
                 else if (AttributeResult is not null)
@@ -322,7 +310,6 @@
                             <strong>@(AttributeResult.Success ? "Eigenschaftsprobe gelungen" : "Eigenschaftsprobe misslungen")</strong>
                             <span>@AttributeResult.SuccessCount von @AttributeResult.Details.Length Eigenschaften gelungen</span>
                         </div>
-                        <UiButton Size="compact" Class="combat-result-details" OnClick="ResultDetailsRequested">Details</UiButton>
                     </div>
                 }
                 else if (CombatResult is not null)
@@ -337,7 +324,6 @@
                                 <small class="combat-result-note">Nur TP gewürfelt; LeP und Wunden bleiben unverändert.</small>
                             }
                         </div>
-                        <UiButton Size="compact" Class="combat-result-details" OnClick="ResultDetailsRequested">Details</UiButton>
                         @if (CanConsumeReaction && CombatResult.Snapshot.Action is CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge)
                         {
                             <UiButton Variant="primary" Size="compact" Class="combat-result-reaction" OnClick="ConsumeReactionRequested">Reaktion verbrauchen</UiButton>
@@ -356,17 +342,6 @@
                 }
             </div>
 
-            @if (History.Count > 0)
-            {
-                <details class="combat-history-inline">
-                    <summary>Verlauf (@History.Count)</summary>
-                    <RollHistory Entries="@History.Take(3).ToArray()" EntrySelected="HistoryEntrySelected" />
-                    @if (History.Count > 3)
-                    {
-                        <UiButton Size="compact" Class="combat-more-button" OnClick="HistoryRequested">Alle Ergebnisse öffnen</UiButton>
-                    }
-                </details>
-            }
         </div>
     </div>
 </section>

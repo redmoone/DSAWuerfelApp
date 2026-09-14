@@ -44,7 +44,6 @@
 .combat-action-state,
 .combat-muted,
 .combat-block-heading p,
-.combat-active-roll > span:last-child,
 .combat-target-preview > span,
 .combat-roll-result > div > span:last-of-type {
     color: var(--dsa-text-muted);
@@ -81,10 +80,8 @@
 .combat-maneuver-block,
 .combat-attribute-block,
 .combat-empty-state,
-.combat-active-roll,
 .combat-target-preview,
-.combat-calculation-details,
-.combat-history-inline {
+.combat-calculation-details {
     min-width: 0;
     padding: 0.7rem;
     border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.28);
@@ -141,17 +138,6 @@
     padding: 0;
     border: 0;
     background: transparent;
-}
-
-.combat-roll-summary {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    gap: 0.45rem;
-    padding: 0.7rem;
-    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.42);
-    border-radius: 0.9rem;
-    background: rgba(21, 48, 78, 0.42);
 }
 
 .combat-choice-block,
@@ -222,8 +208,7 @@
 }
 
 .combat-helper-group summary,
-.combat-calculation-details summary,
-.combat-history-inline summary {
+.combat-calculation-details summary {
     color: var(--dsa-white);
     cursor: pointer;
     font-size: 0.78rem;
@@ -231,8 +216,7 @@
 }
 
 .combat-helper-group[open] summary,
-.combat-calculation-details[open] summary,
-.combat-history-inline[open] summary {
+.combat-calculation-details[open] summary {
     margin-bottom: 0.5rem;
     color: var(--dsa-gold);
 }
@@ -287,16 +271,6 @@
     align-items: baseline;
 }
 
-.combat-active-roll {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    padding: 0;
-    border: 0;
-    background: transparent;
-}
-
-.combat-active-roll strong,
 .combat-target-preview strong,
 .combat-roll-result strong {
     color: var(--dsa-gold);
@@ -354,8 +328,8 @@
 
 .combat-dice-viewport {
     width: 100%;
-    height: clamp(10rem, 18vw, 12rem);
-    min-height: 10rem;
+    height: clamp(6rem, 10vw, 7.5rem);
+    min-height: 6rem;
     overflow: hidden;
     border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.26);
     border-radius: 0.9rem;
@@ -434,18 +408,6 @@
 .combat-result-note {
     color: var(--dsa-gold);
     font-size: 0.7rem;
-}
-
-.combat-history-inline {
-    padding: 0.55rem 0.7rem;
-}
-
-.combat-history-inline .roll-history {
-    margin-top: 0.5rem;
-}
-
-.combat-more-button {
-    margin-top: 0.5rem;
 }
 
 .combat-roll-column ::deep .results-bar {

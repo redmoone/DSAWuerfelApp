@@ -844,14 +844,6 @@ public partial class Kampf : IDisposable
         _selectedHistoryEntry = entry;
     }
 
-    private void OpenLastResultDetails()
-    {
-        if (CombatResult is not null || AttributeResult is not null)
-        {
-            _selectedHistoryEntry = CombatResult?.HistoryEntry ?? AttributeResult?.HistoryEntry;
-        }
-    }
-
     private Task CloseHistoryDetails()
     {
         _selectedHistoryEntry = null;
