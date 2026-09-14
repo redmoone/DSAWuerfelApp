@@ -17,6 +17,7 @@ public sealed class WuerfelSignalREventBridge(WuerfelState state, GameClient gam
         gameClient.OnTalentRollResultReceived += HandleTalentRollResultReceived;
         gameClient.OnAttributeRollResultReceived += HandleAttributeRollResultReceived;
         gameClient.OnBadTraitRollResultReceived += HandleBadTraitRollResultReceived;
+        gameClient.OnHistoryEntryReceived += HandleHistoryEntryReceived;
         _isAttached = true;
     }
 
@@ -31,6 +32,7 @@ public sealed class WuerfelSignalREventBridge(WuerfelState state, GameClient gam
         gameClient.OnTalentRollResultReceived -= HandleTalentRollResultReceived;
         gameClient.OnAttributeRollResultReceived -= HandleAttributeRollResultReceived;
         gameClient.OnBadTraitRollResultReceived -= HandleBadTraitRollResultReceived;
+        gameClient.OnHistoryEntryReceived -= HandleHistoryEntryReceived;
         _isAttached = false;
     }
 
@@ -52,5 +54,10 @@ public sealed class WuerfelSignalREventBridge(WuerfelState state, GameClient gam
     private void HandleBadTraitRollResultReceived(BadTraitRollResultDto result)
     {
         state.ApplyBadTraitRollResult(result);
+    }
+
+    private void HandleHistoryEntryReceived(RollHistoryEntryDto entry)
+    {
+        state.AppendHistoryEntry(entry);
     }
 }

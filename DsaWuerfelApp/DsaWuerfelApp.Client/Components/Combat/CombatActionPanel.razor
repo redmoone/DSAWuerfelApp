@@ -274,35 +274,7 @@
                                  ShowHiddenRollHint="false"
                                  ResetButtonText="Modifikator auf 0" />
 
-                @if (!AttributeMode && SelectedAction == "initiative" && InitiativeResult is not null)
-                {
-                    <div class="combat-roll-result combat-initiative-result" data-testid="combat-initiative-result" aria-live="assertive">
-                        <div class="combat-initiative-result-content">
-                            <span class="combat-field-label">Ergebnis</span>
-                            <strong>Initiative @InitiativeResult.Total</strong>
-                            <div class="combat-initiative-equation" aria-label="Initiativeberechnung">
-                                <span class="combat-initiative-term">
-                                    <strong>@InitiativeResult.DiceLabel (@InitiativeResult.DiceTotal)</strong>
-                                    <small>Wurf</small>
-                                </span>
-                                <span class="combat-initiative-operator" aria-hidden="true">@FormatSignedTerm(InitiativeResult.Modifier)</span>
-                                <span class="combat-initiative-term">
-                                    <small>Modifikation</small>
-                                </span>
-                                <span class="combat-initiative-operator" aria-hidden="true">@FormatSignedTerm(InitiativeResult.BaseValue)</span>
-                                <span class="combat-initiative-term">
-                                    <small>INI-Basiswert</small>
-                                </span>
-                                <span class="combat-initiative-operator" aria-hidden="true">=</span>
-                                <span class="combat-initiative-term combat-initiative-total">
-                                    <strong>@InitiativeResult.Total</strong>
-                                    <small>Initiative</small>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                }
-                else if (AttributeResult is not null)
+                @if (AttributeResult is not null)
                 {
                     <div class="combat-roll-result" data-testid="combat-roll-result" aria-live="assertive">
                         <div>
@@ -331,7 +303,7 @@
                     </div>
                 }
 
-                @if (HasResultDice)
+                @if (HasResultDice && SelectedAction != "initiative")
                 {
                     <div class="combat-dice-viewport" data-testid="combat-dice-viewport" title="3D-Ansicht der Kampf-Würfel">
                         <DiceViewport SelectedDice="@EmptyDice"

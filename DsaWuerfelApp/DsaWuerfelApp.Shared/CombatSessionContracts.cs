@@ -130,4 +130,5 @@ public sealed record CombatSessionMutationResultDto(
     CombatSessionSnapshotDto Snapshot)
 {
     public DiceRollDto[] Rolls { get; init; } = [];
+    public RollHistoryEntryDto? HistoryEntry { get; init; }
 }

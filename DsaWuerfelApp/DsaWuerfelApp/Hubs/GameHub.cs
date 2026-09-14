@@ -228,6 +228,10 @@ public class GameHub(
             if (result.Applied)
             {
                 await Clients.Group(request.SessionId).SendAsync("CombatStateChanged", result.Snapshot);
+                if (result.HistoryEntry is not null)
+                {
+                    await Clients.Group(request.SessionId).SendAsync("ShowHistoryEntry", result.HistoryEntry);
+                }
             }
 
             return result;

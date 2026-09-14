@@ -100,13 +100,19 @@ public sealed class CombatSessionStateService(
 
             var previous = current;
             var rolls = Array.Empty<DiceRollDto>();
+            RollHistoryEntryDto? historyEntry = null;
             CombatSessionSnapshotDto next;
             string description;
 
             switch (request.Kind)
             {
                 case CombatSessionMutationKind.RollInitiative:
-                    (next, rolls, description) = await RollInitiativeAsync(session, current, request, userId, cancellationToken);
+                    (next, rolls, description, historyEntry) = await RollInitiativeAsync(
+                        session,
+                        current,
+                        request,
+                        userId,
+                        cancellationToken);
                     break;
                 case CombatSessionMutationKind.SetInitiative:
                     (next, description) = await SetInitiativeAsync(session, current, request, userId, cancellationToken);
@@ -180,7 +186,15 @@ public sealed class CombatSessionStateService(
             var undoOwner = request.Kind == CombatSessionMutationKind.Undo ? null : userId;
             next = next with { UndoAvailable = undo is not null };
             Save(session, new PersistedState(next, undo, undoOwner, appliedRequestIds));
-            return Result(request, next, applied: true, alreadyApplied: false, stale: false, description, rolls);
+            if (historyEntry is not null)
+            {
+                recordStore.AppendHistoryEntry(session.SessionId, historyEntry);
+            }
+
+            return Result(request, next, applied: true, alreadyApplied: false, stale: false, description, rolls) with
+            {
+                HistoryEntry = historyEntry
+            };
         }
         finally
         {
@@ -188,7 +202,11 @@ public sealed class CombatSessionStateService(
         }
     }
 
-    private async Task<(CombatSessionSnapshotDto Snapshot, DiceRollDto[] Rolls, string Description)> RollInitiativeAsync(
+    private async Task<(
+        CombatSessionSnapshotDto Snapshot,
+        DiceRollDto[] Rolls,
+        string Description,
+        RollHistoryEntryDto HistoryEntry)> RollInitiativeAsync(
         GameSession session,
         CombatSessionSnapshotDto current,
         CombatSessionMutationRequestDto request,
@@ -205,6 +223,8 @@ public sealed class CombatSessionStateService(
 
         var roll = diceService.RollDice([new DiceRollGroupDto(6, initiativeInfo.DiceCount)]);
         var rollTotal = roll.Sum(result => result.Value);
+        var totalModifier = initiativeInfo.RuntimeModifier + request.InitiativeCorrection;
+        var finalInitiative = initiativeInfo.BaseValue.Value + rollTotal + totalModifier;
         var updatedParticipant = participant with
         {
             InitiativeBase = initiativeInfo.BaseValue,
@@ -216,7 +236,7 @@ public sealed class CombatSessionStateService(
             InitiativeRuntimeNotes = initiativeInfo.RuntimeNotes,
             RuntimeState = request.RuntimeState ?? participant.RuntimeState,
             RecoverableInitiativeLoss = 0,
-            CurrentInitiative = initiativeInfo.BaseValue.Value + rollTotal + initiativeInfo.RuntimeModifier + request.InitiativeCorrection,
+            CurrentInitiative = finalInitiative,
             ActionAvailable = true,
             ReactionAvailable = true,
             IsOriented = false
@@ -228,10 +248,47 @@ public sealed class CombatSessionStateService(
             actions = actions.Append(CreateNormalAction(updatedParticipant, current.Round)).ToArray();
         }
 
+        var initiativeSnapshot = new CombatRollSnapshotDto
+        {
+            EntryId = Guid.NewGuid(),
+            RequestId = request.RequestId,
+            SessionId = session.SessionId,
+            HeroId = participant.HeroId,
+            Action = CombatActionKind.InitiativeHelper,
+            ActionLabel = "Initiative",
+            ValuesSource = "Regelhilfe",
+            BaseValue = initiativeInfo.BaseValue,
+            Modifiers = CreateInitiativeModifiers(initiativeInfo.RuntimeModifier, request.InitiativeCorrection),
+            Outcome = CombatOutcome.Neutral,
+            StatusLabel = "Initiative gewürfelt",
+            LabeledRolls = roll
+                .Select(result => new CombatLabeledRollDto("INI-Wurf", result.Sides, result.Value))
+                .ToArray()
+        };
+        var historyEntry = new RollHistoryEntryDto(
+            session.Players.FirstOrDefault(player => string.Equals(player.UserId, userId, StringComparison.Ordinal))?.Name
+                ?? participant.Name,
+            DateTime.UtcNow,
+            roll,
+            initiativeInfo.BaseValue.Value + totalModifier,
+            finalInitiative,
+            new RollHistoryContextDto(
+                RollHistoryKind.Combat,
+                "Initiative",
+                RollHistoryOutcome.None,
+                null,
+                [],
+                new RollHistorySnapshotDto
+                {
+                    HeroName = participant.Name,
+                    Combat = initiativeSnapshot
+                }));
+
         return (current with { IsStarted = true, Participants = participants, Actions = actions }, roll,
             current.Participants.Any(existing => existing.Id == participant.Id && existing.CurrentInitiative.HasValue)
                 ? $"Startwurf für {participant.Name} ersetzt"
-                : $"Startwurf für {participant.Name} gespeichert");
+                : $"Startwurf für {participant.Name} gespeichert",
+            historyEntry);
     }
 
     private async Task<(CombatSessionSnapshotDto Snapshot, string Description)> SetInitiativeAsync(
@@ -1104,6 +1161,22 @@ public sealed class CombatSessionStateService(
         new(RequestRejectionReason.Validation, message);
 
     private static string FormatSigned(int value) => value > 0 ? $"+{value}" : value.ToString();
+
+    private static CombatModifierDto[] CreateInitiativeModifiers(int runtimeModifier, int correction)
+    {
+        var modifiers = new List<CombatModifierDto>();
+        if (runtimeModifier != 0)
+        {
+            modifiers.Add(new CombatModifierDto("Automatisch", runtimeModifier, "Kampf"));
+        }
+
+        if (correction != 0)
+        {
+            modifiers.Add(new CombatModifierDto("Situativ", correction, "Kampfseite"));
+        }
+
+        return modifiers.ToArray();
+    }
 
     private static void ValidateRuntimeState(CombatRuntimeStateDto? state)
     {

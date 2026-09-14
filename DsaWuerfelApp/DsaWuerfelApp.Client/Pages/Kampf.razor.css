@@ -62,32 +62,40 @@
 .combat-history-sidebar {
     display: flex;
     min-width: 0;
+    height: clamp(18rem, 52vh, 32rem);
     flex-direction: column;
     padding: 0.7rem 0.85rem;
+    box-sizing: border-box;
     border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.42);
     border-radius: var(--dsa-panel-radius);
     background: rgba(7, 17, 29, 0.78);
 }
 
-.combat-history-sidebar summary {
-    color: var(--dsa-white);
-    cursor: pointer;
-    font-size: 0.78rem;
+.combat-history-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding-bottom: 0.55rem;
+    border-bottom: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.22);
+}
+
+.combat-history-heading h2 {
+    margin: 0;
+    color: var(--dsa-gold);
+    font-size: 0.92rem;
+}
+
+.combat-history-heading span {
+    color: var(--dsa-text-muted);
+    font-size: 0.72rem;
     font-weight: 800;
 }
 
-.combat-history-sidebar[open] summary {
-    margin-bottom: 0.45rem;
-    color: var(--dsa-gold);
-}
-
 .combat-history-sidebar .roll-history {
+    flex: 1 1 auto;
     min-height: 0;
-}
-
-.combat-history-sidebar .combat-more-button {
-    align-self: flex-start;
-    margin-top: 0.45rem;
+    overflow: hidden;
 }
 
 .combat-kicker {
@@ -395,6 +403,10 @@
 @media (max-width: 680px) {
     .combat-tabs {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .combat-history-sidebar {
+        height: clamp(15rem, 46vh, 22rem);
     }
 
     .combat-section-heading,

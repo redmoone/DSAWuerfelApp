@@ -33,6 +33,8 @@ public class GameClient : IAsyncDisposable
             result => OnCombatRollResultReceived?.Invoke(result));
         _hub.On<CombatSessionSnapshotDto>("CombatStateChanged",
             snapshot => OnCombatSessionStateReceived?.Invoke(snapshot));
+        _hub.On<RollHistoryEntryDto>("ShowHistoryEntry",
+            entry => OnHistoryEntryReceived?.Invoke(entry));
     }
 
     public string? CurrentSessionId { get; private set; }
@@ -53,6 +55,7 @@ public class GameClient : IAsyncDisposable
     public event Action<BadTraitRollResultDto>? OnBadTraitRollResultReceived;
     public event Action<CombatRollResultDto>? OnCombatRollResultReceived;
     public event Action<CombatSessionSnapshotDto>? OnCombatSessionStateReceived;
+    public event Action<RollHistoryEntryDto>? OnHistoryEntryReceived;
     public event Action? SessionChanged;
     public event Action? SessionsChanged;
 

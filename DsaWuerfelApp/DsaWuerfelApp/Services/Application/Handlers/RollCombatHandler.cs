@@ -306,7 +306,10 @@ public sealed partial class RollCombatHandler(
     {
         var timestamp = DateTime.UtcNow;
         var rollArray = rolls.ToArray();
-        var equation = DiceResultFactory.CreateEquation(rollArray, 0);
+        var historyModifier = snapshot.Action == CombatActionKind.InitiativeHelper
+            ? (snapshot.BaseValue ?? 0) + snapshot.Modifiers.Sum(modifier => modifier.Value)
+            : 0;
+        var equation = DiceResultFactory.CreateEquation(rollArray, historyModifier);
         var historyContext = new RollHistoryContextDto(
             RollHistoryKind.Combat,
             GetHistoryDisplayName(snapshot),

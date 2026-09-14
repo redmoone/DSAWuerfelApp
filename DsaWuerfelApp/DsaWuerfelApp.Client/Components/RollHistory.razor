@@ -13,13 +13,19 @@
                 <article class="history-entry @GetEntryClass(log)">
                     <header class="history-entry-header">
                         <div class="history-entry-title">
-                            <span class="history-status @GetStatusClass(log)">@GetStatusText(log)</span>
+                            @if (!IsInitiativeEntry(log))
+                            {
+                                <span class="history-status @GetStatusClass(log)">@GetStatusText(log)</span>
+                            }
                             <span class="history-player">@log.PlayerName</span>
                             @if (GetHeroName(log) is { Length: > 0 } heroName)
                             {
                                 <span class="history-hero-name">@heroName</span>
                             }
-                            <span class="history-display-name">@GetDisplayName(log)</span>
+                            @if (!IsInitiativeEntry(log))
+                            {
+                                <span class="history-display-name">@GetDisplayName(log)</span>
+                            }
                         </div>
                         <div class="history-entry-actions">
                             <time class="history-time">@log.Timestamp.ToLocalTime().ToString("HH:mm")</time>
@@ -35,7 +41,36 @@
                         </div>
                     </header>
 
-                    @if (log.Context is { } context && context.Checks.Length > 0)
+                    @if (IsInitiativeEntry(log))
+                    {
+                        <div class="history-initiative-equation" aria-label="@GetInitiativeAriaLabel(log)">
+                            @for (var index = 0; index < log.Rolls.Length; index++)
+                            {
+                                var roll = log.Rolls[index];
+                                @if (index > 0)
+                                {
+                                    <span class="history-math-symbol">+</span>
+                                }
+                                <span class="history-die-container">
+                                    <span class="die-shape history-die shape-d@(roll.Sides)">
+                                        <span class="die-text">@roll.Value</span>
+                                    </span>
+                                </span>
+                            }
+                            <span class="history-initiative-term">
+                                <strong>@FormatSigned(GetInitiativeModifier(log))</strong>
+                                <small>Modifikation</small>
+                            </span>
+                            <span class="history-math-symbol">+</span>
+                            <span class="history-initiative-term">
+                                <strong>@FormatSigned(GetInitiativeBase(log))</strong>
+                                <small>INI-Basiswert</small>
+                            </span>
+                            <span class="history-math-symbol">=</span>
+                            <span class="history-total">@log.TotalSum</span>
+                        </div>
+                    }
+                    else if (log.Context is { } context && context.Checks.Length > 0)
                     {
                         <div class="history-checks" role="list" aria-label="Einzelwürfe">
                             @foreach (var check in context.Checks)

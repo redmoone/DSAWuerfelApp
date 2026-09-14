@@ -305,6 +305,18 @@ public sealed class WuerfelState
         });
     }
 
+    public void AppendHistoryEntry(RollHistoryEntryDto historyEntry)
+    {
+        ArgumentNullException.ThrowIfNull(historyEntry);
+        var entryId = historyEntry.Context?.Snapshot?.Combat?.EntryId;
+        var history = entryId.HasValue && Current.History.Any(entry =>
+                entry.Context?.Snapshot?.Combat?.EntryId == entryId)
+            ? Current.History
+            : Current.History.Prepend(historyEntry).Take(100).ToArray();
+
+        Update(Current with { History = history });
+    }
+
     public void ApplyMasterTalentRollResults(IReadOnlyList<MasterTalentRollTargetResultDto> results)
     {
         ApplyMasterResults(

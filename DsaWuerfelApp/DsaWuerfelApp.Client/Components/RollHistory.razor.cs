@@ -16,6 +16,11 @@ public partial class RollHistory
 
     private static string GetEntryClass(RollHistoryEntryDto entry)
     {
+        if (IsInitiativeEntry(entry))
+        {
+            return "initiative";
+        }
+
         return GetVisualOutcome(entry) switch
         {
             RollHistoryOutcome.Success => "success",
@@ -118,6 +123,33 @@ public partial class RollHistory
         return string.IsNullOrWhiteSpace(entry.Context?.Snapshot?.HeroName)
             ? null
             : entry.Context.Snapshot.HeroName;
+    }
+
+    private static bool IsInitiativeEntry(RollHistoryEntryDto entry) =>
+        entry.Context?.Snapshot?.Combat?.Action == CombatActionKind.InitiativeHelper;
+
+    private static int GetInitiativeBase(RollHistoryEntryDto entry) =>
+        entry.Context?.Snapshot?.Combat?.BaseValue ?? 0;
+
+    private static int GetInitiativeModifier(RollHistoryEntryDto entry)
+    {
+        var snapshot = entry.Context?.Snapshot?.Combat;
+        return snapshot is null
+            ? entry.Modifier - GetInitiativeBase(entry)
+            : snapshot.Modifiers.Sum(modifier => modifier.Value);
+    }
+
+    private static string FormatSigned(int value) => value < 0
+        ? $"−{Math.Abs(value)}"
+        : $"+{value}";
+
+    private static string GetInitiativeAriaLabel(RollHistoryEntryDto entry)
+    {
+        var dice = entry.Rolls.Length == 0
+            ? "kein Wurf"
+            : string.Join(" plus ", entry.Rolls.Select(roll => $"W{roll.Sides} {roll.Value}"));
+        return $"{dice} plus {GetInitiativeModifier(entry)} Modifikation plus " +
+               $"{GetInitiativeBase(entry)} Initiative-Basiswert ergibt {entry.TotalSum}";
     }
 
     private static bool ShouldShowCompactEquation(RollHistoryEntryDto entry)

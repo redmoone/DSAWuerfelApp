@@ -115,7 +115,6 @@
                                        AttributeResult="@AttributeResult"
                                        CanConsumeReaction="@CanConsumeReaction"
                                        ConsumeReactionRequested="ConsumeReactionFromResultAsync"
-                                       InitiativeResult="@InitiativeResult"
                                        ResultDiceSides="@ResultDiceSides"
                                        ResultDiceValues="@ResultDiceValues"
                                        ResultVersion="@ResultVersion" />
@@ -287,17 +286,13 @@
                                           ExecuteHeldActionRequested="ExecuteHeldActionAsync"
                                           ResolveOrientationRequested="ResolveOrientationAsync" />
 
-                @if (History.Count > 0)
-                {
-                    <details class="combat-history-sidebar">
-                        <summary>Verlauf (@History.Count)</summary>
-                        <RollHistory Entries="@History.Take(3).ToArray()" EntrySelected="HandleHistorySelected" />
-                        @if (History.Count > 3)
-                        {
-                            <UiButton Size="compact" Class="combat-more-button" OnClick="OpenHistoryDrawer">Alle Ergebnisse öffnen</UiButton>
-                        }
-                    </details>
-                }
+                <section class="combat-history-sidebar" aria-labelledby="combat-history-title">
+                    <div class="combat-history-heading">
+                        <h2 id="combat-history-title">Verlauf</h2>
+                        <span>@History.Count</span>
+                    </div>
+                    <RollHistory Entries="@History" EntrySelected="HandleHistorySelected" />
+                </section>
             </div>
         </div>
     </div>
@@ -379,10 +374,6 @@
                 <UiButton OnClick="CloseDrawer">Abbrechen</UiButton>
             </div>
         </div>
-    }
-    else if (_drawer == CombatDrawer.History)
-    {
-        <RollHistory Entries="@History" EntrySelected="HandleHistorySelected" />
     }
 </CombatDetailsDrawer>
 

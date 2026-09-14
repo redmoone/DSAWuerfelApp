@@ -48,7 +48,6 @@ public partial class CombatActionPanel
     [Parameter] public IReadOnlyList<int> ResultDiceSides { get; set; } = Array.Empty<int>();
     [Parameter] public IReadOnlyList<int> ResultDiceValues { get; set; } = Array.Empty<int>();
     [Parameter] public long ResultVersion { get; set; }
-    [Parameter] public InitiativeRollDetails? InitiativeResult { get; set; }
 
     private IEnumerable<ActionOption> MainActions => Actions.Where(action => action.Key is "attack" or "parry" or "shield-parry" or "dodge" or "ranged");
     private IEnumerable<ActionOption> AdditionalActions => Actions.Where(action => action.Key is "damage" or "zone" or "initiative");
@@ -159,10 +158,6 @@ public partial class CombatActionPanel
 
     private static string FormatModifier(int value) => value > 0 ? $"+{value}" : value.ToString(CultureInfo.InvariantCulture);
 
-    private static string FormatSignedTerm(int value) => value < 0
-        ? $"−{Math.Abs(value).ToString(CultureInfo.InvariantCulture)}"
-        : $"+{value.ToString(CultureInfo.InvariantCulture)}";
-
     private static string GetResultSummary(CombatRollResultDto result)
     {
         if (result.Snapshot.Damage is { } damage)
@@ -177,11 +172,4 @@ public partial class CombatActionPanel
 
     public sealed record ActionOption(string Key, string Label, string Detail, bool IsAvailable);
 
-    public sealed record InitiativeRollDetails(
-        string DiceLabel,
-        IReadOnlyList<int> DiceValues,
-        int DiceTotal,
-        int Modifier,
-        int BaseValue,
-        int Total);
 }
