@@ -302,6 +302,217 @@ public sealed class CombatSessionStateService(
         }
     }
 
+    public async Task<CombatSessionSnapshotDto> ApplyDamageAsync(
+        CombatRollRequestDto request,
+        CombatRollResultDto result,
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(result);
+        if (string.IsNullOrWhiteSpace(request.SessionId) || request.Action != CombatActionKind.Damage)
+        {
+            throw Validation("Nur ein Session-TP-Wurf kann einen offenen Treffer abschließen.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.ExchangeId))
+        {
+            throw Validation("Ein Session-TP-Wurf braucht eine offene ExchangeId.");
+        }
+
+        await _stateLock.WaitAsync(cancellationToken);
+        try
+        {
+            var session = runtimeState.GetMemberSession(request.SessionId, userId);
+            var persisted = Load(session);
+            var current = Normalize(session, persisted.Current, userId) with
+            {
+                UndoAvailable = persisted.Undo is not null && !string.IsNullOrWhiteSpace(persisted.UndoOwnerUserId)
+            };
+            var exchange = current.ActiveExchange;
+            if (exchange is null || !string.Equals(exchange.ExchangeId, request.ExchangeId.Trim(), StringComparison.Ordinal))
+            {
+                throw Validation("Für diesen TP-Wurf gibt es keinen passenden Angriffsaustausch.");
+            }
+
+            if (exchange.Damage is not null)
+            {
+                return current;
+            }
+
+            if (exchange.Status is not (CombatExchangeStatus.Hit or CombatExchangeStatus.DamageOpen) ||
+                result.RequestId != request.RequestId ||
+                result.Snapshot.RequestId != request.RequestId ||
+                !string.Equals(result.Snapshot.SessionId, request.SessionId, StringComparison.Ordinal) ||
+                !string.Equals(result.Snapshot.ExchangeId, request.ExchangeId, StringComparison.Ordinal) ||
+                result.Snapshot.Action != CombatActionKind.Damage ||
+                result.Snapshot.Damage is null ||
+                result.Snapshot.Zone is not { WoundZone: not null })
+            {
+                throw Validation("Der TP-Wurf enthält keine vollständige Trefferfolge für diesen Angriff.");
+            }
+
+            var attacker = current.Participants.FirstOrDefault(participant =>
+                string.Equals(participant.Id, exchange.AttackerParticipantId, StringComparison.Ordinal));
+            if (attacker is null ||
+                (attacker.Kind == CombatParticipantKind.Hero && attacker.HeroId != request.HeroId) ||
+                (attacker.OwnerUserId != userId && !string.Equals(session.MasterUserId, userId, StringComparison.Ordinal)))
+            {
+                throw new RequestRejectedException(RequestRejectionReason.Forbidden,
+                    "Du darfst nur den eigenen Treffer anwenden.");
+            }
+
+            var target = current.Participants.FirstOrDefault(participant =>
+                string.Equals(participant.Id, exchange.TargetParticipantId, StringComparison.Ordinal));
+            if (target is null)
+            {
+                throw Validation("Das Ziel des offenen Angriffsaustauschs wurde nicht gefunden.");
+            }
+
+            var zone = result.Snapshot.Zone!;
+            var targetProfile = target.Kind == CombatParticipantKind.Hero
+                ? await ReadCombatProfileAsync(target, cancellationToken)
+                : null;
+            var targetSet = targetProfile is null
+                ? null
+                : ResolveParticipantSet(targetProfile, target, null);
+            var armorRating = target.Kind == CombatParticipantKind.Opponent
+                ? target.OpponentProfile?.ArmorRating
+                : zone.ArmorZone is { } armorZone
+                    ? CombatZoneRules.ResolveArmorRating(targetSet, armorZone)
+                    : null;
+            if (!armorRating.HasValue)
+            {
+                throw Validation("Für das Ziel ist kein gültiger RS zur Trefferzone bekannt.");
+            }
+
+            var rawDamage = result.Snapshot.Damage;
+            var calculation = CombatRollRules.CalculateDamage(
+                rawDamage.DiceTotal,
+                rawDamage.WeaponBonus,
+                rawDamage.PreMultiplierModifier,
+                rawDamage.Multiplier,
+                rawDamage.PostMultiplierModifier,
+                rawDamage.IsCritical,
+                armorRating);
+            if (calculation.Total != rawDamage.Total)
+            {
+                throw Validation("Der TP-Wurf enthält eine ungültige Schadenssumme.");
+            }
+
+            var runtime = target.RuntimeState;
+            var currentLeP = runtime?.CurrentLeP ?? target.OpponentProfile?.LeP;
+            var wounds = runtime?.Wounds;
+            if (wounds is null && target.Kind == CombatParticipantKind.Opponent)
+            {
+                wounds = CreateEmptyWounds();
+            }
+
+            var woundZone = zone.WoundZone.Value;
+            var currentWounds = wounds is not null && wounds.TryGetValue(woundZone, out var woundValue)
+                ? woundValue
+                : null;
+            var constitution = targetProfile?.Attributes
+                .FirstOrDefault(attribute => string.Equals(attribute.Key, "KO", StringComparison.OrdinalIgnoreCase))
+                ?.Value;
+            var woundThresholds = CombatWoundRules.CreateThresholds(
+                target.Kind == CombatParticipantKind.Opponent
+                    ? target.OpponentProfile?.WoundThreshold
+                    : targetProfile?.WoundThreshold,
+                constitution);
+            var application = CombatWoundRules.Resolve(
+                calculation.StructurePoints,
+                currentLeP,
+                woundZone,
+                currentWounds,
+                woundThresholds);
+
+            var nextWounds = wounds is null
+                ? null
+                : new Dictionary<CombatWoundZone, int?>(wounds);
+            if (nextWounds is not null && application.ResultingWounds.HasValue)
+            {
+                nextWounds[woundZone] = application.ResultingWounds;
+            }
+
+            var nextRuntime = (runtime ?? new CombatRuntimeStateDto()) with
+            {
+                IsStarted = true,
+                CurrentLeP = application.LePAfter,
+                Wounds = nextWounds ?? []
+            };
+            var targetBudget = target.ActionBudget ?? new CombatActionBudgetDto();
+            if (application.IsIncapacitated)
+            {
+                targetBudget = targetBudget with
+                {
+                    NormalActionsRemaining = 0,
+                    ReactionsRemaining = 0,
+                    FreeActionAvailable = false,
+                    HeldActionId = null,
+                    HeldActionRound = null
+                };
+            }
+
+            var nextRevision = current.Revision + 1;
+            var storedDamage = rawDamage with
+            {
+                ArmorRating = armorRating,
+                StructurePoints = calculation.StructurePoints
+            };
+            var storedZone = zone with { ArmorRating = armorRating };
+            var updatedExchange = exchange with
+            {
+                Revision = nextRevision,
+                Status = CombatExchangeStatus.Completed,
+                Zone = storedZone,
+                Damage = storedDamage,
+                HistoryEntryIds = exchange.HistoryEntryIds
+                    .Append(result.Snapshot.EntryId)
+                    .Distinct()
+                    .ToArray(),
+                RuleNote = application.IsIncapacitated
+                    ? $"{calculation.StructurePoints} SP; {target.Name} ist handlungsunfähig."
+                    : $"{calculation.StructurePoints} SP auf {target.Name}."
+            };
+            if (exchange.Status == CombatExchangeStatus.Hit &&
+                !CombatAttackExchangeRules.CanTransition(exchange.Status, CombatExchangeStatus.DamageOpen))
+            {
+                throw Validation("Der Treffer kann keine Schadensfolge öffnen.");
+            }
+
+            if (!CombatAttackExchangeRules.CanTransition(CombatExchangeStatus.DamageOpen, CombatExchangeStatus.Completed))
+            {
+                throw Validation("Die Schadensfolge kann nicht abgeschlossen werden.");
+            }
+
+            var next = FinalizeSnapshot(current with
+            {
+                Revision = nextRevision,
+                Participants = ReplaceParticipant(current.Participants, target with
+                {
+                    RuntimeState = nextRuntime,
+                    ActionBudget = targetBudget
+                }),
+                ActiveExchange = updatedExchange,
+                LastMutationId = request.RequestId,
+                LastMutationDescription = $"Schadensfolge für {exchange.ExchangeId} gespeichert",
+                LastMutationUserId = userId
+            });
+            var appliedRequestIds = persisted.AppliedRequestIds
+                .Append(request.RequestId)
+                .TakeLast(MaxAppliedRequestIds)
+                .ToArray();
+            next = next with { UndoAvailable = true };
+            Save(session, new PersistedState(next, current, userId, appliedRequestIds));
+            return next;
+        }
+        finally
+        {
+            _stateLock.Release();
+        }
+    }
+
     public async Task<CombatSessionSnapshotDto> BindAttackRollAsync(
         CombatRollRequestDto request,
         CombatRollResultDto result,
@@ -1799,6 +2010,10 @@ public sealed class CombatSessionStateService(
         CombatSessionParticipantDto replacement) => participants
         .Select(item => item.Id == replacement.Id ? replacement : item)
         .ToArray();
+
+    private static Dictionary<CombatWoundZone, int?> CreateEmptyWounds() =>
+        Enum.GetValues<CombatWoundZone>()
+            .ToDictionary(zone => zone, _ => (int?)0);
 
     private static CombatSessionActionDto[] ReplaceAction(
         IEnumerable<CombatSessionActionDto> actions,
