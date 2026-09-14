@@ -76,6 +76,27 @@ public sealed class CombatAttackExchangeContractTests
             CombatExchangeStatus.DamageOpen));
     }
 
+    [Fact]
+    public void Target_rules_require_a_real_other_participant_and_explicit_opponent_values()
+    {
+        var attacker = new CombatSessionParticipantDto
+        {
+            Id = "hero:attacker",
+            Kind = CombatParticipantKind.Hero,
+            HeroId = Guid.NewGuid()
+        };
+        var opponent = new CombatSessionParticipantDto
+        {
+            Id = "opponent:target",
+            Kind = CombatParticipantKind.Opponent,
+            OpponentProfile = new CombatOpponentProfileDto(14, 12, null, 3, 20)
+        };
+
+        Assert.True(CombatTargetRules.IsValidTarget(attacker, opponent));
+        Assert.False(CombatTargetRules.IsValidTarget(attacker, opponent with { OpponentProfile = null }));
+        Assert.False(CombatTargetRules.IsValidTarget(attacker, attacker));
+    }
+
     private static CombatAttackExchangeDto ValidExchange() => new()
     {
         ExchangeId = "exchange-1",

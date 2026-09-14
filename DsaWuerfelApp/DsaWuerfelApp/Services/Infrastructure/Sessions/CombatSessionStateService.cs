@@ -624,6 +624,7 @@ public sealed class CombatSessionStateService(
             Name = name,
             Kind = CombatParticipantKind.Opponent,
             Affiliation = string.IsNullOrWhiteSpace(request.Affiliation) ? "Gegner" : request.Affiliation.Trim(),
+            OpponentProfile = request.OpponentProfile,
             InitiativeBase = request.InitiativeBase,
             CurrentInitiative = initiative,
             InitiativeCorrection = request.Initiative.HasValue && request.InitiativeBase.HasValue

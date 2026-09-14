@@ -212,13 +212,15 @@ public sealed class CombatSessionState : IDisposable
         int? initiativeBase,
         int? initiative,
         string? affiliation,
+        CombatOpponentProfileDto? opponentProfile = null,
         CancellationToken cancellationToken = default) => MutateAsync(new CombatSessionMutationRequestDto
         {
             Kind = CombatSessionMutationKind.AddOpponent,
             Name = name,
             InitiativeBase = initiativeBase,
             Initiative = initiative,
-            Affiliation = affiliation
+            Affiliation = affiliation,
+            OpponentProfile = opponentProfile
         }, cancellationToken);
 
     public Task<CombatSessionMutationResultDto> NewRoundAsync(

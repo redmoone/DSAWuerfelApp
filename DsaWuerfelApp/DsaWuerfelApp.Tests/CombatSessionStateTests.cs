@@ -112,6 +112,36 @@ public sealed class CombatSessionStateTests
     }
 
     [Fact]
+    public async Task Opponent_profile_is_persisted_without_inventing_missing_combat_values()
+    {
+        using var factory = new TestApplicationFactory();
+        var hero = await SeedHeroAsync(factory, "owner");
+        var session = CreateSession(factory, hero, "owner");
+        var state = factory.Services.GetRequiredService<CombatSessionStateService>();
+        var initial = await state.GetAsync(session.SessionId, "owner");
+        var profile = new CombatOpponentProfileDto(14, 12, 10, 3, 20, 5);
+
+        var added = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = initial.Revision,
+            Kind = CombatSessionMutationKind.AddOpponent,
+            Name = "Ork",
+            InitiativeBase = 10,
+            OpponentProfile = profile
+        }, "owner");
+
+        var opponent = Assert.Single(added.Snapshot.Participants, participant =>
+            participant.Kind == CombatParticipantKind.Opponent);
+        Assert.Equal(profile, opponent.OpponentProfile);
+
+        var reloaded = await state.GetAsync(session.SessionId, "owner");
+        Assert.Equal(profile, Assert.Single(reloaded.Participants, participant =>
+            participant.Id == opponent.Id).OpponentProfile);
+    }
+
+    [Fact]
     public async Task Held_action_moves_to_the_next_round_without_rerolling_initiative()
     {
         using var factory = new TestApplicationFactory();

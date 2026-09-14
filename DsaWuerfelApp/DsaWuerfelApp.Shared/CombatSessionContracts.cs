@@ -6,6 +6,21 @@ public enum CombatParticipantKind
     Opponent
 }
 
+public sealed record CombatOpponentProfileDto(
+    int? Attack,
+    int? Parry,
+    int? Dodge,
+    int? ArmorRating,
+    int? LeP,
+    int? WoundThreshold = null)
+{
+    public bool HasBasicCombatValues =>
+        Attack.HasValue &&
+        (Parry.HasValue || Dodge.HasValue) &&
+        ArmorRating.HasValue &&
+        LeP.HasValue;
+}
+
 public enum CombatActionEntryState
 {
     Open,
@@ -40,6 +55,7 @@ public sealed record CombatSessionParticipantDto
     public Guid? HeroId { get; init; }
     public string? OwnerUserId { get; init; }
     public string? Affiliation { get; init; }
+    public CombatOpponentProfileDto? OpponentProfile { get; init; }
     public int? InitiativeBase { get; init; }
     public string? InitiativeSetId { get; init; }
     public int? StartRoll { get; init; }
@@ -112,6 +128,7 @@ public sealed record CombatSessionMutationRequestDto
     public string? WeaponId { get; init; }
     public string? WeaponName { get; init; }
     public string? Affiliation { get; init; }
+    public CombatOpponentProfileDto? OpponentProfile { get; init; }
     public int? InitiativeBase { get; init; }
     public int? Initiative { get; init; }
     public int InitiativeCorrection { get; init; }
