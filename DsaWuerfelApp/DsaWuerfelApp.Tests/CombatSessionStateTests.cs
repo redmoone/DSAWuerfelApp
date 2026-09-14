@@ -391,6 +391,21 @@ public sealed class CombatSessionStateTests
         await Assert.ThrowsAsync<RequestRejectedException>(() => state.EnsureDefenseRollAvailabilityAsync(
             defenseRequest with { RequestId = Guid.NewGuid() }, "owner"));
         Assert.Equal(declaration.Snapshot.Revision + 2, avoided.Revision);
+
+        var undone = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = avoided.Revision,
+            Kind = CombatSessionMutationKind.Undo
+        }, "owner");
+
+        Assert.True(undone.Applied);
+        Assert.Null(undone.Snapshot.ActiveExchange);
+        Assert.Equal(1, Assert.Single(undone.Snapshot.Participants, item => item.Id == attacker.Id)
+            .ActionBudget?.NormalActionsRemaining);
+        Assert.Equal(1, Assert.Single(undone.Snapshot.Participants, item => item.Id == target.Id)
+            .ActionBudget?.ReactionsRemaining);
     }
 
     [Fact]
@@ -453,10 +468,8 @@ public sealed class CombatSessionStateTests
             WeaponName = weapon.Name,
             Action = CombatActionKind.MeleeAttack
         };
-        var attackOpen = await state.BindAttackRollAsync(
-            attackRequest,
-            CreateCombatResult(attackRequest, 8, 14, CombatOutcome.Success),
-            "owner");
+        var attackResult = CreateCombatResult(attackRequest, 8, 14, CombatOutcome.Success);
+        var attackOpen = await state.BindAttackRollAsync(attackRequest, attackResult, "owner");
         Assert.Equal(CombatExchangeStatus.DefenseOpen, attackOpen.ActiveExchange!.Status);
 
         var defenseRequest = new CombatRollRequestDto
@@ -466,10 +479,8 @@ public sealed class CombatSessionStateTests
             ExchangeId = "exchange-damage",
             Action = CombatActionKind.Dodge
         };
-        var hit = await state.BindDefenseRollAsync(
-            defenseRequest,
-            CreateCombatResult(defenseRequest, 19, 7, CombatOutcome.Failure),
-            "owner");
+        var defenseResult = CreateCombatResult(defenseRequest, 19, 7, CombatOutcome.Failure);
+        var hit = await state.BindDefenseRollAsync(defenseRequest, defenseResult, "owner");
         Assert.Equal(CombatExchangeStatus.Hit, hit.ActiveExchange!.Status);
 
         var damageRequest = new CombatRollRequestDto
@@ -487,6 +498,10 @@ public sealed class CombatSessionStateTests
             CombatFacing.Front,
             null);
         var damageResult = CreateDamageResult(damageRequest, 7, zone);
+        var history = factory.Services.GetRequiredService<SessionRecordStore>();
+        history.AppendHistoryEntry(session.SessionId, attackResult.HistoryEntry);
+        history.AppendHistoryEntry(session.SessionId, defenseResult.HistoryEntry);
+        history.AppendHistoryEntry(session.SessionId, damageResult.HistoryEntry);
 
         var completed = await state.ApplyDamageAsync(damageRequest, damageResult, "owner");
 
@@ -507,6 +522,26 @@ public sealed class CombatSessionStateTests
         Assert.Equal(1, Assert.Single(repeated.Participants, item => item.Id == target.Id)
             .RuntimeState!.Wounds[CombatWoundZone.Torso]);
         Assert.Equal(declaration.Snapshot.Revision + 3, completed.Revision);
+
+        var undone = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = completed.Revision,
+            Kind = CombatSessionMutationKind.Undo
+        }, "owner");
+
+        Assert.True(undone.Applied);
+        Assert.Equal(completed.Revision + 1, undone.Snapshot.Revision);
+        Assert.Null(undone.Snapshot.ActiveExchange);
+        var restoredAttacker = Assert.Single(undone.Snapshot.Participants, item => item.Id == attacker.Id);
+        var restoredTarget = Assert.Single(undone.Snapshot.Participants, item => item.Id == target.Id);
+        Assert.Equal(1, restoredAttacker.ActionBudget?.NormalActionsRemaining);
+        Assert.Equal(1, restoredTarget.ActionBudget?.ReactionsRemaining);
+        Assert.Null(restoredTarget.RuntimeState);
+        Assert.DoesNotContain(
+            history.LoadHistory(session.SessionId),
+            entry => entry.Context?.Snapshot?.Combat?.ExchangeId == "exchange-damage");
     }
 
     [Fact]
@@ -870,6 +905,22 @@ public sealed class CombatSessionStateTests
             LabeledRolls = [new CombatLabeledRollDto("Hauptwurf", 20, mainRoll)]
         };
         var roll = new DiceRollDto(20, mainRoll);
+        var historyOutcome = outcome == CombatOutcome.Success
+            ? RollHistoryOutcome.Success
+            : RollHistoryOutcome.Failure;
+        var historyEntry = new RollHistoryEntryDto(
+            "Besitzer",
+            DateTime.UtcNow,
+            [roll],
+            0,
+            mainRoll,
+            new RollHistoryContextDto(
+                RollHistoryKind.Combat,
+                snapshot.ActionLabel ?? "Kampfwurf",
+                historyOutcome,
+                null,
+                [],
+                new RollHistorySnapshotDto { Combat = snapshot }));
         return new CombatRollResultDto(
             snapshot.EntryId,
             request.RequestId,
@@ -880,7 +931,7 @@ public sealed class CombatSessionStateTests
             outcome,
             snapshot,
             [roll],
-            new RollHistoryEntryDto("Besitzer", DateTime.UtcNow, [roll], 0, mainRoll));
+            historyEntry);
     }
 
     private static CombatRollResultDto CreateDamageResult(
@@ -903,6 +954,19 @@ public sealed class CombatSessionStateTests
             Zone = zone
         };
         var roll = new DiceRollDto(20, rawDamage);
+        var historyEntry = new RollHistoryEntryDto(
+            "Besitzer",
+            DateTime.UtcNow,
+            [roll],
+            0,
+            rawDamage,
+            new RollHistoryContextDto(
+                RollHistoryKind.Combat,
+                snapshot.StatusLabel,
+                RollHistoryOutcome.None,
+                null,
+                [],
+                new RollHistorySnapshotDto { Combat = snapshot }));
         return new CombatRollResultDto(
             snapshot.EntryId,
             request.RequestId,
@@ -913,7 +977,7 @@ public sealed class CombatSessionStateTests
             CombatOutcome.Neutral,
             snapshot,
             [roll],
-            new RollHistoryEntryDto("Besitzer", DateTime.UtcNow, [roll], 0, rawDamage));
+            historyEntry);
     }
 
     private static CombatRuntimeStateDto CreateRuntimeState(int currentAuP) => new()

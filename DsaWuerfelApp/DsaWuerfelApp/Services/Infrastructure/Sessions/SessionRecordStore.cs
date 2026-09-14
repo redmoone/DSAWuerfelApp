@@ -243,6 +243,32 @@ public sealed class SessionRecordStore(IServiceScopeFactory scopeFactory)
         dbContext.SaveChanges();
     }
 
+    public void RemoveCombatHistoryEntries(string sessionId, IReadOnlyCollection<Guid> entryIds)
+    {
+        if (entryIds.Count == 0)
+        {
+            return;
+        }
+
+        var ids = entryIds.ToHashSet();
+        using var scope = scopeFactory.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<HeroDbContext>();
+        var records = dbContext.SessionRollHistoryRecords
+            .Where(current => current.SessionId == sessionId)
+            .ToArray();
+        var matchingRecords = records
+            .Where(record => DeserializeContext(record.ContextJson)?.Snapshot?.Combat?.EntryId is { } entryId &&
+                             ids.Contains(entryId))
+            .ToArray();
+        if (matchingRecords.Length == 0)
+        {
+            return;
+        }
+
+        dbContext.SessionRollHistoryRecords.RemoveRange(matchingRecords);
+        dbContext.SaveChanges();
+    }
+
     public bool JoinCodeExists(string joinCode)
     {
         using var scope = scopeFactory.CreateScope();

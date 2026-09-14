@@ -293,7 +293,13 @@ public sealed class CombatSessionStateService(
                 .TakeLast(MaxAppliedRequestIds)
                 .ToArray();
             next = next with { UndoAvailable = true };
-            Save(session, new PersistedState(next, current, userId, appliedRequestIds));
+            Save(session, CreateExchangePersistedState(
+                next,
+                current,
+                persisted,
+                exchange.ExchangeId,
+                userId,
+                appliedRequestIds));
             return next;
         }
         finally
@@ -504,7 +510,13 @@ public sealed class CombatSessionStateService(
                 .TakeLast(MaxAppliedRequestIds)
                 .ToArray();
             next = next with { UndoAvailable = true };
-            Save(session, new PersistedState(next, current, userId, appliedRequestIds));
+            Save(session, CreateExchangePersistedState(
+                next,
+                current,
+                persisted,
+                exchange.ExchangeId,
+                userId,
+                appliedRequestIds));
             return next;
         }
         finally
@@ -602,7 +614,13 @@ public sealed class CombatSessionStateService(
                 .TakeLast(MaxAppliedRequestIds)
                 .ToArray();
             next = next with { UndoAvailable = true };
-            Save(session, new PersistedState(next, current, userId, appliedRequestIds));
+            Save(session, CreateExchangePersistedState(
+                next,
+                current,
+                persisted,
+                exchange.ExchangeId,
+                userId,
+                appliedRequestIds));
             return next;
         }
         finally
@@ -665,6 +683,9 @@ public sealed class CombatSessionStateService(
             var previous = current;
             var rolls = Array.Empty<DiceRollDto>();
             RollHistoryEntryDto? historyEntry = null;
+            var historyEntryIdsToRemove = request.Kind == CombatSessionMutationKind.Undo
+                ? current.ActiveExchange?.HistoryEntryIds ?? []
+                : [];
             CombatSessionSnapshotDto next;
             string description;
 
@@ -753,10 +774,25 @@ public sealed class CombatSessionStateService(
                 .Append(request.RequestId)
                 .TakeLast(MaxAppliedRequestIds)
                 .ToArray();
-            var undo = request.Kind == CombatSessionMutationKind.Undo ? null : previous;
-            var undoOwner = request.Kind == CombatSessionMutationKind.Undo ? null : userId;
+            var undoExchangeId = request.Kind == CombatSessionMutationKind.Undo
+                ? null
+                : ResolveUndoExchangeId(current, next, persisted);
+            var keepExchangeUndo = undoExchangeId is not null &&
+                                   string.Equals(undoExchangeId, persisted.UndoExchangeId,
+                                       StringComparison.Ordinal) &&
+                                   persisted.Undo is not null;
+            var undo = request.Kind == CombatSessionMutationKind.Undo
+                ? null
+                : keepExchangeUndo ? persisted.Undo : previous;
+            var undoOwner = request.Kind == CombatSessionMutationKind.Undo
+                ? null
+                : keepExchangeUndo ? persisted.UndoOwnerUserId : userId;
             next = next with { UndoAvailable = undo is not null };
-            Save(session, new PersistedState(next, undo, undoOwner, appliedRequestIds));
+            Save(session, new PersistedState(next, undo, undoOwner, appliedRequestIds, undoExchangeId));
+            if (historyEntryIdsToRemove.Length > 0)
+            {
+                recordStore.RemoveCombatHistoryEntries(session.SessionId, historyEntryIdsToRemove);
+            }
             if (historyEntry is not null)
             {
                 recordStore.AppendHistoryEntry(session.SessionId, historyEntry);
@@ -1551,6 +1587,50 @@ public sealed class CombatSessionStateService(
         return (persisted.Undo, "Letzte eigene Kampfänderung zurückgenommen");
     }
 
+    private static PersistedState CreateExchangePersistedState(
+        CombatSessionSnapshotDto next,
+        CombatSessionSnapshotDto current,
+        PersistedState persisted,
+        string exchangeId,
+        string userId,
+        Guid[] appliedRequestIds)
+    {
+        var keepExchangeUndo = string.Equals(persisted.UndoExchangeId, exchangeId, StringComparison.Ordinal) &&
+                               persisted.Undo is not null;
+        return new PersistedState(
+            next,
+            keepExchangeUndo ? persisted.Undo : current,
+            keepExchangeUndo ? persisted.UndoOwnerUserId : userId,
+            appliedRequestIds,
+            exchangeId);
+    }
+
+    private static string? ResolveUndoExchangeId(
+        CombatSessionSnapshotDto current,
+        CombatSessionSnapshotDto next,
+        PersistedState persisted)
+    {
+        var nextExchange = next.ActiveExchange;
+        if (nextExchange is null || !IsUndoableExchangeStatus(nextExchange.Status))
+        {
+            return null;
+        }
+
+        return current.ActiveExchange is { } currentExchange &&
+               string.Equals(currentExchange.ExchangeId, nextExchange.ExchangeId, StringComparison.Ordinal) &&
+               string.Equals(persisted.UndoExchangeId, currentExchange.ExchangeId, StringComparison.Ordinal)
+            ? currentExchange.ExchangeId
+            : nextExchange.ExchangeId;
+    }
+
+    private static bool IsUndoableExchangeStatus(CombatExchangeStatus status) => status is
+        CombatExchangeStatus.Declared or
+        CombatExchangeStatus.AttackOpen or
+        CombatExchangeStatus.DefenseOpen or
+        CombatExchangeStatus.Hit or
+        CombatExchangeStatus.Avoided or
+        CombatExchangeStatus.DamageOpen;
+
     private static (CombatSessionSnapshotDto Snapshot, string Description) SetAnnouncement(
         CombatSessionSnapshotDto current,
         CombatSessionMutationRequestDto request)
@@ -2125,7 +2205,8 @@ public sealed class CombatSessionStateService(
         CombatSessionSnapshotDto Current,
         CombatSessionSnapshotDto? Undo,
         string? UndoOwnerUserId,
-        Guid[] AppliedRequestIds);
+        Guid[] AppliedRequestIds,
+        string? UndoExchangeId = null);
 
     private sealed record InitiativeProfileInfo(
         int? BaseValue,
