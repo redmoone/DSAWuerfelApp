@@ -200,12 +200,6 @@
     white-space: nowrap;
 }
 
-.combat-option-entry ::deep .ui-button--option .combat-option-value::before {
-    margin: 0 0.05rem 0 0.1rem;
-    color: var(--dsa-text-muted);
-    content: "·";
-}
-
 .combat-action-options.compact {
     gap: 0.35rem;
 }
