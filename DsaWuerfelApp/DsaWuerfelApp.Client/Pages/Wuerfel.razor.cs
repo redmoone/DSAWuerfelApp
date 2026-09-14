@@ -51,13 +51,15 @@ public partial class Wuerfel : IDisposable
     private CombatSessionParticipantDto? OwnCombatParticipant => CombatSession?.Participants
         .FirstOrDefault(participant => participant.HeroId == CombatHero?.Id);
     private bool CombatIsSession => !string.IsNullOrWhiteSpace(SessionState.ActiveSessionId);
-    private int? CombatCurrentInitiative => CombatIsSession
+    private int? CombatCurrentInitiative => NormalizeInitiative(CombatIsSession
         ? OwnCombatParticipant?.CurrentInitiative
-        : CombatState.CurrentInitiative;
+        : CombatState.CurrentInitiative);
     private bool CombatIsStarted => CombatIsSession ? CombatSession?.IsStarted == true : CombatState.IsStarted;
     private bool CombatCanUndo => CombatIsSession ? CombatSessionState.CanUndo : CombatState.CanUndo;
     private string CombatHeroDisplayName => CombatHero?.Name ?? "Kein aktiver Held";
     private CombatWoundZone CombatWoundDrawerZone => CombatSelectedZone ?? CombatWoundZone.Torso;
+
+    private static int? NormalizeInitiative(int? initiative) => initiative == 0 ? null : initiative;
     private string CombatDrawerTitle => _combatDrawer switch
     {
         WuerfelCombatDrawer.Resource => $"{GetCombatResourceLabel(_combatResourceKind ?? CombatResourceKind.LeP)} setzen",
