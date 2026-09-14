@@ -387,6 +387,50 @@
     gap: 0.15rem;
 }
 
+.combat-initiative-result {
+    align-items: flex-start;
+}
+
+.combat-initiative-result-content {
+    gap: 0.35rem !important;
+}
+
+.combat-initiative-equation {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.4rem;
+    color: var(--dsa-white);
+    font-size: 0.84rem;
+}
+
+.combat-initiative-term {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    white-space: nowrap;
+}
+
+.combat-initiative-term strong {
+    color: var(--dsa-white);
+    font-size: 0.92rem;
+}
+
+.combat-initiative-term small {
+    color: var(--dsa-text-muted);
+    font-size: 0.68rem;
+}
+
+.combat-initiative-operator {
+    color: var(--dsa-gold);
+    font-weight: 800;
+}
+
+.combat-initiative-total strong,
+.combat-initiative-total small {
+    color: var(--dsa-gold);
+}
+
 .combat-result-note {
     color: var(--dsa-gold);
     font-size: 0.7rem;

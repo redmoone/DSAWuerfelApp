@@ -40,6 +40,7 @@ public partial class Kampf : IDisposable
     private string _announcementDraft = string.Empty;
     private CombatParticipantDrawerMode _participantDrawerMode;
     private RollHistoryEntryDto? _selectedHistoryEntry;
+    private CombatActionPanel.InitiativeRollDetails? _initiativeRollDetails;
 
     private Hero? ActiveHero => ActiveHeroState.CurrentHero;
     private CombatProfileDto? Profile => CombatState.Profile;
@@ -95,6 +96,7 @@ public partial class Kampf : IDisposable
     private CombatWoundZone? SelectedZone => CombatState.SelectedZone;
     private IReadOnlyList<RollHistoryEntryDto> History => WuerfelState.Current.History;
     private CombatRollResultDto? CombatResult => WuerfelState.Current.LastCombatRoll;
+    private CombatActionPanel.InitiativeRollDetails? InitiativeResult => _initiativeRollDetails;
     private AttributeRollResultDto? AttributeResult => WuerfelState.Current.LastAttributeRoll;
     private IReadOnlyList<int> ResultDiceSides => IsAttributeMode
         ? WuerfelState.Current.AnimatedDiceSides
@@ -255,6 +257,7 @@ public partial class Kampf : IDisposable
             _lastContextKey = CombatState.ContextKey;
             CloseDrawer();
             _selectedHistoryEntry = null;
+            _initiativeRollDetails = null;
             _notice = null;
             _activeArea = CombatArea.Kampf;
         }
@@ -265,6 +268,7 @@ public partial class Kampf : IDisposable
     private async Task HandleSetSelected(string setId)
     {
         await CombatState.SetSelectedSetAsync(setId);
+        _initiativeRollDetails = null;
         if (SelectedWeapon?.Category == CombatWeaponCategory.Ranged)
         {
             await CombatState.SetSelectedActionAsync("ranged");
@@ -561,11 +565,22 @@ public partial class Kampf : IDisposable
                     BuildRuntimeState(),
                     SelectedSet?.Id,
                     Modifier);
-                var initiative = sessionResult.Snapshot.Participants
-                    .FirstOrDefault(participant => participant.HeroId == ActiveHero?.Id)?.CurrentInitiative;
+                var participant = sessionResult.Snapshot.Participants
+                    .FirstOrDefault(current => current.HeroId == ActiveHero?.Id);
+                var initiative = participant?.CurrentInitiative;
                 if (initiative.HasValue)
                 {
                     await CombatState.SetInitiativeAsync(initiative);
+                }
+
+                if (sessionResult.Applied && participant?.InitiativeBase is { } baseValue && sessionResult.Rolls.Length > 0)
+                {
+                    var modifier = participant.InitiativeCorrection + participant.InitiativeRuntimeModifier;
+                    _initiativeRollDetails = CreateInitiativeRollDetails(
+                        sessionResult.Rolls,
+                        baseValue,
+                        modifier,
+                        initiative ?? baseValue + sessionResult.Rolls.Sum(roll => roll.Value) + modifier);
                 }
 
                 if (sessionResult.Stale || !sessionResult.Applied)
@@ -576,6 +591,19 @@ public partial class Kampf : IDisposable
                 return;
             }
 
+            var baseInitiative = SelectedSet?.Initiative ?? 0;
+            var runtime = CombatRuntimeModifierRules.ResolveInitiative(Profile, SelectedSet, BuildRuntimeState());
+            var initiativeModifiers = new List<CombatModifierDto>();
+            if (Modifier != 0)
+            {
+                initiativeModifiers.Add(new CombatModifierDto("Situativ", Modifier, "Kampfseite"));
+            }
+
+            if (runtime.Modifier != 0)
+            {
+                initiativeModifiers.Add(new CombatModifierDto("Automatisch", runtime.Modifier, "Kampf"));
+            }
+
             var result = await CombatCoordinator.RollAsync(new CombatRollRequestDto
             {
                 RequestId = Guid.NewGuid(),
@@ -584,9 +612,8 @@ public partial class Kampf : IDisposable
                 SetId = SelectedSet?.Id,
                 Action = CombatActionKind.InitiativeHelper,
                 RuntimeState = BuildRuntimeState(),
-                Modifiers = Modifier == 0
-                    ? Array.Empty<CombatModifierDto>()
-                    : [new CombatModifierDto("Situativ", Modifier, "Kampfseite")],
+                BaseValue = baseInitiative,
+                Modifiers = initiativeModifiers.ToArray(),
                 Helper = new CombatHelperRollRequestDto
                 {
                     DiceCount = Profile?.HasKlingentaenzer == true ? 2 : 1,
@@ -594,9 +621,9 @@ public partial class Kampf : IDisposable
                     Purpose = "INI-Startwurf"
                 }
             });
-            var baseInitiative = SelectedSet?.Initiative ?? 0;
-            var runtime = CombatRuntimeModifierRules.ResolveInitiative(Profile, SelectedSet, BuildRuntimeState());
-            await CombatState.SetInitiativeAsync(baseInitiative + result.Rolls.Sum(roll => roll.Value) + runtime.Modifier + Modifier);
+            var total = baseInitiative + result.Rolls.Sum(roll => roll.Value) + runtime.Modifier + Modifier;
+            _initiativeRollDetails = CreateInitiativeRollDetails(result.Rolls, baseInitiative, runtime.Modifier + Modifier, total);
+            await CombatState.SetInitiativeAsync(total);
         }
         catch (Exception exception)
         {
@@ -606,6 +633,25 @@ public partial class Kampf : IDisposable
         {
             _rollBusy = false;
         }
+    }
+
+    private static CombatActionPanel.InitiativeRollDetails CreateInitiativeRollDetails(
+        IReadOnlyList<DiceRollDto> rolls,
+        int baseValue,
+        int modifier,
+        int total)
+    {
+        var values = rolls.Select(roll => roll.Value).ToArray();
+        var diceLabel = values.Length > 0
+            ? $"{values.Length}W{rolls[0].Sides}"
+            : "Wurf";
+        return new CombatActionPanel.InitiativeRollDetails(
+            diceLabel,
+            values,
+            values.Sum(),
+            modifier,
+            baseValue,
+            total);
     }
 
     private async Task HandleParticipantInitiativeChanged(CombatSessionParticipantDto participant, int? initiative)

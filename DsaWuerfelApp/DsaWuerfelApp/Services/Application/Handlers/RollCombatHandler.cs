@@ -275,12 +275,20 @@ public sealed partial class RollCombatHandler(
             Action = request.Action,
             ActionLabel = GetActionLabel(request.Action),
             ValuesSource = "Regelhilfe",
+            BaseValue = request.BaseValue,
             Modifiers = request.Modifiers ?? [],
             RuleOptions = request.Options ?? new CombatRuleOptionsDto(),
             Outcome = CombatOutcome.Neutral,
-            StatusLabel = $"Hilfswurf · {purpose}",
-            LabeledRolls = rolls.Select(roll => new CombatLabeledRollDto(purpose, roll.Sides, roll.Value)).ToArray(),
-            RuleNotes = BuildRuleNotes(request, null).Append($"Zweck: {purpose}").ToArray()
+            StatusLabel = request.Action == CombatActionKind.InitiativeHelper
+                ? "Initiative gewürfelt"
+                : $"Hilfswurf · {purpose}",
+            LabeledRolls = rolls.Select(roll => new CombatLabeledRollDto(
+                request.Action == CombatActionKind.InitiativeHelper ? "INI-Wurf" : purpose,
+                roll.Sides,
+                roll.Value)).ToArray(),
+            RuleNotes = request.Action == CombatActionKind.InitiativeHelper
+                ? []
+                : BuildRuleNotes(request, null).Append($"Zweck: {purpose}").ToArray()
         };
 
         return CreateResult(request, hero, userId, playerName, snapshot, rolls, RollHistoryOutcome.None, []);
@@ -499,7 +507,7 @@ public sealed partial class RollCombatHandler(
         CombatActionKind.RangedAttack => "Fernkampf",
         CombatActionKind.Damage => "Trefferpunkte",
         CombatActionKind.HitZone => "Trefferzone",
-        CombatActionKind.InitiativeHelper => "INI-Hilfswurf",
+        CombatActionKind.InitiativeHelper => "Initiative",
         CombatActionKind.WoundHelper => "Wund-Hilfswurf",
         CombatActionKind.FumbleHelper => "Patzer-Hilfswurf",
         _ => "Kampfwurf"

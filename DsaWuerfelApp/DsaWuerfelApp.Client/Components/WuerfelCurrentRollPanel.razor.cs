@@ -290,6 +290,15 @@ public partial class WuerfelCurrentRollPanel
 
         if (snapshot.Combat is { } combat)
         {
+            if (combat.Action == CombatActionKind.InitiativeHelper)
+            {
+                var rolls = combat.LabeledRolls
+                    .Select(roll => new DiceRollDto(roll.Sides, roll.Value))
+                    .ToArray();
+                details.Add($"Rechnung: {GetInitiativeEquation(rolls, combat.Modifiers, combat.BaseValue)}");
+                return details;
+            }
+
             details.Add($"Kampf: {combat.StatusLabel}");
             AddText(details, "Aktion", combat.ActionLabel);
             AddText(details, "Waffe", combat.WeaponName);
@@ -428,6 +437,11 @@ public partial class WuerfelCurrentRollPanel
     private static string GetCombatRollSummary(CombatRollResultDto result)
     {
         var snapshot = result.Snapshot;
+        if (snapshot.Action == CombatActionKind.InitiativeHelper)
+        {
+            return GetInitiativeEquation(result.Rolls, snapshot.Modifiers, snapshot.BaseValue);
+        }
+
         if (snapshot.Damage is { } damage)
         {
             return $"TP {damage.Total}";
@@ -441,6 +455,11 @@ public partial class WuerfelCurrentRollPanel
     private static IReadOnlyList<string> GetCombatDetails(CombatRollResultDto result)
     {
         var snapshot = result.Snapshot;
+        if (snapshot.Action == CombatActionKind.InitiativeHelper)
+        {
+            return [$"Rechnung: {GetInitiativeEquation(result.Rolls, snapshot.Modifiers, snapshot.BaseValue)}"];
+        }
+
         var details = new List<string>
         {
             $"Status: {snapshot.StatusLabel}",
@@ -483,6 +502,31 @@ public partial class WuerfelCurrentRollPanel
         details.AddRange(snapshot.RuleNotes);
         return details;
     }
+
+    private static string GetInitiativeEquation(
+        IReadOnlyList<DiceRollDto> rolls,
+        IReadOnlyList<CombatModifierDto> modifiers,
+        int? baseValue)
+    {
+        var diceLabel = rolls.Count == 0
+            ? "Wurf"
+            : $"{rolls.Count}W{rolls[0].Sides}";
+        var diceValues = rolls.Count == 0
+            ? "—"
+            : string.Join(" + ", rolls.Select(roll => roll.Value));
+        var modifier = modifiers.Sum(current => current.Value);
+        if (baseValue is not { } initiativeBase)
+        {
+            return $"{diceLabel} ({diceValues}) {FormatInitiativeTerm(modifier)} · INI-Basiswert fehlt";
+        }
+
+        var total = rolls.Sum(roll => roll.Value) + modifier + initiativeBase;
+        return $"{diceLabel} ({diceValues}) {FormatInitiativeTerm(modifier)} {FormatInitiativeTerm(initiativeBase)} = {total}";
+    }
+
+    private static string FormatInitiativeTerm(int value) => value < 0
+        ? $"−{Math.Abs(value)}"
+        : $"+{value}";
 
     private static void AddText(ICollection<string> details, string label, string? value)
     {
