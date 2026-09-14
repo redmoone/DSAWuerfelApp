@@ -228,6 +228,22 @@ public partial class Kampf : IDisposable
         ? SessionCombat.Participants.FirstOrDefault(participant => participant.Id == exchange.TargetParticipantId)?.Name
         : null;
 
+    private bool CanRespondToExchange =>
+        IsSessionCombat &&
+        SessionCombat?.ActiveExchange is { Status: CombatExchangeStatus.DefenseOpen } exchange &&
+        OwnSessionParticipant?.Id == exchange.TargetParticipantId &&
+        !_rollBusy &&
+        !_valueMutationBusy;
+
+    private bool CanAdvanceExchange =>
+        IsSessionCombat &&
+        SessionCombat?.ActiveExchange is { Status: CombatExchangeStatus.Hit or CombatExchangeStatus.DamageOpen } exchange &&
+        OwnSessionParticipant?.Id == exchange.AttackerParticipantId &&
+        !_rollBusy &&
+        !_valueMutationBusy;
+
+    private bool HasExchangeZone => SessionCombat?.ActiveExchange?.Zone is not null;
+
     private IReadOnlyList<CombatSessionActionDto> CurrentSessionActions =>
         SessionCombat?.Actions
             .Where(action => action.Round == (SessionCombat?.Round ?? 1) && action.State != CombatActionEntryState.Completed)
@@ -433,7 +449,8 @@ public partial class Kampf : IDisposable
             SessionId = SessionState.ActiveSessionId,
             HeroId = ActiveHero?.Id,
             SetId = SelectedSet?.Id,
-            ExchangeId = IsSessionCombat && action is (CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack)
+            ExchangeId = IsSessionCombat && action is
+                (CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack or CombatActionKind.HitZone or CombatActionKind.Damage)
                 ? SessionCombat?.ActiveExchange?.ExchangeId
                 : null,
             Action = action,
@@ -447,6 +464,12 @@ public partial class Kampf : IDisposable
                 ? new CombatDamageRollRequestDto { IsCritical = IsLastCriticalAttack() }
                 : null,
             DamageModifier = action == CombatActionKind.Damage ? Modifier : 0,
+            ResolvedZone = action == CombatActionKind.Damage
+                ? SessionCombat?.ActiveExchange?.Zone ??
+                  (CombatResult?.Snapshot.Action == CombatActionKind.HitZone
+                      ? CombatResult.Snapshot.Zone
+                      : null)
+                : null,
             Zone = action == CombatActionKind.HitZone
                 ? new CombatZoneRollRequestDto(Facing, CombatArmorZone.LeftArm, CombatArmorZone.RightArm)
                 : null,
@@ -533,6 +556,56 @@ public partial class Kampf : IDisposable
     {
         _selectedTargetParticipantId = participantId;
         return Task.CompletedTask;
+    }
+
+    private async Task HandleExchangeActionAsync(CombatActionKind action)
+    {
+        if (SessionCombat?.ActiveExchange is not { } exchange)
+        {
+            return;
+        }
+
+        CombatRollRequestDto request;
+        if (action is CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge)
+        {
+            request = new CombatRollRequestDto
+            {
+                RequestId = Guid.NewGuid(),
+                SessionId = SessionState.ActiveSessionId,
+                HeroId = ActiveHero?.Id,
+                SetId = SelectedSet?.Id,
+                ExchangeId = exchange.ExchangeId,
+                Action = action,
+                WeaponId = action is CombatActionKind.WeaponParry or CombatActionKind.ShieldParry
+                    ? SelectedWeapon?.Id
+                    : null,
+                WeaponName = SelectedWeapon?.Name,
+                RuntimeState = BuildRuntimeState(),
+                Modifiers = Modifier == 0
+                    ? []
+                    : [new CombatModifierDto("Situativ", Modifier, "Kampfseite")],
+                Options = new CombatRuleOptionsDto(SpecialResultsEnabled: true, LowLePEnabled: true)
+            };
+        }
+        else
+        {
+            request = BuildRollRequest(action);
+        }
+
+        _rollBusy = true;
+        _notice = null;
+        try
+        {
+            await CombatCoordinator.RollAsync(request);
+        }
+        catch (Exception exception)
+        {
+            _notice = exception.Message;
+        }
+        finally
+        {
+            _rollBusy = false;
+        }
     }
 
     private Task HandleFacingChanged(CombatFacing facing) => CombatState.SetFacingAsync(facing);

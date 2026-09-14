@@ -353,7 +353,8 @@ public sealed class CombatSessionStateService(
                 !string.Equals(result.Snapshot.ExchangeId, request.ExchangeId, StringComparison.Ordinal) ||
                 result.Snapshot.Action != CombatActionKind.Damage ||
                 result.Snapshot.Damage is null ||
-                result.Snapshot.Zone is not { WoundZone: not null })
+                (exchange.Zone is null && result.Snapshot.Zone is not { WoundZone: not null }) ||
+                (exchange.Zone is not null && result.Snapshot.Zone is { WoundZone: null }))
             {
                 throw Validation("Der TP-Wurf enthält keine vollständige Trefferfolge für diesen Angriff.");
             }
@@ -375,7 +376,16 @@ public sealed class CombatSessionStateService(
                 throw Validation("Das Ziel des offenen Angriffsaustauschs wurde nicht gefunden.");
             }
 
-            var zone = result.Snapshot.Zone!;
+            var zone = exchange.Zone ?? result.Snapshot.Zone!;
+            if (exchange.Zone is { } storedExchangeZone &&
+                result.Snapshot.Zone is { } suppliedZone &&
+                (storedExchangeZone.W20 != suppliedZone.W20 ||
+                 storedExchangeZone.ArmorZone != suppliedZone.ArmorZone ||
+                 storedExchangeZone.WoundZone != suppliedZone.WoundZone ||
+                 storedExchangeZone.Facing != suppliedZone.Facing))
+            {
+                throw Validation("Die Trefferzone des TP-Wurfs passt nicht zum Angriffsaustausch.");
+            }
             var targetProfile = target.Kind == CombatParticipantKind.Hero
                 ? await ReadCombatProfileAsync(target, cancellationToken)
                 : null;
@@ -414,7 +424,10 @@ public sealed class CombatSessionStateService(
                 wounds = CreateEmptyWounds();
             }
 
-            var woundZone = zone.WoundZone.Value;
+            if (zone.WoundZone is not { } woundZone)
+            {
+                throw Validation("Für den Treffer ist keine Wundzone bekannt.");
+            }
             var currentWounds = wounds is not null && wounds.TryGetValue(woundZone, out var woundValue)
                 ? woundValue
                 : null;
@@ -503,6 +516,134 @@ public sealed class CombatSessionStateService(
                 ActiveExchange = updatedExchange,
                 LastMutationId = request.RequestId,
                 LastMutationDescription = $"Schadensfolge für {exchange.ExchangeId} gespeichert",
+                LastMutationUserId = userId
+            });
+            var appliedRequestIds = persisted.AppliedRequestIds
+                .Append(request.RequestId)
+                .TakeLast(MaxAppliedRequestIds)
+                .ToArray();
+            next = next with { UndoAvailable = true };
+            Save(session, CreateExchangePersistedState(
+                next,
+                current,
+                persisted,
+                exchange.ExchangeId,
+                userId,
+                appliedRequestIds));
+            return next;
+        }
+        finally
+        {
+            _stateLock.Release();
+        }
+    }
+
+    public async Task<CombatSessionSnapshotDto> BindHitZoneAsync(
+        CombatRollRequestDto request,
+        CombatRollResultDto result,
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(result);
+        if (string.IsNullOrWhiteSpace(request.SessionId) || request.Action != CombatActionKind.HitZone)
+        {
+            throw Validation("Nur ein Session-Trefferzonenwurf kann einen offenen Treffer fortsetzen.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.ExchangeId))
+        {
+            throw Validation("Ein Session-Trefferzonenwurf braucht eine offene ExchangeId.");
+        }
+
+        await _stateLock.WaitAsync(cancellationToken);
+        try
+        {
+            var session = runtimeState.GetMemberSession(request.SessionId, userId);
+            var persisted = Load(session);
+            var current = Normalize(session, persisted.Current, userId) with
+            {
+                UndoAvailable = persisted.Undo is not null && !string.IsNullOrWhiteSpace(persisted.UndoOwnerUserId)
+            };
+            var exchange = current.ActiveExchange;
+            if (exchange is null || !string.Equals(exchange.ExchangeId, request.ExchangeId.Trim(), StringComparison.Ordinal))
+            {
+                throw Validation("Für diesen Trefferzonenwurf gibt es keinen passenden Angriffsaustausch.");
+            }
+
+            if (exchange.Zone is not null)
+            {
+                return current;
+            }
+
+            if (exchange.Status != CombatExchangeStatus.Hit ||
+                result.RequestId != request.RequestId ||
+                result.Snapshot.RequestId != request.RequestId ||
+                !string.Equals(result.Snapshot.SessionId, request.SessionId, StringComparison.Ordinal) ||
+                !string.Equals(result.Snapshot.ExchangeId, request.ExchangeId, StringComparison.Ordinal) ||
+                result.Snapshot.Action != CombatActionKind.HitZone ||
+                result.Snapshot.Zone is not { WoundZone: not null })
+            {
+                throw Validation("Der Trefferzonenwurf passt nicht zum aktuellen Angriffsaustausch.");
+            }
+
+            var attacker = current.Participants.FirstOrDefault(participant =>
+                string.Equals(participant.Id, exchange.AttackerParticipantId, StringComparison.Ordinal));
+            if (attacker is null ||
+                (attacker.Kind == CombatParticipantKind.Hero && attacker.HeroId != request.HeroId) ||
+                (attacker.OwnerUserId != userId && !string.Equals(session.MasterUserId, userId, StringComparison.Ordinal)))
+            {
+                throw new RequestRejectedException(RequestRejectionReason.Forbidden,
+                    "Du darfst nur die Trefferzone des eigenen Angriffs würfeln.");
+            }
+
+            var target = current.Participants.FirstOrDefault(participant =>
+                string.Equals(participant.Id, exchange.TargetParticipantId, StringComparison.Ordinal));
+            if (target is null)
+            {
+                throw Validation("Das Ziel des offenen Angriffsaustauschs wurde nicht gefunden.");
+            }
+
+            var zone = result.Snapshot.Zone!;
+            var targetProfile = target.Kind == CombatParticipantKind.Hero
+                ? await ReadCombatProfileAsync(target, cancellationToken)
+                : null;
+            var targetSet = targetProfile is null
+                ? null
+                : ResolveParticipantSet(targetProfile, target, null);
+            var armorRating = target.Kind == CombatParticipantKind.Opponent
+                ? target.OpponentProfile?.ArmorRating
+                : zone.ArmorZone is { } armorZone
+                    ? CombatZoneRules.ResolveArmorRating(targetSet, armorZone)
+                    : null;
+            if (!armorRating.HasValue)
+            {
+                throw Validation("Für das Ziel ist kein gültiger RS zur Trefferzone bekannt.");
+            }
+
+            if (!CombatAttackExchangeRules.CanTransition(exchange.Status, CombatExchangeStatus.DamageOpen))
+            {
+                throw Validation("Der Treffer kann keine Schadensfolge öffnen.");
+            }
+
+            var nextRevision = current.Revision + 1;
+            var updatedExchange = exchange with
+            {
+                Revision = nextRevision,
+                Status = CombatExchangeStatus.DamageOpen,
+                Zone = zone with { ArmorRating = armorRating },
+                HistoryEntryIds = exchange.HistoryEntryIds
+                    .Append(result.Snapshot.EntryId)
+                    .Distinct()
+                    .ToArray(),
+                RuleNote = "Trefferzone bestimmt; TP-Wurf steht noch aus."
+            };
+            var next = FinalizeSnapshot(current with
+            {
+                Revision = nextRevision,
+                ActiveExchange = updatedExchange,
+                LastMutationId = request.RequestId,
+                LastMutationDescription = $"Trefferzone für {exchange.ExchangeId} gespeichert",
                 LastMutationUserId = userId
             });
             var appliedRequestIds = persisted.AppliedRequestIds

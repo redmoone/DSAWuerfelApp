@@ -107,6 +107,14 @@
     line-height: 1.35;
 }
 
+.combat-exchange-actions {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding-top: 0.15rem;
+}
+
 .combat-target-choice {
     background: rgba(7, 17, 29, 0.38);
 }

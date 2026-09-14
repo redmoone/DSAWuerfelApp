@@ -119,6 +119,7 @@ public sealed record CombatRollRequestDto
     public CombatDamageRollRequestDto? Damage { get; init; }
     public int DamageModifier { get; init; }
     public CombatZoneRollRequestDto? Zone { get; init; }
+    public CombatZoneSnapshotDto? ResolvedZone { get; init; }
     public CombatHelperRollRequestDto? Helper { get; init; }
     public string? Note { get; init; }
 }

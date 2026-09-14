@@ -55,6 +55,10 @@ public partial class CombatActionPanel
     [Parameter] public CombatAttackExchangeDto? ActiveExchange { get; set; }
     [Parameter] public string? ActiveExchangeAttackerName { get; set; }
     [Parameter] public string? ActiveExchangeTargetName { get; set; }
+    [Parameter] public bool CanRespondToExchange { get; set; }
+    [Parameter] public bool CanAdvanceExchange { get; set; }
+    [Parameter] public bool HasExchangeZone { get; set; }
+    [Parameter] public EventCallback<CombatActionKind> ExchangeActionRequested { get; set; }
 
     private IEnumerable<ActionOption> MainActions => Actions.Where(action => action.Key is "attack" or "parry" or "shield-parry" or "dodge" or "ranged");
     private IEnumerable<ActionOption> AdditionalActions => Actions.Where(action => action.Key is "damage" or "zone" or "initiative");
@@ -103,6 +107,14 @@ public partial class CombatActionPanel
     private static string GetEvaluationText(CombatRollEvaluationDto evaluation) =>
         $"{evaluation.StatusLabel} · {evaluation.MainRoll}" +
         (evaluation.EffectiveTarget is { } target ? $" / {target}" : string.Empty);
+
+    private static string GetExchangeActionLabel(CombatActionKind action) => action switch
+    {
+        CombatActionKind.WeaponParry => "Waffenparade",
+        CombatActionKind.ShieldParry => "Schildparade",
+        CombatActionKind.Dodge => "Ausweichen",
+        _ => action.ToString()
+    };
 
     private string RollButtonText => AttributeMode
         ? "Eigenschaften würfeln"

@@ -71,6 +71,26 @@ public sealed partial class RollCombatHandler(
             return result with { CombatSessionSnapshot = sessionSnapshot };
         }
 
+        if (!string.IsNullOrWhiteSpace(request.SessionId) && request.Action == CombatActionKind.HitZone)
+        {
+            var sessionSnapshot = await combatSessionStateService.BindHitZoneAsync(
+                request,
+                result,
+                userId,
+                cancellationToken);
+            return result with { CombatSessionSnapshot = sessionSnapshot };
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.SessionId) && request.Action == CombatActionKind.Damage)
+        {
+            var sessionSnapshot = await combatSessionStateService.ApplyDamageAsync(
+                request,
+                result,
+                userId,
+                cancellationToken);
+            return result with { CombatSessionSnapshot = sessionSnapshot };
+        }
+
         return result;
     }
 
@@ -221,6 +241,7 @@ public sealed partial class RollCombatHandler(
                 calculation.IsCritical,
                 calculation.ArmorRating,
                 calculation.StructurePoints),
+            Zone = request.ResolvedZone,
             RuleNotes = BuildRuleNotes(request, null)
                 .Append($"Importierter Schaden: {damageText ?? "unbekannt"}")
                 .ToArray()

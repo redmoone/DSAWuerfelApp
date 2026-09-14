@@ -497,15 +497,33 @@ public sealed class CombatSessionStateTests
             CombatWoundZone.Torso,
             CombatFacing.Front,
             null);
+        var zoneRequest = new CombatRollRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            HeroId = hero.Id,
+            ExchangeId = "exchange-damage",
+            Action = CombatActionKind.HitZone,
+            Zone = new CombatZoneRollRequestDto(
+                CombatFacing.Front,
+                CombatArmorZone.LeftArm,
+                CombatArmorZone.RightArm)
+        };
+        var zoneResult = CreateZoneResult(zoneRequest, zone);
+        var zoneOpen = await state.BindHitZoneAsync(zoneRequest, zoneResult, "owner");
+        Assert.Equal(CombatExchangeStatus.DamageOpen, zoneOpen.ActiveExchange!.Status);
+        Assert.Equal(2, zoneOpen.ActiveExchange.Zone!.ArmorRating);
+
         var damageResult = CreateDamageResult(damageRequest, 7, zone);
         var history = factory.Services.GetRequiredService<SessionRecordStore>();
         history.AppendHistoryEntry(session.SessionId, attackResult.HistoryEntry);
         history.AppendHistoryEntry(session.SessionId, defenseResult.HistoryEntry);
+        history.AppendHistoryEntry(session.SessionId, zoneResult.HistoryEntry);
         history.AppendHistoryEntry(session.SessionId, damageResult.HistoryEntry);
 
         var completed = await state.ApplyDamageAsync(damageRequest, damageResult, "owner");
 
-        Assert.Equal(hit.Revision + 1, completed.Revision);
+        Assert.Equal(zoneOpen.Revision + 1, completed.Revision);
         Assert.Equal(CombatExchangeStatus.Completed, completed.ActiveExchange!.Status);
         Assert.Equal(2, completed.ActiveExchange.Damage!.ArmorRating);
         Assert.Equal(5, completed.ActiveExchange.Damage.StructurePoints);
@@ -521,7 +539,7 @@ public sealed class CombatSessionStateTests
             .RuntimeState!.CurrentLeP);
         Assert.Equal(1, Assert.Single(repeated.Participants, item => item.Id == target.Id)
             .RuntimeState!.Wounds[CombatWoundZone.Torso]);
-        Assert.Equal(declaration.Snapshot.Revision + 3, completed.Revision);
+        Assert.Equal(declaration.Snapshot.Revision + 4, completed.Revision);
 
         var undone = await state.MutateAsync(new CombatSessionMutationRequestDto
         {
@@ -960,6 +978,50 @@ public sealed class CombatSessionStateTests
             [roll],
             0,
             rawDamage,
+            new RollHistoryContextDto(
+                RollHistoryKind.Combat,
+                snapshot.StatusLabel,
+                RollHistoryOutcome.None,
+                null,
+                [],
+                new RollHistorySnapshotDto { Combat = snapshot }));
+        return new CombatRollResultDto(
+            snapshot.EntryId,
+            request.RequestId,
+            request.SessionId,
+            "owner",
+            "Besitzer",
+            null,
+            CombatOutcome.Neutral,
+            snapshot,
+            [roll],
+            historyEntry);
+    }
+
+    private static CombatRollResultDto CreateZoneResult(
+        CombatRollRequestDto request,
+        CombatZoneSnapshotDto zone)
+    {
+        var snapshot = new CombatRollSnapshotDto
+        {
+            EntryId = Guid.NewGuid(),
+            RequestId = request.RequestId,
+            SessionId = request.SessionId,
+            ExchangeId = request.ExchangeId,
+            HeroId = request.HeroId,
+            Action = request.Action,
+            Outcome = CombatOutcome.Neutral,
+            StatusLabel = "Trefferzone gewürfelt",
+            LabeledRolls = [new CombatLabeledRollDto("Trefferzone", 20, zone.W20 ?? 1)],
+            Zone = zone
+        };
+        var roll = new DiceRollDto(20, zone.W20 ?? 1);
+        var historyEntry = new RollHistoryEntryDto(
+            "Besitzer",
+            DateTime.UtcNow,
+            [roll],
+            0,
+            roll.Value,
             new RollHistoryContextDto(
                 RollHistoryKind.Combat,
                 snapshot.StatusLabel,

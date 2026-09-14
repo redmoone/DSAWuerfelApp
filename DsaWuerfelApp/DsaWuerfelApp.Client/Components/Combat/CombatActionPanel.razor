@@ -45,6 +45,40 @@
             {
                 <p class="combat-exchange-note">@exchange.RuleNote</p>
             }
+            @if (exchange.Status == CombatExchangeStatus.DefenseOpen && CanRespondToExchange)
+            {
+                <div class="combat-exchange-actions" aria-label="Abwehraktionen">
+                    @foreach (var defenseAction in exchange.AllowedDefenseActions)
+                    {
+                        <UiButton Variant="primary"
+                                  Size="compact"
+                                  OnClick="() => ExchangeActionRequested.InvokeAsync(defenseAction)">
+                            @GetExchangeActionLabel(defenseAction)
+                        </UiButton>
+                    }
+                </div>
+            }
+            else if ((exchange.Status is CombatExchangeStatus.Hit or CombatExchangeStatus.DamageOpen) && CanAdvanceExchange)
+            {
+                <div class="combat-exchange-actions" aria-label="Trefferfolge">
+                    @if (!HasExchangeZone)
+                    {
+                        <UiButton Variant="primary"
+                                  Size="compact"
+                                  OnClick="() => ExchangeActionRequested.InvokeAsync(CombatActionKind.HitZone)">
+                            Trefferzone würfeln
+                        </UiButton>
+                    }
+                    else
+                    {
+                        <UiButton Variant="primary"
+                                  Size="compact"
+                                  OnClick="() => ExchangeActionRequested.InvokeAsync(CombatActionKind.Damage)">
+                            TP würfeln
+                        </UiButton>
+                    }
+                </div>
+            }
         </section>
     }
 
