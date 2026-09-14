@@ -256,7 +256,12 @@ public sealed record CombatRollEvaluationDto(
     bool IsCritical,
     bool IsFumble,
     bool RequiresDefenseDecision,
-    string StatusLabel);
+    string StatusLabel)
+{
+    public CombatModifierDto[] Modifiers { get; init; } = [];
+    public string[] RuleNotes { get; init; } = [];
+    public string ValuesSource { get; init; } = "Regelhilfe";
+}
 
 public sealed record CombatAttackDecisionDto(
     bool IsValid,

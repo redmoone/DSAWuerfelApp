@@ -105,35 +105,39 @@ public static class CombatRollRules
         int mainRoll,
         int? controlRoll = null,
         int? unmodifiedBaseValue = null,
-        CombatRuleOptionsDto? options = null)
+        CombatRuleOptionsDto? options = null,
+        string valuesSource = "Regelhilfe",
+        IReadOnlyList<string>? ruleNotes = null)
     {
         options ??= new CombatRuleOptionsDto();
+        var evaluationModifiers = modifiers?.ToArray() ?? [];
+        var evaluationRuleNotes = ruleNotes?.ToArray() ?? [];
 
         if (mainRoll is < 1 or > 20)
         {
-            return Invalid(action, baseValue, mainRoll, "Der Hauptwurf muss zwischen 1 und 20 liegen.");
+            return AttachDetails(Invalid(action, baseValue, mainRoll, "Der Hauptwurf muss zwischen 1 und 20 liegen."));
         }
 
         if (controlRoll is < 1 or > 20)
         {
-            return Invalid(action, baseValue, mainRoll, "Der Kontrollwurf muss zwischen 1 und 20 liegen.");
+            return AttachDetails(Invalid(action, baseValue, mainRoll, "Der Kontrollwurf muss zwischen 1 und 20 liegen."));
         }
 
         var target = ResolveEffectiveTarget(baseValue, modifiers);
         if (!target.HasValue)
         {
-            return Invalid(action, baseValue, mainRoll, "Für diesen Kampfwurf fehlt ein Zielwert.");
+            return AttachDetails(Invalid(action, baseValue, mainRoll, "Für diesen Kampfwurf fehlt ein Zielwert."));
         }
 
         if (!IsCheckAction(action))
         {
-            return Invalid(action, baseValue, mainRoll, "Diese Aktion ist kein AT-, PA-, Ausweich- oder FK-Wurf.");
+            return AttachDetails(Invalid(action, baseValue, mainRoll, "Diese Aktion ist kein AT-, PA-, Ausweich- oder FK-Wurf."));
         }
 
         if (!options.SpecialResultsEnabled)
         {
             var ordinarySuccess = mainRoll != 20 && mainRoll <= target.Value;
-            return new CombatRollEvaluationDto(
+            return AttachDetails(new CombatRollEvaluationDto(
                 true,
                 null,
                 action,
@@ -147,7 +151,7 @@ public static class CombatRollRules
                 false,
                 false,
                 IsAttack(action) && ordinarySuccess,
-                ordinarySuccess ? "Gelungen" : "Misslungen");
+                ordinarySuccess ? "Gelungen" : "Misslungen"));
         }
 
         if (mainRoll == 20)
@@ -157,12 +161,12 @@ public static class CombatRollRules
                 : target.Value;
             if (!controlRoll.HasValue)
             {
-                return PendingControl(action, baseValue, target.Value, controlTarget, mainRoll,
-                    "Kontrollwurf für Patzer ausstehend.");
+                return AttachDetails(PendingControl(action, baseValue, target.Value, controlTarget, mainRoll,
+                    "Kontrollwurf für Patzer ausstehend."));
             }
 
             var avoided = controlRoll.Value <= controlTarget;
-            return new CombatRollEvaluationDto(
+            return AttachDetails(new CombatRollEvaluationDto(
                 true,
                 null,
                 action,
@@ -176,14 +180,14 @@ public static class CombatRollRules
                 false,
                 !avoided,
                 false,
-                avoided ? "Misslungen · Patzer abgewendet" : "PATZER · Kontrollwurf misslungen");
+                avoided ? "Misslungen · Patzer abgewendet" : "PATZER · Kontrollwurf misslungen"));
         }
 
         if (mainRoll == 1)
         {
             if (action == CombatActionKind.RangedAttack && !RangedLuckyRollIsAllowed(baseValue, modifiers))
             {
-                return new CombatRollEvaluationDto(
+                return AttachDetails(new CombatRollEvaluationDto(
                     true,
                     null,
                     action,
@@ -197,13 +201,13 @@ public static class CombatRollRules
                     false,
                     false,
                     false,
-                    "Misslungen · FK-Glücksbedingung nicht erfüllt");
+                    "Misslungen · FK-Glücksbedingung nicht erfüllt"));
             }
 
             if (!controlRoll.HasValue)
             {
-                return PendingControl(action, baseValue, target.Value, target.Value, mainRoll,
-                    "Kontrollwurf für Glückswurf ausstehend.");
+                return AttachDetails(PendingControl(action, baseValue, target.Value, target.Value, mainRoll,
+                    "Kontrollwurf für Glückswurf ausstehend."));
             }
 
             var confirmed = controlRoll.Value <= target.Value;
@@ -221,7 +225,7 @@ public static class CombatRollRules
                 _ => critical ? "Kritischer Wurf" : "Glücklicher Wurf"
             };
 
-            return new CombatRollEvaluationDto(
+            return AttachDetails(new CombatRollEvaluationDto(
                 true,
                 null,
                 action,
@@ -235,11 +239,11 @@ public static class CombatRollRules
                 critical,
                 false,
                 IsAttack(action),
-                label);
+                label));
         }
 
         var success = mainRoll <= target.Value;
-        return new CombatRollEvaluationDto(
+        return AttachDetails(new CombatRollEvaluationDto(
             true,
             null,
             action,
@@ -253,7 +257,14 @@ public static class CombatRollRules
             false,
             false,
             IsAttack(action) && success,
-            success ? IsAttack(action) ? "Attacke gelungen" : "Gelungen" : "Misslungen");
+            success ? IsAttack(action) ? "Attacke gelungen" : "Gelungen" : "Misslungen"));
+
+        CombatRollEvaluationDto AttachDetails(CombatRollEvaluationDto evaluation) => evaluation with
+        {
+            Modifiers = evaluationModifiers,
+            RuleNotes = evaluationRuleNotes,
+            ValuesSource = valuesSource
+        };
     }
 
     public static CombatDamageCalculationDto CalculateDamage(

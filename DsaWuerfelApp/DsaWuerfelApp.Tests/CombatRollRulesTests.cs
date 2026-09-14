@@ -15,6 +15,30 @@ public sealed class CombatRollRulesTests
     }
 
     [Fact]
+    public void Evaluation_preserves_modifier_breakdown_and_rule_source()
+    {
+        var modifiers = new[]
+        {
+            new CombatModifierDto("Wunden", -2, "WdS S. 83"),
+            new CombatModifierDto("Entfernung", 1, "Kampfset")
+        };
+
+        var evaluation = CombatRollRules.Evaluate(
+            CombatActionKind.MeleeAttack,
+            14,
+            modifiers,
+            10,
+            valuesSource: "Import + laufender Kampfzustand",
+            ruleNotes: ["WdS S. 83: Wunden berücksichtigt."]);
+
+        Assert.Equal(14, evaluation.BaseValue);
+        Assert.Equal(13, evaluation.EffectiveTarget);
+        Assert.Equal(modifiers, evaluation.Modifiers);
+        Assert.Equal("Import + laufender Kampfzustand", evaluation.ValuesSource);
+        Assert.Equal(["WdS S. 83: Wunden berücksichtigt."], evaluation.RuleNotes);
+    }
+
+    [Fact]
     public void Successful_attack_requires_a_defense_decision()
     {
         var evaluation = CombatRollRules.Evaluate(CombatActionKind.MeleeAttack, 14, [], 10);

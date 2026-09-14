@@ -87,6 +87,9 @@ public sealed partial class RollCombatHandler(
         var modifiers = (request.Modifiers ?? [])
             .Concat(runtimeModifiers.Modifiers)
             .ToArray();
+        var valuesSource = runtimeModifiers.Modifiers.Length > 0 || runtimeModifiers.RuleNotes.Length > 0
+            ? "Import + laufender Kampfzustand"
+            : "Import";
         var mainRoll = RollSingleD20();
         var preliminary = CombatRollRules.Evaluate(
             request.Action,
@@ -109,7 +112,9 @@ public sealed partial class RollCombatHandler(
             mainRoll,
             controlRoll,
             unmodifiedBaseValue: baseValue,
-            options);
+            options,
+            valuesSource,
+            runtimeModifiers.RuleNotes);
         if (!evaluation.IsValid)
         {
             throw Validation(evaluation.ValidationMessage ?? "Kampfwurf konnte nicht ausgewertet werden.");
@@ -127,9 +132,7 @@ public sealed partial class RollCombatHandler(
             Action = request.Action,
             ActionLabel = GetActionLabel(request.Action),
             WeaponName = weapon?.Name,
-            ValuesSource = runtimeModifiers.Modifiers.Length > 0 || runtimeModifiers.RuleNotes.Length > 0
-                ? "Import + laufender Kampfzustand"
-                : "Import",
+            ValuesSource = valuesSource,
             BaseValue = baseValue,
             UnmodifiedBaseValue = baseValue,
             EffectiveTarget = evaluation.EffectiveTarget,
