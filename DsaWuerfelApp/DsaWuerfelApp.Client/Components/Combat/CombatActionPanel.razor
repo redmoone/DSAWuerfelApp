@@ -121,11 +121,11 @@
                                                       Active="@(weapon.Id == SelectedWeaponId)"
                                                       role="option"
                                                       aria-selected="@(weapon.Id == SelectedWeaponId)"
-                                                      Disabled="@(IsBusy || weapon.IsAvailable == false)"
-                                                      OnClick="() => WeaponSelected.InvokeAsync(weapon.Id)">
+                                              Disabled="@(IsBusy || weapon.IsAvailable == false)"
+                                              OnClick="() => WeaponSelected.InvokeAsync(weapon.Id)">
                                                 <span class="ui-button-label">@GetWeaponLabel(weapon)</span>
+                                                <span class="combat-option-value">@GetWeaponValue(weapon)</span>
                                             </UiButton>
-                                            <span class="combat-option-meta">@GetWeaponValue(weapon)</span>
                                         </div>
                                     }
                                 </div>
@@ -150,8 +150,8 @@
                                           Disabled="@(IsBusy || !action.IsAvailable)"
                                           OnClick="() => ActionSelected.InvokeAsync(action.Key)">
                                     <span class="ui-button-label">@action.Label</span>
+                                    <span class="combat-option-value">@action.Detail</span>
                                 </UiButton>
-                                <span class="combat-option-meta">@action.Detail</span>
                             </div>
                         }
                     </div>
@@ -170,8 +170,8 @@
                                           Disabled="@(IsBusy || !action.IsAvailable)"
                                           OnClick="() => ActionSelected.InvokeAsync(action.Key)">
                                     <span class="ui-button-label">@action.Label</span>
+                                    <span class="combat-option-value">@action.Detail</span>
                                 </UiButton>
-                                <span class="combat-option-meta">@action.Detail</span>
                             </div>
                         }
                     </div>
@@ -190,8 +190,8 @@
                                           Disabled="@(IsBusy || !action.IsAvailable)"
                                           OnClick="() => ActionSelected.InvokeAsync(action.Key)">
                                     <span class="ui-button-label">@action.Label</span>
+                                    <span class="combat-option-value">@action.Detail</span>
                                 </UiButton>
-                                <span class="combat-option-meta">@action.Detail</span>
                             </div>
                         }
                     </div>

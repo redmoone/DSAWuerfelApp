@@ -186,21 +186,24 @@
     min-width: 0;
     max-width: 100%;
     flex: 0 1 auto;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.15rem;
+    align-items: stretch;
 }
 
 .combat-option-entry .ui-button {
     max-width: 100%;
 }
 
-.combat-option-meta {
-    padding-left: 0.2rem;
+.combat-option-entry ::deep .ui-button--option .combat-option-value {
+    color: var(--dsa-gold);
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.combat-option-entry ::deep .ui-button--option .combat-option-value::before {
+    margin: 0 0.05rem 0 0.1rem;
     color: var(--dsa-text-muted);
-    font-size: 0.68rem;
-    line-height: 1.25;
-    overflow-wrap: anywhere;
+    content: "·";
 }
 
 .combat-action-options.compact {
