@@ -299,6 +299,16 @@ public sealed record CombatDamageCalculationDto(
 
 public sealed record CombatWoundThresholdsDto(int? First, int? Second, int? Third);
 
+public sealed record CombatWoundApplicationDto(
+    int? StructurePoints,
+    int? LePBefore,
+    int? LePAfter,
+    CombatWoundZone? Zone,
+    int? ExistingWounds,
+    int? ResultingWounds,
+    int AddedWounds,
+    bool IsIncapacitated);
+
 public sealed record CombatFollowUpRequirementDto(
     string Id,
     CombatFollowUpKind Kind,
