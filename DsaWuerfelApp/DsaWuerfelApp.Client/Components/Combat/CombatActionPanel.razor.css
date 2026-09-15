@@ -134,7 +134,7 @@
 .combat-muted,
 .combat-block-heading p,
 .combat-target-preview > span,
-.combat-roll-result > div > span:last-of-type {
+.combat-action-state {
     color: var(--dsa-text-muted);
     font-size: 0.74rem;
 }
@@ -358,8 +358,7 @@
     align-items: baseline;
 }
 
-.combat-target-preview strong,
-.combat-roll-result strong {
+.combat-target-preview strong {
     color: var(--dsa-gold);
     font-size: 1.05rem;
     overflow-wrap: anywhere;
@@ -429,7 +428,7 @@
     height: 100%;
 }
 
-.combat-roll-result {
+.combat-result-actions {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -441,16 +440,11 @@
     background: rgba(21, 48, 78, 0.5);
 }
 
-.combat-roll-result > div {
+.combat-result-actions > div {
     display: flex;
     min-width: 0;
     flex-direction: column;
     gap: 0.15rem;
-}
-
-.combat-result-note {
-    color: var(--dsa-gold);
-    font-size: 0.7rem;
 }
 
 .combat-roll-column ::deep .results-bar {

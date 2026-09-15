@@ -88,6 +88,16 @@
                         </div>
                     }
 
+                    @if (GetCombatSummary(log) is { Length: > 0 } combatSummary)
+                    {
+                        <div class="history-combat-summary" data-testid="history-combat-summary">
+                            @foreach (var detail in combatSummary)
+                            {
+                                <span>@detail</span>
+                            }
+                        </div>
+                    }
+
                     @if (ShouldShowCompactEquation(log))
                     {
                         <div class="history-equation" aria-label="@GetEquationAriaLabel(log)">

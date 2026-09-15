@@ -139,6 +139,66 @@ public partial class RollHistory
     private static bool IsInitiativeEntry(RollHistoryEntryDto entry) =>
         entry.Context?.Snapshot?.Combat?.Action == CombatActionKind.InitiativeHelper;
 
+    private static string[] GetCombatSummary(RollHistoryEntryDto entry)
+    {
+        if (entry.Context?.Snapshot?.Combat is not { } combat || IsInitiativeEntry(entry))
+        {
+            return [];
+        }
+
+        var details = new List<string>();
+        if (!string.IsNullOrWhiteSpace(combat.StatusLabel))
+        {
+            details.Add(combat.StatusLabel);
+        }
+
+        if (combat.Damage is { } damage)
+        {
+            details.Add($"TP {damage.Total}");
+            if (damage.ArmorRating is { } armor)
+            {
+                details.Add($"RS {armor}");
+            }
+
+            if (damage.StructurePoints is { } structurePoints)
+            {
+                details.Add($"SP {structurePoints}");
+            }
+        }
+
+        if (combat.Zone is { } zone && zone.WoundZone is { } woundZone)
+        {
+            details.Add($"Zone {GetWoundZoneLabel(woundZone)}");
+        }
+
+        if (combat.EffectiveTarget is { } target && combat.LabeledRolls.Length == 0)
+        {
+            details.Add($"Ziel {target}");
+        }
+
+        if (combat.Modifiers.Length > 0)
+        {
+            details.Add(string.Join(" · ", combat.Modifiers.Select(FormatModifier)));
+        }
+
+        return details.ToArray();
+    }
+
+    private static string FormatModifier(CombatModifierDto modifier) =>
+        $"{modifier.Label} {(modifier.Value > 0 ? "+" : string.Empty)}{modifier.Value}";
+
+    private static string GetWoundZoneLabel(CombatWoundZone zone) => zone switch
+    {
+        CombatWoundZone.Head => "Kopf",
+        CombatWoundZone.Torso => "Brust/Rücken",
+        CombatWoundZone.Abdomen => "Bauch",
+        CombatWoundZone.LeftArm => "linker Arm",
+        CombatWoundZone.RightArm => "rechter Arm",
+        CombatWoundZone.LeftLeg => "linkes Bein",
+        CombatWoundZone.RightLeg => "rechtes Bein",
+        _ => zone.ToString()
+    };
+
     private static int GetInitiativeBase(RollHistoryEntryDto entry) =>
         entry.Context?.Snapshot?.Combat?.BaseValue ?? 0;
 

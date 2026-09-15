@@ -369,32 +369,14 @@
                                  ShowHiddenRollHint="false"
                                  ResetButtonText="Modifikator auf 0" />
 
-                @if (AttributeResult is not null)
+                @if (CanConsumeReaction)
                 {
-                    <div class="combat-roll-result" data-testid="combat-roll-result" aria-live="assertive">
+                    <div class="combat-result-actions" aria-live="polite">
                         <div>
-                            <span class="combat-field-label">Ergebnis</span>
-                            <strong>@(AttributeResult.Success ? "Eigenschaftsprobe gelungen" : "Eigenschaftsprobe misslungen")</strong>
-                            <span>@AttributeResult.SuccessCount von @AttributeResult.Details.Length Eigenschaften gelungen</span>
+                            <span class="combat-field-label">Reaktion</span>
+                            <span class="combat-action-state">Die Abwehr ist noch nicht verbucht.</span>
                         </div>
-                    </div>
-                }
-                else if (CombatResult is not null)
-                {
-                    <div class="combat-roll-result" data-testid="combat-roll-result" aria-live="assertive">
-                        <div>
-                            <span class="combat-field-label">Ergebnis</span>
-                            <strong>@CombatResult.Snapshot.StatusLabel</strong>
-                            <span>@GetResultSummary(CombatResult)</span>
-                            @if (CombatResult.Snapshot.Action == CombatActionKind.Damage)
-                            {
-                                <small class="combat-result-note">Nur TP gewürfelt; LeP und Wunden bleiben unverändert.</small>
-                            }
-                        </div>
-                        @if (CanConsumeReaction && CombatResult.Snapshot.Action is CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge)
-                        {
-                            <UiButton Variant="primary" Size="compact" Class="combat-result-reaction" OnClick="ConsumeReactionRequested">Reaktion verbrauchen</UiButton>
-                        }
+                        <UiButton Variant="primary" Size="compact" Class="combat-result-reaction" OnClick="ConsumeReactionRequested">Reaktion verbrauchen</UiButton>
                     </div>
                 }
 

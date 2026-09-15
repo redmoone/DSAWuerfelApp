@@ -45,8 +45,6 @@ public partial class CombatActionPanel
     [Parameter] public int? EffectiveTarget { get; set; }
     [Parameter] public CombatFacing Facing { get; set; }
     [Parameter] public EventCallback<CombatFacing> FacingChanged { get; set; }
-    [Parameter] public CombatRollResultDto? CombatResult { get; set; }
-    [Parameter] public AttributeRollResultDto? AttributeResult { get; set; }
     [Parameter] public bool CanConsumeReaction { get; set; }
     [Parameter] public EventCallback ConsumeReactionRequested { get; set; }
     [Parameter] public IReadOnlyList<int> ResultDiceSides { get; set; } = Array.Empty<int>();
@@ -202,18 +200,6 @@ public partial class CombatActionPanel
     private static string FormatNumber(int? value) => value?.ToString(CultureInfo.InvariantCulture) ?? "—";
 
     private static string FormatModifier(int value) => value > 0 ? $"+{value}" : value.ToString(CultureInfo.InvariantCulture);
-
-    private static string GetResultSummary(CombatRollResultDto result)
-    {
-        if (result.Snapshot.Damage is { } damage)
-        {
-            return $"TP {damage.Total}";
-        }
-
-        return result.Snapshot.EffectiveTarget is { } target
-            ? $"Wurf {string.Join(" / ", result.Snapshot.LabeledRolls.Select(roll => roll.Value))} · Ziel {target}"
-            : string.Join(" / ", result.Snapshot.LabeledRolls.Select(roll => $"W{roll.Sides} {roll.Value}"));
-    }
 
     public sealed record ActionOption(string Key, string Label, string Detail, bool IsAvailable);
 
