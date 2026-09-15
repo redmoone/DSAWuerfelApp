@@ -53,6 +53,10 @@
                             </div>
                             <strong>@participant.Name</strong>
                             <span>@GetAffiliation(participant)</span>
+                            @if (!string.IsNullOrWhiteSpace(GetParticipantStatus(participant)))
+                            {
+                                <small class="combat-initiative-overview-status">@GetParticipantStatus(participant)</small>
+                            }
                             @if (participant.CurrentInitiative.HasValue && participant.InitiativeBase.HasValue && participant.CurrentInitiative != participant.InitiativeBase)
                             {
                                 <small>Basis @participant.InitiativeBase</small>
@@ -69,6 +73,22 @@
                                       OnClick="() => ConsumeReactionRequested.InvokeAsync(participant)">
                                 @(participant.ReactionAvailable ? "Reaktion" : "PA verbraucht")
                             </UiButton>
+                            @if (participant.CurrentInitiative is null && CanRollParticipantInitiative?.Invoke(participant) == true)
+                            {
+                                <UiButton Size="compact"
+                                          Class="combat-initiative-overview-button"
+                                          OnClick="() => RollInitiativeRequested.InvokeAsync(participant)">
+                                    INI würfeln
+                                </UiButton>
+                            }
+                            @if (CanRemoveOpponent?.Invoke(participant) == true)
+                            {
+                                <UiButton Size="compact"
+                                          Class="combat-initiative-overview-button"
+                                          OnClick="() => RemoveOpponentRequested.InvokeAsync(participant)">
+                                    Entfernen
+                                </UiButton>
+                            }
                         </div>
 
                         @if (!string.IsNullOrWhiteSpace(participant.Announcement))

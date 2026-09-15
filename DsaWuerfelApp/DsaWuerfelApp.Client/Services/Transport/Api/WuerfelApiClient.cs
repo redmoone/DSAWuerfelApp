@@ -23,6 +23,15 @@ public sealed class WuerfelApiClient(HttpClient httpClient) : IWuerfelApiClient
             cancellationToken);
     }
 
+    public Task<CombatEnemyCatalogEntryDto[]> GetCombatEnemyCatalogAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return GetJsonAsync<CombatEnemyCatalogEntryDto[]>(
+            "api/dice/combat-enemies",
+            "Gegnerkatalog konnte nicht geladen werden.",
+            cancellationToken);
+    }
+
     public Task<ProbeInfoResultDto> GetProbeInfoAsync(
         ProbeInfoRequestDto request,
         CancellationToken cancellationToken = default)

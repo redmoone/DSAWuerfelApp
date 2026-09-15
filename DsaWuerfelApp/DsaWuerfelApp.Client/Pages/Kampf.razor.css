@@ -379,6 +379,40 @@
     font: inherit;
 }
 
+.combat-drawer-field .combat-enemy-select,
+.combat-drawer-field .ui-select {
+    max-width: 28rem;
+}
+
+.combat-enemy-catalog-summary {
+    display: flex;
+    width: min(100%, 28rem);
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.65rem 0.75rem;
+    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.35);
+    border-radius: var(--dsa-panel-radius);
+    background: rgba(7, 17, 29, 0.68);
+}
+
+.combat-enemy-catalog-summary strong {
+    color: var(--dsa-white);
+    font-size: 0.86rem;
+}
+
+.combat-enemy-catalog-summary span,
+.combat-enemy-catalog-summary small {
+    color: var(--dsa-text-muted);
+    font-size: 0.72rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.combat-enemy-catalog-summary small:first-of-type {
+    color: var(--dsa-gold);
+}
+
 .combat-drawer-check {
     display: inline-flex;
     align-items: center;

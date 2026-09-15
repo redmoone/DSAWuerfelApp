@@ -8,6 +8,9 @@ public interface IWuerfelApiClient
 
     Task<DicePageContextDto> GetCatalogContextAsync(CancellationToken cancellationToken = default);
 
+    Task<CombatEnemyCatalogEntryDto[]> GetCombatEnemyCatalogAsync(
+        CancellationToken cancellationToken = default);
+
     Task<ProbeInfoResultDto> GetProbeInfoAsync(
         ProbeInfoRequestDto request,
         CancellationToken cancellationToken = default);

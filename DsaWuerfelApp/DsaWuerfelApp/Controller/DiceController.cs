@@ -12,7 +12,9 @@ namespace DsaWuerfelApp.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/dice")]
-public class DiceController(DiceWorkflowService workflow) : ControllerBase
+public class DiceController(
+    DiceWorkflowService workflow,
+    CombatEnemyCatalogStore enemyCatalogStore) : ControllerBase
 {
     [HttpGet("context")]
     public async Task<ActionResult<DicePageContextDto>> GetContext(
@@ -29,6 +31,12 @@ public class DiceController(DiceWorkflowService workflow) : ControllerBase
     {
         var result = await workflow.GetCatalogContextAsync(cancellationToken);
         return Ok(result);
+    }
+
+    [HttpGet("combat-enemies")]
+    public ActionResult<CombatEnemyCatalogEntryDto[]> GetCombatEnemies()
+    {
+        return Ok(enemyCatalogStore.Entries.ToArray());
     }
 
     [HttpGet("probe-info")]

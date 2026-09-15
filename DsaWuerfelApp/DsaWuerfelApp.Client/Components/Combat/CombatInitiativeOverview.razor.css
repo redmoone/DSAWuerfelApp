@@ -118,6 +118,10 @@
     overflow-wrap: anywhere;
 }
 
+.combat-initiative-overview-status {
+    line-height: 1.35;
+}
+
 .combat-initiative-turn-label {
     color: var(--dsa-text-muted);
     font-size: 0.6rem;

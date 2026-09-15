@@ -19,6 +19,7 @@ public partial class Kampf : IDisposable
     [Inject] public SessionState SessionState { get; set; } = null!;
     [Inject] public WuerfelState WuerfelState { get; set; } = null!;
     [Inject] public WuerfelFacade WuerfelFacade { get; set; } = null!;
+    [Inject] public IWuerfelApiClient WuerfelApiClient { get; set; } = null!;
 
     private string? _notice;
     private string? _lastContextKey;
@@ -37,6 +38,14 @@ public partial class Kampf : IDisposable
     private string _opponentAffiliationDraft = "Gegner";
     private int? _opponentInitiativeBaseDraft;
     private int? _opponentInitiativeDraft;
+    private CombatEnemyCatalogEntryDto[] _enemyCatalog = [];
+    private bool _enemyCatalogLoading;
+    private string? _selectedEnemyId;
+    private string? _selectedEnemyVariantId;
+    private string? _selectedEnemyAttackId;
+    private string? _selectedEnemyWeaponOption;
+    private string? _selectedEnemyArmorOption;
+    private int? _selectedEnemyLeP;
     private string _announcementDraft = string.Empty;
     private CombatParticipantDrawerMode _participantDrawerMode;
     private RollHistoryEntryDto? _selectedHistoryEntry;
@@ -105,6 +114,50 @@ public partial class Kampf : IDisposable
     private CombatArea ActiveArea => _activeArea;
     private bool IsAttributeMode => _attributeMode;
     private bool HasAttention => Profile?.HasAttention == true;
+
+    private const string ManualOpponentSelection = "__manual__";
+
+    private CombatEnemyCatalogEntryDto? SelectedEnemyCatalogEntry =>
+        _enemyCatalog.FirstOrDefault(enemy =>
+            string.Equals(enemy.Id, _selectedEnemyId, StringComparison.Ordinal));
+
+    private CombatEnemyCombatDto? SelectedEnemyCombat =>
+        SelectedEnemyCatalogEntry is not { } enemy
+            ? null
+            : enemy.CombatVariants.FirstOrDefault(variant =>
+                    string.Equals(variant.Id, _selectedEnemyVariantId, StringComparison.Ordinal))?.Combat
+              ?? enemy.Combat;
+
+    private CombatEnemyRangeDto? SelectedEnemyLePRange => SelectedEnemyCombat?.Resources.LeP.SourceRange;
+
+    private bool IsManualOpponentSelection =>
+        string.Equals(_selectedEnemyId, ManualOpponentSelection, StringComparison.Ordinal);
+
+    private bool HasSelectedEnemyVariant =>
+        SelectedEnemyCatalogEntry is not { CombatVariants.Length: > 0 } ||
+        !string.IsNullOrWhiteSpace(_selectedEnemyVariantId);
+
+    private bool HasSelectedEnemyAttack =>
+        SelectedEnemyCatalogEntry is not { Attacks.Length: > 1 } ||
+        !string.IsNullOrWhiteSpace(_selectedEnemyAttackId);
+
+    private bool HasSelectedEnemyEquipment =>
+        SelectedEnemyCatalogEntry?.Equipment is not { SelectionRequired: true } ||
+        (!string.IsNullOrWhiteSpace(_selectedEnemyWeaponOption) &&
+         !string.IsNullOrWhiteSpace(_selectedEnemyArmorOption));
+
+    private bool HasSelectedEnemyLeP =>
+        SelectedEnemyLePRange is null || _selectedEnemyLeP.HasValue;
+
+    private bool CanApplyOpponentDrawer =>
+        IsManualOpponentSelection
+            ? !string.IsNullOrWhiteSpace(_opponentNameDraft)
+            : SelectedEnemyCatalogEntry is not null &&
+              SelectedEnemyCombat is not null &&
+              HasSelectedEnemyVariant &&
+              HasSelectedEnemyAttack &&
+              HasSelectedEnemyEquipment &&
+              HasSelectedEnemyLeP;
 
     private string HeroDisplayName => ActiveHero?.Name ?? "Kein aktiver Held";
 
@@ -866,6 +919,119 @@ public partial class Kampf : IDisposable
             StringComparison.Ordinal);
     }
 
+    private bool CanRollParticipantInitiative(CombatSessionParticipantDto participant) =>
+        IsSessionMaster &&
+        participant.Kind == CombatParticipantKind.Opponent &&
+        !participant.CurrentInitiative.HasValue &&
+        participant.InitiativeBase.HasValue;
+
+    private async Task RollParticipantInitiativeAsync(CombatSessionParticipantDto participant)
+    {
+        if (!CanRollParticipantInitiative(participant) || _rollBusy)
+        {
+            return;
+        }
+
+        _rollBusy = true;
+        _notice = null;
+        try
+        {
+            var result = await CombatSessionState.RollInitiativeAsync(
+                participant.Id,
+                runtimeState: participant.RuntimeState,
+                initiativeCorrection: participant.InitiativeCorrection);
+            if (result.Stale || !result.Applied)
+            {
+                _notice = result.Message;
+            }
+        }
+        catch (Exception exception)
+        {
+            _notice = exception.Message;
+        }
+        finally
+        {
+            _rollBusy = false;
+        }
+    }
+
+    private bool CanRemoveOpponent(CombatSessionParticipantDto participant) =>
+        IsSessionMaster && participant.Kind == CombatParticipantKind.Opponent;
+
+    private async Task RemoveOpponentAsync(CombatSessionParticipantDto participant)
+    {
+        if (!CanRemoveOpponent(participant))
+        {
+            return;
+        }
+
+        try
+        {
+            var result = await CombatSessionState.RemoveOpponentAsync(participant.Id);
+            _notice = result.Message;
+        }
+        catch (Exception exception)
+        {
+            _notice = exception.Message;
+        }
+    }
+
+    private string? GetParticipantStatus(CombatSessionParticipantDto participant)
+    {
+        if (participant.Kind != CombatParticipantKind.Opponent ||
+            participant.OpponentProfile is not { } opponent)
+        {
+            return null;
+        }
+
+        var catalog = opponent.CatalogProfile;
+        var runtime = participant.RuntimeState;
+        var status = new List<string>
+        {
+            FormatOpponentLeP(opponent, runtime),
+            FormatOpponentAuP(catalog, runtime),
+            $"Wunden {CountWounds(runtime)}",
+            "Schmerz —",
+            $"RS {opponent.ArmorRating?.ToString() ?? catalog?.Armor.TotalRs?.ToString() ?? "—"}"
+        };
+
+        if (catalog is { CombatReady: false })
+        {
+            status.Add("noch nicht kampfbereit");
+        }
+
+        return string.Join(" · ", status);
+    }
+
+    private static string FormatOpponentLeP(
+        CombatOpponentProfileDto opponent,
+        CombatRuntimeStateDto? runtime)
+    {
+        var current = runtime?.CurrentLeP ?? opponent.LeP;
+        var catalog = opponent.CatalogProfile;
+        if (current.HasValue && catalog?.LePSourceMin is { } min && catalog.LePSourceMax is { } max)
+        {
+            return $"LeP {current} ({min}–{max})";
+        }
+
+        return current.HasValue && opponent.LeP.HasValue
+            ? $"LeP {current}/{opponent.LeP}"
+            : "LeP —";
+    }
+
+    private static string FormatOpponentAuP(
+        CombatEnemyResolvedProfileDto? catalog,
+        CombatRuntimeStateDto? runtime)
+    {
+        var current = runtime?.CurrentAuP ?? catalog?.AuP;
+        return current.HasValue && catalog?.AuP.HasValue == true
+            ? $"AuP {current}/{catalog.AuP}"
+            : "AuP —";
+    }
+
+    private static int CountWounds(CombatRuntimeStateDto? runtime) =>
+        runtime?.Wounds.Values.Count(value => value.GetValueOrDefault() > 0) ?? 0;
+
     private void OpenResourceDrawer(CombatResourceKind resource)
     {
         _resourceDrawerKind = resource;
@@ -902,14 +1068,40 @@ public partial class Kampf : IDisposable
         _drawer = CombatDrawer.Orientation;
     }
 
-    private void OpenOpponentDrawer()
+    private async Task OpenOpponentDrawer()
     {
         _participantDrawerMode = CombatParticipantDrawerMode.Opponent;
         _opponentNameDraft = string.Empty;
         _opponentAffiliationDraft = "Gegner";
         _opponentInitiativeBaseDraft = null;
         _opponentInitiativeDraft = null;
+        _selectedEnemyId = null;
+        _selectedEnemyVariantId = null;
+        _selectedEnemyAttackId = null;
+        _selectedEnemyWeaponOption = null;
+        _selectedEnemyArmorOption = null;
+        _selectedEnemyLeP = null;
         _drawer = CombatDrawer.Participant;
+
+        if (_enemyCatalog.Length > 0)
+        {
+            return;
+        }
+
+        _enemyCatalogLoading = true;
+        _notice = null;
+        try
+        {
+            _enemyCatalog = await WuerfelApiClient.GetCombatEnemyCatalogAsync();
+        }
+        catch (Exception exception)
+        {
+            _notice = exception.Message;
+        }
+        finally
+        {
+            _enemyCatalogLoading = false;
+        }
     }
 
     private void OpenAnnouncementDrawer()
@@ -946,11 +1138,29 @@ public partial class Kampf : IDisposable
         CombatSessionMutationResultDto result;
         if (_participantDrawerMode == CombatParticipantDrawerMode.Opponent)
         {
-            result = await CombatSessionState.AddOpponentAsync(
-                _opponentNameDraft,
-                _opponentInitiativeBaseDraft,
-                _opponentInitiativeDraft,
-                _opponentAffiliationDraft);
+            if (!CanApplyOpponentDrawer)
+            {
+                _notice = "Bitte das Gegnerprofil und alle erforderlichen Auswahlwerte festlegen.";
+                return;
+            }
+
+            result = IsManualOpponentSelection
+                ? await CombatSessionState.AddOpponentAsync(
+                    _opponentNameDraft,
+                    _opponentInitiativeBaseDraft,
+                    _opponentInitiativeDraft,
+                    _opponentAffiliationDraft)
+                : await CombatSessionState.AddCatalogEnemyAsync(
+                    new CombatEnemySelectionDto
+                    {
+                        EnemyId = _selectedEnemyId!,
+                        VariantId = _selectedEnemyVariantId,
+                        AttackId = _selectedEnemyAttackId,
+                        WeaponOption = _selectedEnemyWeaponOption,
+                        ArmorOption = _selectedEnemyArmorOption,
+                        LeP = _selectedEnemyLeP
+                    },
+                    affiliation: _opponentAffiliationDraft);
         }
         else
         {
@@ -965,6 +1175,164 @@ public partial class Kampf : IDisposable
         {
             CloseDrawer();
         }
+    }
+
+    private Task HandleEnemySelectionChanged(ChangeEventArgs args)
+    {
+        _selectedEnemyId = args.Value?.ToString();
+        _selectedEnemyVariantId = null;
+        _selectedEnemyAttackId = null;
+        _selectedEnemyWeaponOption = null;
+        _selectedEnemyArmorOption = null;
+        _selectedEnemyLeP = null;
+        return Task.CompletedTask;
+    }
+
+    private Task HandleEnemyVariantChanged(ChangeEventArgs args)
+    {
+        _selectedEnemyVariantId = args.Value?.ToString();
+        _selectedEnemyLeP = null;
+        return Task.CompletedTask;
+    }
+
+    private Task HandleEnemyAttackChanged(ChangeEventArgs args)
+    {
+        _selectedEnemyAttackId = args.Value?.ToString();
+        return Task.CompletedTask;
+    }
+
+    private Task HandleEnemyWeaponChanged(ChangeEventArgs args)
+    {
+        _selectedEnemyWeaponOption = args.Value?.ToString();
+        return Task.CompletedTask;
+    }
+
+    private Task HandleEnemyArmorChanged(ChangeEventArgs args)
+    {
+        _selectedEnemyArmorOption = args.Value?.ToString();
+        return Task.CompletedTask;
+    }
+
+    private Task HandleEnemyLePChanged(int? value)
+    {
+        _selectedEnemyLeP = value;
+        return Task.CompletedTask;
+    }
+
+    private string GetSelectedEnemyInitiativeLabel()
+    {
+        var combat = SelectedEnemyCombat;
+        return combat?.Initiative.Notation is { Length: > 0 } notation
+            ? $"INI {notation}"
+            : "INI —";
+    }
+
+    private string GetSelectedEnemyLePLabel()
+    {
+        var resource = SelectedEnemyCombat?.Resources.LeP;
+        if (resource?.SourceRange is { Min: { } min, Max: { } max })
+        {
+            return $"LeP {min}–{max}";
+        }
+
+        if (resource?.Initial is { } initial)
+        {
+            return $"LeP {initial}";
+        }
+
+        return resource?.Maximum is { } maximum
+            ? $"LeP {maximum}"
+            : "LeP —";
+    }
+
+    private string GetSelectedEnemyDefenseLabel()
+    {
+        var defense = SelectedEnemyCombat?.Defense;
+        if (defense is null)
+        {
+            return "Abwehr —";
+        }
+
+        var value = defense.ParryValue?.ToString() ?? "—";
+        return string.Equals(defense.Mode, "masterfulEvasion", StringComparison.OrdinalIgnoreCase)
+            ? $"AW {value}"
+            : $"PA {value}";
+    }
+
+    private string GetSelectedEnemyReadinessLabel()
+    {
+        var enemy = SelectedEnemyCatalogEntry;
+        if (enemy is null)
+        {
+            return string.Empty;
+        }
+
+        if (enemy.CombatVariants.Length > 0 && string.IsNullOrWhiteSpace(_selectedEnemyVariantId))
+        {
+            return "Erfahrungsvariante auswählen.";
+        }
+
+        if (enemy.Attacks.Length > 1 && string.IsNullOrWhiteSpace(_selectedEnemyAttackId))
+        {
+            return "Konkreten Angriff auswählen.";
+        }
+
+        if (enemy.Equipment?.SelectionRequired == true &&
+            (string.IsNullOrWhiteSpace(_selectedEnemyWeaponOption) ||
+             string.IsNullOrWhiteSpace(_selectedEnemyArmorOption)))
+        {
+            return "Waffe und Rüstung auswählen.";
+        }
+
+        if (SelectedEnemyLePRange is not null && !_selectedEnemyLeP.HasValue)
+        {
+            return "LeP braucht eine Meisterentscheidung.";
+        }
+
+        if (enemy.CombatReady)
+        {
+            return "Kampfbereit nach Katalogwerten.";
+        }
+
+        return enemy.Readiness switch
+        {
+            "sourceDependent" => "LeP braucht eine Meisterentscheidung.",
+            "requiresEquipmentSelection" => "Erfahrungsstufe, Waffe und Rüstung auswählen; TP/RS bleiben bei fehlenden Katalogwerten offen.",
+            _ => "Für den Kampfeinsatz sind noch Auswahlwerte erforderlich."
+        };
+    }
+
+    private string GetSelectedEnemySourceLabel()
+    {
+        var sourceRefs = SelectedEnemyCatalogEntry?.SourceRefs ?? [];
+        return sourceRefs.Length == 0
+            ? "Quelle: nicht angegeben"
+            : $"Quelle: {string.Join(", ", sourceRefs.Select(FormatSourceReference))}";
+    }
+
+    private static string GetEnemyAttackLabel(CombatEnemyAttackDto attack)
+    {
+        var details = new List<string>();
+        if (!string.IsNullOrWhiteSpace(attack.DistanceClass))
+        {
+            details.Add(attack.DistanceClass!);
+        }
+
+        if (!string.IsNullOrWhiteSpace(attack.Damage?.Notation))
+        {
+            details.Add($"TP {attack.Damage.Notation}");
+        }
+
+        return details.Count == 0
+            ? attack.Name
+            : $"{attack.Name} · {string.Join(" · ", details)}";
+    }
+
+    private static string FormatSourceReference(CombatEnemySourceReferenceDto source)
+    {
+        var page = source.PrintedPage?.ToString() ??
+                   (source.PrintedPages.Length > 0 ? string.Join(", ", source.PrintedPages) : null);
+        return string.IsNullOrWhiteSpace(page) ? source.SourceId : $"{source.SourceId} S. {page}";
     }
 
     private Task HandleOpponentNameChanged(string value)

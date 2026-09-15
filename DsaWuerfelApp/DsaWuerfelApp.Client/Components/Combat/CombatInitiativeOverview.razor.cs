@@ -14,6 +14,11 @@ public partial class CombatInitiativeOverview
     [Parameter] public IReadOnlyList<CombatSessionParticipantDto> Participants { get; set; } = Array.Empty<CombatSessionParticipantDto>();
     [Parameter] public Func<CombatSessionParticipantDto, string>? TurnLabel { get; set; }
     [Parameter] public Func<CombatSessionParticipantDto, bool>? IsCurrentParticipant { get; set; }
+    [Parameter] public Func<CombatSessionParticipantDto, string?>? ParticipantStatus { get; set; }
+    [Parameter] public Func<CombatSessionParticipantDto, bool>? CanRollParticipantInitiative { get; set; }
+    [Parameter] public EventCallback<CombatSessionParticipantDto> RollInitiativeRequested { get; set; }
+    [Parameter] public Func<CombatSessionParticipantDto, bool>? CanRemoveOpponent { get; set; }
+    [Parameter] public EventCallback<CombatSessionParticipantDto> RemoveOpponentRequested { get; set; }
     [Parameter] public Func<CombatSessionParticipantDto, IReadOnlyList<CombatSessionActionDto>>? ParticipantActions { get; set; }
     [Parameter] public Func<CombatSessionActionDto, bool>? IsOrientationAction { get; set; }
     [Parameter] public EventCallback<CombatSessionParticipantDto> ConsumeReactionRequested { get; set; }
@@ -24,6 +29,9 @@ public partial class CombatInitiativeOverview
 
     private string GetTurnLabel(CombatSessionParticipantDto participant) =>
         TurnLabel?.Invoke(participant) ?? "Offen";
+
+    private string? GetParticipantStatus(CombatSessionParticipantDto participant) =>
+        ParticipantStatus?.Invoke(participant);
 
     private IReadOnlyList<CombatSessionActionDto> GetVisibleActions(CombatSessionParticipantDto participant) =>
         ParticipantActions?.Invoke(participant)

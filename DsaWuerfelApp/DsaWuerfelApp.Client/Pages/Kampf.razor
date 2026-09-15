@@ -290,6 +290,11 @@
                                           Participants="@InitiativeParticipants"
                                           TurnLabel="GetParticipantTurnLabel"
                                           IsCurrentParticipant="IsCurrentParticipant"
+                                          ParticipantStatus="GetParticipantStatus"
+                                          CanRollParticipantInitiative="CanRollParticipantInitiative"
+                                          RollInitiativeRequested="RollParticipantInitiativeAsync"
+                                          CanRemoveOpponent="CanRemoveOpponent"
+                                          RemoveOpponentRequested="RemoveOpponentAsync"
                                           ParticipantActions="participant => GetParticipantActions(participant.Id)"
                                           IsOrientationAction="IsOrientationAction"
                                           ConsumeReactionRequested="ConsumeReactionAsync"
@@ -361,17 +366,120 @@
         <div class="combat-drawer-form">
             @if (_participantDrawerMode == CombatParticipantDrawerMode.Opponent)
             {
-                <p class="combat-drawer-lead">Nur die Werte zum Einordnen erfassen. Weitere Gegnerdaten bleiben optional.</p>
-                <label class="combat-drawer-field">
-                    <span>Name</span>
-                    <input value="@_opponentNameDraft" @oninput="eventArgs => HandleOpponentNameChanged(eventArgs.Value?.ToString() ?? string.Empty)" />
-                </label>
+                <p class="combat-drawer-lead">DSA-4.1-Profil wählen. Werte aus dem Katalog werden nicht erneut eingegeben.</p>
+                @if (_enemyCatalogLoading)
+                {
+                    <p class="combat-drawer-hint">Gegnerkatalog wird geladen …</p>
+                }
+                else
+                {
+                    <label class="combat-drawer-field">
+                        <span>Gegnerprofil</span>
+                        <select class="ui-select combat-enemy-select"
+                                value="@(_selectedEnemyId ?? string.Empty)"
+                                @onchange="HandleEnemySelectionChanged">
+                            <option value="">Profil auswählen …</option>
+                            <option value="@ManualOpponentSelection">Manuell ohne Katalog</option>
+                            @foreach (var enemy in _enemyCatalog.OrderBy(enemy => enemy.Name, StringComparer.OrdinalIgnoreCase))
+                            {
+                                <option value="@enemy.Id">@enemy.Name</option>
+                            }
+                        </select>
+                    </label>
+                }
+
+                @if (SelectedEnemyCatalogEntry is { } selectedEnemy)
+                {
+                    <div class="combat-enemy-catalog-summary">
+                        <strong>@selectedEnemy.Name</strong>
+                        <span>@GetSelectedEnemyInitiativeLabel() · @GetSelectedEnemyLePLabel() · @GetSelectedEnemyDefenseLabel()</span>
+                        <small>@GetSelectedEnemyReadinessLabel()</small>
+                        <small>@GetSelectedEnemySourceLabel()</small>
+                    </div>
+
+                    @if (selectedEnemy.CombatVariants.Length > 0)
+                    {
+                        <label class="combat-drawer-field">
+                            <span>Erfahrungsstufe</span>
+                            <select class="ui-select" value="@(_selectedEnemyVariantId ?? string.Empty)" @onchange="HandleEnemyVariantChanged">
+                                <option value="">Variante auswählen …</option>
+                                @foreach (var variant in selectedEnemy.CombatVariants)
+                                {
+                                    <option value="@variant.Id">@variant.Label</option>
+                                }
+                            </select>
+                        </label>
+                    }
+
+                    @if (selectedEnemy.Attacks.Length > 1)
+                    {
+                        <label class="combat-drawer-field">
+                            <span>Angriff</span>
+                            <select class="ui-select" value="@(_selectedEnemyAttackId ?? string.Empty)" @onchange="HandleEnemyAttackChanged">
+                                <option value="">Angriff auswählen …</option>
+                                @foreach (var attack in selectedEnemy.Attacks)
+                                {
+                                    <option value="@attack.Id">@GetEnemyAttackLabel(attack)</option>
+                                }
+                            </select>
+                        </label>
+                    }
+
+                    @if (selectedEnemy.Equipment is { SelectionRequired: true } equipment)
+                    {
+                        <label class="combat-drawer-field">
+                            <span>Waffe</span>
+                            <select class="ui-select" value="@(_selectedEnemyWeaponOption ?? string.Empty)" @onchange="HandleEnemyWeaponChanged">
+                                <option value="">Waffe auswählen …</option>
+                                @foreach (var weapon in equipment.WeaponOptions)
+                                {
+                                    <option value="@weapon">@weapon</option>
+                                }
+                            </select>
+                        </label>
+                        <label class="combat-drawer-field">
+                            <span>Rüstung</span>
+                            <select class="ui-select" value="@(_selectedEnemyArmorOption ?? string.Empty)" @onchange="HandleEnemyArmorChanged">
+                                <option value="">Rüstung auswählen …</option>
+                                @foreach (var armor in equipment.ArmorOptions)
+                                {
+                                    <option value="@armor">@armor</option>
+                                }
+                            </select>
+                        </label>
+                        <p class="combat-drawer-hint">Der Katalog enthält für diese Ausrüstung keine TP-/RS-Werte. Der Gegner bleibt bis zur Meisterentscheidung unvollständig.</p>
+                    }
+
+                    @if (SelectedEnemyLePRange is { Min: { } min, Max: { } max })
+                    {
+                        <NumberControl Label="LeP festlegen"
+                                       Value="@_selectedEnemyLeP"
+                                       ValueChanged="HandleEnemyLePChanged"
+                                       Minimum="@min"
+                                       Maximum="@max"
+                                       AllowEmpty="true"
+                                       ShowValidationMessage="true" />
+                        <p class="combat-drawer-hint">Quelle: LeP @min–@max; vor dem Kampfbeginn ist eine Meisterentscheidung erforderlich.</p>
+                    }
+                }
+                else if (IsManualOpponentSelection)
+                {
+                    <label class="combat-drawer-field">
+                        <span>Name</span>
+                        <input value="@_opponentNameDraft" @oninput="eventArgs => HandleOpponentNameChanged(eventArgs.Value?.ToString() ?? string.Empty)" />
+                    </label>
+                    <NumberControl Label="INI-Basis" Value="@_opponentInitiativeBaseDraft" ValueChanged="HandleOpponentInitiativeBaseChanged" AllowEmpty="true" />
+                    <NumberControl Label="Aktuelle INI" Value="@_opponentInitiativeDraft" ValueChanged="HandleOpponentInitiativeChanged" AllowEmpty="true" />
+                }
+                else if (!_enemyCatalogLoading)
+                {
+                    <p class="combat-drawer-hint">Ein Profil auswählen oder die manuelle Erfassung öffnen.</p>
+                }
+
                 <label class="combat-drawer-field">
                     <span>Zugehörigkeit</span>
                     <input value="@_opponentAffiliationDraft" @oninput="eventArgs => HandleOpponentAffiliationChanged(eventArgs.Value?.ToString() ?? string.Empty)" />
                 </label>
-                <NumberControl Label="INI-Basis" Value="@_opponentInitiativeBaseDraft" ValueChanged="HandleOpponentInitiativeBaseChanged" AllowEmpty="true" />
-                <NumberControl Label="Aktuelle INI" Value="@_opponentInitiativeDraft" ValueChanged="HandleOpponentInitiativeChanged" AllowEmpty="true" />
             }
             else
             {
@@ -382,7 +490,7 @@
                 </label>
             }
             <div class="combat-drawer-actions">
-                <UiButton Variant="primary" OnClick="ApplyParticipantDrawerAsync">Anwenden</UiButton>
+                <UiButton Variant="primary" Disabled="@(_participantDrawerMode == CombatParticipantDrawerMode.Opponent && !CanApplyOpponentDrawer)" OnClick="ApplyParticipantDrawerAsync">Hinzufügen</UiButton>
                 <UiButton OnClick="CloseDrawer">Abbrechen</UiButton>
             </div>
         </div>
