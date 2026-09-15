@@ -106,6 +106,9 @@ public sealed record CombatRollRequestDto
     public Guid RequestId { get; init; }
     public string? SessionId { get; init; }
     public string? ParticipantId { get; init; }
+    public string? TargetParticipantId { get; init; }
+    public string? ActionId { get; init; }
+    public long? ExpectedRevision { get; init; }
     public Guid? HeroId { get; init; }
     public string? SetId { get; init; }
     public string? ExchangeId { get; init; }
@@ -121,6 +124,7 @@ public sealed record CombatRollRequestDto
     public int DamageModifier { get; init; }
     public CombatZoneRollRequestDto? Zone { get; init; }
     public CombatZoneSnapshotDto? ResolvedZone { get; init; }
+    public CombatFacing? Facing { get; init; }
     public CombatHelperRollRequestDto? Helper { get; init; }
     public string? Note { get; init; }
 }
@@ -132,6 +136,8 @@ public sealed record CombatAttackExchangeDto
     public string ExchangeId { get; init; } = string.Empty;
     public string SessionId { get; init; } = string.Empty;
     public Guid RequestId { get; init; }
+    public Guid? AttackRollRequestId { get; init; }
+    public Guid? DefenseRollRequestId { get; init; }
     public long Revision { get; init; }
     public string AttackerParticipantId { get; init; } = string.Empty;
     public string TargetParticipantId { get; init; } = string.Empty;
@@ -141,6 +147,8 @@ public sealed record CombatAttackExchangeDto
     public string? WeaponId { get; init; }
     public string? WeaponName { get; init; }
     public CombatActionKind AttackKind { get; init; }
+    public string? ActionId { get; init; }
+    public CombatFacing Facing { get; init; } = CombatFacing.Front;
     public CombatExchangeStatus Status { get; init; } = CombatExchangeStatus.Declared;
     public bool ActionConsumed { get; init; }
     public CombatRollEvaluationDto? AttackResult { get; init; }
@@ -234,6 +242,7 @@ public sealed record CombatRollSnapshotDto
     public CombatLabeledRollDto[] LabeledRolls { get; init; } = [];
     public CombatDamageSnapshotDto? Damage { get; init; }
     public CombatZoneSnapshotDto? Zone { get; init; }
+    public CombatWoundApplicationDto? WoundApplication { get; init; }
     public string[] RuleNotes { get; init; } = [];
 }
 
@@ -322,3 +331,12 @@ public sealed record CombatFollowUpRequirementDto(
     int DiceSides,
     string Purpose,
     bool RequiresConfirmation = true);
+
+public sealed record CombatAutomaticHitResolutionDto(
+    CombatSessionSnapshotDto Snapshot,
+    DiceRollDto[] Rolls,
+    CombatZoneSnapshotDto Zone,
+    CombatDamageSnapshotDto Damage,
+    CombatWoundApplicationDto WoundApplication,
+    string[] RuleNotes,
+    bool ZoneWasRolled = true);

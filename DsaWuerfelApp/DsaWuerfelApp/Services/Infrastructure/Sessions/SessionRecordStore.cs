@@ -213,6 +213,26 @@ public sealed class SessionRecordStore(IServiceScopeFactory scopeFactory)
         using var scope = scopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<HeroDbContext>();
 
+        if (historyEntry.Context?.Snapshot?.Combat is { } combat)
+        {
+            var existingCombatEntries = dbContext.SessionRollHistoryRecords
+                .AsNoTracking()
+                .Where(current => current.SessionId == sessionId && current.ContextJson != null)
+                .Select(current => current.ContextJson)
+                .ToArray();
+            var duplicate = existingCombatEntries
+                .Select(DeserializeContext)
+                .Where(context => context?.Snapshot?.Combat is not null)
+                .Select(context => context!.Snapshot!.Combat!)
+                .Any(existing =>
+                    (combat.EntryId != Guid.Empty && existing.EntryId == combat.EntryId) ||
+                    (combat.RequestId != Guid.Empty && existing.RequestId == combat.RequestId));
+            if (duplicate)
+            {
+                return;
+            }
+        }
+
         dbContext.SessionRollHistoryRecords.Add(new SessionRollHistoryRecord
         {
             SessionId = sessionId,

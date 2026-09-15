@@ -75,4 +75,30 @@ public static class CombatZoneRules
 
         return null;
     }
+
+    public static int? ResolveEnemyArmorRating(CombatEnemyArmorDto? armor, CombatArmorZone zone)
+    {
+        if (armor is null)
+        {
+            return null;
+        }
+
+        if (armor.UsesZonalArmor)
+        {
+            return zone switch
+            {
+                CombatArmorZone.Head => armor.Head,
+                CombatArmorZone.Chest => armor.Chest,
+                CombatArmorZone.Back => armor.Back,
+                CombatArmorZone.Abdomen => armor.Abdomen,
+                CombatArmorZone.LeftArm => armor.LeftArm,
+                CombatArmorZone.RightArm => armor.RightArm,
+                CombatArmorZone.LeftLeg => armor.LeftLeg,
+                CombatArmorZone.RightLeg => armor.RightLeg,
+                _ => null
+            };
+        }
+
+        return armor.TotalRs;
+    }
 }

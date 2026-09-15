@@ -236,6 +236,26 @@ public sealed class CombatRollRulesTests
         Assert.Null(calculated.StructurePoints);
     }
 
+    [Theory]
+    [InlineData("1W+4", 1, 6, 4)]
+    [InlineData("2W6-1", 2, 6, -1)]
+    public void Damage_notation_supports_dsa_four_point_one_w_six_shorthand(
+        string notation,
+        int expectedCount,
+        int expectedSides,
+        int expectedBonus)
+    {
+        Assert.True(CombatRollRules.TryParseDamageNotation(
+            notation,
+            out var count,
+            out var sides,
+            out var bonus));
+
+        Assert.Equal(expectedCount, count);
+        Assert.Equal(expectedSides, sides);
+        Assert.Equal(expectedBonus, bonus);
+    }
+
     [Fact]
     public void Negative_armor_is_rejected()
     {

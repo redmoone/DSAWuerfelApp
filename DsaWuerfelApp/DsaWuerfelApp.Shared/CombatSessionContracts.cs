@@ -15,6 +15,7 @@ public sealed record CombatOpponentProfileDto(
     int? WoundThreshold = null)
 {
     public CombatEnemyResolvedProfileDto? CatalogProfile { get; init; }
+    public CombatEnemyArmorDto? Armor { get; init; }
 
     public bool HasBasicCombatValues =>
         Attack.HasValue &&
@@ -178,6 +179,7 @@ public sealed record CombatSessionMutationRequestDto
     public bool HasAttention { get; init; }
     public int? OrientationRelief { get; init; }
     public bool OrientationUninterrupted { get; init; } = true;
+    public CombatFacing? Facing { get; init; }
     public string? Announcement { get; init; }
     public CombatRuntimeStateDto? RuntimeState { get; init; }
 }

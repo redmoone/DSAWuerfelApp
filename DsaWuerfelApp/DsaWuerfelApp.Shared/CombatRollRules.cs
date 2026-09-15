@@ -2,6 +2,52 @@ namespace DsaWuerfelApp.Shared;
 
 public static class CombatRollRules
 {
+    public static bool TryParseDamageNotation(
+        string? notation,
+        out int diceCount,
+        out int diceSides,
+        out int weaponBonus)
+    {
+        diceCount = 0;
+        diceSides = 0;
+        weaponBonus = 0;
+        if (string.IsNullOrWhiteSpace(notation))
+        {
+            return false;
+        }
+
+        var value = notation.Replace(" ", string.Empty, StringComparison.Ordinal);
+        var separator = value.IndexOfAny(['W', 'w', 'D', 'd']);
+        if (separator <= 0 ||
+            !int.TryParse(value[..separator], out diceCount))
+        {
+            return false;
+        }
+
+        var modifierStart = value.IndexOfAny(['+', '-'], separator + 1);
+        var sidesText = modifierStart < 0
+            ? value[(separator + 1)..]
+            : value[(separator + 1)..modifierStart];
+        // DSA 4.1 commonly writes a six-sided die as "1W+4" and omits
+        // the 6. Keep this notation identical to the combat handler.
+        if (string.IsNullOrEmpty(sidesText))
+        {
+            diceSides = 6;
+        }
+        else if (!int.TryParse(sidesText, out diceSides))
+        {
+            return false;
+        }
+
+        if (modifierStart >= 0 &&
+            !int.TryParse(value[modifierStart..], out weaponBonus))
+        {
+            return false;
+        }
+
+        return diceCount > 0 && diceSides >= 2;
+    }
+
     public static CombatAttackDecisionDto ResolveAttackDecision(
         CombatRollEvaluationDto attack,
         IReadOnlyList<CombatActionKind>? allowedDefenseActions,

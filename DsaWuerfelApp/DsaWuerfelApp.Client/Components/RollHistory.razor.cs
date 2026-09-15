@@ -171,6 +171,24 @@ public partial class RollHistory
             details.Add($"Zone {GetWoundZoneLabel(woundZone)}");
         }
 
+        if (combat.WoundApplication is { } wounds)
+        {
+            if (wounds.LePBefore.HasValue && wounds.LePAfter.HasValue)
+            {
+                details.Add($"LeP {wounds.LePBefore} → {wounds.LePAfter}");
+            }
+
+            if (wounds.AddedWounds > 0)
+            {
+                details.Add($"Wunden +{wounds.AddedWounds}");
+            }
+
+            if (wounds.IsIncapacitated)
+            {
+                details.Add("handlungsunfähig");
+            }
+        }
+
         if (combat.EffectiveTarget is { } target && combat.LabeledRolls.Length == 0)
         {
             details.Add($"Ziel {target}");
@@ -225,7 +243,7 @@ public partial class RollHistory
 
     private static bool ShouldShowCompactEquation(RollHistoryEntryDto entry)
     {
-        return entry.Context?.Kind is not (RollHistoryKind.Talent or RollHistoryKind.Spell);
+        return entry.Context?.Kind is not (RollHistoryKind.Talent or RollHistoryKind.Spell or RollHistoryKind.Combat);
     }
 
     private static string GetCompactDifferenceText(RollHistoryCheckDto check)

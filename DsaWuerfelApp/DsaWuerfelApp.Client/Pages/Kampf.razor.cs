@@ -573,6 +573,14 @@ public partial class Kampf : IDisposable
         {
             RequestId = Guid.NewGuid(),
             SessionId = SessionState.ActiveSessionId,
+            ParticipantId = IsSessionCombat ? OwnSessionParticipant?.Id : null,
+            TargetParticipantId = action is CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack
+                ? SelectedTargetParticipantId
+                : action is CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge
+                    ? SessionCombat?.ActiveExchange?.AttackerParticipantId
+                    : null,
+            ActionId = IsSessionCombat ? SessionCombat?.ActiveExchange?.ActionId : null,
+            ExpectedRevision = IsSessionCombat ? SessionCombat?.Revision : null,
             HeroId = ActiveHero?.Id,
             SetId = SelectedSet?.Id,
             ExchangeId = IsSessionCombat && action is
@@ -599,6 +607,7 @@ public partial class Kampf : IDisposable
             Zone = action == CombatActionKind.HitZone
                 ? new CombatZoneRollRequestDto(Facing, CombatArmorZone.LeftArm, CombatArmorZone.RightArm)
                 : null,
+            Facing = Facing,
             Helper = action switch
             {
                 CombatActionKind.WoundHelper => new CombatHelperRollRequestDto { DiceCount = 1, DiceSides = 6, Purpose = "Wund-Hilfswurf" },
@@ -657,7 +666,8 @@ public partial class Kampf : IDisposable
             SelectedWeapon?.Id,
             SelectedWeapon?.Name,
             openAction.PhaseInitiative,
-            ActiveHero?.Id);
+            ActiveHero?.Id,
+            Facing);
         if (!result.Applied && !result.AlreadyApplied)
         {
             _notice = result.Message;
@@ -702,6 +712,10 @@ public partial class Kampf : IDisposable
             {
                 RequestId = Guid.NewGuid(),
                 SessionId = SessionState.ActiveSessionId,
+                ParticipantId = exchange.TargetParticipantId,
+                TargetParticipantId = exchange.AttackerParticipantId,
+                ActionId = exchange.ActionId,
+                ExpectedRevision = SessionCombat?.Revision,
                 HeroId = ActiveHero?.Id,
                 SetId = SelectedSet?.Id,
                 ExchangeId = exchange.ExchangeId,
@@ -714,7 +728,8 @@ public partial class Kampf : IDisposable
                 Modifiers = Modifier == 0
                     ? []
                     : [new CombatModifierDto("Situativ", Modifier, "Kampfseite")],
-                Options = new CombatRuleOptionsDto(SpecialResultsEnabled: true, LowLePEnabled: true)
+                Options = new CombatRuleOptionsDto(SpecialResultsEnabled: true, LowLePEnabled: true),
+                Facing = exchange.Facing
             };
         }
         else

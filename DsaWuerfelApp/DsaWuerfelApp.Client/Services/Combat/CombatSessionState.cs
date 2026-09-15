@@ -168,6 +168,7 @@ public sealed class CombatSessionState : IDisposable
         string? weaponName = null,
         int? phaseInitiative = null,
         Guid? heroId = null,
+        CombatFacing facing = CombatFacing.Front,
         CancellationToken cancellationToken = default) => MutateAsync(new CombatSessionMutationRequestDto
         {
             Kind = CombatSessionMutationKind.DeclareAttack,
@@ -180,7 +181,8 @@ public sealed class CombatSessionState : IDisposable
             WeaponId = weaponId,
             WeaponName = weaponName,
             PhaseInitiative = phaseInitiative,
-            HeroId = heroId
+            HeroId = heroId,
+            Facing = facing
         }, cancellationToken);
 
     public Task<CombatSessionMutationResultDto> CompleteActionAsync(

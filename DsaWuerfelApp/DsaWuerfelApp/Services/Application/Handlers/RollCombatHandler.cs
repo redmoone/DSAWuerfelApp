@@ -22,6 +22,20 @@ public sealed partial class RollCombatHandler(
     {
         ArgumentNullException.ThrowIfNull(request);
         ValidateRequest(request);
+
+        if (!string.IsNullOrWhiteSpace(request.SessionId))
+        {
+            var cached = await combatSessionStateService.GetCachedRollAsync(
+                request.SessionId,
+                request.RequestId,
+                userId,
+                cancellationToken);
+            if (cached is not null)
+            {
+                return cached;
+            }
+        }
+
         await combatSessionStateService.EnsureRollAvailabilityAsync(request, userId, cancellationToken);
 
         var resolvedPlayerName = string.IsNullOrWhiteSpace(playerName) ? "Unbekannt" : playerName.Trim();
@@ -106,7 +120,23 @@ public sealed partial class RollCombatHandler(
             var sessionSnapshot = request.Action is CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack
                 ? await combatSessionStateService.BindAttackRollAsync(request, result, userId, cancellationToken)
                 : await combatSessionStateService.BindDefenseRollAsync(request, result, userId, cancellationToken);
-            return result with { CombatSessionSnapshot = sessionSnapshot };
+            var boundResult = result with { CombatSessionSnapshot = sessionSnapshot };
+            var automaticHit = await combatSessionStateService.ResolveAutomaticHitAsync(
+                request,
+                boundResult,
+                userId,
+                cancellationToken);
+            if (automaticHit is not null)
+            {
+                boundResult = EnrichAutomaticHitResult(boundResult, automaticHit);
+            }
+
+            await combatSessionStateService.CacheRollResultAsync(
+                request,
+                boundResult,
+                userId,
+                cancellationToken);
+            return boundResult;
         }
 
         if (!string.IsNullOrWhiteSpace(request.SessionId) && request.Action == CombatActionKind.HitZone)
@@ -116,7 +146,13 @@ public sealed partial class RollCombatHandler(
                 result,
                 userId,
                 cancellationToken);
-            return result with { CombatSessionSnapshot = sessionSnapshot };
+            var boundResult = result with { CombatSessionSnapshot = sessionSnapshot };
+            await combatSessionStateService.CacheRollResultAsync(
+                request,
+                boundResult,
+                userId,
+                cancellationToken);
+            return boundResult;
         }
 
         if (!string.IsNullOrWhiteSpace(request.SessionId) && request.Action == CombatActionKind.Damage)
@@ -126,10 +162,60 @@ public sealed partial class RollCombatHandler(
                 result,
                 userId,
                 cancellationToken);
-            return result with { CombatSessionSnapshot = sessionSnapshot };
+            var boundResult = result with { CombatSessionSnapshot = sessionSnapshot };
+            await combatSessionStateService.CacheRollResultAsync(
+                request,
+                boundResult,
+                userId,
+                cancellationToken);
+            return boundResult;
         }
 
         return result;
+    }
+
+    private static CombatRollResultDto EnrichAutomaticHitResult(
+        CombatRollResultDto result,
+        CombatAutomaticHitResolutionDto automaticHit)
+    {
+        var automaticLabels = automaticHit.Rolls
+            .Select((roll, index) => new CombatLabeledRollDto(
+                automaticHit.ZoneWasRolled && index == 0 ? "Trefferzonenwurf" : "TP-Würfel",
+                roll.Sides,
+                roll.Value));
+        var snapshot = result.Snapshot with
+        {
+            StatusLabel = "Treffer · Trefferzone und TP automatisch gespeichert",
+            LabeledRolls = result.Snapshot.LabeledRolls.Concat(automaticLabels).ToArray(),
+            Zone = automaticHit.Zone,
+            Damage = automaticHit.Damage,
+            WoundApplication = automaticHit.WoundApplication,
+            RuleNotes = result.Snapshot.RuleNotes
+                .Concat(automaticHit.RuleNotes)
+                .Distinct(StringComparer.Ordinal)
+                .ToArray()
+        };
+        var historyContext = result.HistoryEntry.Context;
+        var historyEntry = result.HistoryEntry with
+        {
+            Rolls = result.HistoryEntry.Rolls.Concat(automaticHit.Rolls).ToArray(),
+            Context = historyContext is null
+                ? null
+                : historyContext with
+                {
+                    Snapshot = (historyContext.Snapshot ?? new RollHistorySnapshotDto()) with
+                    {
+                        Combat = snapshot
+                    }
+                }
+        };
+        return result with
+        {
+            Snapshot = snapshot,
+            Rolls = result.Rolls.Concat(automaticHit.Rolls).ToArray(),
+            HistoryEntry = historyEntry,
+            CombatSessionSnapshot = automaticHit.Snapshot
+        };
     }
 
     private CombatRollResultDto RollOpponent(
@@ -853,11 +939,14 @@ public sealed partial class RollCombatHandler(
 
         var match = DamagePattern().Match(value.Replace(" ", string.Empty));
         if (!match.Success ||
-            !int.TryParse(match.Groups["count"].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var count) ||
-            !int.TryParse(match.Groups["sides"].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var sides))
+            !int.TryParse(match.Groups["count"].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var count))
         {
             throw Validation($"Die importierte TP-Formel „{value}“ konnte nicht ausgewertet werden.");
         }
+
+        var sides = match.Groups["sides"].Success && match.Groups["sides"].Length > 0
+            ? int.Parse(match.Groups["sides"].Value, CultureInfo.InvariantCulture)
+            : 6;
 
         var modifier = 0;
         if (match.Groups["modifier"].Success)

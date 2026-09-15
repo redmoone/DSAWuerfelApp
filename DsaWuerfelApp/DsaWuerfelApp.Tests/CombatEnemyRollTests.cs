@@ -106,74 +106,22 @@ public sealed class CombatEnemyRollTests
         }, "owner", "Meister");
         Assert.Equal(target.Id, defense.ParticipantId);
         Assert.Equal(9, defense.Snapshot.BaseValue);
-        Assert.Equal(CombatExchangeStatus.Hit, defense.CombatSessionSnapshot!.ActiveExchange!.Status);
+        Assert.Equal(CombatExchangeStatus.Completed, defense.CombatSessionSnapshot!.ActiveExchange!.Status);
+        Assert.NotNull(defense.CombatSessionSnapshot.ActiveExchange.Zone);
+        Assert.NotNull(defense.CombatSessionSnapshot.ActiveExchange.Damage);
 
-        var zone = new CombatZoneSnapshotDto(
-            10,
-            CombatArmorZone.Chest,
-            CombatWoundZone.Torso,
-            CombatFacing.Front,
-            null);
-        var zoneRequest = new CombatRollRequestDto
-        {
-            RequestId = Guid.NewGuid(),
-            SessionId = session.SessionId,
-            ParticipantId = attacker.Id,
-            ExchangeId = attack.ExchangeId,
-            Action = CombatActionKind.HitZone,
-            Zone = new CombatZoneRollRequestDto(CombatFacing.Front, CombatArmorZone.LeftArm, CombatArmorZone.RightArm)
-        };
-        var zoneResult = new CombatRollResultDto(
-            Guid.NewGuid(),
-            zoneRequest.RequestId,
-            session.SessionId,
-            "owner",
-            "Meister",
-            null,
-            CombatOutcome.Neutral,
-            new CombatRollSnapshotDto
-            {
-                EntryId = Guid.NewGuid(),
-                RequestId = zoneRequest.RequestId,
-                SessionId = session.SessionId,
-                ParticipantId = attacker.Id,
-                ExchangeId = attack.ExchangeId,
-                Action = CombatActionKind.HitZone,
-                StatusLabel = "Trefferzone gewürfelt",
-                LabeledRolls = [new CombatLabeledRollDto("Trefferzonenwurf", 20, 10)],
-                Zone = zone
-            },
-            [new DiceRollDto(20, 10)],
-            EmptyHistory());
-        var afterZone = await state.BindHitZoneAsync(zoneRequest, zoneResult, "owner");
-        Assert.Equal(CombatExchangeStatus.DamageOpen, afterZone.ActiveExchange!.Status);
-
-        var beforeDamage = afterZone.Participants.Single(participant => participant.Id == target.Id)
+        var beforeDamage = afterAttack.Participants.Single(participant => participant.Id == target.Id)
             .RuntimeState!.CurrentLeP;
-        var damage = await handler.HandleAsync(new CombatRollRequestDto
-        {
-            RequestId = Guid.NewGuid(),
-            SessionId = session.SessionId,
-            ParticipantId = attacker.Id,
-            ExchangeId = attack.ExchangeId,
-            Action = CombatActionKind.Damage,
-            WeaponId = "biss",
-            ResolvedZone = zone,
-            Damage = new CombatDamageRollRequestDto()
-        }, "owner", "Meister");
-
-        var targetAfterDamage = damage.CombatSessionSnapshot!.Participants.Single(participant => participant.Id == target.Id);
-        Assert.Equal(attacker.Id, damage.ParticipantId);
-        Assert.Equal("1W6+3", damage.Snapshot.RuleNotes.Single(note => note.Contains("Schaden", StringComparison.Ordinal)).Split(' ').Last());
-        Assert.True(damage.Snapshot.Damage!.Total >= 4);
+        var targetAfterDamage = defense.CombatSessionSnapshot.Participants.Single(participant => participant.Id == target.Id);
+        Assert.Equal(target.Id, defense.ParticipantId);
+        Assert.True(defense.CombatSessionSnapshot.ActiveExchange.Damage!.Total >= 4);
         Assert.True(targetAfterDamage.RuntimeState!.CurrentLeP < beforeDamage);
-        Assert.NotNull(damage.CombatSessionSnapshot!.ActiveExchange!.Damage);
 
         var undone = await state.MutateAsync(new CombatSessionMutationRequestDto
         {
             RequestId = Guid.NewGuid(),
             SessionId = session.SessionId,
-            ExpectedRevision = damage.CombatSessionSnapshot.Revision,
+            ExpectedRevision = defense.CombatSessionSnapshot.Revision,
             Kind = CombatSessionMutationKind.Undo
         }, "owner");
         var targetAfterUndo = undone.Snapshot.Participants.Single(participant => participant.Id == target.Id);
