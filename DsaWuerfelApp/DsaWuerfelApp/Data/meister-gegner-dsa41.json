@@ -1,0 +1,4305 @@
+{
+  "format": {
+    "id": "dsa41-gm-enemy-catalog",
+    "schemaVersion": 1,
+    "language": "de-DE",
+    "intendedUse": "Gegnerprofile fuer den Meister und spaetere Kampfprofil-Adapter"
+  },
+  "ruleset": {
+    "name": "DSA 4.1",
+    "edition": "4.1",
+    "strict": true,
+    "doNotMixWith": [
+      "DSA 5"
+    ],
+    "sourcePolicy": "Nicht belegte Werte bleiben null oder werden als Quellen- beziehungsweise Meisterentscheidung markiert."
+  },
+  "sources": [
+    {
+      "id": "zba",
+      "title": "R03 - Zoo Botanica Aventurica",
+      "edition": "DSA 4.1",
+      "role": "Kreaturenwerte, Tierverhalten und besondere Kampfregeln",
+      "fileName": "R03 - Zoo Botanica Aventurica.pdf"
+    },
+    {
+      "id": "wds",
+      "title": "Wege des Schwertes",
+      "edition": "DSA 4.1",
+      "role": "Allgemeiner Kampf, Aktionen, Reaktionen, Manöver und Passierschlag",
+      "fileName": "DSA 4.1 - Wege des Schwertes.pdf"
+    },
+    {
+      "id": "basisregelwerk",
+      "title": "Das schwarze Auge - Basisregelwerk",
+      "edition": "DSA 4.1",
+      "role": "Grundlagen von Proben, Eigenschaften und Lebensenergie",
+      "fileName": "Das schwarze Auge - Basisregelwerk.pdf"
+    }
+  ],
+  "conventions": {
+    "nullMeans": "Die Quelle nennt fuer dieses Feld keinen belastbaren Wert. Null ist nicht automatisch gleich 0.",
+    "printedPage": "Seitenzahlen in sourceRefs beziehen sich auf die gedruckte Seitenzahl des Quellenbands.",
+    "diceNotation": "DSA-Notation wie 1W6+3 oder 9+1W6 wird als notation erhalten; base und dice werden nur bei eindeutiger Zerlegung zusaetzlich angegeben.",
+    "damageNotation": "Schadensnotation wird nicht stillschweigend normalisiert. Insbesondere 1W-3 wird ohne angenommene Mindestgrenze gespeichert.",
+    "resourceSemantics": "maximum und initial sind getrennt. tracking=sourceOnly bedeutet, dass der Wert laut Quelle vorhanden ist, aber nicht automatisch als Kampfressource verbraucht werden soll.",
+    "specialRuleSemantics": "Mehrstufige, situationsabhaengige oder nicht eindeutig automatisierbare Regeln bleiben mit Quellenbezeichnung und Parametern erhalten und werden als manuell oder quellenabhaengig markiert."
+  },
+  "supportedDataModel": {
+    "armorModels": [
+      "simple",
+      "zone"
+    ],
+    "armorZoneKeys": [
+      "head",
+      "chest",
+      "back",
+      "abdomen",
+      "leftArm",
+      "rightArm",
+      "leftLeg",
+      "rightLeg"
+    ],
+    "woundZoneKeys": [
+      "head",
+      "torso",
+      "abdomen",
+      "leftArm",
+      "rightArm",
+      "leftLeg",
+      "rightLeg"
+    ],
+    "attackData": [
+      "category",
+      "distanceClass",
+      "attack",
+      "parry",
+      "damage.notation",
+      "initiativeModifier",
+      "availability",
+      "specialRuleRefs"
+    ],
+    "combatStateData": [
+      "currentLeP",
+      "currentAuP",
+      "wounds",
+      "initiative",
+      "conditions",
+      "heldAction",
+      "equipmentState"
+    ],
+    "conditionValues": [
+      "ready",
+      "sourceDependent",
+      "manual",
+      "optionalManualRoll",
+      "gmDecision",
+      "requiresEquipmentSelection"
+    ]
+  },
+  "specialRuleDefinitions": [
+    {
+      "id": "animal-default-defense",
+      "label": "Meisterliches Ausweichen von Tieren",
+      "kind": "defense",
+      "resolution": "automatic",
+      "parameters": {
+        "usesParadeValueAsDisplayValue": true,
+        "initiativeLossOnEvasion": false,
+        "staysInCombat": true
+      },
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPages": [
+            10,
+            12
+          ]
+        }
+      ]
+    },
+    {
+      "id": "animal-retreat",
+      "label": "Rueckzug bei niedriger Lebensenergie",
+      "kind": "behavior",
+      "resolution": "sourceDefined",
+      "parameters": {
+        "normalAnimalLePRatio": {
+          "numerator": 1,
+          "denominator": 3,
+          "comparison": "below"
+        },
+        "birdLePRatio": {
+          "numerator": 1,
+          "denominator": 4,
+          "comparison": "below"
+        },
+        "passierschlagOnRetreat": true,
+        "zeroLeP": "Tier bricht zusammen und gilt nach den Tierkampfregeln als tot; Kampagnenausnahmen bleiben Meisterentscheidung."
+      },
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPages": [
+            10,
+            12
+          ]
+        },
+        {
+          "sourceId": "wds",
+          "printedPage": 83
+        }
+      ]
+    },
+    {
+      "id": "animal-wounds",
+      "label": "Wunden bei Tieren",
+      "kind": "damageAndWounds",
+      "resolution": "sourceDefined",
+      "parameters": {
+        "withKo": "Eine Wunde entsteht bei mehr SP als KO.",
+        "withoutKo": "Ohne KO wird fuer viele Tiere mehr als ein Drittel der LeP als Wundschwelle verwendet.",
+        "standardEffect": "Wunden senken AT, PA und INI um 2; GS ist situations- und tierabhaengig.",
+        "rangedAndTargetedStab": "Fuer Fernkampf und Gezielten Stich gelten die in der Quelle genannten Sondergrenzen."
+      },
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 10
+        }
+      ]
+    },
+    {
+      "id": "ambush",
+      "label": "Hinterhalt",
+      "kind": "openingSituation",
+      "resolution": "multiStep",
+      "parameters": {
+        "firstRoundAttackBonus": 5,
+        "awarenessDifficultyComesFromProfile": true,
+        "failureRemovesFirstRoundActionsAndInitiative": true
+      },
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPages": [
+            9,
+            11
+          ]
+        }
+      ]
+    },
+    {
+      "id": "net",
+      "label": "Netz",
+      "kind": "control",
+      "resolution": "multiStep",
+      "parameters": {
+        "baseDifficultyComesFromProfile": true,
+        "failedEscapeIncreasesDifficulty": 1,
+        "failedEscapeAlsoIncreasesCombatPenalty": true,
+        "escapeCheck": "GE-Probe oder quellenbezogene Befreiungsregel"
+      },
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 11
+        }
+      ]
+    },
+    {
+      "id": "double-attack",
+      "label": "Doppelangriff",
+      "kind": "attackSequence",
+      "resolution": "multiStep",
+      "parameters": {
+        "attackCount": 2,
+        "attackModifier": 4,
+        "sameTarget": true,
+        "damageIsRolledSeparately": true,
+        "oneSuccessStillHasEffect": true,
+        "twoSuccessesRequireDodgeOrMasterfulDodge": true
+      },
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 11
+        }
+      ]
+    },
+    {
+      "id": "source-combined-options",
+      "label": "Verkettete Sonderangabe aus dem Bestiarium",
+      "kind": "sourceNotation",
+      "resolution": "manual",
+      "parameters": {
+        "meaning": "Schraegstrichangaben werden nicht in eine neue eigene Regel umgedeutet. Die Reihenfolge und Bedingungen bleiben bis zur Regelauflösung quellenabhaengig."
+      },
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 11
+        }
+      ]
+    },
+    {
+      "id": "targeted-attack",
+      "label": "Gezielter Angriff",
+      "kind": "attackOption",
+      "resolution": "manual",
+      "parameters": {
+        "mayChangeHitLocationOrEffect": true,
+        "exactEffectComesFromProfileOrWds": true
+      },
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 11
+        },
+        {
+          "sourceId": "wds",
+          "printedPage": 58
+        }
+      ]
+    },
+    {
+      "id": "bite-hold",
+      "label": "Verbeissen, Festkrallen oder Umklammern",
+      "kind": "controlAndDamage",
+      "resolution": "multiStep",
+      "parameters": {
+        "requiresCloseCombat": true,
+        "breakFreeMayUseStrengthAndAgility": true,
+        "ongoingDamageMayBeAutomatic": true,
+        "exactBreakConditionComesFromProfile": true
+      },
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 11
+        },
+        {
+          "sourceId": "wds",
+          "printedPage": 93
+        }
+      ]
+    },
+    {
+      "id": "knockdown",
+      "label": "Niederwerfen",
+      "kind": "control",
+      "resolution": "multiStep",
+      "parameters": {
+        "difficultyComesFromProfile": true,
+        "paradePreventsDamageNotNecessarilyKnockdown": true,
+        "escapeAndPositionNeedSeparateState": true
+      },
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 11
+        },
+        {
+          "sourceId": "wds",
+          "printedPage": 57
+        }
+      ]
+    },
+    {
+      "id": "overrun",
+      "label": "Ueberrennen",
+      "kind": "attackOption",
+      "resolution": "multiStep",
+      "parameters": {
+        "canForceKnockdown": true,
+        "defenseOptionsAreRestricted": true,
+        "profileSpecificValuesRemainRaw": true
+      },
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 11
+        },
+        {
+          "sourceId": "wds",
+          "printedPage": 57
+        }
+      ]
+    },
+    {
+      "id": "fear-check",
+      "label": "Angst- oder Schockprobe",
+      "kind": "openingSituation",
+      "resolution": "manual",
+      "parameters": {
+        "checkAndConsequenceComeFromProfile": true
+      },
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 102
+        }
+      ]
+    },
+    {
+      "id": "ausweichen-I",
+      "label": "Ausweichen I",
+      "kind": "specialAbility",
+      "resolution": "manual",
+      "parameters": {
+        "profileValue": 10
+      },
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 103
+        }
+      ]
+    },
+    {
+      "id": "ausweichen-II",
+      "label": "Ausweichen II",
+      "kind": "specialAbility",
+      "resolution": "manual",
+      "parameters": {
+        "profileValue": 14
+      },
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 103
+        }
+      ]
+    },
+    {
+      "id": "kampfreflexe",
+      "label": "Kampfreflexe",
+      "kind": "specialAbility",
+      "resolution": "manual",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 103
+        }
+      ]
+    },
+    {
+      "id": "reiterkampf",
+      "label": "Reiterkampf",
+      "kind": "specialAbility",
+      "resolution": "manual",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 103
+        }
+      ]
+    },
+    {
+      "id": "scharfschuetze",
+      "label": "Scharfschuetze",
+      "kind": "specialAbility",
+      "resolution": "manual",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 103
+        }
+      ]
+    }
+  ],
+  "authoringTemplate": {
+    "requiredFields": [
+      "id",
+      "name",
+      "kind",
+      "combat.initiative",
+      "combat.defense",
+      "combat.resources.leP",
+      "armor",
+      "attacks",
+      "sourceRefs"
+    ],
+    "recommendedFields": [
+      "encounter",
+      "behavior",
+      "body",
+      "attributes",
+      "combat.wounds",
+      "combat.resistances",
+      "specialRules",
+      "equipment",
+      "gmNotes"
+    ],
+    "authoringRules": [
+      "Keine DSA-5-Felder oder DSA-5-Bezeichnungen einfuehren.",
+      "Quellenwerte als raw beziehungsweise notation erhalten, wenn ihre Interpretation nicht eindeutig ist.",
+      "Eine fehlende Angabe als null speichern und nicht als 0 erfinden.",
+      "Sonderregeln mit mehreren Kampfschritten als ruleId plus parameters speichern.",
+      "Bei Humanoiden zuerst Erfahrungsstufe und Ausruestung waehlen, bevor ein kampfbereites Profil erzeugt wird."
+    ]
+  },
+  "integrationHints": {
+    "repository": "redmoone/DSAWuerfelApp",
+    "branchVerified": "master",
+    "participantMapping": {
+      "CombatSessionParticipantDto.Id": "enemy.id",
+      "CombatSessionParticipantDto.Name": "enemy.name",
+      "CombatSessionParticipantDto.InitiativeBase": "enemy.combat.initiative.base",
+      "CombatSessionParticipantDto.InitiativeDiceCount": "enemy.combat.initiative.dice.count",
+      "CombatRuntimeStateDto.CurrentLeP": "enemy.combat.resources.leP.initial",
+      "CombatRuntimeStateDto.CurrentAuP": "enemy.combat.resources.auP.initial"
+    },
+    "adapterNotes": [
+      "Die bestehende AddOpponent-Mutation verwaltet derzeit nur die grundlegenden Gegnerdaten; dieses Profil braucht spaeter einen separaten Profil-Adapter.",
+      "CombatProfileDto ist aktuell hero-zentriert und darf fuer Gegner nicht durch eine erfundene HeroId missbraucht werden.",
+      "combat.initiative.notation muss vor dem Setzen der konkreten Initiative gewuerfelt werden.",
+      "armor.model=simple kann direkt auf SimpleArmor abgebildet werden; ein spaeterer Gegneradapter muss zonale Ruestung weiterhin unterstuetzen.",
+      "Sonderregeln mit resolution=multiStep oder manual duerfen nicht als bereits automatisch aufgeloest behandelt werden."
+    ]
+  },
+  "openDecisions": [
+    {
+      "id": "mr-slash-notation",
+      "question": "Wie soll die im Bestiarium vorkommende Schreibweise MR 0 / 6 oder MR 15 / 10 im Kampfprofil fachlich aufgeteilt werden?",
+      "currentHandling": "Als mrRaw erhalten; kein Bedeutungsanteil wird erfunden.",
+      "status": "open"
+    },
+    {
+      "id": "animal-aup-tracking",
+      "question": "Soll AuP bei Nicht-Humanoiden nur angezeigt oder in einer optionalen Regelvariante geführt werden?",
+      "currentHandling": "Tierprofile verwenden tracking=sourceOnly; Ghul und Goblin verwenden optional.",
+      "status": "open"
+    },
+    {
+      "id": "humanoid-equipment",
+      "question": "Welche konkrete Waffen- und Ruestungsauswahl soll fuer einen Humanoiden vor dem Kampfeinsatz gelten?",
+      "currentHandling": "Goblin bleibt bis zur Auswahl von Waffe und Ruestung nicht kampfbereit.",
+      "status": "open"
+    },
+    {
+      "id": "zonal-armor-source-data",
+      "question": "Welche Gegnerquelle liefert fuer einzelne Wesen belastbare RS-Werte pro Trefferzone?",
+      "currentHandling": "Die aktuellen ZBA-Beispiele verwenden Ganzkoerper-RS; armor.model=zone bleibt im Format unterstuetzt.",
+      "status": "open"
+    }
+  ],
+  "enemies": [
+    {
+      "id": "wolf-gemeine-werte",
+      "name": "Wolf (gemeine Werte)",
+      "kind": "animal",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 188,
+          "section": "Werte fuer alle Woelfe"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1W6+2",
+          "winterNotation": "1W20+10"
+        },
+        "socialForm": "Rudel"
+      },
+      "behavior": {
+        "combatMotivation": "Rudeljaeger; gemeine Woelfe meiden Menschen normalerweise und ziehen sich bei ernsthafter Gegenwehr zurueck.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": [
+          "Die Entscheidung, ob Hunger oder Gegenwehr den Rueckzug verhindert, bleibt situationsabhaengig."
+        ]
+      },
+      "body": {
+        "sizeDescription": "Koerperlaenge 6 Spann",
+        "weightDescription": "50 Stein"
+      },
+      "attributes": null,
+      "combat": {
+        "initiative": {
+          "notation": "9+1W6",
+          "base": 9,
+          "dice": {
+            "count": 1,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 7,
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": 23,
+            "initial": 23,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 100,
+            "initial": 100,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "ko": 11,
+          "mrRaw": "1",
+          "gw": 5
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 11
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 12
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 2,
+        "equipmentRs": 0,
+        "totalRs": 2,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "biss",
+          "name": "Biss",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 10,
+          "damage": {
+            "notation": "1W6+3",
+            "type": "TP"
+          },
+          "specialRuleRefs": [
+            "wolf-attack-chain"
+          ]
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "wolf-attack-chain",
+          "sourceNotation": "Gezielter Angriff / Verbeissen / Niederwerfen (4)",
+          "resolution": "sourceDependent",
+          "parameters": {
+            "knockdownValue": 4,
+            "sequence": [
+              "targeted-attack",
+              "bite-hold",
+              "knockdown"
+            ]
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 188
+            },
+            {
+              "sourceId": "zba",
+              "printedPage": 11
+            }
+          ]
+        },
+        {
+          "ruleId": "wolf-infection-carrier",
+          "resolution": "optionalManualRoll",
+          "parameters": {
+            "chancePerPack": {
+              "percent": 5
+            },
+            "diseaseRoll": {
+              "notation": "1W20",
+              "range1To15": "Rascher Wahn",
+              "range16To20": "Tollwut"
+            },
+            "resistanceCheckRequired": true,
+            "trigger": "Biss"
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 188
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": [
+        "Die Quelle beschreibt Wunde, LeP-Verlust und Rueckzug fuer Tiere; die App soll diese Folge nicht als einfachen TP-Text behandeln."
+      ]
+    },
+    {
+      "id": "wildschwein",
+      "name": "Wildschwein",
+      "kind": "animal",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 173,
+          "section": "Wildschwein"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1W3+3"
+        },
+        "socialForm": "Rotte"
+      },
+      "behavior": {
+        "combatMotivation": "Aggressiv und territorial; greift bei Stoerung des Reviers an.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": [
+          "Wildschweine fliehen laut Quelle, sobald sie im Kampf zu unterliegen drohen."
+        ]
+      },
+      "body": {
+        "sizeDescription": "Bis 6 Spann",
+        "weightDescription": "Bis 250 Stein"
+      },
+      "attributes": {
+        "MU": 9,
+        "KL": 5,
+        "IN": 4,
+        "CH": 4,
+        "FF": 3,
+        "GE": 7,
+        "KO": 13,
+        "KK": 14
+      },
+      "combat": {
+        "initiative": {
+          "notation": "8+1W6",
+          "base": 8,
+          "dice": {
+            "count": 1,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 6,
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": 46,
+            "initial": 46,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 60,
+            "initial": 60,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "ko": 13,
+          "mrRaw": "0 / 6",
+          "gw": 11
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 13
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 10
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 2,
+        "equipmentRs": 0,
+        "totalRs": 2,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "stoss-biss",
+          "name": "Stoss / Biss",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 13,
+          "damage": {
+            "notation": "1W6+3",
+            "type": "TP"
+          },
+          "specialRuleRefs": [
+            "wildschwein-attack-options"
+          ]
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "wildschwein-attack-options",
+          "sourceNotation": "Ueberrennen (8, 2W) / Verbeissen, Niederwerfen (4, Stoss gegen Beine)",
+          "resolution": "sourceDependent",
+          "parameters": {
+            "overrunDifficulty": 8,
+            "overrunWidthNotation": "2W",
+            "knockdownDifficulty": 4,
+            "knockdownTarget": "Beine"
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 173
+            },
+            {
+              "sourceId": "zba",
+              "printedPage": 11
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": [
+        "LO, TK und ZK sind als Nichtkampfwerte nicht aufgenommen; die Kampfwerte bleiben davon getrennt."
+      ]
+    },
+    {
+      "id": "borkenbaer",
+      "name": "Borkenbaer",
+      "kind": "animal",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 73,
+          "section": "Borkenbaer"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1"
+        },
+        "socialForm": "Einzeltier"
+      },
+      "behavior": {
+        "combatMotivation": "Normalerweise angriffsfaul; waehrend der Brunft unberechenbar und aggressiv.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": [
+          "Die Brunftbeschreibung ist als Verhalten abgelegt; eine zusaetzliche Raserei-Regel wird hier nicht erfunden."
+        ]
+      },
+      "body": {
+        "sizeDescription": "2 Schritt aufgerichtet",
+        "weightDescription": "200 Stein"
+      },
+      "attributes": {
+        "MU": 10,
+        "KL": 4,
+        "IN": 4,
+        "CH": 3,
+        "FF": 4,
+        "GE": 7,
+        "KO": 15,
+        "KK": 17
+      },
+      "combat": {
+        "initiative": {
+          "notation": "8+1W6",
+          "base": 8,
+          "dice": {
+            "count": 1,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 8,
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": 45,
+            "initial": 45,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 35,
+            "initial": 35,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "ko": 15,
+          "mrRaw": "3 / 4",
+          "gw": 10
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 15
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 15
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 3,
+        "equipmentRs": 0,
+        "totalRs": 3,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "tatze",
+          "name": "Tatze",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 11,
+          "damage": {
+            "notation": "1W6+3",
+            "type": "TP"
+          },
+          "specialRuleRefs": [
+            "double-attack",
+            "borkenbaer-knockdown"
+          ]
+        },
+        {
+          "id": "biss",
+          "name": "Biss",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 12,
+          "damage": {
+            "notation": "2W6+2",
+            "type": "TP"
+          },
+          "availability": {
+            "kind": "conditional",
+            "conditions": [
+              "successfulDoubleAttack",
+              "targetIsProne"
+            ]
+          },
+          "sourceNote": "Der Biss wird laut Quellenfussnote nur nach gelungenem Doppelangriff oder gegen am Boden liegende Gegner eingesetzt."
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "borkenbaer-knockdown",
+          "sourceNotation": "Niederwerfen (Tatze, 5)",
+          "resolution": "sourceDependent",
+          "parameters": {
+            "difficulty": 5,
+            "attackId": "tatze"
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 73
+            }
+          ]
+        },
+        {
+          "ruleId": "large-opponent",
+          "resolution": "sourceDefined",
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 73
+            }
+          ]
+        },
+        {
+          "ruleId": "terrain",
+          "resolution": "gmDecision",
+          "parameters": {
+            "preferredTerrain": "Hoehle"
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 73
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": [
+        "Der Borkenbaer hat im Quellenprofil keinen zusaetzlichen Ausruestungs-RS; RS 3 wird als Gesamtwert gefuehrt."
+      ]
+    },
+    {
+      "id": "ghul",
+      "name": "Ghul",
+      "kind": "undead",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 102,
+          "section": "Ghule"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1",
+          "exceptionNotation": "bis zu 3W6"
+        },
+        "socialForm": "Einzeln oder kleine Gruppe"
+      },
+      "behavior": {
+        "combatMotivation": "Leichenfresser; greift auch lebende Wesen an.",
+        "retreatRuleRef": null,
+        "sourceNotes": [
+          "Ein allgemeiner Rueckzugsschwellwert wird fuer Untote hier nicht ergaenzt, weil die Quelle fuer diesen Eintrag keinen solchen Wert nennt."
+        ]
+      },
+      "body": {
+        "sizeDescription": "8 bis 10 Spann",
+        "weightDescription": "60 bis 80 Stein"
+      },
+      "attributes": null,
+      "combat": {
+        "initiative": {
+          "notation": "8+1W6",
+          "base": 8,
+          "dice": {
+            "count": 1,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "parry",
+          "parryValue": 9,
+          "initiativeLossOnEvasion": null
+        },
+        "resources": {
+          "leP": {
+            "maximum": 35,
+            "initial": 35,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 60,
+            "initial": 60,
+            "tracking": "optional"
+          }
+        },
+        "resistances": {
+          "ko": 18,
+          "mrRaw": "15 / 10",
+          "gw": 9
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 18
+          }
+        },
+        "movement": {
+          "gs": 7
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 2,
+        "equipmentRs": 0,
+        "totalRs": 2,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "klauen",
+          "name": "Klauen",
+          "category": "melee",
+          "distanceClass": "HN",
+          "attack": null,
+          "baseAttackReference": "klauen",
+          "damage": {
+            "notation": "1W6+2",
+            "type": "TP"
+          }
+        },
+        {
+          "id": "gezielter-biss",
+          "name": "Biss (nur als Gezielter Angriff)",
+          "category": "melee",
+          "distanceClass": "H",
+          "attack": 11,
+          "damage": {
+            "notation": "1W6+4",
+            "type": "TP"
+          },
+          "availability": {
+            "kind": "requiresSpecialRule",
+            "ruleId": "targeted-attack"
+          },
+          "specialRuleRefs": [
+            "ghul-bite-poison"
+          ],
+          "sourceNote": "Die Quelle beschreibt den Biss als Ergebnis eines Gezielten Angriffs; ein eigener freier Standardangriff und kein separater AT-Wert werden daraus abgeleitet. Die Erschwernis des Gezielten Angriffs kommt aus WdS."
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "ghul-fear",
+          "ruleRef": "fear-check",
+          "resolution": "manual",
+          "parameters": {
+            "check": "MU-Probe",
+            "modifier": 3,
+            "trigger": "erstmalige Begegnung",
+            "optionalModifier": "Totenangst"
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 102
+            }
+          ]
+        },
+        {
+          "ruleId": "ghul-bite-poison",
+          "resolution": "multiStep",
+          "parameters": {
+            "trigger": "Gezielter Biss verursacht SP",
+            "poisonLevel": 10,
+            "effect": "KK und GE sinken je um 1 pro KR",
+            "duration": "2W20 KR",
+            "paralysisAtZero": true,
+            "repeatable": true,
+            "transformationRisk": {
+              "percentPerFiveSP": 5,
+              "time": "innerhalb von 3 Tagen",
+              "preventedBy": [
+                "Heiltrank",
+                "Gegengift",
+                "KLARUM PURUM (10)"
+              ]
+            }
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 102
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": []
+    },
+    {
+      "id": "haus-feldratte",
+      "name": "Haus- oder Feldratte",
+      "kind": "animal",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 155,
+          "section": "Ratten"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1W20+10",
+          "plagueNotation": "3W20+30"
+        },
+        "socialForm": "Rudel; einzelne Tiere sind laut Beschreibung untypisch"
+      },
+      "behavior": {
+        "combatMotivation": "Greift Menschen normalerweise nur in grosser Zahl oder in die Enge getrieben an.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": [
+          "Die Einordnung als Rattengroesse ist fuer die Abwehr relevant; konkrete Aufschlaege werden als Quellenangabe erhalten."
+        ]
+      },
+      "body": {
+        "sizeDescription": "Koerperlaenge 2,5 Spann",
+        "weightDescription": "Bis 0,25 Stein",
+        "sourceSizeTag": "ratSized"
+      },
+      "attributes": null,
+      "combat": {
+        "initiative": {
+          "notation": "9+2W6",
+          "base": 9,
+          "dice": {
+            "count": 2,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 0,
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": 4,
+            "initial": 4,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 20,
+            "initial": 20,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "ko": 9,
+          "mrRaw": "0",
+          "gw": 1
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 9
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 4
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 1,
+        "equipmentRs": 0,
+        "totalRs": 1,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "biss",
+          "name": "Biss",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 5,
+          "damage": {
+            "notation": "1W-3",
+            "type": "TP"
+          },
+          "specialRuleRefs": [
+            "rat-attack-options",
+            "rat-disease-risk"
+          ]
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "rat-attack-options",
+          "sourceNotation": "Gezielter Angriff (SP statt TP), sehr kleiner Gegner (AT+4 / PA+7), Raserei (1, bei Tollwut)",
+          "resolution": "sourceDependent",
+          "parameters": {
+            "targetedAttackDamageType": "SP",
+            "verySmallOpponent": "AT+4 / PA+7",
+            "rageModifier": 1,
+            "rageTrigger": "Tollwut"
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 155
+            }
+          ]
+        },
+        {
+          "ruleId": "rat-disease-risk",
+          "resolution": "optionalManualRoll",
+          "parameters": {
+            "trigger": "mehr als 5 SP durch Rattenbisse",
+            "infectionChancePercent": 5,
+            "diseaseTable": "1W20 mit den in der Quelle genannten Krankheitsbereichen",
+            "resistanceCheckRequired": true
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 155
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": []
+    },
+    {
+      "id": "vogelspinne",
+      "name": "Vogelspinne",
+      "kind": "animal",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 178,
+          "section": "Vogelspinne"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1W6"
+        },
+        "socialForm": "Kleine Gruppe"
+      },
+      "behavior": {
+        "combatMotivation": "Eher scheu; greift Menschen laut Beschreibung selten an und jagt kleinere Beute.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": [
+          "Hinterhalt und Netz sind als getrennte Kampfschritte modelliert."
+        ]
+      },
+      "body": {
+        "sizeDescription": "Etwa 1 Schritt",
+        "weightDescription": "20 bis 30 Stein"
+      },
+      "attributes": null,
+      "combat": {
+        "initiative": {
+          "notation": "4+2W6",
+          "base": 4,
+          "dice": {
+            "count": 2,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 5,
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": 22,
+            "initial": 22,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 15,
+            "initial": 15,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "ko": 13,
+          "mrRaw": "10 / 8",
+          "gw": 5
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 13
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 4
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 2,
+        "equipmentRs": 0,
+        "totalRs": 2,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "biss",
+          "name": "Biss",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 9,
+          "damage": {
+            "notation": "1W6+2",
+            "type": "TP"
+          }
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "ambush",
+          "resolution": "multiStep",
+          "parameters": {
+            "difficulty": 9
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 178
+            },
+            {
+              "sourceId": "zba",
+              "printedPage": 9
+            }
+          ]
+        },
+        {
+          "ruleId": "net",
+          "resolution": "multiStep",
+          "parameters": {
+            "difficulty": 5
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 178
+            },
+            {
+              "sourceId": "zba",
+              "printedPage": 11
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": []
+    },
+    {
+      "id": "goblin",
+      "name": "Goblin",
+      "kind": "humanoid",
+      "combatReady": false,
+      "readiness": "requiresEquipmentSelection",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 103,
+          "section": "Goblins"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": null,
+        "socialForm": "Sippe oder Bande"
+      },
+      "behavior": {
+        "combatMotivation": "Listige, zahlenmaessig starke Gegner; groessere Banden koennen sich sicherer fuehlen, sind aber leicht einzuschaetzen.",
+        "retreatRuleRef": null,
+        "sourceNotes": [
+          "Die Quelle nennt keine einzelne Standardausruestung mit einer eindeutigen TP-Zeile; deshalb ist der Eintrag erst nach Waffen- und Ruestungswahl kampfbereit."
+        ]
+      },
+      "body": {
+        "sizeDescription": "1,40 bis 1,60 Schritt",
+        "weightDescription": "Um 50 Stein"
+      },
+      "attributes": {
+        "MU": {
+          "min": 6,
+          "max": 14
+        },
+        "FF": {
+          "min": 10,
+          "max": 20
+        },
+        "KL": {
+          "min": 6,
+          "max": 17
+        },
+        "GE": {
+          "min": 10,
+          "max": 20
+        },
+        "IN": {
+          "min": 8,
+          "max": 16
+        },
+        "KO": {
+          "min": 8,
+          "max": 18
+        },
+        "CH": {
+          "min": 8,
+          "max": 15
+        },
+        "KK": {
+          "min": 7,
+          "max": 15
+        }
+      },
+      "combatVariants": [
+        {
+          "id": "unerfahren",
+          "label": "Unerfahren",
+          "combat": {
+            "initiative": {
+              "notation": "8+W6",
+              "base": 8,
+              "dice": {
+                "count": 1,
+                "sides": 6
+              }
+            },
+            "defense": {
+              "mode": "parry",
+              "parryValue": 8
+            },
+            "resources": {
+              "leP": {
+                "maximum": 22,
+                "initial": 22,
+                "tracking": "combat"
+              },
+              "auP": {
+                "maximum": 30,
+                "initial": 30,
+                "tracking": "optional"
+              }
+            },
+            "resistances": {
+              "mr": 1
+            },
+            "movement": {
+              "gs": 8
+            },
+            "attackValue": 10,
+            "rangedValue": 9
+          },
+          "specialRuleRefs": []
+        },
+        {
+          "id": "erfahren",
+          "label": "Erfahren",
+          "combat": {
+            "initiative": {
+              "notation": "13+W6",
+              "base": 13,
+              "dice": {
+                "count": 1,
+                "sides": 6
+              }
+            },
+            "defense": {
+              "mode": "parry",
+              "parryValue": 10
+            },
+            "resources": {
+              "leP": {
+                "maximum": 27,
+                "initial": 27,
+                "tracking": "combat"
+              },
+              "auP": {
+                "maximum": 35,
+                "initial": 35,
+                "tracking": "optional"
+              }
+            },
+            "resistances": {
+              "mr": 3
+            },
+            "movement": {
+              "gs": 9
+            },
+            "attackValue": 12,
+            "rangedValue": 15
+          },
+          "specialRuleRefs": [
+            "ausweichen-I",
+            "kampfreflexe"
+          ]
+        },
+        {
+          "id": "veteran",
+          "label": "Veteran",
+          "combat": {
+            "initiative": {
+              "notation": "15+W6",
+              "base": 15,
+              "dice": {
+                "count": 1,
+                "sides": 6
+              }
+            },
+            "defense": {
+              "mode": "parry",
+              "parryValue": 14
+            },
+            "resources": {
+              "leP": {
+                "maximum": 33,
+                "initial": 33,
+                "tracking": "combat"
+              },
+              "auP": {
+                "maximum": 40,
+                "initial": 40,
+                "tracking": "optional"
+              }
+            },
+            "resistances": {
+              "mr": 5
+            },
+            "movement": {
+              "gs": 9
+            },
+            "attackValue": 16,
+            "rangedValue": 20
+          },
+          "specialRuleRefs": [
+            "ausweichen-II",
+            "kampfreflexe",
+            "reiterkampf",
+            "scharfschuetze"
+          ]
+        }
+      ],
+      "armor": {
+        "model": "simple",
+        "naturalRs": 1,
+        "equipmentRs": null,
+        "totalRs": null,
+        "sourceExpression": "1+Ruestung",
+        "usesZonalArmor": false
+      },
+      "attacks": [],
+      "specialRules": [
+        {
+          "ruleId": "goblin-special-abilities",
+          "resolution": "manual",
+          "parameters": {
+            "experienced": [
+              "Ausweichen I (PA 10)",
+              "Kampfreflexe"
+            ],
+            "veteran": [
+              "Ausweichen II (PA 14)",
+              "Kampfreflexe",
+              "Reiterkampf",
+              "Scharfschuetze"
+            ]
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 103
+            }
+          ]
+        },
+        {
+          "ruleId": "goblin-large-band",
+          "resolution": "gmDecision",
+          "parameters": {
+            "condition": "groessere Bande",
+            "effects": [
+              "MU+2",
+              "IN-2",
+              "AT+1",
+              "PA+3"
+            ],
+            "note": "Die Quelle nennt keine feste Gruppengroesse; daher keine automatische Schwelle eintragen."
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 103
+            }
+          ]
+        }
+      ],
+      "equipment": {
+        "weaponOptions": [
+          "Speer",
+          "Keule",
+          "Beil",
+          "Kurzbogen",
+          "Schleuder",
+          "erbeutete Waffen"
+        ],
+        "armorOptions": [
+          "Fellkleidung",
+          "erbeutete Ruestung"
+        ],
+        "damageSource": "TP je nach gewaehlter Waffe",
+        "selectionRequired": true
+      },
+      "gmNotes": [
+        "Dieser Eintrag ist absichtlich nicht kampfbereit, weil die Quelle keine einheitliche Waffe mit eindeutiger TP vorgibt.",
+        "Nach Auswahl einer Waffe koennen die AT/PA/FK-Werte der gewaehlten Erfahrungsstufe mit dem Waffenprofil kombiniert werden."
+      ]
+    },
+    {
+      "id": "sandwolf",
+      "name": "Sandwolf",
+      "kind": "animal",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPages": [
+            187,
+            188
+          ],
+          "section": "Sandwolf"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1",
+          "exceptionNotation": "bis zu 2W6+6"
+        },
+        "socialForm": "Einzeltier"
+      },
+      "behavior": {
+        "combatMotivation": "Gefaehrlicher Einzelgaenger der Khom; kann sich auch an deutlich groessere Beute wagen.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": [
+          "Die Krankheitsangabe des allgemeinen Wolfsprofils bleibt als Sonderregel erhalten."
+        ]
+      },
+      "body": {
+        "sizeDescription": "5 Spann",
+        "weightDescription": "25 Stein"
+      },
+      "combat": {
+        "initiative": {
+          "notation": "9+1W6",
+          "base": 9,
+          "dice": {
+            "count": 1,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 9,
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": 19,
+            "initial": 19,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 120,
+            "initial": 120,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "mr": 2,
+          "gw": 5
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "sourceDependent",
+            "value": null
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 12
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 2,
+        "equipmentRs": 0,
+        "totalRs": 2,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "biss",
+          "name": "Biss",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 11,
+          "damage": {
+            "notation": "1W6+2",
+            "type": "TP"
+          },
+          "specialRuleRefs": [
+            "sandwolf-attack-options"
+          ]
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "sandwolf-attack-options",
+          "sourceNotation": "Gezielter Angriff / Verbeissen / Niederwerfen (3); siehe allgemeine Wolfsregeln",
+          "resolution": "sourceDependent",
+          "parameters": {
+            "knockdownDifficulty": 3,
+            "infectionSource": "general-wolf-profile"
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPages": [
+                187,
+                188
+              ]
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": []
+    },
+    {
+      "id": "hoehlenbaer",
+      "name": "Höhlenbär",
+      "kind": "animal",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 73,
+          "section": "Höhlenbär"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1"
+        },
+        "socialForm": "Einzeltier"
+      },
+      "behavior": {
+        "combatMotivation": "Aggressiver Höhlenbewohner; bei grellem Tageslicht mit zusätzlichen Kampfmodifikatoren.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": [
+          "Die Quelle beschreibt eigene Abzüge bei grellem Tageslicht sowie halbierte Abzüge aus mangelnder Beleuchtung."
+        ]
+      },
+      "body": {
+        "sizeDescription": "3 Schritt aufgerichtet",
+        "weightDescription": "650 Stein"
+      },
+      "combat": {
+        "initiative": {
+          "notation": "6+1W6",
+          "base": 6,
+          "dice": {
+            "count": 1,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 6,
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": 70,
+            "initial": 70,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 30,
+            "initial": 30,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "ko": 20,
+          "mrRaw": "4 / 6",
+          "gw": 12
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 20
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 8
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 3,
+        "equipmentRs": 0,
+        "totalRs": 3,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "tatze",
+          "name": "Tatze",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 11,
+          "damage": {
+            "notation": "2W6",
+            "type": "TP"
+          },
+          "specialRuleRefs": [
+            "double-attack",
+            "hoehlenbaer-knockdown"
+          ]
+        },
+        {
+          "id": "biss",
+          "name": "Biss",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 12,
+          "damage": {
+            "notation": "2W6+4",
+            "type": "TP"
+          },
+          "availability": {
+            "kind": "conditional",
+            "conditions": [
+              "successfulDoubleAttack",
+              "targetIsProne"
+            ]
+          },
+          "sourceNote": "Die Fussnote verweist auf die Borkenbär-Regel: Biss erst nach gelungenem Doppelangriff oder gegen am Boden liegende Gegner."
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "hoehlenbaer-knockdown",
+          "sourceNotation": "Niederwerfen (Tatze, 5)",
+          "resolution": "sourceDependent",
+          "parameters": {
+            "difficulty": 5,
+            "attackId": "tatze"
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 73
+            }
+          ]
+        },
+        {
+          "ruleId": "hoehlenbaer-daylight",
+          "sourceNotation": "Bei grellem Tageslicht AT und PA je -2; Beleuchtungsabzüge sind halbiert.",
+          "resolution": "manual",
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 73
+            }
+          ]
+        },
+        {
+          "ruleId": "large-opponent",
+          "resolution": "sourceDefined",
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 73
+            }
+          ]
+        },
+        {
+          "ruleId": "terrain",
+          "resolution": "gmDecision",
+          "parameters": {
+            "preferredTerrain": "Hoehle"
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 73
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": []
+    },
+    {
+      "id": "orklandbaer",
+      "name": "Orklandbär",
+      "kind": "animal",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 73,
+          "section": "Orklandbär"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1"
+        },
+        "socialForm": "Einzeltier"
+      },
+      "behavior": {
+        "combatMotivation": "Normalerweise Nahrungssucher; bei Störung ein wütender und gefährlicher Kämpfer.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": []
+      },
+      "body": {
+        "sizeDescription": "Bis 8 Spann",
+        "weightDescription": "100 Stein"
+      },
+      "combat": {
+        "initiative": {
+          "notation": "9+1W6",
+          "base": 9,
+          "dice": {
+            "count": 1,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 8,
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": 40,
+            "initial": 40,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 40,
+            "initial": 40,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "ko": 17,
+          "mr": 3,
+          "gw": 10
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 17
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 14
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 2,
+        "equipmentRs": 0,
+        "totalRs": 2,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "tatze",
+          "name": "Tatze",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 13,
+          "damage": {
+            "notation": "1W6+3",
+            "type": "TP"
+          },
+          "specialRuleRefs": [
+            "double-attack",
+            "orklandbaer-knockdown"
+          ]
+        },
+        {
+          "id": "biss",
+          "name": "Biss",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 12,
+          "damage": {
+            "notation": "1W6+6",
+            "type": "TP"
+          },
+          "availability": {
+            "kind": "conditional",
+            "conditions": [
+              "successfulDoubleAttack",
+              "targetIsProne"
+            ]
+          },
+          "sourceNote": "Die Fussnote verweist auf die Borkenbär-Regel: Biss erst nach gelungenem Doppelangriff oder gegen am Boden liegende Gegner."
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "orklandbaer-knockdown",
+          "sourceNotation": "Niederwerfen (Tatze, 6)",
+          "resolution": "sourceDependent",
+          "parameters": {
+            "difficulty": 6,
+            "attackId": "tatze"
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 73
+            }
+          ]
+        },
+        {
+          "ruleId": "large-opponent",
+          "resolution": "sourceDefined",
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 73
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": []
+    },
+    {
+      "id": "streifendachs",
+      "name": "Streifendachs",
+      "kind": "animal",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 77,
+          "section": "Streifendachs"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1"
+        },
+        "socialForm": "Einzeltier"
+      },
+      "behavior": {
+        "combatMotivation": "Kleiner, meist scheuer Räuber; greift an oder flieht.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": []
+      },
+      "body": {
+        "sizeDescription": "Körperlänge knapp 1 Schritt; Schulterhöhe 1,5 Spann",
+        "weightDescription": null
+      },
+      "attributes": {
+        "MU": 10,
+        "KL": 4,
+        "IN": 5,
+        "CH": 4,
+        "FF": 3,
+        "GE": 5,
+        "KO": 9,
+        "KK": 8
+      },
+      "combat": {
+        "initiative": {
+          "notation": "7+1W6",
+          "base": 7,
+          "dice": {
+            "count": 1,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 5,
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": 18,
+            "initial": 18,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 40,
+            "initial": 40,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "ko": 9,
+          "mr": 3,
+          "gw": 4
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 9
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 8
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 2,
+        "equipmentRs": 0,
+        "totalRs": 2,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "biss",
+          "name": "Biss",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 9,
+          "damage": {
+            "notation": "1W6+1",
+            "type": "TP"
+          },
+          "specialRuleRefs": [
+            "very-small-opponent"
+          ]
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "very-small-opponent",
+          "sourceNotation": "Sehr kleiner Gegner (AT+2 / PA+4)",
+          "resolution": "sourceDefined",
+          "parameters": {
+            "attackModifier": 2,
+            "parryModifier": 4
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 77
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": []
+    },
+    {
+      "id": "vielfrass",
+      "name": "Vielfraß",
+      "kind": "animal",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 182,
+          "section": "Vielfraß"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1"
+        },
+        "socialForm": "Einzeltier"
+      },
+      "behavior": {
+        "combatMotivation": "Saisonal aggressiver Einzelgänger; im Winter kann er auch größere Beute und Menschen angreifen.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": [
+          "Die Quelle nennt Raserei (3) in der Zeit von Boron bis Phex."
+        ]
+      },
+      "body": {
+        "sizeDescription": null,
+        "weightDescription": null
+      },
+      "combat": {
+        "initiative": {
+          "notation": "8+1W6",
+          "base": 8,
+          "dice": {
+            "count": 1,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 8,
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": 23,
+            "initial": 23,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 50,
+            "initial": 50,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "ko": 9,
+          "mrRaw": "0 / 2",
+          "gw": 6
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 9
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 7
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 2,
+        "equipmentRs": 0,
+        "totalRs": 2,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "biss",
+          "name": "Biss",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 14,
+          "damage": {
+            "notation": "1W6+3",
+            "type": "TP"
+          },
+          "specialRuleRefs": [
+            "wolverine-attack-options"
+          ]
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "wolverine-attack-options",
+          "sourceNotation": "Verbeissen; Raserei (3, Boron bis Phex); sehr kleiner Gegner (AT+2 / PA+4)",
+          "resolution": "sourceDependent",
+          "parameters": {
+            "smallOpponentAttackModifier": 2,
+            "smallOpponentParryModifier": 4,
+            "frenzyLevel": 3,
+            "frenzySeason": "Boron bis Phex"
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 182
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": []
+    },
+    {
+      "id": "fischerspinne",
+      "name": "Fischerspinne",
+      "kind": "animal",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 176,
+          "section": "Fischerspinne"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1"
+        },
+        "socialForm": "Einzeltier"
+      },
+      "behavior": {
+        "combatMotivation": "Lauert aus Höhlen oder Bäumen und versucht Beute zuerst mit dem Netz wehrlos zu machen.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": []
+      },
+      "body": {
+        "sizeDescription": "Etwa 2 Schritt",
+        "weightDescription": "20 Stein"
+      },
+      "combat": {
+        "initiative": {
+          "notation": "5+2W6",
+          "base": 5,
+          "dice": {
+            "count": 2,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 6,
+          "sourceNotation": "PA 6 / 0 während des Aussaugens",
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": 20,
+            "initial": 20,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 20,
+            "initial": 20,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "ko": 10,
+          "mrRaw": "10 / 8",
+          "gw": 6
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 10
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 7
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 1,
+        "equipmentRs": 0,
+        "totalRs": 1,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "fangnetz",
+          "name": "Fangnetz",
+          "category": "naturalRanged",
+          "distanceClass": "NSP",
+          "attack": 11,
+          "damage": {
+            "notation": "-",
+            "type": "none"
+          },
+          "specialRuleRefs": [
+            "net",
+            "fischerspinne-netz"
+          ]
+        },
+        {
+          "id": "aussaugen",
+          "name": "Aussaugen",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": null,
+          "damage": {
+            "notation": "1 SP",
+            "type": "SP"
+          },
+          "availability": {
+            "kind": "requiresSpecialRule",
+            "ruleId": "fischerspinne-netz"
+          },
+          "specialRuleRefs": [
+            "fischerspinne-saugen"
+          ]
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "fischerspinne-netz",
+          "sourceNotation": "Hinterhalt (8), Netz (8)",
+          "resolution": "multiStep",
+          "parameters": {
+            "ambushDifficulty": 8,
+            "netValue": 8
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 176
+            }
+          ]
+        },
+        {
+          "ruleId": "fischerspinne-saugen",
+          "sourceNotation": "Aussaugen automatisch für 1 SP; währenddessen PA 0",
+          "resolution": "multiStep",
+          "parameters": {
+            "damageNotation": "1 SP",
+            "defenseWhileSucking": 0
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 176
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": []
+    },
+    {
+      "id": "hoehlen-baumspinne",
+      "name": "Höhlenspinne / Baumspinne",
+      "kind": "animal",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPages": [
+            176,
+            177
+          ],
+          "section": "Höhlenspinne und Baumspinne"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1"
+        },
+        "socialForm": "Einzeltier"
+      },
+      "behavior": {
+        "combatMotivation": "Greift an, wenn sich Beute im Netz verfängt; die Baumspinne verwendet klebrige Fäden statt eines Netzes.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": []
+      },
+      "body": {
+        "sizeDescription": "7 bis 8 Spann",
+        "weightDescription": "30 bis 40 Stein"
+      },
+      "combat": {
+        "initiative": {
+          "notation": "7+2W6",
+          "base": 7,
+          "dice": {
+            "count": 2,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 5,
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": 25,
+            "initial": 25,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 20,
+            "initial": 20,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "ko": 13,
+          "mrRaw": "9 / 8",
+          "gw": 5
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 13
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 5
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 2,
+        "equipmentRs": 0,
+        "totalRs": 2,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "biss",
+          "name": "Biss",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 8,
+          "damage": {
+            "notation": "1W6+2(+Gift)",
+            "type": "TP"
+          },
+          "specialRuleRefs": [
+            "ambush",
+            "net",
+            "hoehlen-spinne-poison"
+          ]
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "hoehlen-spinne-poison",
+          "sourceNotation": "Gift Stufe 4; AT, PA, GE und KK je -1; Beginn nach 3 KR; Regeneration 1 Punkt pro Tag; Resistenzwurf möglich",
+          "resolution": "multiStep",
+          "parameters": {
+            "poisonLevel": 4,
+            "attributeModifiers": {
+              "AT": -1,
+              "PA": -1,
+              "GE": -1,
+              "KK": -1
+            },
+            "onset": "3 KR",
+            "recovery": "1 Punkt pro Tag",
+            "resistanceNegatesEffect": true
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 177
+            }
+          ]
+        },
+        {
+          "ruleId": "hoehlen-spinne-terrain",
+          "sourceNotation": "Hinterhalt (6), Netz (4), Gelände (Höhle / Baum)",
+          "resolution": "sourceDependent",
+          "parameters": {
+            "ambushDifficulty": 6,
+            "netValue": 4,
+            "terrain": [
+              "Hoehle",
+              "Baum"
+            ]
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 177
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": []
+    },
+    {
+      "id": "saguaraspinne",
+      "name": "Saguaraspinne",
+      "kind": "animal",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 177,
+          "section": "Saguaraspinne"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1"
+        },
+        "socialForm": "Einzeltier"
+      },
+      "behavior": {
+        "combatMotivation": "Kleinstes Ziel; beisst vor allem, wenn sie sich bedroht fühlt.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": []
+      },
+      "body": {
+        "sizeDescription": "Etwa 2 Finger",
+        "weightDescription": "Unbedeutend"
+      },
+      "combat": {
+        "initiative": {
+          "notation": "2+2W6",
+          "base": 2,
+          "dice": {
+            "count": 2,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 0,
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": 1,
+            "initial": 1,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 20,
+            "initial": 20,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "ko": 10,
+          "mr": 8,
+          "gw": 5
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 10
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 1
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 0,
+        "equipmentRs": 0,
+        "totalRs": 0,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "biss",
+          "name": "Biss",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 12,
+          "damage": {
+            "notation": "1W3-1(+Gift)",
+            "type": "TP"
+          },
+          "specialRuleRefs": [
+            "targeted-attack",
+            "saguaraspinne-poison"
+          ]
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "saguaraspinne-poison",
+          "sourceNotation": "Gift Stufe 9; KL -5, IN -3 und 2W20 SP beziehungsweise KL -3, IN -2 und 1W20 SP",
+          "resolution": "multiStep",
+          "parameters": {
+            "poisonLevel": 9,
+            "effectNotation": "2W20 SP",
+            "alternateEffectNotation": "1W20 SP",
+            "attributeModifiers": [
+              "KL -5 / -3",
+              "IN -3 / -2"
+            ],
+            "damagePerRound": 2,
+            "duration": "1W6+3 SR / 1W3+2 SR"
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 177
+            }
+          ]
+        },
+        {
+          "ruleId": "tiny-opponent",
+          "sourceNotation": "Winziger Gegner (AT+8)",
+          "resolution": "sourceDefined",
+          "parameters": {
+            "attackModifier": 8
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 177
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": []
+    },
+    {
+      "id": "speispinne",
+      "name": "Speispinne",
+      "kind": "animal",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 177,
+          "section": "Speispinne"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1"
+        },
+        "socialForm": "Einzeltier"
+      },
+      "behavior": {
+        "combatMotivation": "Vermeidet Nahkampf, spinnt das Opfer erst ein und saugt es danach aus.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": []
+      },
+      "body": {
+        "sizeDescription": "Etwa 1 Schritt",
+        "weightDescription": "5 Stein"
+      },
+      "combat": {
+        "initiative": {
+          "notation": "3+3W6",
+          "base": 3,
+          "dice": {
+            "count": 3,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 5,
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": 10,
+            "initial": 10,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 25,
+            "initial": 25,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "ko": 12,
+          "mrRaw": "9 / 8",
+          "gw": 5
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 12
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 6
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 1,
+        "equipmentRs": 0,
+        "totalRs": 1,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "speiangriff",
+          "name": "Speiangriff",
+          "category": "naturalRanged",
+          "distanceClass": "NSP",
+          "attack": 18,
+          "damage": {
+            "notation": "-",
+            "type": "none"
+          },
+          "specialRuleRefs": [
+            "net",
+            "speispinne-net"
+          ]
+        },
+        {
+          "id": "biss",
+          "name": "Biss",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 9,
+          "damage": {
+            "notation": "1W6",
+            "type": "TP"
+          },
+          "availability": {
+            "kind": "conditional",
+            "conditions": [
+              "targetIsHelplessAfterNet"
+            ]
+          }
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "speispinne-net",
+          "sourceNotation": "Netz (2); Speiangriff alle 2 KR; Ausweichen gegen halben Ausweichwert; weiterer Treffer erhöht Netzwert um 2",
+          "resolution": "multiStep",
+          "parameters": {
+            "netValue": 2,
+            "interval": "2 KR",
+            "escape": "Ausweichen-Probe gegen halben Ausweichwert",
+            "incrementPerFurtherHit": 2,
+            "meleeOnlyAfter": "targetIsHelplessAfterNet"
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 177
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": []
+    },
+    {
+      "id": "feuerskorpion",
+      "name": "Feuerskorpion",
+      "kind": "animal",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 174,
+          "section": "Feuerskorpion oder Roter Skorpion"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1"
+        },
+        "socialForm": "Einzeltier"
+      },
+      "behavior": {
+        "combatMotivation": "Greift aus dem Versteck nur bei Bedrohung an; der Stich ist vor allem wegen des Gifts gefährlich.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": []
+      },
+      "body": {
+        "sizeDescription": "1 bis 2 Finger",
+        "weightDescription": "Unbedeutend"
+      },
+      "combat": {
+        "initiative": {
+          "notation": "5+1W6",
+          "base": 5,
+          "dice": {
+            "count": 1,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 0,
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": 1,
+            "initial": 1,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 10,
+            "initial": 10,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "ko": 11,
+          "mrRaw": "8 / 3",
+          "gw": 2
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 11
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 1
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 1,
+        "equipmentRs": 0,
+        "totalRs": 1,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "stachel",
+          "name": "Stachel",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 12,
+          "damage": {
+            "notation": "1W3(+Gift)",
+            "type": "TP"
+          },
+          "specialRuleRefs": [
+            "targeted-attack",
+            "feuerskorpion-poison"
+          ]
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "feuerskorpion-poison",
+          "sourceNotation": "Gift Stufe 8; HÖLLENPEIN-artiger Ausdauerverlust, Beginn sofort",
+          "resolution": "multiStep",
+          "parameters": {
+            "poisonLevel": 8,
+            "effectNotation": "1W6 AuP pro KR / 1W3 AuP pro KR",
+            "duration": "1W6 x 1W6 KR / 1W3 x 1W3 KR"
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 174
+            }
+          ]
+        },
+        {
+          "ruleId": "tiny-opponent",
+          "sourceNotation": "Winziger Gegner (AT+8)",
+          "resolution": "sourceDefined",
+          "parameters": {
+            "attackModifier": 8
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 174
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": []
+    },
+    {
+      "id": "wuestenskorpion",
+      "name": "Wüstenskorpion",
+      "kind": "animal",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 175,
+          "section": "Wüstenskorpion"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1"
+        },
+        "socialForm": "Einzeltier"
+      },
+      "behavior": {
+        "combatMotivation": "Versteckt sich an warmen, dunklen Orten und sticht besonders leichtfertig zu.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": []
+      },
+      "body": {
+        "sizeDescription": "6 bis 7 Finger",
+        "weightDescription": "Unbedeutend"
+      },
+      "combat": {
+        "initiative": {
+          "notation": "5+1W6",
+          "base": 5,
+          "dice": {
+            "count": 1,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 0,
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": 4,
+            "initial": 4,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 15,
+            "initial": 15,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "ko": 11,
+          "mr": 8,
+          "gw": 5
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 11
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 2
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 2,
+        "equipmentRs": 0,
+        "totalRs": 2,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "stachel",
+          "name": "Stachel",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 13,
+          "damage": {
+            "notation": "1W3+2(+Gift)",
+            "type": "TP"
+          },
+          "specialRuleRefs": [
+            "targeted-attack",
+            "wuestenskorpion-poison"
+          ]
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "wuestenskorpion-poison",
+          "sourceNotation": "Gift Stufe 4; 1W20 SP beziehungsweise 2W6 SP, danach 2 beziehungsweise 1 SP pro KR",
+          "resolution": "multiStep",
+          "parameters": {
+            "poisonLevel": 4,
+            "effectNotation": "1W20 SP / 2W6 SP",
+            "damagePerRound": "2 SP/KR / 1 SP/KR",
+            "onset": "sofort"
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 175
+            }
+          ]
+        },
+        {
+          "ruleId": "tiny-opponent",
+          "sourceNotation": "Winziger Gegner (AT+4)",
+          "resolution": "sourceDefined",
+          "parameters": {
+            "attackModifier": 4
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 175
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": []
+    },
+    {
+      "id": "riesenameise",
+      "name": "Riesenameise",
+      "kind": "animal",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 68,
+          "section": "Riesenameisen"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1"
+        },
+        "socialForm": "Einzeltier"
+      },
+      "behavior": {
+        "combatMotivation": "Einzellebendes Wüsteninsekt, das Menschen als Nahrung betrachtet.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": []
+      },
+      "body": {
+        "sizeDescription": "2 Schritt",
+        "weightDescription": "40 bis 50 Stein"
+      },
+      "combat": {
+        "initiative": {
+          "notation": "9+1W6",
+          "base": 9,
+          "dice": {
+            "count": 1,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 0,
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": 28,
+            "initial": 28,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 70,
+            "initial": 70,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "ko": 15,
+          "mr": 12,
+          "gw": 8
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 15
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 6
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 4,
+        "equipmentRs": 0,
+        "totalRs": 4,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "biss",
+          "name": "Biss",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 10,
+          "damage": {
+            "notation": "1W6+3",
+            "type": "TP"
+          },
+          "specialRuleRefs": [
+            "riesenameise-acid",
+            "bite-hold"
+          ]
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "riesenameise-acid",
+          "sourceNotation": "Säure zusätzlich zum Biss: SP 1W6-2; je 5 volle Säure-SP sinkt der RS um 1; natürlicher RS regeneriert nach den Wundenregeln",
+          "resolution": "multiStep",
+          "parameters": {
+            "damageNotation": "1W6-2 SP",
+            "armorReductionPerFullDamage": 5,
+            "armorReduction": 1,
+            "naturalArmorRecovery": "Wundenregeln"
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 68
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": []
+    },
+    {
+      "id": "adler",
+      "name": "Adler",
+      "kind": "animal",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 64,
+          "section": "Werte für alle Adler"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "2"
+        },
+        "socialForm": "Paar"
+      },
+      "behavior": {
+        "combatMotivation": "Verteidigt den Horst; beginnt mit Sturzflug und wechselt bei geringer Höhe in den Flugangriff.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": [
+          "Die Quelle beschreibt ein abweichendes LeP-Rückzugsverhalten für Vögel."
+        ]
+      },
+      "body": {
+        "sizeDescription": null,
+        "weightDescription": null
+      },
+      "combat": {
+        "initiative": {
+          "notation": "10+1W6",
+          "base": 10,
+          "dice": {
+            "count": 1,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 3,
+          "sourceNotation": "PA 3 am Boden / 6 in der Luft",
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": 16,
+            "initial": 16,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 60,
+            "initial": 60,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "ko": 9,
+          "mrRaw": "2 / 3",
+          "gw": 7
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 9
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 1,
+          "sourceNotation": "GS 1 am Boden / 25 in der Luft",
+          "alternate": {
+            "state": "air",
+            "gs": 25
+          }
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 2,
+        "equipmentRs": 0,
+        "totalRs": 2,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "schnabel-klauen",
+          "name": "Schnabel / Klauen",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 6,
+          "sourceNotation": "AT 6 am Boden / 14 in der Luft",
+          "damage": {
+            "notation": "1W6+2",
+            "type": "TP"
+          },
+          "specialRuleRefs": [
+            "adler-flight-profile"
+          ]
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "adler-flight-profile",
+          "sourceNotation": "Flugangriff, Sturzflug, Gezielter Angriff / Verkrallen, Gelände (Gebirge)",
+          "resolution": "multiStep",
+          "parameters": {
+            "groundAttack": 6,
+            "airAttack": 14,
+            "groundParry": 3,
+            "airParry": 6,
+            "groundGs": 1,
+            "airGs": 25,
+            "terrain": "Gebirge"
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 64
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": []
+    },
+    {
+      "id": "sumpfranze",
+      "name": "Sumpfranze",
+      "kind": "animal",
+      "combatReady": true,
+      "readiness": "ready",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 68,
+          "section": "Sumpfranzen"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1",
+          "exceptionNotation": "Rotten von 2W6 Tieren"
+        },
+        "socialForm": "Einzeltier oder Rotte"
+      },
+      "behavior": {
+        "combatMotivation": "Einzeln meist feige und flüchtig; in Rotten bei Nahrungsknappheit deutlich gefährlicher.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": [
+          "Die Quelle nennt für Rotten die Sonderregel Meute und für Einzeltiere Flucht."
+        ]
+      },
+      "body": {
+        "sizeDescription": "Schulterhöhe 7 Spann",
+        "weightDescription": "60 Stein"
+      },
+      "combat": {
+        "initiative": {
+          "notation": "6+2W6",
+          "base": 6,
+          "dice": {
+            "count": 2,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 4,
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": 25,
+            "initial": 25,
+            "tracking": "combat"
+          },
+          "auP": {
+            "maximum": 40,
+            "initial": 40,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "ko": 16,
+          "mrRaw": "3 / 4",
+          "gw": 4
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 16
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 8
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 2,
+        "equipmentRs": 0,
+        "totalRs": 2,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "biss-krallen",
+          "name": "Biss / Krallen",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 7,
+          "damage": {
+            "notation": "1W6+2",
+            "type": "TP"
+          },
+          "specialRuleRefs": [
+            "sumpfranze-pack"
+          ]
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "sumpfranze-pack",
+          "sourceNotation": "Gelände (Sumpf), Meute",
+          "resolution": "sourceDependent",
+          "parameters": {
+            "terrain": "Sumpf",
+            "pack": true
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 68
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": []
+    },
+    {
+      "id": "rotfuchs",
+      "name": "Rotfuchs",
+      "kind": "animal",
+      "combatReady": false,
+      "readiness": "sourceDependent",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 98,
+          "section": "Werte für alle Füchse; Rotfuchs"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": {
+          "notation": "1",
+          "exceptionNotation": "im Frühling und Sommer oft paarweise"
+        },
+        "socialForm": "Einzeltier"
+      },
+      "behavior": {
+        "combatMotivation": "Gesunde Tiere meiden aussichtslose Kämpfe; tollwütige Tiere können in Raserei angreifen.",
+        "retreatRuleRef": "animal-retreat",
+        "sourceNotes": [
+          "Das allgemeine Fuchsprofil nennt LeP als Bereich von 13 bis 16; vor dem Einsatz muss der Meister einen Wert innerhalb dieses Quellenbereichs wählen."
+        ]
+      },
+      "body": {
+        "sizeDescription": "Körperlänge bis 6,5 Spann",
+        "weightDescription": "Bis 10 Stein"
+      },
+      "combat": {
+        "initiative": {
+          "notation": "12+1W6",
+          "base": 12,
+          "dice": {
+            "count": 1,
+            "sides": 6
+          }
+        },
+        "defense": {
+          "mode": "masterfulEvasion",
+          "parryValue": 11,
+          "initiativeLossOnEvasion": false,
+          "ruleRef": "animal-default-defense"
+        },
+        "resources": {
+          "leP": {
+            "maximum": null,
+            "initial": null,
+            "sourceRange": {
+              "min": 13,
+              "max": 16
+            },
+            "tracking": "sourceDependent"
+          },
+          "auP": {
+            "maximum": 35,
+            "initial": 35,
+            "tracking": "sourceOnly"
+          }
+        },
+        "resistances": {
+          "ko": 9,
+          "mr": 0,
+          "gw": 4
+        },
+        "wounds": {
+          "threshold": {
+            "kind": "ko",
+            "value": 9
+          },
+          "ruleRef": "animal-wounds"
+        },
+        "movement": {
+          "gs": 15
+        }
+      },
+      "armor": {
+        "model": "simple",
+        "naturalRs": 2,
+        "equipmentRs": 0,
+        "totalRs": 2,
+        "usesZonalArmor": false
+      },
+      "attacks": [
+        {
+          "id": "biss",
+          "name": "Biss",
+          "category": "naturalMelee",
+          "distanceClass": "H",
+          "attack": 12,
+          "damage": {
+            "notation": "1W6+1",
+            "type": "TP"
+          },
+          "specialRuleRefs": [
+            "rotfuchs-behavior"
+          ]
+        }
+      ],
+      "specialRules": [
+        {
+          "ruleId": "rotfuchs-behavior",
+          "sourceNotation": "Raserei (1, bei Tollwut), sehr kleiner Gegner (AT+2 / PA+4)",
+          "resolution": "sourceDependent",
+          "parameters": {
+            "frenzyLevel": 1,
+            "frenzyCondition": "Tollwut",
+            "attackModifier": 2,
+            "parryModifier": 4
+          },
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 98
+            }
+          ]
+        }
+      ],
+      "equipment": null,
+      "gmNotes": [
+        "Vor dem Kampfeinsatz LeP aus dem Quellenbereich 13 bis 16 festlegen."
+      ]
+    },
+    {
+      "id": "mittellaender",
+      "name": "Mittelländer",
+      "kind": "humanoid",
+      "combatReady": false,
+      "readiness": "requiresEquipmentSelection",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 134,
+          "section": "Mittelländer"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": null,
+        "socialForm": "Gruppe, Bande oder Einzelgegner"
+      },
+      "behavior": {
+        "combatMotivation": "Generisches menschliches Gegnerprofil für Räuber, Wachen, Milizionäre oder andere bewaffnete Personen.",
+        "retreatRuleRef": null,
+        "sourceNotes": [
+          "Die Bezeichnung ist ein Quellenprofil, keine zusätzliche Räuberregel."
+        ]
+      },
+      "body": {
+        "sizeDescription": "1,60 bis 2,00 Schritt",
+        "weightDescription": "60 bis 100 Stein"
+      },
+      "attributes": {
+        "MU": {
+          "min": 8,
+          "max": 17
+        },
+        "FF": {
+          "min": 8,
+          "max": 17
+        },
+        "KL": {
+          "min": 8,
+          "max": 17
+        },
+        "GE": {
+          "min": 8,
+          "max": 17
+        },
+        "IN": {
+          "min": 8,
+          "max": 17
+        },
+        "KO": {
+          "min": 8,
+          "max": 18
+        },
+        "CH": {
+          "min": 8,
+          "max": 17
+        },
+        "KK": {
+          "min": 8,
+          "max": 17
+        }
+      },
+      "combatVariants": [
+        {
+          "id": "unerfahren",
+          "label": "Unerfahren",
+          "combat": {
+            "initiative": {
+              "notation": "9+W6",
+              "base": 9,
+              "dice": {
+                "count": 1,
+                "sides": 6
+              }
+            },
+            "defense": {
+              "mode": "parry",
+              "parryValue": 10
+            },
+            "resources": {
+              "leP": {
+                "maximum": 25,
+                "initial": 25,
+                "tracking": "combat"
+              },
+              "auP": {
+                "maximum": 25,
+                "initial": 25,
+                "tracking": "optional"
+              }
+            },
+            "resistances": {
+              "mr": 2
+            },
+            "movement": {
+              "gs": 8
+            },
+            "attackValue": 11,
+            "rangedValue": null
+          },
+          "specialRuleRefs": []
+        },
+        {
+          "id": "erfahren",
+          "label": "Erfahren",
+          "combat": {
+            "initiative": {
+              "notation": "11+W6",
+              "base": 11,
+              "dice": {
+                "count": 1,
+                "sides": 6
+              }
+            },
+            "defense": {
+              "mode": "parry",
+              "parryValue": 12
+            },
+            "resources": {
+              "leP": {
+                "maximum": 34,
+                "initial": 34,
+                "tracking": "combat"
+              },
+              "auP": {
+                "maximum": 35,
+                "initial": 35,
+                "tracking": "optional"
+              }
+            },
+            "resistances": {
+              "mr": 4
+            },
+            "movement": {
+              "gs": 8
+            },
+            "attackValue": 14,
+            "rangedValue": 12
+          },
+          "specialRuleRefs": [
+            "mittellaender-special-abilities"
+          ]
+        },
+        {
+          "id": "veteran",
+          "label": "Veteran",
+          "combat": {
+            "initiative": {
+              "notation": "17+W6",
+              "base": 17,
+              "dice": {
+                "count": 1,
+                "sides": 6
+              }
+            },
+            "defense": {
+              "mode": "parry",
+              "parryValue": 16
+            },
+            "resources": {
+              "leP": {
+                "maximum": 41,
+                "initial": 41,
+                "tracking": "combat"
+              },
+              "auP": {
+                "maximum": 42,
+                "initial": 42,
+                "tracking": "optional"
+              }
+            },
+            "resistances": {
+              "mr": 6
+            },
+            "movement": {
+              "gs": 9
+            },
+            "attackValue": 17,
+            "rangedValue": 18
+          },
+          "specialRuleRefs": [
+            "mittellaender-special-abilities"
+          ]
+        }
+      ],
+      "armor": {
+        "model": "simple",
+        "naturalRs": 0,
+        "equipmentRs": null,
+        "totalRs": null,
+        "sourceExpression": "je nach Rüstung",
+        "usesZonalArmor": false
+      },
+      "attacks": [],
+      "specialRules": [
+        {
+          "ruleId": "mittellaender-special-abilities",
+          "sourceNotation": "Unerfahren ohne SF; erfahren Aufmerksamkeit, Finte oder Wuchtschlag; Veteran Ausfall und Gezielter Stich oder Hammerschlag und Niederwerfen, Ausweichen I (PA 12), Kampfreflexe, Rüstungsgewöhnung I",
+          "resolution": "sourceDependent",
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 134
+            }
+          ]
+        }
+      ],
+      "equipment": {
+        "weaponOptions": [
+          "Dolch",
+          "Säbel",
+          "Schwert",
+          "Speer",
+          "Kurzbogen"
+        ],
+        "armorOptions": [
+          "Lederharnisch",
+          "Kettenrüstung",
+          "Plattenrüstung"
+        ],
+        "damageSource": "TP je nach gewählter Waffe",
+        "selectionRequired": true
+      },
+      "gmNotes": [
+        "Für einen Räuber-, Wachen- oder Milizkontext nur die konkrete Waffen- und Rüstungsauswahl ergänzen; die Quellenwerte werden dadurch nicht verändert."
+      ]
+    },
+    {
+      "id": "ork",
+      "name": "Ork",
+      "kind": "humanoid",
+      "combatReady": false,
+      "readiness": "requiresEquipmentSelection",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 145,
+          "section": "Orks"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": null,
+        "socialForm": "Sippe, Kriegszug oder Bande"
+      },
+      "behavior": {
+        "combatMotivation": "Kämpferisches humanoides Gegnerprofil mit starkem Nahkampffokus; konkrete Taktik hängt von Stamm und Ausrüstung ab.",
+        "retreatRuleRef": null,
+        "sourceNotes": []
+      },
+      "body": {
+        "sizeDescription": "1,55 bis 1,70 Schritt",
+        "weightDescription": "60 bis 75 Stein"
+      },
+      "attributes": {
+        "MU": {
+          "min": 10,
+          "max": 20
+        },
+        "FF": {
+          "min": 7,
+          "max": 17
+        },
+        "KL": {
+          "min": 6,
+          "max": 15
+        },
+        "GE": {
+          "min": 8,
+          "max": 16
+        },
+        "IN": {
+          "min": 8,
+          "max": 17
+        },
+        "KO": {
+          "min": 10,
+          "max": 21
+        },
+        "CH": {
+          "min": 6,
+          "max": 14
+        },
+        "KK": {
+          "min": 10,
+          "max": 21
+        }
+      },
+      "combatVariants": [
+        {
+          "id": "unerfahren",
+          "label": "Unerfahren",
+          "combat": {
+            "initiative": {
+              "notation": "10+W6",
+              "base": 10,
+              "dice": {
+                "count": 1,
+                "sides": 6
+              }
+            },
+            "defense": {
+              "mode": "parry",
+              "parryValue": 9
+            },
+            "resources": {
+              "leP": {
+                "maximum": 30,
+                "initial": 30,
+                "tracking": "combat"
+              },
+              "auP": {
+                "maximum": 35,
+                "initial": 35,
+                "tracking": "optional"
+              }
+            },
+            "resistances": {
+              "mr": 0
+            },
+            "movement": {
+              "gs": 8
+            },
+            "attackValue": 13,
+            "rangedValue": 10
+          },
+          "specialRuleRefs": []
+        },
+        {
+          "id": "erfahren",
+          "label": "Erfahren",
+          "combat": {
+            "initiative": {
+              "notation": "12+W6",
+              "base": 12,
+              "dice": {
+                "count": 1,
+                "sides": 6
+              }
+            },
+            "defense": {
+              "mode": "parry",
+              "parryValue": 11
+            },
+            "resources": {
+              "leP": {
+                "maximum": 39,
+                "initial": 39,
+                "tracking": "combat"
+              },
+              "auP": {
+                "maximum": 44,
+                "initial": 44,
+                "tracking": "optional"
+              }
+            },
+            "resistances": {
+              "mr": 1
+            },
+            "movement": {
+              "gs": 8
+            },
+            "attackValue": 15,
+            "rangedValue": 14
+          },
+          "specialRuleRefs": [
+            "ork-special-abilities"
+          ]
+        },
+        {
+          "id": "veteran",
+          "label": "Veteran",
+          "combat": {
+            "initiative": {
+              "notation": "18+W6",
+              "base": 18,
+              "dice": {
+                "count": 1,
+                "sides": 6
+              }
+            },
+            "defense": {
+              "mode": "parry",
+              "parryValue": 16
+            },
+            "resources": {
+              "leP": {
+                "maximum": 45,
+                "initial": 45,
+                "tracking": "combat"
+              },
+              "auP": {
+                "maximum": 51,
+                "initial": 51,
+                "tracking": "optional"
+              }
+            },
+            "resistances": {
+              "mr": 4
+            },
+            "movement": {
+              "gs": 8
+            },
+            "attackValue": 19,
+            "rangedValue": 20
+          },
+          "specialRuleRefs": [
+            "ork-special-abilities"
+          ]
+        }
+      ],
+      "armor": {
+        "model": "simple",
+        "naturalRs": 1,
+        "equipmentRs": null,
+        "totalRs": null,
+        "sourceExpression": "1+Rüstung",
+        "usesZonalArmor": false
+      },
+      "attacks": [],
+      "specialRules": [
+        {
+          "ruleId": "ork-special-abilities",
+          "sourceNotation": "Biss / Niederwerfen, Überrennen, Wuchtschlag; erfahren zusätzlich Aufmerksamkeit, Gegenhalten, Kampfreflexe, Meisterparade, Rüstungsgewöhnung I",
+          "resolution": "sourceDependent",
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 145
+            }
+          ]
+        }
+      ],
+      "equipment": {
+        "weaponOptions": [
+          "Byakka",
+          "Gruufhai",
+          "Arbach",
+          "Stoßspeer",
+          "Reiterbogen"
+        ],
+        "armorOptions": [
+          "Lederharnisch"
+        ],
+        "damageSource": "TP je nach gewählter Waffe",
+        "selectionRequired": true
+      },
+      "gmNotes": [
+        "Der natürliche RS 1 wird getrennt vom nicht festgelegten Rüstungswert geführt."
+      ]
+    },
+    {
+      "id": "zwerg",
+      "name": "Zwerg",
+      "kind": "humanoid",
+      "combatReady": false,
+      "readiness": "requiresEquipmentSelection",
+      "sourceRefs": [
+        {
+          "sourceId": "zba",
+          "printedPage": 191,
+          "section": "Zwerge in ihren Lebensräumen"
+        }
+      ],
+      "encounter": {
+        "typicalNumber": null,
+        "socialForm": "Sippe, Wacht oder Reisegruppe"
+      },
+      "behavior": {
+        "combatMotivation": "Robustes, bewaffnetes Profil mit niedriger GS und starker Ausrüstungsabhängigkeit.",
+        "retreatRuleRef": null,
+        "sourceNotes": []
+      },
+      "body": {
+        "sizeDescription": "1,30 bis 1,40 Schritt",
+        "weightDescription": "Um 60 Stein"
+      },
+      "attributes": {
+        "MU": {
+          "min": 8,
+          "max": 17
+        },
+        "FF": {
+          "min": 9,
+          "max": 19
+        },
+        "KL": {
+          "min": 8,
+          "max": 17
+        },
+        "GE": {
+          "min": 7,
+          "max": 15
+        },
+        "IN": {
+          "min": 8,
+          "max": 16
+        },
+        "KO": {
+          "min": 10,
+          "max": 20
+        },
+        "CH": {
+          "min": 8,
+          "max": 16
+        },
+        "KK": {
+          "min": 9,
+          "max": 19
+        }
+      },
+      "combatVariants": [
+        {
+          "id": "unerfahren",
+          "label": "Unerfahren",
+          "combat": {
+            "initiative": {
+              "notation": "10+1W6",
+              "base": 10,
+              "dice": {
+                "count": 1,
+                "sides": 6
+              }
+            },
+            "defense": {
+              "mode": "parry",
+              "parryValue": 10
+            },
+            "resources": {
+              "leP": {
+                "maximum": 30,
+                "initial": 30,
+                "tracking": "combat"
+              },
+              "auP": {
+                "maximum": 31,
+                "initial": 31,
+                "tracking": "optional"
+              }
+            },
+            "resistances": {
+              "mr": 4
+            },
+            "movement": {
+              "gs": 5
+            },
+            "attackValue": 11,
+            "rangedValue": 10
+          },
+          "specialRuleRefs": []
+        },
+        {
+          "id": "erfahren",
+          "label": "Erfahren",
+          "combat": {
+            "initiative": {
+              "notation": "11+1W6",
+              "base": 11,
+              "dice": {
+                "count": 1,
+                "sides": 6
+              }
+            },
+            "defense": {
+              "mode": "parry",
+              "parryValue": 12
+            },
+            "resources": {
+              "leP": {
+                "maximum": 36,
+                "initial": 36,
+                "tracking": "combat"
+              },
+              "auP": {
+                "maximum": 35,
+                "initial": 35,
+                "tracking": "optional"
+              }
+            },
+            "resistances": {
+              "mr": 5
+            },
+            "movement": {
+              "gs": 6
+            },
+            "attackValue": 14,
+            "rangedValue": 13
+          },
+          "specialRuleRefs": [
+            "zwerg-special-abilities"
+          ]
+        },
+        {
+          "id": "veteran",
+          "label": "Veteran",
+          "combat": {
+            "initiative": {
+              "notation": "15+1W6",
+              "base": 15,
+              "dice": {
+                "count": 1,
+                "sides": 6
+              }
+            },
+            "defense": {
+              "mode": "parry",
+              "parryValue": 15
+            },
+            "resources": {
+              "leP": {
+                "maximum": 45,
+                "initial": 45,
+                "tracking": "combat"
+              },
+              "auP": {
+                "maximum": 45,
+                "initial": 45,
+                "tracking": "optional"
+              }
+            },
+            "resistances": {
+              "mr": 7
+            },
+            "movement": {
+              "gs": 6
+            },
+            "attackValue": 18,
+            "rangedValue": 19
+          },
+          "specialRuleRefs": [
+            "zwerg-special-abilities"
+          ]
+        }
+      ],
+      "armor": {
+        "model": "simple",
+        "naturalRs": 0,
+        "equipmentRs": null,
+        "totalRs": null,
+        "sourceExpression": "je nach Rüstung",
+        "usesZonalArmor": false
+      },
+      "attacks": [],
+      "specialRules": [
+        {
+          "ruleId": "zwerg-special-abilities",
+          "sourceNotation": "Unerfahren ohne SF; erfahren Aufmerksamkeit, Rüstungsgewöhnung I, Wuchtschlag; Veteran Hammerschlag, Kampfreflexe, Niederwerfen, Rüstungsgewöhnung II und III, Sturmangriff",
+          "resolution": "sourceDependent",
+          "sourceRefs": [
+            {
+              "sourceId": "zba",
+              "printedPage": 191
+            }
+          ]
+        }
+      ],
+      "equipment": {
+        "weaponOptions": [
+          "Lindwurmschläger",
+          "Drachenzahn",
+          "Zwergenskraja",
+          "Felsspalter",
+          "Wurmspieß",
+          "Zwergenschlägel"
+        ],
+        "armorOptions": [
+          "Kettenhemd",
+          "Kettenmantel"
+        ],
+        "damageSource": "TP je nach gewählter Waffe",
+        "selectionRequired": true
+      },
+      "gmNotes": []
+    }
+  ]
+}

@@ -72,6 +72,7 @@ builder.Services.AddSingleton<AttributeProbeService>();
 builder.Services.AddSingleton<SchlechteEigenschaftProbeService>();
 builder.Services.AddSingleton<TalentCatalogStore>();
 builder.Services.AddSingleton<SpellCatalogStore>();
+builder.Services.AddSingleton<CombatEnemyCatalogStore>();
 builder.Services.AddSingleton<BadTraitService>();
 builder.Services.AddSingleton<HeroAttributeValueFactory>();
 builder.Services.AddSingleton<DerivedTalentService>();
