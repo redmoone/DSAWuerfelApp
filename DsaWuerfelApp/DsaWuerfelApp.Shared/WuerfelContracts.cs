@@ -54,6 +54,7 @@ public sealed record RollHistoryRequirementCheckDto(
 public sealed record RollHistorySnapshotDto
 {
     public CombatRollSnapshotDto? Combat { get; init; }
+    public CombatStateChangeDto? CombatStateChange { get; init; }
     public string? Probe { get; init; }
     public string? HeroName { get; init; }
     public string? ParticipantName { get; init; }
@@ -84,6 +85,17 @@ public sealed record RollHistorySnapshotDto
     public bool? ManualModifierRequired { get; init; }
     public string[] SelectedOptions { get; init; } = [];
 }
+
+public sealed record CombatStateChangeDto(
+    Guid Id,
+    CombatSessionMutationKind Kind,
+    string Description,
+    int? Round = null,
+    string? ParticipantId = null,
+    string? ParticipantName = null,
+    string? ExchangeId = null,
+    Guid? RelatedEntryId = null,
+    bool IsUndo = false);
 
 public sealed record RollHistoryContextDto(
     RollHistoryKind Kind,

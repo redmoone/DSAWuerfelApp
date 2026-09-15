@@ -315,8 +315,11 @@ public sealed class WuerfelState
     {
         ArgumentNullException.ThrowIfNull(historyEntry);
         var combat = historyEntry.Context?.Snapshot?.Combat;
-        var history = combat is not null && Current.History.Any(entry =>
-                IsSameCombatHistory(entry, combat))
+        var stateChange = historyEntry.Context?.Snapshot?.CombatStateChange;
+        var history = (combat is not null && Current.History.Any(entry =>
+                IsSameCombatHistory(entry, combat))) ||
+            (stateChange is not null && Current.History.Any(entry =>
+                IsSameCombatStateChange(entry, stateChange)))
             ? Current.History
             : Current.History.Prepend(historyEntry).Take(100).ToArray();
 
@@ -338,6 +341,14 @@ public sealed class WuerfelState
     {
         return entry.Context?.Snapshot?.Combat is { } existing &&
                IsSameCombatRoll(existing, incoming);
+    }
+
+    private static bool IsSameCombatStateChange(
+        RollHistoryEntryDto entry,
+        CombatStateChangeDto incoming)
+    {
+        return entry.Context?.Snapshot?.CombatStateChange is { } existing &&
+               incoming.Id != Guid.Empty && existing.Id == incoming.Id;
     }
 
     public void ApplyMasterTalentRollResults(IReadOnlyList<MasterTalentRollTargetResultDto> results)

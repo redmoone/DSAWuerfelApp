@@ -1213,9 +1213,6 @@ public sealed class CombatSessionStateService(
             var previous = current;
             var rolls = Array.Empty<DiceRollDto>();
             RollHistoryEntryDto? historyEntry = null;
-            var historyEntryIdsToRemove = request.Kind == CombatSessionMutationKind.Undo
-                ? current.ActiveExchange?.HistoryEntryIds ?? []
-                : [];
             CombatSessionSnapshotDto next;
             string description;
 
@@ -1306,6 +1303,17 @@ public sealed class CombatSessionStateService(
                 LastMutationUserId = userId
             });
 
+            if (historyEntry is null && request.Kind != CombatSessionMutationKind.RollInitiative)
+            {
+                historyEntry = CreateMutationHistoryEntry(
+                    session,
+                    previous,
+                    next,
+                    request,
+                    description,
+                    userId);
+            }
+
             var appliedRequestIds = persisted.AppliedRequestIds
                 .Append(request.RequestId)
                 .TakeLast(MaxAppliedRequestIds)
@@ -1331,10 +1339,6 @@ public sealed class CombatSessionStateService(
                 appliedRequestIds,
                 undoExchangeId,
                 persisted.CachedRolls));
-            if (historyEntryIdsToRemove.Length > 0)
-            {
-                recordStore.RemoveCombatHistoryEntries(session.SessionId, historyEntryIdsToRemove);
-            }
             if (historyEntry is not null)
             {
                 recordStore.AppendHistoryEntry(session.SessionId, historyEntry);
@@ -1349,6 +1353,60 @@ public sealed class CombatSessionStateService(
         {
             _stateLock.Release();
         }
+    }
+
+    private static RollHistoryEntryDto CreateMutationHistoryEntry(
+        GameSession session,
+        CombatSessionSnapshotDto previous,
+        CombatSessionSnapshotDto next,
+        CombatSessionMutationRequestDto request,
+        string description,
+        string userId)
+    {
+        var participant = next.Participants.FirstOrDefault(current =>
+                           string.Equals(current.Id, request.ParticipantId, StringComparison.Ordinal))
+                       ?? previous.Participants.FirstOrDefault(current =>
+                           string.Equals(current.Id, request.ParticipantId, StringComparison.Ordinal));
+        var relatedEntryId = request.Kind == CombatSessionMutationKind.Undo
+            ? previous.ActiveExchange?.HistoryEntryIds.LastOrDefault()
+            : null;
+        if (relatedEntryId == Guid.Empty)
+        {
+            relatedEntryId = null;
+        }
+
+        var stateChange = new CombatStateChangeDto(
+            request.RequestId,
+            request.Kind,
+            description,
+            next.Round,
+            participant?.Id ?? request.ParticipantId,
+            participant?.Name,
+            next.ActiveExchange?.ExchangeId ?? previous.ActiveExchange?.ExchangeId,
+            relatedEntryId,
+            request.Kind == CombatSessionMutationKind.Undo);
+        var playerName = session.Players.FirstOrDefault(player =>
+                             string.Equals(player.UserId, userId, StringComparison.Ordinal))?.Name
+                         ?? participant?.Name
+                         ?? "Kampf";
+
+        return new RollHistoryEntryDto(
+            playerName,
+            DateTime.UtcNow,
+            [],
+            0,
+            0,
+            new RollHistoryContextDto(
+                RollHistoryKind.Combat,
+                "Kampfstatus",
+                RollHistoryOutcome.None,
+                null,
+                [],
+                new RollHistorySnapshotDto
+                {
+                    ParticipantName = participant?.Name,
+                    CombatStateChange = stateChange
+                }));
     }
 
     private async Task<(

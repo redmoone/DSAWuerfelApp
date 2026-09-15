@@ -11,6 +11,12 @@ public partial class RollHistory
 
     private static string GetHistoryEntryId(RollHistoryEntryDto entry)
     {
+        var stateChange = entry.Context?.Snapshot?.CombatStateChange;
+        if (stateChange?.Id is { } stateChangeId && stateChangeId != Guid.Empty)
+        {
+            return $"combat-state-{stateChangeId:N}";
+        }
+
         var combat = entry.Context?.Snapshot?.Combat;
         if (combat?.EntryId is { } entryId && entryId != Guid.Empty)
         {
@@ -27,6 +33,11 @@ public partial class RollHistory
 
     private static string GetEntryClass(RollHistoryEntryDto entry)
     {
+        if (IsStateChange(entry))
+        {
+            return "state-change";
+        }
+
         if (IsInitiativeEntry(entry))
         {
             return "initiative";
@@ -60,6 +71,11 @@ public partial class RollHistory
         if (entry.Context is not { } context)
         {
             return "ROHWURF";
+        }
+
+        if (GetCombatStateChange(entry) is { } stateChange)
+        {
+            return stateChange.IsUndo ? "RÜCKNAHME" : "KAMPFSTATUS";
         }
 
         if (context.Kind == RollHistoryKind.Free)
@@ -138,6 +154,12 @@ public partial class RollHistory
 
     private static bool IsInitiativeEntry(RollHistoryEntryDto entry) =>
         entry.Context?.Snapshot?.Combat?.Action == CombatActionKind.InitiativeHelper;
+
+    private static bool IsStateChange(RollHistoryEntryDto entry) =>
+        entry.Context?.Snapshot?.CombatStateChange is not null;
+
+    private static CombatStateChangeDto? GetCombatStateChange(RollHistoryEntryDto entry) =>
+        entry.Context?.Snapshot?.CombatStateChange;
 
     private static string[] GetCombatSummary(RollHistoryEntryDto entry)
     {

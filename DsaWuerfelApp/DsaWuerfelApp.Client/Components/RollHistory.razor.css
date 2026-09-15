@@ -41,6 +41,10 @@
     border-bottom-color: rgba(212, 175, 55, 0.28);
 }
 
+.history-entry.state-change {
+    border-bottom-color: rgba(212, 175, 55, 0.28);
+}
+
 .history-entry-header {
     display: flex;
     align-items: flex-start;
@@ -217,6 +221,15 @@
 .history-combat-summary span:first-child {
     color: var(--dsa-white);
     font-weight: 800;
+}
+
+.history-state-change {
+    min-width: 0;
+    color: var(--dsa-gold);
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
 }
 
 .history-equation {

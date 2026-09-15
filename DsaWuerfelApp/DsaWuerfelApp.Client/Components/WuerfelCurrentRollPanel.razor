@@ -12,6 +12,11 @@
                 <span class="probe-evaluation-status">@GetHistoryStatusText(historyEntry)</span>
             </div>
 
+            @if (GetHistoryStateChange(historyEntry) is { } stateChange)
+            {
+                <p class="historical-roll-state-change">@stateChange.Description</p>
+            }
+
             <div class="historical-roll-meta">
                 <span>@historyEntry.PlayerName</span>
                 @if (historyEntry.Context?.Snapshot?.HeroName is { Length: > 0 } heroName)
@@ -36,7 +41,7 @@
             }
 
             <details class="roll-details historical-roll-calculation" open>
-                <summary>Berechnung und Details</summary>
+                <summary>@(GetHistoryStateChange(historyEntry) is null ? "Berechnung und Details" : "Ereignisdetails")</summary>
                 @if (historyEntry.Context is { } context)
                 {
                     @if (context.Snapshot is { } snapshot)
@@ -76,10 +81,13 @@
                     </p>
                 }
 
-                <div class="historical-roll-equation">
-                    <span class="historical-roll-equation-label">Rohwurfgleichung</span>
-                    <RollEquation Result="@BuildHistoryEquation(historyEntry)"/>
-                </div>
+                @if (GetHistoryStateChange(historyEntry) is null)
+                {
+                    <div class="historical-roll-equation">
+                        <span class="historical-roll-equation-label">Rohwurfgleichung</span>
+                        <RollEquation Result="@BuildHistoryEquation(historyEntry)"/>
+                    </div>
+                }
             </details>
         </article>
     }

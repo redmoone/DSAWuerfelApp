@@ -587,9 +587,13 @@ public sealed class CombatSessionStateTests
         Assert.Equal(1, restoredAttacker.ActionBudget?.NormalActionsRemaining);
         Assert.Equal(1, restoredTarget.ActionBudget?.ReactionsRemaining);
         Assert.Null(restoredTarget.RuntimeState);
-        Assert.DoesNotContain(
+        Assert.Contains(
             history.LoadHistory(session.SessionId),
             entry => entry.Context?.Snapshot?.Combat?.ExchangeId == "exchange-damage");
+        Assert.Contains(
+            history.LoadHistory(session.SessionId),
+            entry => entry.Context?.Snapshot?.CombatStateChange is { IsUndo: true } stateChange &&
+                     stateChange.RelatedEntryId == damageResult.Snapshot.EntryId);
     }
 
     [Fact]

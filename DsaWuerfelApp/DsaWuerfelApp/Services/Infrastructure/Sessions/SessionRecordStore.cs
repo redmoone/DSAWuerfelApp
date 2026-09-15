@@ -213,7 +213,9 @@ public sealed class SessionRecordStore(IServiceScopeFactory scopeFactory)
         using var scope = scopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<HeroDbContext>();
 
-        if (historyEntry.Context?.Snapshot?.Combat is { } combat)
+        var combat = historyEntry.Context?.Snapshot?.Combat;
+        var stateChange = historyEntry.Context?.Snapshot?.CombatStateChange;
+        if (combat is not null || stateChange is not null)
         {
             var existingCombatEntries = dbContext.SessionRollHistoryRecords
                 .AsNoTracking()
@@ -222,11 +224,23 @@ public sealed class SessionRecordStore(IServiceScopeFactory scopeFactory)
                 .ToArray();
             var duplicate = existingCombatEntries
                 .Select(DeserializeContext)
-                .Where(context => context?.Snapshot?.Combat is not null)
-                .Select(context => context!.Snapshot!.Combat!)
-                .Any(existing =>
-                    (combat.EntryId != Guid.Empty && existing.EntryId == combat.EntryId) ||
-                    (combat.RequestId != Guid.Empty && existing.RequestId == combat.RequestId));
+                .Any(context =>
+                {
+                    if (context?.Snapshot is not { } snapshot)
+                    {
+                        return false;
+                    }
+
+                    if (combat is not null && snapshot.Combat is { } existingCombat &&
+                        ((combat.EntryId != Guid.Empty && existingCombat.EntryId == combat.EntryId) ||
+                         (combat.RequestId != Guid.Empty && existingCombat.RequestId == combat.RequestId)))
+                    {
+                        return true;
+                    }
+
+                    return stateChange is not null &&
+                           snapshot.CombatStateChange?.Id == stateChange.Id;
+                });
             if (duplicate)
             {
                 return;

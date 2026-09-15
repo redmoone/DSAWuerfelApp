@@ -275,6 +275,38 @@ public class ClientStateTests
         Assert.Equal(1, entryState.Current.ResultVersion);
     }
 
+    [Fact]
+    public void Combat_state_history_deduplicates_repeated_request_identity()
+    {
+        var change = new CombatStateChangeDto(
+            Guid.NewGuid(),
+            CombatSessionMutationKind.HoldAction,
+            "Handlung gehalten",
+            1,
+            "participant-1",
+            "Held");
+        var entry = new RollHistoryEntryDto(
+            "Spieler",
+            DateTime.UtcNow,
+            [],
+            0,
+            0,
+            new RollHistoryContextDto(
+                RollHistoryKind.Combat,
+                "Kampfstatus",
+                RollHistoryOutcome.None,
+                null,
+                [],
+                new RollHistorySnapshotDto { CombatStateChange = change }));
+        var state = new WuerfelState();
+
+        state.AppendHistoryEntry(entry);
+        state.AppendHistoryEntry(entry with { Timestamp = DateTime.UtcNow.AddSeconds(1) });
+
+        Assert.Single(state.Current.History);
+        Assert.Equal(change, state.Current.History.Single().Context?.Snapshot?.CombatStateChange);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-3)]

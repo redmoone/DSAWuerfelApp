@@ -41,7 +41,13 @@
                         </div>
                     </header>
 
-                    @if (IsInitiativeEntry(log))
+                    @if (GetCombatStateChange(log) is { } stateChange)
+                    {
+                        <div class="history-state-change" data-testid="history-state-change">
+                            @stateChange.Description
+                        </div>
+                    }
+                    else if (IsInitiativeEntry(log))
                     {
                         <div class="history-initiative-equation" aria-label="@GetInitiativeAriaLabel(log)">
                             @for (var index = 0; index < log.Rolls.Length; index++)

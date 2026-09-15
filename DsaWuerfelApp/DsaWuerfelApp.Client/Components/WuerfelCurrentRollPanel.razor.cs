@@ -182,6 +182,11 @@ public partial class WuerfelCurrentRollPanel
             return "FREIER WURF";
         }
 
+        if (context.Kind == RollHistoryKind.Combat && context.Snapshot?.CombatStateChange is { } stateChange)
+        {
+            return stateChange.IsUndo ? "RÜCKNAHME" : "KAMPFSTATUS";
+        }
+
         if (context.Kind == RollHistoryKind.Combat && context.Snapshot?.Combat is { } combat)
         {
             return combat.StatusLabel;
@@ -220,6 +225,11 @@ public partial class WuerfelCurrentRollPanel
 
     private static string GetHistoryEvaluationClass(RollHistoryEntryDto entry)
     {
+        if (entry.Context?.Snapshot?.CombatStateChange is not null)
+        {
+            return "state-change";
+        }
+
         if (entry.Context is { Kind: RollHistoryKind.Attribute, Outcome: RollHistoryOutcome.Success or RollHistoryOutcome.Failure })
         {
             return string.Empty;
@@ -267,6 +277,9 @@ public partial class WuerfelCurrentRollPanel
         return check.Difference == 0 ? "success" : "failure";
     }
 
+    private static CombatStateChangeDto? GetHistoryStateChange(RollHistoryEntryDto entry) =>
+        entry.Context?.Snapshot?.CombatStateChange;
+
     private static RollEquationDto BuildHistoryEquation(RollHistoryEntryDto entry)
     {
         var dice = entry.Rolls
@@ -287,6 +300,19 @@ public partial class WuerfelCurrentRollPanel
         RollHistorySnapshotDto snapshot)
     {
         var details = new List<string>();
+
+        if (snapshot.CombatStateChange is { } stateChange)
+        {
+            details.Add(stateChange.Description);
+            AddText(details, "Teilnehmer", stateChange.ParticipantName);
+            AddText(details, "Angriff", stateChange.ExchangeId);
+            if (stateChange.IsUndo)
+            {
+                details.Add("Der zugehörige vorherige Kampfstand wurde wiederhergestellt.");
+            }
+
+            return details;
+        }
 
         if (snapshot.Combat is { } combat)
         {
