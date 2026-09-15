@@ -105,6 +105,7 @@ public sealed record CombatRollRequestDto
 {
     public Guid RequestId { get; init; }
     public string? SessionId { get; init; }
+    public string? ParticipantId { get; init; }
     public Guid? HeroId { get; init; }
     public string? SetId { get; init; }
     public string? ExchangeId { get; init; }
@@ -214,6 +215,8 @@ public sealed record CombatRollSnapshotDto
     public Guid EntryId { get; init; }
     public Guid RequestId { get; init; }
     public string? SessionId { get; init; }
+    public string? ParticipantId { get; init; }
+    public string? ParticipantName { get; init; }
     public string? ExchangeId { get; init; }
     public Guid? HeroId { get; init; }
     public CombatActionKind Action { get; init; }
@@ -247,6 +250,8 @@ public sealed record CombatRollResultDto(
     RollHistoryEntryDto HistoryEntry)
 {
     public CombatSessionSnapshotDto? CombatSessionSnapshot { get; init; }
+    public string? ParticipantId { get; init; }
+    public string? ParticipantName { get; init; }
 }
 
 public sealed record CombatRollEvaluationDto(

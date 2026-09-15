@@ -56,6 +56,7 @@ public sealed record RollHistorySnapshotDto
     public CombatRollSnapshotDto? Combat { get; init; }
     public string? Probe { get; init; }
     public string? HeroName { get; init; }
+    public string? ParticipantName { get; init; }
     public int? TalentValue { get; init; }
     public int? EffectiveTalentValue { get; init; }
     public int? BasisModifier { get; init; }

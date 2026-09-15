@@ -74,7 +74,7 @@ public sealed class CombatSessionStateService(
         }
 
         var snapshot = await GetAsync(request.SessionId, userId, cancellationToken);
-        var participant = FindParticipant(snapshot, null, request.HeroId)
+        var participant = FindParticipant(snapshot, request.ParticipantId, request.HeroId)
                           ?? throw Validation("Der eigene Kampfteilnehmer wurde nicht gefunden.");
         var budget = participant.ActionBudget ?? new CombatActionBudgetDto();
         if (CombatActionBudgetRules.RequiresNormalAction(request.Action) && !budget.HasNormalAction)
@@ -85,6 +85,34 @@ public sealed class CombatSessionStateService(
         if (CombatActionBudgetRules.RequiresReaction(request.Action) && !budget.HasReaction)
         {
             throw Validation($"Für {participant.Name} ist keine Reaktion mehr verfügbar.");
+        }
+    }
+
+    public async Task EnsureParticipantRollAccessAsync(
+        CombatRollRequestDto request,
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (string.IsNullOrWhiteSpace(request.SessionId) || string.IsNullOrWhiteSpace(request.ParticipantId))
+        {
+            return;
+        }
+
+        var snapshot = await GetAsync(request.SessionId, userId, cancellationToken);
+        var participant = snapshot.Participants.FirstOrDefault(item =>
+            string.Equals(item.Id, request.ParticipantId.Trim(), StringComparison.Ordinal));
+        if (participant is null || !MatchesRequestedParticipant(participant, request))
+        {
+            throw Validation("Der Kampfwurf gehÃ¶rt nicht zum ausgewÃ¤hlten Teilnehmer.");
+        }
+
+        var session = runtimeState.GetMemberSession(request.SessionId, userId);
+        if (!string.Equals(session.MasterUserId, userId, StringComparison.Ordinal) &&
+            !string.Equals(participant.OwnerUserId, userId, StringComparison.Ordinal))
+        {
+            throw new RequestRejectedException(RequestRejectionReason.Forbidden,
+                "Du darfst nur den eigenen Kampfwurf ausfÃ¼hren.");
         }
     }
 
@@ -125,7 +153,7 @@ public sealed class CombatSessionStateService(
 
         var attacker = snapshot.Participants.FirstOrDefault(participant =>
             string.Equals(participant.Id, exchange.AttackerParticipantId, StringComparison.Ordinal));
-        if (attacker is null || attacker.HeroId != request.HeroId)
+        if (attacker is null || !MatchesRequestedParticipant(attacker, request))
         {
             throw Validation("Der AT-Wurf gehört nicht zum deklarierten Angreifer.");
         }
@@ -174,7 +202,7 @@ public sealed class CombatSessionStateService(
 
         var target = snapshot.Participants.FirstOrDefault(participant =>
             string.Equals(participant.Id, exchange.TargetParticipantId, StringComparison.Ordinal));
-        if (target is null || target.HeroId != request.HeroId)
+        if (target is null || !MatchesRequestedParticipant(target, request))
         {
             throw Validation("Die Abwehr gehört nicht zum Ziel des offenen Angriffs.");
         }
@@ -238,7 +266,7 @@ public sealed class CombatSessionStateService(
 
             var target = current.Participants.FirstOrDefault(participant =>
                 string.Equals(participant.Id, exchange.TargetParticipantId, StringComparison.Ordinal));
-            if (target is null || target.HeroId != request.HeroId ||
+            if (target is null || !MatchesRequestedParticipant(target, request) ||
                 (target.OwnerUserId != userId && !string.Equals(session.MasterUserId, userId, StringComparison.Ordinal)))
             {
                 throw new RequestRejectedException(RequestRejectionReason.Forbidden,
@@ -363,7 +391,7 @@ public sealed class CombatSessionStateService(
             var attacker = current.Participants.FirstOrDefault(participant =>
                 string.Equals(participant.Id, exchange.AttackerParticipantId, StringComparison.Ordinal));
             if (attacker is null ||
-                (attacker.Kind == CombatParticipantKind.Hero && attacker.HeroId != request.HeroId) ||
+                !MatchesRequestedParticipant(attacker, request) ||
                 (attacker.OwnerUserId != userId && !string.Equals(session.MasterUserId, userId, StringComparison.Ordinal)))
             {
                 throw new RequestRejectedException(RequestRejectionReason.Forbidden,
@@ -591,7 +619,7 @@ public sealed class CombatSessionStateService(
             var attacker = current.Participants.FirstOrDefault(participant =>
                 string.Equals(participant.Id, exchange.AttackerParticipantId, StringComparison.Ordinal));
             if (attacker is null ||
-                (attacker.Kind == CombatParticipantKind.Hero && attacker.HeroId != request.HeroId) ||
+                !MatchesRequestedParticipant(attacker, request) ||
                 (attacker.OwnerUserId != userId && !string.Equals(session.MasterUserId, userId, StringComparison.Ordinal)))
             {
                 throw new RequestRejectedException(RequestRejectionReason.Forbidden,
@@ -713,6 +741,7 @@ public sealed class CombatSessionStateService(
             var attacker = current.Participants.FirstOrDefault(participant =>
                 string.Equals(participant.Id, exchange.AttackerParticipantId, StringComparison.Ordinal));
             if (attacker is null ||
+                !MatchesRequestedParticipant(attacker, request) ||
                 (attacker.OwnerUserId != userId && !string.Equals(session.MasterUserId, userId, StringComparison.Ordinal)))
             {
                 throw new RequestRejectedException(RequestRejectionReason.Forbidden,
@@ -1009,6 +1038,8 @@ public sealed class CombatSessionStateService(
             EntryId = Guid.NewGuid(),
             RequestId = request.RequestId,
             SessionId = session.SessionId,
+            ParticipantId = participant.Id,
+            ParticipantName = participant.Name,
             HeroId = participant.HeroId,
             Action = CombatActionKind.InitiativeHelper,
             ActionLabel = "Initiative",
@@ -1036,7 +1067,8 @@ public sealed class CombatSessionStateService(
                 [],
                 new RollHistorySnapshotDto
                 {
-                    HeroName = participant.Name,
+                    HeroName = participant.Kind == CombatParticipantKind.Hero ? participant.Name : null,
+                    ParticipantName = participant.Name,
                     Combat = initiativeSnapshot
                 }));
 
@@ -1242,6 +1274,50 @@ public sealed class CombatSessionStateService(
     {
         if (attacker.Kind == CombatParticipantKind.Opponent)
         {
+            if (attacker.OpponentProfile?.CatalogProfile is { } catalogProfile)
+            {
+                if (!catalogProfile.CombatReady)
+                {
+                    throw Validation("Der Kataloggegner ist für diesen Angriff noch nicht kampfbereit.");
+                }
+
+                if (request.ActionKind is not (CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack))
+                {
+                    throw Validation("Nur Nah- oder Fernkampfangriffe können einen Gegnerangriff eröffnen.");
+                }
+
+                var attackId = string.IsNullOrWhiteSpace(request.WeaponId)
+                    ? catalogProfile.AttackId
+                    : request.WeaponId;
+                if (!string.IsNullOrWhiteSpace(catalogProfile.AttackId) &&
+                    !string.Equals(attackId, catalogProfile.AttackId, StringComparison.Ordinal))
+                {
+                    throw Validation("Der angeforderte Katalogangriff passt nicht zur ausgewÃ¤hlten Profilvariante.");
+                }
+
+                var attack = catalogProfile.Attacks.FirstOrDefault(candidate =>
+                    string.Equals(candidate.Id, attackId, StringComparison.Ordinal));
+                if (attack is null)
+                {
+                    throw Validation("Für den Kataloggegner muss ein konkreter Angriff ausgewählt sein.");
+                }
+
+                var isRangedAttack = attack.Category.Contains("ranged", StringComparison.OrdinalIgnoreCase);
+                if ((request.ActionKind == CombatActionKind.RangedAttack && !isRangedAttack) ||
+                    (request.ActionKind == CombatActionKind.MeleeAttack && isRangedAttack))
+                {
+                    throw Validation("Angriffsart und Katalogangriff passen nicht zusammen.");
+                }
+
+                if ((request.ActionKind == CombatActionKind.MeleeAttack && !catalogProfile.Attack.HasValue) ||
+                    (request.ActionKind == CombatActionKind.RangedAttack && !catalogProfile.RangedValue.HasValue))
+                {
+                    throw Validation("FÃ¼r die gewÃ¤hlte Katalogangriffsart fehlt ein Zielwert.");
+                }
+
+                return new AttackLoadout(null, attack.Id, attack.Name);
+            }
+
             if (attacker.OpponentProfile?.Attack is null)
             {
                 throw Validation("Für diesen Gegner ist kein AT-Wert hinterlegt.");
@@ -2322,6 +2398,15 @@ public sealed class CombatSessionStateService(
             ? snapshot.Participants.FirstOrDefault(item => item.HeroId == heroId)
             : snapshot.Participants.FirstOrDefault(item => item.Kind == CombatParticipantKind.Hero);
     }
+
+    private static bool MatchesRequestedParticipant(
+        CombatSessionParticipantDto participant,
+        CombatRollRequestDto request) =>
+        (string.IsNullOrWhiteSpace(request.ParticipantId) ||
+         string.Equals(participant.Id, request.ParticipantId.Trim(), StringComparison.Ordinal)) &&
+        (participant.Kind == CombatParticipantKind.Hero
+            ? participant.HeroId == request.HeroId
+            : !request.HeroId.HasValue);
 
     private static CombatSessionActionDto? FindAction(
         CombatSessionSnapshotDto snapshot,

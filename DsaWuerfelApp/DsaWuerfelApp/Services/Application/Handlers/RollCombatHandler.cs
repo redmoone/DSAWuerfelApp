@@ -24,6 +24,36 @@ public sealed partial class RollCombatHandler(
         ValidateRequest(request);
         await combatSessionStateService.EnsureRollAvailabilityAsync(request, userId, cancellationToken);
 
+        var resolvedPlayerName = string.IsNullOrWhiteSpace(playerName) ? "Unbekannt" : playerName.Trim();
+        if (!string.IsNullOrWhiteSpace(request.SessionId) &&
+            !string.IsNullOrWhiteSpace(request.ParticipantId))
+        {
+            var sessionSnapshot = await combatSessionStateService.GetAsync(
+                request.SessionId,
+                userId,
+                cancellationToken);
+            var opponent = sessionSnapshot.Participants.FirstOrDefault(participant =>
+                string.Equals(participant.Id, request.ParticipantId.Trim(), StringComparison.Ordinal));
+            if (opponent?.Kind == CombatParticipantKind.Opponent)
+            {
+                await combatSessionStateService.EnsureParticipantRollAccessAsync(
+                    request,
+                    userId,
+                    cancellationToken);
+                var opponentResult = RollOpponent(
+                    request,
+                    opponent,
+                    sessionSnapshot,
+                    resolvedPlayerName,
+                    userId);
+                return await BindSessionResultAsync(
+                    request,
+                    opponentResult,
+                    userId,
+                    cancellationToken);
+            }
+        }
+
         var hero = await heroContextReader.LoadContextAsync(
             request.HeroId,
             request.SessionId,
@@ -44,7 +74,6 @@ public sealed partial class RollCombatHandler(
         }
 
         var set = ResolveSet(profile, request.SetId);
-        var resolvedPlayerName = string.IsNullOrWhiteSpace(playerName) ? "Unbekannt" : playerName.Trim();
 
         var result = request.Action switch
         {
@@ -61,6 +90,15 @@ public sealed partial class RollCombatHandler(
             _ => throw Validation("Diese Kampfwurfart wird nicht unterstützt.")
         };
 
+        return await BindSessionResultAsync(request, result, userId, cancellationToken);
+    }
+
+    private async Task<CombatRollResultDto> BindSessionResultAsync(
+        CombatRollRequestDto request,
+        CombatRollResultDto result,
+        string userId,
+        CancellationToken cancellationToken)
+    {
         if (!string.IsNullOrWhiteSpace(request.SessionId) && request.Action is
             CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack or
             CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge)
@@ -94,6 +132,190 @@ public sealed partial class RollCombatHandler(
         return result;
     }
 
+    private CombatRollResultDto RollOpponent(
+        CombatRollRequestDto request,
+        CombatSessionParticipantDto opponent,
+        CombatSessionSnapshotDto sessionSnapshot,
+        string playerName,
+        string userId)
+    {
+        var profile = opponent.OpponentProfile?.CatalogProfile;
+        if (profile is null)
+        {
+            throw Validation("FÃ¼r diesen Gegner ist kein DSA-4.1-Katalogprofil hinterlegt.");
+        }
+
+        if (!profile.CombatReady)
+        {
+            throw Validation($"{opponent.Name} ist noch nicht kampfbereit: {GetReadinessText(profile)}");
+        }
+
+        return request.Action switch
+        {
+            CombatActionKind.MeleeAttack or
+            CombatActionKind.WeaponParry or
+            CombatActionKind.Dodge or
+            CombatActionKind.RangedAttack => RollOpponentCheck(
+                request,
+                opponent,
+                profile,
+                playerName,
+                userId),
+            CombatActionKind.Damage => RollOpponentDamage(
+                request,
+                opponent,
+                profile,
+                sessionSnapshot,
+                playerName,
+                userId),
+            CombatActionKind.HitZone => RollOpponentHitZone(request, opponent, playerName, userId),
+            _ => throw Validation("Dieser Gegnerwurf wird Ã¼ber die bestehende Session-Aktion ausgefÃ¼hrt.")
+        };
+    }
+
+    private CombatRollResultDto RollOpponentCheck(
+        CombatRollRequestDto request,
+        CombatSessionParticipantDto opponent,
+        CombatEnemyResolvedProfileDto profile,
+        string playerName,
+        string userId)
+    {
+        CombatEnemyAttackDto? attack = null;
+        if (request.Action is CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack)
+        {
+            attack = ResolveCatalogAttack(profile, request);
+            if (attack is null)
+            {
+                throw Validation("FÃ¼r diesen Gegner ist kein konkreter Katalogangriff ausgewÃ¤hlt.");
+            }
+        }
+
+        var baseValue = request.Action switch
+        {
+            CombatActionKind.MeleeAttack => profile.Attack,
+            CombatActionKind.WeaponParry => profile.Parry,
+            CombatActionKind.Dodge => profile.Dodge,
+            CombatActionKind.RangedAttack => profile.RangedValue,
+            _ => null
+        };
+        if (!baseValue.HasValue)
+        {
+            throw Validation($"FÃ¼r {GetActionLabel(request.Action)} ist im Katalog kein Zielwert vorhanden.");
+        }
+
+        var options = request.Options ?? new CombatRuleOptionsDto();
+        return RollCheckCore(
+            request,
+            null,
+            opponent.Name,
+            opponent.Id,
+            attack?.Name,
+            baseValue.Value,
+            request.Modifiers ?? [],
+            "DSA 4.1-Katalog",
+            BuildCatalogRollNotes(profile, attack),
+            options,
+            playerName,
+            userId);
+    }
+
+    private CombatRollResultDto RollOpponentDamage(
+        CombatRollRequestDto request,
+        CombatSessionParticipantDto opponent,
+        CombatEnemyResolvedProfileDto profile,
+        CombatSessionSnapshotDto sessionSnapshot,
+        string playerName,
+        string userId)
+    {
+        var exchange = sessionSnapshot.ActiveExchange;
+        if (exchange is null ||
+            !string.Equals(exchange.AttackerParticipantId, opponent.Id, StringComparison.Ordinal))
+        {
+            throw Validation("FÃ¼r diesen Gegner gibt es keinen offenen Angriff fÃ¼r einen TP-Wurf.");
+        }
+
+        var attack = ResolveCatalogAttack(profile, request, exchange)
+                     ?? throw Validation("FÃ¼r diesen Gegner ist kein konkreter Katalogangriff ausgewÃ¤hlt.");
+        var damageText = attack.Damage?.Notation;
+        var damage = ParseDamageExpression(damageText);
+        return RollDamageCore(
+            request,
+            null,
+            opponent.Name,
+            opponent.Id,
+            attack.Name,
+            damageText,
+            damage,
+            "DSA 4.1-Katalog",
+            playerName,
+            userId,
+            BuildCatalogRollNotes(profile, attack));
+    }
+
+    private CombatRollResultDto RollOpponentHitZone(
+        CombatRollRequestDto request,
+        CombatSessionParticipantDto opponent,
+        string playerName,
+        string userId) => RollHitZoneCore(
+        request,
+        null,
+        opponent.Name,
+        opponent.Id,
+        null,
+        playerName,
+        userId);
+
+    private static CombatEnemyAttackDto? ResolveCatalogAttack(
+        CombatEnemyResolvedProfileDto profile,
+        CombatRollRequestDto request,
+        CombatAttackExchangeDto? exchange = null)
+    {
+        var attackId = string.IsNullOrWhiteSpace(request.WeaponId)
+            ? exchange?.WeaponId
+            : request.WeaponId;
+        attackId = string.IsNullOrWhiteSpace(attackId) ? profile.AttackId : attackId;
+        if (string.IsNullOrWhiteSpace(attackId) && profile.Attacks.Length == 1)
+        {
+            return profile.Attacks[0];
+        }
+
+        if (!string.IsNullOrWhiteSpace(profile.AttackId) &&
+            !string.Equals(attackId, profile.AttackId, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        return string.IsNullOrWhiteSpace(attackId)
+            ? null
+            : profile.Attacks.FirstOrDefault(attack =>
+                string.Equals(attack.Id, attackId.Trim(), StringComparison.Ordinal));
+    }
+
+    private static string[] BuildCatalogRollNotes(
+        CombatEnemyResolvedProfileDto profile,
+        CombatEnemyAttackDto? attack)
+    {
+        var notes = profile.SourceNotes.ToList();
+        if (attack is not null)
+        {
+            notes.Add($"Angriff aus Katalog: {attack.Name}");
+        }
+
+        notes.AddRange(profile.SpecialRules.Select(rule =>
+            string.IsNullOrWhiteSpace(rule.SourceNotation)
+                ? $"Sonderregel {rule.RuleId} bleibt eine manuelle Entscheidung."
+                : $"Sonderregel {rule.RuleId}: {rule.SourceNotation} bleibt eine manuelle Entscheidung."));
+        return notes.Distinct(StringComparer.Ordinal).ToArray();
+    }
+
+    private static string GetReadinessText(CombatEnemyResolvedProfileDto profile) => profile.Readiness switch
+    {
+        "sourceDependent" => "ein Wertebereich braucht eine Meisterentscheidung",
+        "requiresEquipmentValues" => "fÃ¼r die AusrÃ¼stung fehlen im Katalog TP-/RS-Werte",
+        "requiresAttackSelection" => "ein konkreter Angriff muss ausgewÃ¤hlt werden",
+        _ => "erforderliche Werte fehlen"
+    };
+
     private CombatRollResultDto RollCheck(
         CombatRollRequestDto request,
         DsaWuerfelApp.Shared.Models.Hero hero,
@@ -122,6 +344,35 @@ public sealed partial class RollCombatHandler(
         var valuesSource = runtimeModifiers.Modifiers.Length > 0 || runtimeModifiers.RuleNotes.Length > 0
             ? "Import + laufender Kampfzustand"
             : "Import";
+        return RollCheckCore(
+            request,
+            hero.Id,
+            hero.Name,
+            request.ParticipantId,
+            weapon?.Name,
+            baseValue.Value,
+            modifiers,
+            valuesSource,
+            runtimeModifiers.RuleNotes,
+            options,
+            playerName,
+            userId);
+    }
+
+    private CombatRollResultDto RollCheckCore(
+        CombatRollRequestDto request,
+        Guid? heroId,
+        string actorName,
+        string? participantId,
+        string? weaponName,
+        int baseValue,
+        IReadOnlyList<CombatModifierDto> modifiers,
+        string valuesSource,
+        IReadOnlyList<string> ruleNotes,
+        CombatRuleOptionsDto options,
+        string playerName,
+        string userId)
+    {
         var mainRoll = RollSingleD20();
         var preliminary = CombatRollRules.Evaluate(
             request.Action,
@@ -146,7 +397,7 @@ public sealed partial class RollCombatHandler(
             unmodifiedBaseValue: baseValue,
             options,
             valuesSource,
-            runtimeModifiers.RuleNotes);
+            ruleNotes);
         if (!evaluation.IsValid)
         {
             throw Validation(evaluation.ValidationMessage ?? "Kampfwurf konnte nicht ausgewertet werden.");
@@ -160,11 +411,13 @@ public sealed partial class RollCombatHandler(
             EntryId = Guid.NewGuid(),
             RequestId = request.RequestId,
             SessionId = request.SessionId,
+            ParticipantId = participantId,
+            ParticipantName = actorName,
             ExchangeId = request.ExchangeId,
-            HeroId = hero.Id,
+            HeroId = heroId,
             Action = request.Action,
             ActionLabel = GetActionLabel(request.Action),
-            WeaponName = weapon?.Name,
+            WeaponName = weaponName,
             ValuesSource = valuesSource,
             BaseValue = baseValue,
             UnmodifiedBaseValue = baseValue,
@@ -180,18 +433,93 @@ public sealed partial class RollCombatHandler(
                     new CombatLabeledRollDto("Kontrollwurf", 20, controlRoll.Value)
                 ]
                 : [new CombatLabeledRollDto("Hauptwurf", 20, mainRoll)],
-            RuleNotes = BuildRuleNotes(request, evaluation, runtimeModifiers.RuleNotes)
+            RuleNotes = BuildRuleNotes(request, evaluation, ruleNotes)
         };
 
         return CreateResult(
             request,
-            hero,
+            heroId,
+            actorName,
+            participantId,
             userId,
             playerName,
             snapshot,
             rolls,
             MapHistoryOutcome(evaluation.Outcome),
             BuildChecks(evaluation));
+    }
+
+    private CombatRollResultDto RollDamageCore(
+        CombatRollRequestDto request,
+        Guid? heroId,
+        string actorName,
+        string? participantId,
+        string weaponName,
+        string? damageText,
+        DamageExpression damage,
+        string valuesSource,
+        string playerName,
+        string userId,
+        IReadOnlyList<string>? additionalNotes = null)
+    {
+        var manualDamageModifier = request.DamageModifier;
+        var isCritical = request.Damage?.IsCritical == true;
+        var rolls = diceService.RollDice([new DiceRollGroupDto(damage.DiceSides, damage.DiceCount)]);
+        var calculation = CombatRollRules.CalculateDamage(
+            rolls.Sum(roll => roll.Value),
+            damage.WeaponBonus,
+            0,
+            1,
+            manualDamageModifier,
+            isCritical);
+        var notes = BuildRuleNotes(request, null)
+            .Append($"{valuesSource}: Schaden {damageText ?? "unbekannt"}")
+            .Concat(additionalNotes ?? [])
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        var snapshot = new CombatRollSnapshotDto
+        {
+            EntryId = Guid.NewGuid(),
+            RequestId = request.RequestId,
+            SessionId = request.SessionId,
+            ParticipantId = participantId,
+            ParticipantName = actorName,
+            ExchangeId = request.ExchangeId,
+            HeroId = heroId,
+            Action = CombatActionKind.Damage,
+            ActionLabel = GetActionLabel(CombatActionKind.Damage),
+            WeaponName = weaponName,
+            ValuesSource = valuesSource,
+            Modifiers = request.Modifiers ?? [],
+            RuleOptions = request.Options ?? new CombatRuleOptionsDto(),
+            Outcome = CombatOutcome.Neutral,
+            StatusLabel = "TP-Wurf Â· kein Treffer angewendet",
+            LabeledRolls = rolls.Select(roll => new CombatLabeledRollDto("TP-WÃ¼rfel", roll.Sides, roll.Value)).ToArray(),
+            Damage = new CombatDamageSnapshotDto(
+                calculation.DiceTotal,
+                calculation.WeaponBonus,
+                calculation.PreMultiplierModifier,
+                calculation.Multiplier,
+                calculation.PostMultiplierModifier,
+                calculation.Total,
+                calculation.IsCritical,
+                calculation.ArmorRating,
+                calculation.StructurePoints),
+            Zone = request.ResolvedZone,
+            RuleNotes = notes
+        };
+
+        return CreateResult(
+            request,
+            heroId,
+            actorName,
+            participantId,
+            userId,
+            playerName,
+            snapshot,
+            rolls,
+            RollHistoryOutcome.None,
+            []);
     }
 
     private CombatRollResultDto RollDamage(
@@ -254,6 +582,51 @@ public sealed partial class RollCombatHandler(
             playerName,
             snapshot,
             rolls,
+            RollHistoryOutcome.None,
+            []);
+    }
+
+    private CombatRollResultDto RollHitZoneCore(
+        CombatRollRequestDto request,
+        Guid? heroId,
+        string actorName,
+        string? participantId,
+        CombatSetVariantDto? set,
+        string playerName,
+        string userId)
+    {
+        var d20 = RollSingleD20();
+        var mapped = CombatZoneRules.ResolveHitZone(d20, request.Zone);
+        var armorRating = CombatZoneRules.ResolveArmorRating(set, mapped.ArmorZone);
+        var snapshot = new CombatRollSnapshotDto
+        {
+            EntryId = Guid.NewGuid(),
+            RequestId = request.RequestId,
+            SessionId = request.SessionId,
+            ParticipantId = participantId,
+            ParticipantName = actorName,
+            ExchangeId = request.ExchangeId,
+            HeroId = heroId,
+            Action = CombatActionKind.HitZone,
+            ActionLabel = GetActionLabel(CombatActionKind.HitZone),
+            ValuesSource = "Regeltabelle",
+            RuleOptions = request.Options ?? new CombatRuleOptionsDto(),
+            Outcome = CombatOutcome.Neutral,
+            StatusLabel = "Trefferzone gewÃ¼rfelt",
+            LabeledRolls = [new CombatLabeledRollDto("Trefferzonenwurf", 20, d20)],
+            Zone = new CombatZoneSnapshotDto(d20, mapped.ArmorZone, mapped.WoundZone, request.Zone?.Facing ?? CombatFacing.Front, armorRating),
+            RuleNotes = BuildRuleNotes(request, null)
+        };
+
+        return CreateResult(
+            request,
+            heroId,
+            actorName,
+            participantId,
+            userId,
+            playerName,
+            snapshot,
+            [new DiceRollDto(20, d20)],
             RollHistoryOutcome.None,
             []);
     }
@@ -346,8 +719,36 @@ public sealed partial class RollCombatHandler(
         CombatRollSnapshotDto snapshot,
         IReadOnlyList<DiceRollDto> rolls,
         RollHistoryOutcome historyOutcome,
+        RollHistoryCheckDto[] checks) => CreateResult(
+        request,
+        hero.Id,
+        hero.Name,
+        request.ParticipantId,
+        userId,
+        playerName,
+        snapshot,
+        rolls,
+        historyOutcome,
+        checks);
+
+    private CombatRollResultDto CreateResult(
+        CombatRollRequestDto request,
+        Guid? heroId,
+        string actorName,
+        string? participantId,
+        string userId,
+        string playerName,
+        CombatRollSnapshotDto snapshot,
+        IReadOnlyList<DiceRollDto> rolls,
+        RollHistoryOutcome historyOutcome,
         RollHistoryCheckDto[] checks)
     {
+        snapshot = snapshot with
+        {
+            HeroId = heroId,
+            ParticipantId = participantId,
+            ParticipantName = actorName
+        };
         var timestamp = DateTime.UtcNow;
         var rollArray = rolls.ToArray();
         var historyModifier = snapshot.Action == CombatActionKind.InitiativeHelper
@@ -362,7 +763,8 @@ public sealed partial class RollCombatHandler(
             checks,
             new RollHistorySnapshotDto
             {
-                HeroName = hero.Name,
+                HeroName = heroId.HasValue ? actorName : null,
+                ParticipantName = actorName,
                 Combat = snapshot
             });
         var historyEntry = DiceResultFactory.CreateHistoryEntry(playerName, timestamp, equation, historyContext);
@@ -373,11 +775,15 @@ public sealed partial class RollCombatHandler(
             request.SessionId,
             userId,
             playerName,
-            hero.Name,
+            heroId.HasValue ? actorName : null,
             snapshot.Outcome,
             snapshot,
             rollArray,
-            historyEntry);
+            historyEntry)
+        {
+            ParticipantId = participantId,
+            ParticipantName = actorName
+        };
     }
 
     private int RollSingleD20() => diceService.RollDice([new DiceRollGroupDto(20, 1)])[0].Value;
