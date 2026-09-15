@@ -153,11 +153,9 @@
                                            ActiveExchangeAttackerName="@ActiveExchangeAttackerName"
                                            ActiveExchangeTargetName="@ActiveExchangeTargetName"
                                            CanRespondToExchange="@CanRespondToExchange"
-                                           CanAdvanceExchange="@CanAdvanceExchange"
-                                           HasExchangeZone="@HasExchangeZone"
                                            ExchangeActionRequested="HandleExchangeActionAsync"
-                                           CanConsumeReaction="@CanConsumeReaction"
-                                           ConsumeReactionRequested="ConsumeReactionFromResultAsync"
+                                           CanHoldAction="@CanHoldAction"
+                                           HoldActionRequested="HoldCurrentActionAsync"
                                            ResultDiceSides="@ResultDiceSides"
                                            ResultDiceValues="@ResultDiceValues"
                                            ResultVersion="@ResultVersion" />
@@ -304,10 +302,6 @@
                                                 <UiButton Size="compact" OnClick="() => HoldActionAsync(action)">Warten</UiButton>
                                                 </span>
                                             }
-                                            else if (action.State == CombatActionEntryState.Held && CanManageParticipantControls(participant))
-                                            {
-                                                <UiButton Size="compact" OnClick="() => ExecuteHeldActionAsync(action)">Jetzt ausführen</UiButton>
-                                            }
                                         </div>
                                     }
                                 </div>
@@ -352,15 +346,7 @@
                                           CanRollParticipantInitiative="CanRollParticipantInitiative"
                                           RollInitiativeRequested="RollParticipantInitiativeAsync"
                                           CanRemoveOpponent="CanRemoveOpponent"
-                                          RemoveOpponentRequested="RemoveOpponentAsync"
-                                          CanManageParticipantControls="CanManageParticipantControls"
-                                          ParticipantActions="participant => GetParticipantActions(participant.Id)"
-                                          IsOrientationAction="IsOrientationAction"
-                                          ConsumeReactionRequested="ConsumeReactionAsync"
-                                          CompleteActionRequested="CompleteActionAsync"
-                                          HoldActionRequested="HoldActionAsync"
-                                          ExecuteHeldActionRequested="ExecuteHeldActionAsync"
-                                          ResolveOrientationRequested="ResolveOrientationAsync" />
+                                          RemoveOpponentRequested="RemoveOpponentAsync" />
 
                 <section class="combat-history-sidebar" aria-labelledby="combat-history-title">
                     <div class="combat-history-heading">

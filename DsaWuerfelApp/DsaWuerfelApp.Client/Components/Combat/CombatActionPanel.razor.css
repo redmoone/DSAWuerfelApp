@@ -428,6 +428,19 @@
     height: 100%;
 }
 
+.combat-waiting-action {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    padding-top: 0.1rem;
+}
+
+.combat-waiting-action span {
+    color: var(--dsa-text-muted);
+    font-size: 0.74rem;
+}
+
 .combat-result-actions {
     display: flex;
     align-items: center;

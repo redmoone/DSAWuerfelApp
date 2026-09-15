@@ -23,14 +23,6 @@ public partial class CombatInitiativeOverview
     [Parameter] public string? SelectedTargetParticipantId { get; set; }
     [Parameter] public Func<CombatSessionParticipantDto, bool>? CanSelectTarget { get; set; }
     [Parameter] public EventCallback<string> TargetSelected { get; set; }
-    [Parameter] public Func<CombatSessionParticipantDto, bool>? CanManageParticipantControls { get; set; }
-    [Parameter] public Func<CombatSessionParticipantDto, IReadOnlyList<CombatSessionActionDto>>? ParticipantActions { get; set; }
-    [Parameter] public Func<CombatSessionActionDto, bool>? IsOrientationAction { get; set; }
-    [Parameter] public EventCallback<CombatSessionParticipantDto> ConsumeReactionRequested { get; set; }
-    [Parameter] public EventCallback<CombatSessionActionDto> CompleteActionRequested { get; set; }
-    [Parameter] public EventCallback<CombatSessionActionDto> HoldActionRequested { get; set; }
-    [Parameter] public EventCallback<CombatSessionActionDto> ExecuteHeldActionRequested { get; set; }
-    [Parameter] public EventCallback<CombatSessionActionDto> ResolveOrientationRequested { get; set; }
 
     private string GetTurnLabel(CombatSessionParticipantDto participant) =>
         TurnLabel?.Invoke(participant) ?? "Offen";
@@ -47,12 +39,6 @@ public partial class CombatInitiativeOverview
 
     private string GetTargetClass(CombatSessionParticipantDto participant) =>
         $"combat-initiative-overview-person combat-initiative-overview-target {(IsSelectedTarget(participant) ? "is-target" : string.Empty)}";
-
-    private IReadOnlyList<CombatSessionActionDto> GetVisibleActions(CombatSessionParticipantDto participant) =>
-        ParticipantActions?.Invoke(participant)
-            .Where(action => action.State != CombatActionEntryState.Completed)
-            .Take(2)
-            .ToArray() ?? Array.Empty<CombatSessionActionDto>();
 
     private static string GetTurnClass(CombatSessionParticipantDto participant, string? label = null) =>
         (label ?? string.Empty) switch

@@ -42,8 +42,6 @@ public partial class CombatActionPanel
     [Parameter] public int? EffectiveTarget { get; set; }
     [Parameter] public CombatFacing Facing { get; set; }
     [Parameter] public EventCallback<CombatFacing> FacingChanged { get; set; }
-    [Parameter] public bool CanConsumeReaction { get; set; }
-    [Parameter] public EventCallback ConsumeReactionRequested { get; set; }
     [Parameter] public IReadOnlyList<int> ResultDiceSides { get; set; } = Array.Empty<int>();
     [Parameter] public IReadOnlyList<int> ResultDiceValues { get; set; } = Array.Empty<int>();
     [Parameter] public long ResultVersion { get; set; }
@@ -51,13 +49,12 @@ public partial class CombatActionPanel
     [Parameter] public string? ActiveExchangeAttackerName { get; set; }
     [Parameter] public string? ActiveExchangeTargetName { get; set; }
     [Parameter] public bool CanRespondToExchange { get; set; }
-    [Parameter] public bool CanAdvanceExchange { get; set; }
-    [Parameter] public bool HasExchangeZone { get; set; }
     [Parameter] public EventCallback<CombatActionKind> ExchangeActionRequested { get; set; }
+    [Parameter] public bool CanHoldAction { get; set; }
+    [Parameter] public EventCallback HoldActionRequested { get; set; }
 
     private IEnumerable<ActionOption> MainActions => Actions.Where(action => action.Key is "attack" or "parry" or "shield-parry" or "dodge" or "ranged");
     private IEnumerable<ActionOption> AdditionalActions => Actions.Where(action => action.Key is "damage" or "zone" or "initiative");
-    private IEnumerable<ActionOption> HelperActions => Actions.Where(action => action.Key is "wound-helper" or "fumble-helper");
     private ActionOption? SelectedActionOption => Actions.FirstOrDefault(action => action.Key == SelectedAction);
 
     private string EmptyStateTitle => IsLoading ? "Kampfprofil wird geladen." : "Noch kein Kampfprofil geladen.";

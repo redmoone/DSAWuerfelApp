@@ -58,27 +58,6 @@
                     }
                 </div>
             }
-            else if ((exchange.Status is CombatExchangeStatus.Hit or CombatExchangeStatus.DamageOpen) && CanAdvanceExchange)
-            {
-                <div class="combat-exchange-actions" aria-label="Trefferfolge">
-                    @if (!HasExchangeZone)
-                    {
-                        <UiButton Variant="primary"
-                                  Size="compact"
-                                  OnClick="() => ExchangeActionRequested.InvokeAsync(CombatActionKind.HitZone)">
-                            Trefferzone würfeln
-                        </UiButton>
-                    }
-                    else
-                    {
-                        <UiButton Variant="primary"
-                                  Size="compact"
-                                  OnClick="() => ExchangeActionRequested.InvokeAsync(CombatActionKind.Damage)">
-                            TP würfeln
-                        </UiButton>
-                    }
-                </div>
-            }
         </section>
     }
 
@@ -230,7 +209,21 @@
                     </div>
                 </div>
 
-                <div class="combat-secondary-actions">
+                @if (CanHoldAction)
+                {
+                    <div class="combat-waiting-action">
+                        <UiButton Variant="option"
+                                  Size="compact"
+                                  OnClick="HoldActionRequested">
+                            Abwarten
+                        </UiButton>
+                        <span>Die Handlung bleibt f&uuml;r sp&auml;ter in dieser Runde erhalten.</span>
+                    </div>
+                }
+
+                @if (AdditionalActions.Any())
+                {
+                    <div class="combat-secondary-actions">
                     <span class="combat-field-label">Weitere Würfe</span>
                     <div class="combat-action-options compact" role="listbox" aria-label="Weitere Würfe">
                         @foreach (var action in AdditionalActions)
@@ -248,27 +241,8 @@
                             </div>
                         }
                     </div>
-                </div>
-
-                <details class="combat-helper-group">
-                    <summary>Hilfswürfe</summary>
-                    <div class="combat-action-options compact" role="listbox" aria-label="Hilfswürfe">
-                        @foreach (var action in HelperActions)
-                        {
-                            <div class="combat-option-entry">
-                                <UiButton Variant="option"
-                                          Active="@(action.Key == SelectedAction)"
-                                          role="option"
-                                          aria-selected="@(action.Key == SelectedAction)"
-                                          Disabled="@(IsBusy || !action.IsAvailable)"
-                                          OnClick="() => ActionSelected.InvokeAsync(action.Key)">
-                                    <span class="ui-button-label">@action.Label</span>
-                                    <span class="combat-option-value">@action.Detail</span>
-                                </UiButton>
-                            </div>
-                        }
                     </div>
-                </details>
+                }
 
                 <div class="combat-maneuver-block">
                     <div class="combat-block-heading">
@@ -346,17 +320,6 @@
                                  ShowTitle="false"
                                  ShowHiddenRollHint="false"
                                  ResetButtonText="Modifikator auf 0" />
-
-                @if (CanConsumeReaction)
-                {
-                    <div class="combat-result-actions" aria-live="polite">
-                        <div>
-                            <span class="combat-field-label">Reaktion</span>
-                            <span class="combat-action-state">Die Abwehr ist noch nicht verbucht.</span>
-                        </div>
-                        <UiButton Variant="primary" Size="compact" Class="combat-result-reaction" OnClick="ConsumeReactionRequested">Reaktion verbrauchen</UiButton>
-                    </div>
-                }
 
                 @if (HasResultDice && SelectedAction != "initiative")
                 {

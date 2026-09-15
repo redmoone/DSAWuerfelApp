@@ -180,10 +180,6 @@ public partial class Kampf : IDisposable
         new("shield-parry", "Schildparade", FormatActionValue("PA", SelectedWeapon?.Parry), HasShieldParry && CanUseActionBudget(CombatActionKind.ShieldParry)),
         new("dodge", "Ausweichen", FormatActionValue("AW", SelectedSet?.Dodge), SelectedSet?.Dodge.HasValue == true && CanUseActionBudget(CombatActionKind.Dodge)),
         new("ranged", "Fernkampf", FormatActionValue("FK", SelectedWeapon?.RangedValue), HasRangedValue && CanUseActionBudget(CombatActionKind.RangedAttack)),
-        new("damage", "Trefferpunkte", $"TP {GetDamageText(SelectedWeapon)}", HasDamage),
-        new("zone", "Trefferzone", "W20", HasCombatContext),
-        new("wound-helper", "Wund-Hilfswurf", "W6", HasCombatContext),
-        new("fumble-helper", "Patzer-Hilfswurf", "W20", HasCombatContext),
         new("initiative", "Initiative", GetInitiativeDiceLabel(), CanRollInitiative)
     ];
 
@@ -235,10 +231,6 @@ public partial class Kampf : IDisposable
         }
     }
 
-    private bool CanConsumeReaction => IsSessionCombat &&
-                                       OwnSessionParticipant?.ReactionAvailable == true &&
-                                       CombatResult?.Snapshot.Action is CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge;
-
     private bool CanUseActionBudget(CombatActionKind action)
     {
         if (!IsSessionCombat)
@@ -248,7 +240,7 @@ public partial class Kampf : IDisposable
 
         var budget = OwnSessionParticipant?.ActionBudget;
         return CombatActionBudgetRules.RequiresNormalAction(action)
-            ? budget?.HasNormalAction == true
+            ? budget?.HasNormalAction == true || budget?.HeldActionId is not null
             : CombatActionBudgetRules.RequiresReaction(action)
                 ? budget?.HasReaction == true
                 : true;
@@ -309,14 +301,19 @@ public partial class Kampf : IDisposable
         !_rollBusy &&
         !_valueMutationBusy;
 
-    private bool CanAdvanceExchange =>
+    private bool CanHoldAction =>
         IsSessionCombat &&
-        SessionCombat?.ActiveExchange is { Status: CombatExchangeStatus.Hit or CombatExchangeStatus.DamageOpen } exchange &&
-        OwnSessionParticipant?.Id == exchange.AttackerParticipantId &&
+        OwnSessionParticipant is { } participant &&
         !_rollBusy &&
-        !_valueMutationBusy;
-
-    private bool HasExchangeZone => SessionCombat?.ActiveExchange?.Zone is not null;
+        !_valueMutationBusy &&
+        (SessionCombat?.ActiveExchange is null ||
+         SessionCombat.ActiveExchange.Status is CombatExchangeStatus.Completed or
+             CombatExchangeStatus.Cancelled or CombatExchangeStatus.Avoided) &&
+        GetParticipantActions(participant.Id).Any(action =>
+            action.Round == SessionCombat?.Round &&
+            !action.IsReaction &&
+            !action.IsAdditional &&
+            action.State == CombatActionEntryState.Open);
 
     private IReadOnlyList<CombatSessionActionDto> CurrentSessionActions =>
         SessionCombat?.Actions
@@ -649,7 +646,7 @@ public partial class Kampf : IDisposable
             current.ParticipantId == attacker.Id &&
             current.Round == SessionCombat.Round &&
             !current.IsReaction &&
-            current.State == CombatActionEntryState.Open);
+            current.State is CombatActionEntryState.Open or CombatActionEntryState.Held);
         if (openAction is null)
         {
             _notice = "Für den eigenen Teilnehmer ist keine offene normale Handlung vorhanden.";
@@ -705,10 +702,12 @@ public partial class Kampf : IDisposable
             return;
         }
 
-        CombatRollRequestDto request;
-        if (action is CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge)
+        if (action is not (CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge))
         {
-            request = new CombatRollRequestDto
+            return;
+        }
+
+        var request = new CombatRollRequestDto
             {
                 RequestId = Guid.NewGuid(),
                 SessionId = SessionState.ActiveSessionId,
@@ -731,11 +730,6 @@ public partial class Kampf : IDisposable
                 Options = new CombatRuleOptionsDto(SpecialResultsEnabled: true, LowLePEnabled: true),
                 Facing = exchange.Facing
             };
-        }
-        else
-        {
-            request = BuildRollRequest(action);
-        }
 
         _rollBusy = true;
         _notice = null;
@@ -1553,11 +1547,25 @@ public partial class Kampf : IDisposable
         _notice = result.Message;
     }
 
-    private Task ConsumeReactionFromResultAsync()
+    private async Task HoldCurrentActionAsync()
     {
-        return OwnSessionParticipant is { } participant
-            ? ConsumeReactionAsync(participant)
-            : Task.CompletedTask;
+        if (!CanHoldAction || OwnSessionParticipant is not { } participant)
+        {
+            return;
+        }
+
+        var action = GetParticipantActions(participant.Id).FirstOrDefault(current =>
+            current.Round == SessionCombat?.Round &&
+            !current.IsReaction &&
+            !current.IsAdditional &&
+            current.State == CombatActionEntryState.Open);
+        if (action is null)
+        {
+            _notice = "Es gibt keine offene normale Handlung zum Abwarten.";
+            return;
+        }
+
+        await HoldActionAsync(action);
     }
 
     private async Task HoldActionAsync(CombatSessionActionDto action)
