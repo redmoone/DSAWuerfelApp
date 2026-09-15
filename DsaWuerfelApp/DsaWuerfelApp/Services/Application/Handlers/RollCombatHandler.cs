@@ -996,6 +996,11 @@ public sealed partial class RollCombatHandler(
             notes.Add("Die AT ist gelungen und öffnet die Abwehrentscheidung; sie wendet keinen Treffer an.");
         }
 
+        if (evaluation?.Outcome == CombatOutcome.Fumble)
+        {
+            notes.Add("Patzerfolgen benötigen die passende DSA-4.1-Tabelle und bleiben bis zur Meisterentscheidung offen.");
+        }
+
         if (request.Modifiers is { Length: > 0 })
         {
             notes.Add("Situative Modifikatoren sind im Snapshot einzeln gespeichert.");

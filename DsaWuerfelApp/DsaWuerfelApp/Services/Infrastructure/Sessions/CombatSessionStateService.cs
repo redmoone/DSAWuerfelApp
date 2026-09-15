@@ -1368,7 +1368,7 @@ public sealed class CombatSessionStateService(
                        ?? previous.Participants.FirstOrDefault(current =>
                            string.Equals(current.Id, request.ParticipantId, StringComparison.Ordinal));
         var relatedEntryId = request.Kind == CombatSessionMutationKind.Undo
-            ? previous.ActiveExchange?.HistoryEntryIds.LastOrDefault()
+            ? previous.ActiveExchange?.HistoryEntryIds.LastOrDefault() ?? previous.LastMutationId
             : null;
         if (relatedEntryId == Guid.Empty)
         {

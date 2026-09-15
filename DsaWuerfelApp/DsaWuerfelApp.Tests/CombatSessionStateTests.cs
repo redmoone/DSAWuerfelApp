@@ -760,6 +760,53 @@ public sealed class CombatSessionStateTests
     }
 
     [Fact]
+    public async Task Undo_of_a_non_roll_state_change_is_kept_in_history_and_correlated()
+    {
+        using var factory = new TestApplicationFactory();
+        var hero = await SeedHeroAsync(factory, "owner");
+        var session = CreateSession(factory, hero, "owner");
+        var state = factory.Services.GetRequiredService<CombatSessionStateService>();
+        var history = factory.Services.GetRequiredService<SessionRecordStore>();
+        var initial = await state.GetAsync(session.SessionId, "owner");
+
+        var rolled = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = initial.Revision,
+            Kind = CombatSessionMutationKind.RollInitiative,
+            HeroId = hero.Id
+        }, "owner");
+        var participant = Assert.Single(rolled.Snapshot.Participants, current => current.HeroId == hero.Id);
+        var action = Assert.Single(rolled.Snapshot.Actions, current => current.ParticipantId == participant.Id);
+        var holdRequestId = Guid.NewGuid();
+
+        var held = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = holdRequestId,
+            SessionId = session.SessionId,
+            ExpectedRevision = rolled.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.HoldAction,
+            ActionId = action.Id,
+            ParticipantId = participant.Id
+        }, "owner");
+        Assert.Equal(holdRequestId, held.HistoryEntry?.Context?.Snapshot?.CombatStateChange?.Id);
+
+        var undone = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = held.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.Undo
+        }, "owner");
+
+        Assert.True(undone.Applied);
+        Assert.Contains(history.LoadHistory(session.SessionId), entry =>
+            entry.Context?.Snapshot?.CombatStateChange is { IsUndo: true } stateChange &&
+            stateChange.RelatedEntryId == holdRequestId);
+    }
+
+    [Fact]
     public async Task New_round_rejects_an_open_attack_exchange_instead_of_dropping_it()
     {
         using var factory = new TestApplicationFactory();
