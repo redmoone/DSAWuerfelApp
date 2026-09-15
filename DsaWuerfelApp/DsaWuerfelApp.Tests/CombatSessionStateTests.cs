@@ -730,8 +730,104 @@ public sealed class CombatSessionStateTests
         Assert.Equal(nextRound.Snapshot.Round, nextParticipant.ActionBudget?.HeldActionRound);
         Assert.Contains(nextRound.Snapshot.Actions, current => current.Id == action.Id &&
             current.State == CombatActionEntryState.Held && current.Round == nextRound.Snapshot.Round);
-        Assert.Contains(nextRound.Snapshot.Actions, current => current.ParticipantId == participant.Id &&
+        Assert.DoesNotContain(nextRound.Snapshot.Actions, current => current.ParticipantId == participant.Id &&
             current.State == CombatActionEntryState.Open && current.Round == nextRound.Snapshot.Round);
+    }
+
+    [Fact]
+    public async Task Held_action_can_be_rolled_directly_and_consumes_the_reserve_once()
+    {
+        using var factory = new TestApplicationFactory();
+        var hero = await SeedHeroAsync(factory, "owner");
+        var session = CreateSession(factory, hero, "owner");
+        var state = factory.Services.GetRequiredService<CombatSessionStateService>();
+        var handler = factory.Services.GetRequiredService<RollCombatHandler>();
+        var profile = await factory.Services.GetRequiredService<HeroCombatProfileReader>().ReadAsync(hero.Id, "owner");
+        var set = Assert.Single(profile!.Sets, item => item.ArmorModel == CombatArmorModel.Zone);
+        var weapon = Assert.Single(set.Weapons, item => item.Name == "Schwert");
+
+        var initial = await state.GetAsync(session.SessionId, "owner");
+        var rolled = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = initial.Revision,
+            Kind = CombatSessionMutationKind.RollInitiative,
+            HeroId = hero.Id
+        }, "owner");
+        var attacker = Assert.Single(rolled.Snapshot.Participants, item => item.HeroId == hero.Id);
+        var action = Assert.Single(rolled.Snapshot.Actions, item => item.ParticipantId == attacker.Id);
+
+        var held = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = rolled.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.HoldAction,
+            ActionId = action.Id,
+            ParticipantId = attacker.Id
+        }, "owner");
+        Assert.Equal(action.Id, held.Snapshot.Participants.Single(item => item.Id == attacker.Id)
+            .ActionBudget?.HeldActionId);
+
+        var added = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = held.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.AddOpponent,
+            Name = "Reserveziel",
+            InitiativeBase = 1,
+            Initiative = 1,
+            OpponentProfile = new CombatOpponentProfileDto(10, 8, null, 2, 20)
+        }, "owner");
+        var target = Assert.Single(added.Snapshot.Participants, item => item.Kind == CombatParticipantKind.Opponent);
+
+        var declaration = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = added.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.DeclareAttack,
+            ParticipantId = attacker.Id,
+            TargetParticipantId = target.Id,
+            ActionId = action.Id,
+            ExchangeId = "exchange-held-direct",
+            SetId = set.Id,
+            WeaponId = weapon.Id,
+            ActionKind = CombatActionKind.MeleeAttack
+        }, "owner");
+
+        var request = new CombatRollRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ParticipantId = attacker.Id,
+            TargetParticipantId = target.Id,
+            ActionId = action.Id,
+            ExpectedRevision = declaration.Snapshot.Revision,
+            HeroId = hero.Id,
+            ExchangeId = "exchange-held-direct",
+            SetId = set.Id,
+            WeaponId = weapon.Id,
+            WeaponName = weapon.Name,
+            Action = CombatActionKind.MeleeAttack
+        };
+        var result = await handler.HandleAsync(request, "owner", "Besitzer");
+
+        Assert.NotNull(result.CombatSessionSnapshot);
+        var stored = await state.GetAsync(session.SessionId, "owner");
+        Assert.Equal(0, stored.Participants.Single(item => item.Id == attacker.Id)
+            .ActionBudget?.NormalActionsRemaining);
+        Assert.Null(stored.Participants.Single(item => item.Id == attacker.Id)
+            .ActionBudget?.HeldActionId);
+        Assert.Equal(CombatActionEntryState.Completed,
+            stored.Actions.Single(item => item.Id == action.Id).State);
+
+        var retry = await handler.HandleAsync(request, "owner", "Besitzer");
+        Assert.Equal(result.Snapshot.EntryId, retry.Snapshot.EntryId);
+        Assert.Equal(result.Snapshot.LabeledRolls.Select(roll => roll.Value),
+            retry.Snapshot.LabeledRolls.Select(roll => roll.Value));
     }
 
     [Fact]

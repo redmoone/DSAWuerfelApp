@@ -1565,12 +1565,15 @@ public sealed class CombatSessionStateService(
 
         var action = FindAction(current, request.ActionId, attacker.Id)
                      ?? throw Validation("Für den Angreifer ist keine offene normale Handlung vorhanden.");
-        if (action.Round != current.Round || action.IsReaction || action.State != CombatActionEntryState.Open)
+        if (action.Round != current.Round || action.IsReaction ||
+            action.State is not (CombatActionEntryState.Open or CombatActionEntryState.Held))
         {
             throw Validation("Die angeforderte Handlung ist für diesen Angriff nicht offen.");
         }
 
-        if (current.CurrentActionIds.Length > 0 && !current.CurrentActionIds.Contains(action.Id, StringComparer.Ordinal))
+        var heldAction = action.State == CombatActionEntryState.Held;
+        if (!heldAction && current.CurrentActionIds.Length > 0 &&
+            !current.CurrentActionIds.Contains(action.Id, StringComparer.Ordinal))
         {
             throw Validation("Der Angreifer ist in dieser Initiativephase nicht an der Reihe.");
         }
@@ -1583,6 +1586,10 @@ public sealed class CombatSessionStateService(
 
         var budget = attacker.ActionBudget ?? new CombatActionBudgetDto();
         var actionCost = Math.Max(1, action.ActionCost);
+        if (heldAction && !string.Equals(budget.HeldActionId, action.Id, StringComparison.Ordinal))
+        {
+            throw Validation("Die gehaltene Handlung ist nicht mehr als eigene Reserve vorhanden.");
+        }
         if (!action.IsAdditional && budget.NormalActionsRemaining < actionCost)
         {
             throw Validation($"Für {attacker.Name} ist keine normale Aktion mehr verfügbar.");
@@ -2033,6 +2040,18 @@ public sealed class CombatSessionStateService(
 
         var participant = current.Participants.FirstOrDefault(item => item.Id == action.ParticipantId);
         var budget = participant?.ActionBudget ?? new CombatActionBudgetDto();
+        if (state == CombatActionEntryState.Held && budget.HeldActionId is not null &&
+            !string.Equals(budget.HeldActionId, action.Id, StringComparison.Ordinal))
+        {
+            throw Validation($"Für {participant?.Name ?? "diesen Teilnehmer"} ist bereits eine Handlung gehalten.");
+        }
+
+        if (state == CombatActionEntryState.Open &&
+            !string.Equals(budget.HeldActionId, action.Id, StringComparison.Ordinal))
+        {
+            throw Validation("Die gehaltene Handlung ist nicht mehr als eigene Reserve vorhanden.");
+        }
+
         var nextBudget = state == CombatActionEntryState.Held
             ? budget with { HeldActionId = action.Id, HeldActionRound = current.Round }
             : budget with { HeldActionId = null, HeldActionRound = null };
@@ -2274,7 +2293,8 @@ public sealed class CombatSessionStateService(
             })
             .ToArray();
         var participantsById = participants.ToDictionary(participant => participant.Id, StringComparer.Ordinal);
-        foreach (var participant in participants.Where(item => item.CurrentInitiative.HasValue))
+        foreach (var participant in participants.Where(item => item.CurrentInitiative.HasValue &&
+                                                               !heldActions.ContainsKey(item.Id)))
         {
             actions.Add(CreateNormalAction(participant, round));
         }
