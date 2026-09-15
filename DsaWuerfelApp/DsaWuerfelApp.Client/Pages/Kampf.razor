@@ -246,7 +246,7 @@
                                         <strong>@participant.Name</strong>
                                         <span>@(string.IsNullOrWhiteSpace(participant.Affiliation) ? participant.Kind == CombatParticipantKind.Hero ? "Held" : "Gegner" : participant.Affiliation)</span>
                                     </div>
-                                    @if (participant.HeroId == ActiveHero?.Id)
+                                    @if (OwnSessionParticipant?.Id == participant.Id)
                                     {
                                         <span class="combat-initiative-readonly">@(participant.CurrentInitiative.HasValue ? $"INI {participant.CurrentInitiative}" : "INI —")</span>
                                     }
@@ -266,11 +266,20 @@
                                     }
                                     <div class="combat-initiative-flags">
                                         <span class="combat-action-flag @(participant.ActionAvailable ? "available" : string.Empty)">@(participant.ActionAvailable ? "A" : "A✓")</span>
-                                        <UiButton Size="compact"
-                                                  Disabled="@(!participant.ReactionAvailable)"
-                                                  OnClick="() => ConsumeReactionAsync(participant)">
-                                            @(participant.ReactionAvailable ? "Reaktion" : "PA verbraucht")
-                                        </UiButton>
+                                        @if (CanManageParticipantControls(participant))
+                                        {
+                                            <UiButton Size="compact"
+                                                      Disabled="@(!participant.ReactionAvailable)"
+                                                      OnClick="() => ConsumeReactionAsync(participant)">
+                                                @(participant.ReactionAvailable ? "Reaktion" : "PA verbraucht")
+                                            </UiButton>
+                                        }
+                                        else
+                                        {
+                                            <span class="combat-action-flag @(participant.ReactionAvailable ? "available" : string.Empty)">
+                                                @(participant.ReactionAvailable ? "Reaktion frei" : "PA verbraucht")
+                                            </span>
+                                        }
                                     </div>
                                     @if (!string.IsNullOrWhiteSpace(participant.Announcement))
                                     {
@@ -286,7 +295,7 @@
                                     {
                                         <div class="combat-action-entry @(action.State.ToString().ToLowerInvariant())">
                                             <span>@action.Label · @(action.ActionCost == 1 ? "1 Aktion" : $"{action.ActionCost} Aktionen")</span>
-                                            @if (action.State == CombatActionEntryState.Open)
+                                            @if (action.State == CombatActionEntryState.Open && CanManageParticipantControls(participant))
                                             {
                                                 <span class="combat-action-entry-buttons">
                                                     @if (IsOrientationAction(action) && action.RequiresCheck)
@@ -300,7 +309,7 @@
                                                 <UiButton Size="compact" OnClick="() => HoldActionAsync(action)">Warten</UiButton>
                                                 </span>
                                             }
-                                            else if (action.State == CombatActionEntryState.Held)
+                                            else if (action.State == CombatActionEntryState.Held && CanManageParticipantControls(participant))
                                             {
                                                 <UiButton Size="compact" OnClick="() => ExecuteHeldActionAsync(action)">Jetzt ausführen</UiButton>
                                             }
@@ -312,15 +321,18 @@
                     }
 
                     <div class="combat-initiative-actions">
-                        <UiButton Disabled="@(!(SessionCombat?.IsStarted ?? false))" OnClick="NewRoundAsync">Neue Runde</UiButton>
-                        <UiButton Disabled="@(OwnSessionParticipant?.CurrentInitiative is null)" OnClick="OpenOrientationDrawer">Orientieren</UiButton>
-                        @if (IsSessionCombat)
+                        @if (IsMasterView)
+                        {
+                            <UiButton Disabled="@(!(SessionCombat?.IsStarted ?? false))" OnClick="NewRoundAsync">Neue Runde</UiButton>
+                        }
+                        @if (CanManageOwnSessionParticipant)
+                        {
+                            <UiButton Disabled="@(OwnSessionParticipant?.CurrentInitiative is null)" OnClick="OpenOrientationDrawer">Orientieren</UiButton>
+                        }
+                        @if (IsSessionCombat && IsMasterView)
                         {
                             <UiButton OnClick="OpenAnnouncementDrawer">Rundenansage</UiButton>
-                            @if (IsSessionMaster)
-                            {
-                                <UiButton OnClick="OpenOpponentDrawer">Gegner hinzufügen</UiButton>
-                            }
+                            <UiButton OnClick="OpenOpponentDrawer">Gegner hinzufügen</UiButton>
                         }
                     </div>
                 </section>
@@ -342,6 +354,7 @@
                                           RollInitiativeRequested="RollParticipantInitiativeAsync"
                                           CanRemoveOpponent="CanRemoveOpponent"
                                           RemoveOpponentRequested="RemoveOpponentAsync"
+                                          CanManageParticipantControls="CanManageParticipantControls"
                                           ParticipantActions="participant => GetParticipantActions(participant.Id)"
                                           IsOrientationAction="IsOrientationAction"
                                           ConsumeReactionRequested="ConsumeReactionAsync"

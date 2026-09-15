@@ -43,6 +43,7 @@
                 @foreach (var participant in Participants)
                 {
                     var isCurrent = IsCurrentParticipant?.Invoke(participant) == true;
+                    var canManage = CanManageParticipantControls?.Invoke(participant) == true;
                     var actions = GetVisibleActions(participant);
                     <article class="combat-initiative-overview-row @(isCurrent ? "current" : string.Empty) @GetTurnClass(participant)"
                              aria-current="@(isCurrent ? "step" : null)">
@@ -67,12 +68,21 @@
                             <span class="combat-initiative-overview-flag @(participant.ActionAvailable ? "available" : string.Empty)">
                                 @(participant.ActionAvailable ? "Aktion" : "keine Aktion")
                             </span>
-                            <UiButton Size="compact"
-                                      Class="combat-initiative-overview-button"
-                                      Disabled="@(!participant.ReactionAvailable)"
-                                      OnClick="() => ConsumeReactionRequested.InvokeAsync(participant)">
-                                @(participant.ReactionAvailable ? "Reaktion" : "PA verbraucht")
-                            </UiButton>
+                            @if (canManage)
+                            {
+                                <UiButton Size="compact"
+                                          Class="combat-initiative-overview-button"
+                                          Disabled="@(!participant.ReactionAvailable)"
+                                          OnClick="() => ConsumeReactionRequested.InvokeAsync(participant)">
+                                    @(participant.ReactionAvailable ? "Reaktion" : "PA verbraucht")
+                                </UiButton>
+                            }
+                            else
+                            {
+                                <span class="combat-initiative-overview-flag @(participant.ReactionAvailable ? "available" : string.Empty)">
+                                    @(participant.ReactionAvailable ? "Reaktion frei" : "PA verbraucht")
+                                </span>
+                            }
                             @if (participant.CurrentInitiative is null && CanRollParticipantInitiative?.Invoke(participant) == true)
                             {
                                 <UiButton Size="compact"
@@ -100,7 +110,7 @@
                         {
                             <div class="combat-initiative-overview-action @(action.State.ToString().ToLowerInvariant())">
                                 <span>@action.Label · @(action.ActionCost == 1 ? "1 Aktion" : $"{action.ActionCost} Aktionen")</span>
-                                @if (action.State == CombatActionEntryState.Open)
+                                @if (action.State == CombatActionEntryState.Open && canManage)
                                 {
                                     <span class="combat-initiative-overview-action-buttons">
                                         @if (IsOrientationAction?.Invoke(action) == true && action.RequiresCheck)
@@ -114,7 +124,7 @@
                                         <UiButton Size="compact" Class="combat-initiative-overview-button" OnClick="() => HoldActionRequested.InvokeAsync(action)">Warten</UiButton>
                                     </span>
                                 }
-                                else if (action.State == CombatActionEntryState.Held)
+                                else if (action.State == CombatActionEntryState.Held && canManage)
                                 {
                                     <UiButton Size="compact" Class="combat-initiative-overview-button" OnClick="() => ExecuteHeldActionRequested.InvokeAsync(action)">Jetzt ausführen</UiButton>
                                 }

@@ -19,6 +19,7 @@ public partial class CombatInitiativeOverview
     [Parameter] public EventCallback<CombatSessionParticipantDto> RollInitiativeRequested { get; set; }
     [Parameter] public Func<CombatSessionParticipantDto, bool>? CanRemoveOpponent { get; set; }
     [Parameter] public EventCallback<CombatSessionParticipantDto> RemoveOpponentRequested { get; set; }
+    [Parameter] public Func<CombatSessionParticipantDto, bool>? CanManageParticipantControls { get; set; }
     [Parameter] public Func<CombatSessionParticipantDto, IReadOnlyList<CombatSessionActionDto>>? ParticipantActions { get; set; }
     [Parameter] public Func<CombatSessionActionDto, bool>? IsOrientationAction { get; set; }
     [Parameter] public EventCallback<CombatSessionParticipantDto> ConsumeReactionRequested { get; set; }

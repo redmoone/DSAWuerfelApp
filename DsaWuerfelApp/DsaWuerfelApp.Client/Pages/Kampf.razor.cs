@@ -161,14 +161,15 @@ public partial class Kampf : IDisposable
         SelectedEnemyLePRange is null || _selectedEnemyLeP.HasValue;
 
     private bool CanApplyOpponentDrawer =>
-        IsManualOpponentSelection
+        IsMasterView &&
+        (IsManualOpponentSelection
             ? !string.IsNullOrWhiteSpace(_opponentNameDraft)
             : SelectedEnemyCatalogEntry is not null &&
               SelectedEnemyCombat is not null &&
               HasSelectedEnemyVariant &&
               HasSelectedEnemyAttack &&
               HasSelectedEnemyEquipment &&
-              HasSelectedEnemyLeP;
+              HasSelectedEnemyLeP);
 
     private string HeroDisplayName => ActiveHero?.Name ?? "Kein aktiver Held";
 
@@ -976,14 +977,14 @@ public partial class Kampf : IDisposable
             return false;
         }
 
-        return IsSessionMaster || string.Equals(
+        return IsMasterView || string.Equals(
             participant.OwnerUserId,
             AuthState.Current.User?.Id,
             StringComparison.Ordinal);
     }
 
     private bool CanRollParticipantInitiative(CombatSessionParticipantDto participant) =>
-        IsSessionMaster &&
+        IsMasterView &&
         participant.Kind == CombatParticipantKind.Opponent &&
         !participant.CurrentInitiative.HasValue &&
         participant.InitiativeBase.HasValue;
@@ -1019,7 +1020,29 @@ public partial class Kampf : IDisposable
     }
 
     private bool CanRemoveOpponent(CombatSessionParticipantDto participant) =>
-        IsSessionMaster && participant.Kind == CombatParticipantKind.Opponent;
+        IsMasterView && participant.Kind == CombatParticipantKind.Opponent;
+
+    private bool CanManageParticipantControls(CombatSessionParticipantDto participant)
+    {
+        if (!IsSessionCombat)
+        {
+            return false;
+        }
+
+        if (IsMasterView)
+        {
+            return true;
+        }
+
+        return participant.Kind == CombatParticipantKind.Hero &&
+               participant.HeroId == ActiveHero?.Id &&
+               string.Equals(participant.OwnerUserId,
+                   AuthState.Current.User?.Id,
+                   StringComparison.Ordinal);
+    }
+
+    private bool CanManageOwnSessionParticipant => OwnSessionParticipant is not null &&
+                                                   CanManageParticipantControls(OwnSessionParticipant);
 
     private async Task RemoveOpponentAsync(CombatSessionParticipantDto participant)
     {
@@ -1124,6 +1147,11 @@ public partial class Kampf : IDisposable
 
     private void OpenOrientationDrawer()
     {
+        if (IsSessionCombat && !CanManageOwnSessionParticipant)
+        {
+            return;
+        }
+
         _orientationReliefDraft = Profile?.KriegskunstValue is { } kriegskunst
             ? Math.Max(0, kriegskunst / 2)
             : 0;
@@ -1133,6 +1161,11 @@ public partial class Kampf : IDisposable
 
     private async Task OpenOpponentDrawer()
     {
+        if (!IsMasterView)
+        {
+            return;
+        }
+
         _participantDrawerMode = CombatParticipantDrawerMode.Opponent;
         _opponentNameDraft = string.Empty;
         _opponentAffiliationDraft = "Gegner";
@@ -1169,6 +1202,11 @@ public partial class Kampf : IDisposable
 
     private void OpenAnnouncementDrawer()
     {
+        if (!IsMasterView)
+        {
+            return;
+        }
+
         _participantDrawerMode = CombatParticipantDrawerMode.Announcement;
         _initiativeParticipantId = OwnSessionParticipant?.Id;
         _initiativeHeroId = ActiveHero?.Id;
@@ -1198,6 +1236,11 @@ public partial class Kampf : IDisposable
 
     private async Task ApplyParticipantDrawerAsync()
     {
+        if (!IsMasterView)
+        {
+            return;
+        }
+
         CombatSessionMutationResultDto result;
         if (_participantDrawerMode == CombatParticipantDrawerMode.Opponent)
         {
@@ -1456,6 +1499,12 @@ public partial class Kampf : IDisposable
 
     private async Task CompleteActionAsync(CombatSessionActionDto action)
     {
+        var participant = SessionCombat?.Participants.FirstOrDefault(item => item.Id == action.ParticipantId);
+        if (participant is null || !CanManageParticipantControls(participant))
+        {
+            return;
+        }
+
         var result = await CombatSessionState.CompleteActionAsync(
             action.Id,
             action.ParticipantId,
@@ -1467,6 +1516,11 @@ public partial class Kampf : IDisposable
 
     private async Task ConsumeReactionAsync(CombatSessionParticipantDto participant)
     {
+        if (!CanManageParticipantControls(participant))
+        {
+            return;
+        }
+
         var result = await CombatSessionState.ConsumeReactionAsync(participant.Id, participant.HeroId);
         _notice = result.Message;
     }
@@ -1480,18 +1534,35 @@ public partial class Kampf : IDisposable
 
     private async Task HoldActionAsync(CombatSessionActionDto action)
     {
+        var participant = SessionCombat?.Participants.FirstOrDefault(item => item.Id == action.ParticipantId);
+        if (participant is null || !CanManageParticipantControls(participant))
+        {
+            return;
+        }
+
         var result = await CombatSessionState.HoldActionAsync(action.Id, action.ParticipantId);
         _notice = result.Message;
     }
 
     private async Task ExecuteHeldActionAsync(CombatSessionActionDto action)
     {
+        var participant = SessionCombat?.Participants.FirstOrDefault(item => item.Id == action.ParticipantId);
+        if (participant is null || !CanManageParticipantControls(participant))
+        {
+            return;
+        }
+
         var result = await CombatSessionState.ExecuteHeldActionAsync(action.Id, action.ParticipantId);
         _notice = result.Message;
     }
 
     private async Task NewRoundAsync()
     {
+        if (!IsMasterView)
+        {
+            return;
+        }
+
         var result = await CombatSessionState.NewRoundAsync();
         _notice = result.Message;
     }
@@ -1511,7 +1582,7 @@ public partial class Kampf : IDisposable
 
     private async Task ApplyOrientationAsync()
     {
-        if (OwnSessionParticipant?.CurrentInitiative is null)
+        if (!CanManageOwnSessionParticipant || OwnSessionParticipant?.CurrentInitiative is null)
         {
             _notice = "Orientieren ist erst nach dem ersten Initiativewurf verfügbar.";
             return;
@@ -1530,6 +1601,12 @@ public partial class Kampf : IDisposable
 
     private async Task ResolveOrientationAsync(CombatSessionActionDto action)
     {
+        var participant = SessionCombat?.Participants.FirstOrDefault(item => item.Id == action.ParticipantId);
+        if (participant is null || !CanManageParticipantControls(participant))
+        {
+            return;
+        }
+
         var result = await CombatSessionState.ResolveOrientationAsync(
             action.Id,
             action.ParticipantId,
