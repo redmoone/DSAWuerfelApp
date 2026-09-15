@@ -54,7 +54,7 @@ async function readRows(page) {
     for (const page of [master, player]) {
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.goto(`${origin}/kampf`, { waitUntil: 'domcontentloaded' });
-      await page.locator('.combat-resource-strip').waitFor();
+      await page.locator('.hero-status-resources').waitFor();
       await page.locator('.combat-initiative-overview-list').waitFor();
       const overviewText = await page.locator('.combat-initiative-overview').innerText();
       assert.match(overviewText, /Vorbereitung|Noch kein gemeinsamer Startwurf/);
@@ -63,14 +63,17 @@ async function readRows(page) {
       assert.match(overviewText, /INI —/);
     }
 
-    const rollInitiative = page => page.locator('.combat-inline-initiative .combat-inline-action');
-    await rollInitiative(master).click();
+    const rollInitiative = async page => {
+      await page.locator('.combat-action-options button').filter({ hasText: 'Initiative' }).click();
+      await page.getByRole('button', { name: 'Initiative würfeln', exact: true }).click();
+    };
+    await rollInitiative(master);
     await waitFor(async () => !(await master.locator('.combat-initiative-overview-row').filter({ hasText: 'Held0' }).innerText()).includes('INI —'),
       'master initiative did not appear in the persistent overview');
     await waitFor(async () => (await readRows(player)).some(row => row.includes('Held0') && !row.includes('INI —')),
       'master initiative did not synchronize to the second session client');
 
-    await rollInitiative(player).click();
+    await rollInitiative(player);
     await player.waitForTimeout(500);
     await waitFor(async () => {
       const rows = await readRows(master);

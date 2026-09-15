@@ -17,7 +17,7 @@ const combatXml = `
     const page = pages[0];
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`${origin}/kampf`, { waitUntil: 'domcontentloaded' });
-    await page.locator('.combat-resource-strip').waitFor();
+    await page.locator('.hero-status-resources').waitFor();
 
     await page.getByRole('tab', { name: 'Eigenschaften', exact: true }).click();
     assert.equal(await page.locator('.combat-set-row').count(), 0);
