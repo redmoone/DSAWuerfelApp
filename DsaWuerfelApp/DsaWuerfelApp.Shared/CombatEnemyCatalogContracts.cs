@@ -93,6 +93,7 @@ public sealed record CombatEnemyCombatDto
     public CombatEnemyDefenseDto Defense { get; init; } = new();
     public CombatEnemyResourcesDto Resources { get; init; } = new();
     public CombatEnemyResistancesDto Resistances { get; init; } = new();
+    public CombatEnemyWoundsDto Wounds { get; init; } = new();
     public CombatEnemyMovementDto Movement { get; init; } = new();
     public int? AttackValue { get; init; }
     public int? RangedValue { get; init; }
@@ -146,6 +147,18 @@ public sealed record CombatEnemyResistancesDto
     public int? Mr { get; init; }
     public string? MrRaw { get; init; }
     public int? Gw { get; init; }
+}
+
+public sealed record CombatEnemyWoundsDto
+{
+    public CombatEnemyWoundThresholdDto Threshold { get; init; } = new();
+    public string? RuleRef { get; init; }
+}
+
+public sealed record CombatEnemyWoundThresholdDto
+{
+    public string? Kind { get; init; }
+    public int? Value { get; init; }
 }
 
 public sealed record CombatEnemyMovementDto
