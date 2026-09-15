@@ -23,7 +23,7 @@ const profiles = [
     expected: page => page.locator('.combat-page').innerText().then(text => {
       assert.match(text, /40/);
       assert.match(text, /AT 21/);
-      assert.match(text, /Nr\. 2/);
+      assert.match(text, /Nr\. 1/);
     })
   },
   {
@@ -48,7 +48,7 @@ const profiles = [
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.goto(`${origin}/kampf`, { waitUntil: 'domcontentloaded' });
       await page.locator('.combat-page').waitFor();
-      await page.locator('.combat-resource-strip').waitFor();
+      await page.locator('.hero-status-resources').waitFor();
       await profile.expected(page);
       await page.getByRole('tab', { name: 'Rüstung & Wunden', exact: true }).click();
       await page.locator('.combat-zone-row').first().waitFor();
@@ -85,7 +85,7 @@ const profiles = [
     await page.waitForFunction(() => /Kampfprofil|Kampfdaten|fehlen/i.test(document.querySelector('.combat-status-panel')?.textContent ?? ''));
     const emptyText = await page.locator('.combat-status-panel').innerText();
     assert.match(emptyText, /Kampfprofil|Kampfdaten|fehlen/i);
-    assert.equal(await page.locator('.combat-resource-strip').count(), 0);
+    assert.equal(await page.locator('.hero-status-resources').count(), 0);
     assert.equal(await page.locator('.combat-hit-capture').count(), 0);
     assert.equal(errors.length, 0, `empty browser errors: ${errors.join(' | ')}`);
   } finally {
@@ -99,7 +99,7 @@ const profiles = [
     for (const width of viewports) {
       await page.setViewportSize({ width, height: 520 });
       await page.goto(`${origin}/kampf`, { waitUntil: 'domcontentloaded' });
-      await page.locator('.combat-resource-strip').waitFor();
+      await page.locator('.hero-status-resources').waitFor();
       await page.getByRole('tab', { name: 'Rüstung & Wunden', exact: true }).click();
       await page.locator('.combat-zone-row').first().waitFor();
       const geometry = await page.evaluate(() => ({
