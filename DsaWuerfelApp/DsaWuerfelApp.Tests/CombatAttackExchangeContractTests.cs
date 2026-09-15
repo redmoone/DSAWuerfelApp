@@ -102,6 +102,41 @@ public sealed class CombatAttackExchangeContractTests
         Assert.False(CombatTargetRules.IsValidTarget(attacker, attacker));
     }
 
+    [Fact]
+    public void Target_rules_accept_explicit_zonal_armor_without_inventing_a_total_rs()
+    {
+        var attacker = new CombatSessionParticipantDto
+        {
+            Id = "hero:attacker",
+            Kind = CombatParticipantKind.Hero,
+            HeroId = Guid.NewGuid()
+        };
+        var zonalOpponent = new CombatSessionParticipantDto
+        {
+            Id = "opponent:zonal",
+            Kind = CombatParticipantKind.Opponent,
+            OpponentProfile = new CombatOpponentProfileDto(14, 12, null, null, 20)
+            {
+                Armor = new CombatEnemyArmorDto
+                {
+                    UsesZonalArmor = true,
+                    Chest = 3
+                }
+            }
+        };
+        var unknownArmorOpponent = zonalOpponent with
+        {
+            Id = "opponent:unknown",
+            OpponentProfile = zonalOpponent.OpponentProfile with
+            {
+                Armor = new CombatEnemyArmorDto { UsesZonalArmor = true }
+            }
+        };
+
+        Assert.True(CombatTargetRules.IsValidTarget(attacker, zonalOpponent));
+        Assert.False(CombatTargetRules.IsValidTarget(attacker, unknownArmorOpponent));
+    }
+
     private static CombatAttackExchangeDto ValidExchange() => new()
     {
         ExchangeId = "exchange-1",

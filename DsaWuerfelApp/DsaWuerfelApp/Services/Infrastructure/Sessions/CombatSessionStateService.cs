@@ -757,7 +757,10 @@ public sealed class CombatSessionStateService(
             var woundZone = mappedZone.WoundZone;
 
             var runtime = target.RuntimeState;
-            var currentLeP = runtime?.CurrentLeP ?? targetProfile?.Resources.LeP ?? target.OpponentProfile?.LeP;
+            var currentLeP = runtime?.CurrentLeP ??
+                             (target.Kind == CombatParticipantKind.Opponent
+                                 ? target.OpponentProfile?.LeP
+                                 : null);
             var wounds = runtime?.Wounds ?? CreateEmptyWounds();
             var currentWounds = wounds.TryGetValue(woundZone, out var woundValue) ? woundValue : null;
             var constitution = targetProfile?.Attributes
@@ -1361,6 +1364,10 @@ public sealed class CombatSessionStateService(
     {
         var participant = FindParticipant(current, request.ParticipantId, request.HeroId)
                           ?? throw Validation("Der Initiative-Teilnehmer wurde nicht gefunden.");
+        if (participant.CurrentInitiative.HasValue || participant.ActionBudget?.HeldActionId is not null)
+        {
+            throw Validation($"Für {participant.Name} liegt bereits ein Initiativewert vor. Bitte den aktuellen Wert korrigieren.");
+        }
         var initiativeInfo = await ResolveInitiativeInfoAsync(participant, request, userId, cancellationToken);
         if (!initiativeInfo.BaseValue.HasValue)
         {
@@ -2249,6 +2256,12 @@ public sealed class CombatSessionStateService(
         CombatSessionSnapshotDto current,
         CombatSessionMutationRequestDto _)
     {
+        if (current.ActiveExchange is { Status: not (CombatExchangeStatus.Completed or
+            CombatExchangeStatus.Cancelled or CombatExchangeStatus.Avoided) })
+        {
+            throw Validation("Der offene Angriffsaustausch muss zuerst abgeschlossen werden.");
+        }
+
         var openActions = current.Actions.Any(action => action.Round == current.Round &&
                                                          !action.IsReaction &&
                                                          action.State == CombatActionEntryState.Open);

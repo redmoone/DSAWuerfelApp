@@ -18,10 +18,24 @@ public sealed record CombatOpponentProfileDto(
     public CombatEnemyArmorDto? Armor { get; init; }
 
     public bool HasBasicCombatValues =>
+        (CatalogProfile is null || CatalogProfile.CombatReady) &&
         Attack.HasValue &&
         (Parry.HasValue || Dodge.HasValue) &&
-        ArmorRating.HasValue &&
+        HasKnownArmor &&
         LeP.HasValue;
+
+    private bool HasKnownArmor =>
+        ArmorRating.HasValue ||
+        Armor?.TotalRs.HasValue == true ||
+        (Armor?.UsesZonalArmor == true &&
+         (Armor.Head.HasValue ||
+          Armor.Chest.HasValue ||
+          Armor.Back.HasValue ||
+          Armor.Abdomen.HasValue ||
+          Armor.LeftArm.HasValue ||
+          Armor.RightArm.HasValue ||
+          Armor.LeftLeg.HasValue ||
+          Armor.RightLeg.HasValue));
 }
 
 public sealed record CombatActionBudgetDto
