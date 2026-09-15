@@ -20,9 +20,6 @@ public partial class CombatActionPanel
     [Parameter] public string? SelectedWeaponId { get; set; }
     [Parameter] public EventCallback<string> WeaponSelected { get; set; }
     [Parameter] public bool IsSessionCombat { get; set; }
-    [Parameter] public IReadOnlyList<CombatSessionParticipantDto> TargetParticipants { get; set; } = Array.Empty<CombatSessionParticipantDto>();
-    [Parameter] public string? SelectedTargetParticipantId { get; set; }
-    [Parameter] public EventCallback<string> TargetSelected { get; set; }
     [Parameter] public string SelectedAction { get; set; } = "attack";
     [Parameter] public EventCallback<string> ActionSelected { get; set; }
     [Parameter] public IReadOnlyList<ActionOption> Actions { get; set; } = Array.Empty<ActionOption>();
@@ -155,15 +152,6 @@ public partial class CombatActionPanel
             await WeaponSelected.InvokeAsync(value);
         }
     }
-
-    private Task HandleTargetChanged(ChangeEventArgs args)
-    {
-        var value = args.Value?.ToString();
-        return string.IsNullOrWhiteSpace(value) ? Task.CompletedTask : TargetSelected.InvokeAsync(value);
-    }
-
-    private static string GetTargetKindLabel(CombatSessionParticipantDto participant) =>
-        participant.Kind == CombatParticipantKind.Hero ? "Held" : "Gegner";
 
     private Task HandleSetChanged(ChangeEventArgs args)
     {

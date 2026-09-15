@@ -47,22 +47,54 @@
                     var actions = GetVisibleActions(participant);
                     <article class="combat-initiative-overview-row @(isCurrent ? "current" : string.Empty) @GetTurnClass(participant)"
                              aria-current="@(isCurrent ? "step" : null)">
-                        <div class="combat-initiative-overview-person">
-                            <div class="combat-initiative-overview-topline">
-                                <span class="combat-initiative-turn-label">@GetTurnLabel(participant)</span>
-                                <span class="combat-initiative-value">@FormatInitiative(participant.CurrentInitiative)</span>
+                        @if (IsTargetSelectable(participant))
+                        {
+                            <UiButton Variant="option"
+                                      Size="compact"
+                                      Class="@GetTargetClass(participant)"
+                                      Active="@IsSelectedTarget(participant)"
+                                      aria-pressed="@IsSelectedTarget(participant)"
+                                      aria-label="@(IsSelectedTarget(participant) ? $"{participant.Name}, ausgewähltes Ziel" : $"{participant.Name} als Ziel auswählen")"
+                                      OnClick="() => TargetSelected.InvokeAsync(participant.Id)">
+                                <div class="combat-initiative-overview-topline">
+                                    <span class="combat-initiative-turn-label">@GetTurnLabel(participant)</span>
+                                    <span class="combat-initiative-value">@FormatInitiative(participant.CurrentInitiative)</span>
+                                </div>
+                                <strong>@participant.Name</strong>
+                                <span>@GetAffiliation(participant)</span>
+                                @if (IsSelectedTarget(participant))
+                                {
+                                    <small class="combat-initiative-overview-target-label">Ziel</small>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(GetParticipantStatus(participant)))
+                                {
+                                    <small class="combat-initiative-overview-status">@GetParticipantStatus(participant)</small>
+                                }
+                                @if (participant.CurrentInitiative.HasValue && participant.InitiativeBase.HasValue && participant.CurrentInitiative != participant.InitiativeBase)
+                                {
+                                    <small>Basis @participant.InitiativeBase</small>
+                                }
+                            </UiButton>
+                        }
+                        else
+                        {
+                            <div class="combat-initiative-overview-person">
+                                <div class="combat-initiative-overview-topline">
+                                    <span class="combat-initiative-turn-label">@GetTurnLabel(participant)</span>
+                                    <span class="combat-initiative-value">@FormatInitiative(participant.CurrentInitiative)</span>
+                                </div>
+                                <strong>@participant.Name</strong>
+                                <span>@GetAffiliation(participant)</span>
+                                @if (!string.IsNullOrWhiteSpace(GetParticipantStatus(participant)))
+                                {
+                                    <small class="combat-initiative-overview-status">@GetParticipantStatus(participant)</small>
+                                }
+                                @if (participant.CurrentInitiative.HasValue && participant.InitiativeBase.HasValue && participant.CurrentInitiative != participant.InitiativeBase)
+                                {
+                                    <small>Basis @participant.InitiativeBase</small>
+                                }
                             </div>
-                            <strong>@participant.Name</strong>
-                            <span>@GetAffiliation(participant)</span>
-                            @if (!string.IsNullOrWhiteSpace(GetParticipantStatus(participant)))
-                            {
-                                <small class="combat-initiative-overview-status">@GetParticipantStatus(participant)</small>
-                            }
-                            @if (participant.CurrentInitiative.HasValue && participant.InitiativeBase.HasValue && participant.CurrentInitiative != participant.InitiativeBase)
-                            {
-                                <small>Basis @participant.InitiativeBase</small>
-                            }
-                        </div>
+                        }
 
                         <div class="combat-initiative-overview-flags">
                             <span class="combat-initiative-overview-flag @(participant.ActionAvailable ? "available" : string.Empty)">

@@ -135,28 +135,6 @@
             }
             else
             {
-                @if (IsSessionCombat)
-                {
-                    <div class="combat-target-choice">
-                        <label class="combat-field-label" for="combat-target-select">Ziel</label>
-                        <select id="combat-target-select"
-                                class="ui-select combat-target-select"
-                                aria-label="Angriffsziel auswählen"
-                                value="@SelectedTargetParticipantId"
-                                disabled="@IsBusy"
-                                @onchange="HandleTargetChanged">
-                            @if (TargetParticipants.Count == 0)
-                            {
-                                <option value="">Kein gültiges Ziel</option>
-                            }
-                            @foreach (var participant in TargetParticipants)
-                            {
-                                <option value="@participant.Id">@participant.Name · @GetTargetKindLabel(participant)</option>
-                            }
-                        </select>
-                    </div>
-                }
-
                 <details class="combat-loadout-details">
                     <summary>
                         <span class="combat-field-label">Kampfausrüstung</span>

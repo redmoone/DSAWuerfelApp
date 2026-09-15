@@ -19,6 +19,10 @@ public partial class CombatInitiativeOverview
     [Parameter] public EventCallback<CombatSessionParticipantDto> RollInitiativeRequested { get; set; }
     [Parameter] public Func<CombatSessionParticipantDto, bool>? CanRemoveOpponent { get; set; }
     [Parameter] public EventCallback<CombatSessionParticipantDto> RemoveOpponentRequested { get; set; }
+    [Parameter] public bool ShowTargetSelection { get; set; }
+    [Parameter] public string? SelectedTargetParticipantId { get; set; }
+    [Parameter] public Func<CombatSessionParticipantDto, bool>? CanSelectTarget { get; set; }
+    [Parameter] public EventCallback<string> TargetSelected { get; set; }
     [Parameter] public Func<CombatSessionParticipantDto, bool>? CanManageParticipantControls { get; set; }
     [Parameter] public Func<CombatSessionParticipantDto, IReadOnlyList<CombatSessionActionDto>>? ParticipantActions { get; set; }
     [Parameter] public Func<CombatSessionActionDto, bool>? IsOrientationAction { get; set; }
@@ -33,6 +37,16 @@ public partial class CombatInitiativeOverview
 
     private string? GetParticipantStatus(CombatSessionParticipantDto participant) =>
         ParticipantStatus?.Invoke(participant);
+
+    private bool IsTargetSelectable(CombatSessionParticipantDto participant) =>
+        ShowTargetSelection && (CanSelectTarget?.Invoke(participant) ?? false);
+
+    private bool IsSelectedTarget(CombatSessionParticipantDto participant) =>
+        IsTargetSelectable(participant) &&
+        string.Equals(SelectedTargetParticipantId, participant.Id, StringComparison.Ordinal);
+
+    private string GetTargetClass(CombatSessionParticipantDto participant) =>
+        $"combat-initiative-overview-person combat-initiative-overview-target {(IsSelectedTarget(participant) ? "is-target" : string.Empty)}";
 
     private IReadOnlyList<CombatSessionActionDto> GetVisibleActions(CombatSessionParticipantDto participant) =>
         ParticipantActions?.Invoke(participant)

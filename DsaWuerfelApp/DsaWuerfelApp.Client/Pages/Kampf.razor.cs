@@ -200,6 +200,7 @@ public partial class Kampf : IDisposable
         : SelectedAction == "initiative"
             ? CanRollInitiative
         : HasCombatContext && !_rollBusy && !_valueMutationBusy &&
+          (!IsAttackAction(GetActionKind()) || SelectedTargetParticipantId is not null) &&
           (GetActionKind() is not { } selectedKind ||
            CanUseActionBudget(selectedKind) ||
            CanRollOpenSessionAttack(selectedKind)) &&
@@ -283,7 +284,15 @@ public partial class Kampf : IDisposable
     private string? SelectedTargetParticipantId =>
         TargetParticipants.Any(participant => participant.Id == _selectedTargetParticipantId)
             ? _selectedTargetParticipantId
-            : TargetParticipants.FirstOrDefault()?.Id;
+            : null;
+
+    private bool CanSelectCombatTarget =>
+        IsSessionCombat && HasOwnSessionHero &&
+        (IsMasterView || CanManageOwnSessionParticipant) &&
+        IsAttackAction(GetActionKind());
+
+    private bool IsTargetSelectable(CombatSessionParticipantDto participant) =>
+        CanSelectCombatTarget && TargetParticipants.Any(target => target.Id == participant.Id);
 
     private string? ActiveExchangeAttackerName => SessionCombat?.ActiveExchange is { } exchange
         ? SessionCombat.Participants.FirstOrDefault(participant => participant.Id == exchange.AttackerParticipantId)?.Name
@@ -671,7 +680,11 @@ public partial class Kampf : IDisposable
 
     private Task HandleTargetSelected(string participantId)
     {
-        _selectedTargetParticipantId = participantId;
+        if (TargetParticipants.Any(participant => participant.Id == participantId))
+        {
+            _selectedTargetParticipantId = participantId;
+        }
+
         return Task.CompletedTask;
     }
 
@@ -1683,6 +1696,9 @@ public partial class Kampf : IDisposable
                ?? action.PhaseInitiative
                ?? int.MinValue;
     }
+
+    private static bool IsAttackAction(CombatActionKind? action) => action is
+        CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack;
 
     private IReadOnlyList<CombatSessionActionDto> GetParticipantActions(string participantId)
     {

@@ -108,6 +108,40 @@
     gap: 0.12rem;
 }
 
+.combat-initiative-overview-target.ui-button {
+    width: 100%;
+    min-height: 0;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 0;
+    border-color: transparent;
+    border-radius: 0.55rem;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+}
+
+.combat-initiative-overview-target.ui-button:hover:not(:disabled),
+.combat-initiative-overview-target.ui-button:focus-visible {
+    border-color: transparent;
+    background: rgba(212, 175, 55, 0.08);
+}
+
+.combat-initiative-overview-target.ui-button.is-active,
+.combat-initiative-overview-target.ui-button.is-active:hover:not(:disabled),
+.combat-initiative-overview-target.ui-button.is-active:focus-visible {
+    border-color: transparent;
+    background: transparent;
+}
+
+.combat-initiative-overview-target-label {
+    color: var(--dsa-gold);
+    font-size: 0.62rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
 .combat-initiative-overview-person strong {
     color: var(--dsa-white);
     font-size: 0.8rem;
