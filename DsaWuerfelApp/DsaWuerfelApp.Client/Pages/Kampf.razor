@@ -8,29 +8,56 @@
 <div class="combat-page">
     <div class="combat-shell">
         <section class="combat-status-surface panel-surface" aria-label="Kampfstatus">
-            <CombatStatusPanel HeroName="@HeroDisplayName"
-                               SessionName="@SessionState.ActiveSession?.Name"
-                               Profile="@Profile"
-                               IsLoading="@ProfileLoading"
-                               ErrorMessage="@ProfileError"
-                               CurrentLeP="@CurrentLeP"
-                               CurrentAuP="@CurrentAuP"
-                               CurrentAeP="@CurrentAeP"
-                               CurrentKeP="@CurrentKeP"
-                               CurrentInitiative="@CurrentInitiative"
-                               IsCombatStarted="@IsCombatStarted"
-                               CanStartCombat="@(!IsCombatStarted)"
-                               StartCombatRequested="InitializeCombatStateAsync"
-                               ResourceEditRequested="OpenResourceDrawer"
-                               ResourceValueChangedRequested="HandleResourceValueChanged"
-                               InitiativeValueChangedRequested="HandleInitiativeChanged"
-                               WoundsRequested="() => SetArea(CombatArea.Zonen)"
-                               CanUndo="@CanUndoCombat"
-                               UndoRequested="UndoLastChangeAsync"
-                               PersistenceWarning="@CombatState.PersistenceError"
-                               Wounds="@Wounds"
-                               Effects="@Effects"
-                               IsMutationBusy="@_valueMutationBusy" />
+            @if (CanSwitchCombatView)
+            {
+                <div class="combat-view-switch" aria-label="Kampfansicht">
+                    <span class="combat-view-switch-current">@(IsMasterView ? "Meisteransicht" : "Spieleransicht")</span>
+                    <UiButton Size="compact" OnClick="ToggleCombatView">
+                        @(IsMasterView ? "Spieleransicht öffnen" : "Meisteransicht öffnen")
+                    </UiButton>
+                </div>
+            }
+
+            @if (NeedsOwnHeroPlaceholder)
+            {
+                <div class="combat-hero-placeholder" role="status">
+                    <p class="combat-kicker">@(IsMasterView ? "Meisteransicht" : "Spieleransicht")</p>
+                    <strong>@(SessionCombat is null ? "Sessionstand wird geladen" : "Kein eigener Held in dieser Session")</strong>
+                    <span>
+                        @(SessionCombat is null
+                            ? "Die Kampfdaten werden geladen."
+                            : IsMasterView
+                                ? "Die Sessionverwaltung bleibt verfügbar; für eigene Kampfaktionen muss ein eigener Held ausgewählt sein."
+                                : "Wähle in der Session einen eigenen Helden, um dessen Kampfwerte und Aktionen zu sehen.")
+                    </span>
+                </div>
+            }
+            else
+            {
+                <CombatStatusPanel HeroName="@HeroDisplayName"
+                                   SessionName="@SessionState.ActiveSession?.Name"
+                                   Profile="@Profile"
+                                   IsLoading="@ProfileLoading"
+                                   ErrorMessage="@ProfileError"
+                                   CurrentLeP="@CurrentLeP"
+                                   CurrentAuP="@CurrentAuP"
+                                   CurrentAeP="@CurrentAeP"
+                                   CurrentKeP="@CurrentKeP"
+                                   CurrentInitiative="@CurrentInitiative"
+                                   IsCombatStarted="@IsCombatStarted"
+                                   CanStartCombat="@(!IsCombatStarted)"
+                                   StartCombatRequested="InitializeCombatStateAsync"
+                                   ResourceEditRequested="OpenResourceDrawer"
+                                   ResourceValueChangedRequested="HandleResourceValueChanged"
+                                   InitiativeValueChangedRequested="HandleInitiativeChanged"
+                                   WoundsRequested="() => SetArea(CombatArea.Zonen)"
+                                   CanUndo="@CanUndoCombat"
+                                   UndoRequested="UndoLastChangeAsync"
+                                   PersistenceWarning="@CombatState.PersistenceError"
+                                   Wounds="@Wounds"
+                                   Effects="@Effects"
+                                   IsMutationBusy="@_valueMutationBusy" />
+            }
         </section>
 
         <div class="combat-content-grid">
@@ -82,67 +109,87 @@
                          class="combat-tab-panel panel-surface"
                          role="tabpanel"
                          aria-label="@(ActiveArea == CombatArea.Kampf ? "Kampf" : "Eigenschaften")">
-                    <CombatActionPanel Sets="@Sets"
-                                       IsLoading="@ProfileLoading"
-                                       SelectedSetId="@SelectedSetId"
-                                       SetSelected="HandleSetSelected"
-                                       IsSessionCombat="@IsSessionCombat"
-                                       TargetParticipants="@TargetParticipants"
-                                       SelectedTargetParticipantId="@SelectedTargetParticipantId"
-                                       TargetSelected="HandleTargetSelected"
-                                       AttributeMode="@IsAttributeMode"
-                                       Weapons="@Weapons"
-                                       SelectedWeaponId="@SelectedWeaponId"
-                                       WeaponSelected="HandleWeaponSelected"
-                                       SelectedAction="@SelectedAction"
-                                       ActionSelected="HandleActionSelected"
-                                       Actions="@Actions"
-                                       Maneuvers="@Maneuvers"
-                                       SelectedProbe="@SelectedProbe"
-                                       ProbeSelected="HandleProbeSelected"
-                                       Attributes="@Attributes"
-                                       SelectedAttributes="@SelectedAttributes"
-                                       AttributeSelected="HandleAttributeSelected"
-                                       AttributeRemoved="HandleAttributeRemoved"
-                                       Modifier="@Modifier"
-                                       ModifierChanged="HandleModifierChanged"
-                                       RollText="@RollText"
-                                       RollTextChanged="HandleRollTextChanged"
-                                       ResetRequested="ResetAction"
-                                       RollRequested="HandleRollRequested"
-                                       CanRoll="@CanRoll"
-                                       IsBusy="@_rollBusy"
-                                       BaseTarget="@GetActionBaseValue()"
-                                       EffectiveTarget="@EffectiveTarget"
-                                       Facing="@Facing"
-                                       FacingChanged="HandleFacingChanged"
-                                       CombatResult="@CombatResult"
-                                       ActiveExchange="@SessionCombat?.ActiveExchange"
-                                       ActiveExchangeAttackerName="@ActiveExchangeAttackerName"
-                                       ActiveExchangeTargetName="@ActiveExchangeTargetName"
-                                       CanRespondToExchange="@CanRespondToExchange"
-                                       CanAdvanceExchange="@CanAdvanceExchange"
-                                       HasExchangeZone="@HasExchangeZone"
-                                       ExchangeActionRequested="HandleExchangeActionAsync"
-                                       AttributeResult="@AttributeResult"
-                                       CanConsumeReaction="@CanConsumeReaction"
-                                       ConsumeReactionRequested="ConsumeReactionFromResultAsync"
-                                       ResultDiceSides="@ResultDiceSides"
-                                       ResultDiceValues="@ResultDiceValues"
-                                       ResultVersion="@ResultVersion" />
+                    @if (NeedsOwnHeroPlaceholder)
+                    {
+                        <div class="combat-hero-placeholder combat-hero-placeholder--workspace" role="status">
+                            <strong>Keine eigenen Kampfaktionen verfügbar</strong>
+                            <span>Dieser Bereich zeigt erst Werte und Aktionen des eigenen Helden, wenn er der Session zugeordnet ist.</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <CombatActionPanel Sets="@Sets"
+                                           IsLoading="@ProfileLoading"
+                                           SelectedSetId="@SelectedSetId"
+                                           SetSelected="HandleSetSelected"
+                                           IsSessionCombat="@IsSessionCombat"
+                                           TargetParticipants="@TargetParticipants"
+                                           SelectedTargetParticipantId="@SelectedTargetParticipantId"
+                                           TargetSelected="HandleTargetSelected"
+                                           AttributeMode="@IsAttributeMode"
+                                           Weapons="@Weapons"
+                                           SelectedWeaponId="@SelectedWeaponId"
+                                           WeaponSelected="HandleWeaponSelected"
+                                           SelectedAction="@SelectedAction"
+                                           ActionSelected="HandleActionSelected"
+                                           Actions="@Actions"
+                                           Maneuvers="@Maneuvers"
+                                           SelectedProbe="@SelectedProbe"
+                                           ProbeSelected="HandleProbeSelected"
+                                           Attributes="@Attributes"
+                                           SelectedAttributes="@SelectedAttributes"
+                                           AttributeSelected="HandleAttributeSelected"
+                                           AttributeRemoved="HandleAttributeRemoved"
+                                           Modifier="@Modifier"
+                                           ModifierChanged="HandleModifierChanged"
+                                           RollText="@RollText"
+                                           RollTextChanged="HandleRollTextChanged"
+                                           ResetRequested="ResetAction"
+                                           RollRequested="HandleRollRequested"
+                                           CanRoll="@CanRoll"
+                                           IsBusy="@_rollBusy"
+                                           BaseTarget="@GetActionBaseValue()"
+                                           EffectiveTarget="@EffectiveTarget"
+                                           Facing="@Facing"
+                                           FacingChanged="HandleFacingChanged"
+                                           CombatResult="@CombatResult"
+                                           ActiveExchange="@SessionCombat?.ActiveExchange"
+                                           ActiveExchangeAttackerName="@ActiveExchangeAttackerName"
+                                           ActiveExchangeTargetName="@ActiveExchangeTargetName"
+                                           CanRespondToExchange="@CanRespondToExchange"
+                                           CanAdvanceExchange="@CanAdvanceExchange"
+                                           HasExchangeZone="@HasExchangeZone"
+                                           ExchangeActionRequested="HandleExchangeActionAsync"
+                                           AttributeResult="@AttributeResult"
+                                           CanConsumeReaction="@CanConsumeReaction"
+                                           ConsumeReactionRequested="ConsumeReactionFromResultAsync"
+                                           ResultDiceSides="@ResultDiceSides"
+                                           ResultDiceValues="@ResultDiceValues"
+                                           ResultVersion="@ResultVersion" />
+                    }
                 </section>
             }
             else if (ActiveArea == CombatArea.Zonen)
             {
                 <section id="combat-tab-ruestung" class="combat-tab-panel panel-surface" role="tabpanel" aria-label="Rüstung und Wunden">
-                    <CombatBodyPanel SelectedSet="@SelectedSet"
-                                     Facing="@Facing"
-                                     FacingChanged="HandleFacingChanged"
-                                     SelectedZone="@SelectedZone"
-                                     ZoneSelected="HandleZoneSelected"
-                                     Wounds="@Wounds"
-                                     WoundChanged="HandleWoundChanged"
-                                     IsBusy="@_valueMutationBusy" />
+                    @if (NeedsOwnHeroPlaceholder)
+                    {
+                        <div class="combat-hero-placeholder combat-hero-placeholder--workspace" role="status">
+                            <strong>Keine eigene Rüstung oder Wunden verfügbar</strong>
+                            <span>Die Zonenansicht gehört immer zum eigenen Helden der aktuellen Session.</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <CombatBodyPanel SelectedSet="@SelectedSet"
+                                         Facing="@Facing"
+                                         FacingChanged="HandleFacingChanged"
+                                         SelectedZone="@SelectedZone"
+                                         ZoneSelected="HandleZoneSelected"
+                                         Wounds="@Wounds"
+                                         WoundChanged="HandleWoundChanged"
+                                         IsBusy="@_valueMutationBusy" />
+                    }
                 </section>
             }
             else

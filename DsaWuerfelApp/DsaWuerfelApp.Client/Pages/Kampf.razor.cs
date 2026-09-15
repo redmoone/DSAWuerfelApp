@@ -50,6 +50,9 @@ public partial class Kampf : IDisposable
     private CombatParticipantDrawerMode _participantDrawerMode;
     private RollHistoryEntryDto? _selectedHistoryEntry;
     private string? _selectedTargetParticipantId;
+    private string? _viewSessionId;
+    private bool _combatViewInitialized;
+    private bool _isMasterView;
 
     private Hero? ActiveHero => ActiveHeroState.CurrentHero;
     private CombatProfileDto? Profile => CombatState.Profile;
@@ -77,7 +80,11 @@ public partial class Kampf : IDisposable
     private int? CurrentKeP => CombatState.CurrentKeP;
     private CombatSessionSnapshotDto? SessionCombat => CombatSessionState.Current;
     private CombatSessionParticipantDto? OwnSessionParticipant => SessionCombat?.Participants
-        .FirstOrDefault(participant => participant.HeroId == ActiveHero?.Id);
+        .FirstOrDefault(participant => participant.Kind == CombatParticipantKind.Hero &&
+                                       participant.HeroId == ActiveHero?.Id &&
+                                       string.Equals(participant.OwnerUserId,
+                                           AuthState.Current.User?.Id,
+                                           StringComparison.Ordinal));
     private int? CurrentInitiative => IsSessionCombat
         ? OwnSessionParticipant?.CurrentInitiative
         : CombatState.CurrentInitiative;
@@ -92,6 +99,10 @@ public partial class Kampf : IDisposable
     private bool IsSessionMaster => IsSessionCombat &&
                                     string.Equals(SessionState.ActiveSession?.MasterUserId,
                                         AuthState.Current.User?.Id, StringComparison.Ordinal);
+    private bool HasOwnSessionHero => !IsSessionCombat || OwnSessionParticipant is not null;
+    private bool CanSwitchCombatView => IsSessionCombat && IsSessionMaster && _combatViewInitialized;
+    private bool IsMasterView => CanSwitchCombatView && _isMasterView;
+    private bool NeedsOwnHeroPlaceholder => IsSessionCombat && !HasOwnSessionHero;
 
     private string? SelectedSetId => CombatState.SelectedSetId;
     private string? SelectedWeaponId => CombatState.SelectedWeaponId;
@@ -341,6 +352,7 @@ public partial class Kampf : IDisposable
         CombatCoordinator.Attach();
         await CombatState.EnsureLoadedAsync();
         await CombatSessionState.EnsureLoadedAsync();
+        EnsureCombatViewState();
         _lastContextKey = CombatState.ContextKey;
         await WuerfelFacade.AttachAsync();
     }
@@ -354,7 +366,11 @@ public partial class Kampf : IDisposable
         WuerfelFacade.Detach();
     }
 
-    private void HandleStateChanged() => _ = InvokeAsync(StateHasChanged);
+    private void HandleStateChanged()
+    {
+        EnsureCombatViewState();
+        _ = InvokeAsync(StateHasChanged);
+    }
 
     private void HandleCombatStateChanged()
     {
@@ -368,6 +384,53 @@ public partial class Kampf : IDisposable
         }
 
         _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void EnsureCombatViewState()
+    {
+        var sessionId = SessionState.ActiveSessionId;
+        if (!string.Equals(_viewSessionId, sessionId, StringComparison.Ordinal))
+        {
+            _viewSessionId = sessionId;
+            _combatViewInitialized = false;
+            _isMasterView = false;
+        }
+
+        if (!IsSessionCombat)
+        {
+            _isMasterView = false;
+            _combatViewInitialized = true;
+            return;
+        }
+
+        if (_combatViewInitialized)
+        {
+            if (!IsSessionMaster)
+            {
+                _isMasterView = false;
+            }
+
+            return;
+        }
+
+        if (SessionState.ActiveSession is null || SessionCombat is null)
+        {
+            return;
+        }
+
+        _isMasterView = IsSessionMaster && !HasOwnSessionHero;
+        _combatViewInitialized = true;
+    }
+
+    private void ToggleCombatView()
+    {
+        if (!CanSwitchCombatView)
+        {
+            return;
+        }
+
+        _isMasterView = !_isMasterView;
+        _notice = null;
     }
 
     private async Task HandleSetSelected(string setId)
