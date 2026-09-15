@@ -249,6 +249,30 @@ public sealed class CombatSessionState : IDisposable
             OpponentProfile = opponentProfile
         }, cancellationToken);
 
+    public Task<CombatSessionMutationResultDto> AddCatalogEnemyAsync(
+        CombatEnemySelectionDto selection,
+        string? name = null,
+        int? initiative = null,
+        string? affiliation = null,
+        int initiativeCorrection = 0,
+        CancellationToken cancellationToken = default) => MutateAsync(new CombatSessionMutationRequestDto
+        {
+            Kind = CombatSessionMutationKind.AddOpponent,
+            Name = name,
+            Initiative = initiative,
+            InitiativeCorrection = initiativeCorrection,
+            Affiliation = affiliation,
+            EnemySelection = selection
+        }, cancellationToken);
+
+    public Task<CombatSessionMutationResultDto> RemoveOpponentAsync(
+        string participantId,
+        CancellationToken cancellationToken = default) => MutateAsync(new CombatSessionMutationRequestDto
+        {
+            Kind = CombatSessionMutationKind.RemoveOpponent,
+            ParticipantId = participantId
+        }, cancellationToken);
+
     public Task<CombatSessionMutationResultDto> NewRoundAsync(
         CancellationToken cancellationToken = default) => MutateAsync(new CombatSessionMutationRequestDto
         {

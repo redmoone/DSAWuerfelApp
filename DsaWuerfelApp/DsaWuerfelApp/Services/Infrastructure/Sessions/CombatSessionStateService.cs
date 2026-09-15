@@ -13,7 +13,8 @@ public sealed class CombatSessionStateService(
     SessionRuntimeState runtimeState,
     SessionRecordStore recordStore,
     DiceService diceService,
-    IServiceScopeFactory scopeFactory)
+    IServiceScopeFactory scopeFactory,
+    CombatEnemyProfileAdapter enemyAdapter)
 {
     private const int MaxAppliedRequestIds = 128;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -872,7 +873,13 @@ public sealed class CombatSessionStateService(
                     break;
                 case CombatSessionMutationKind.AddOpponent:
                     EnsureMaster(session, userId);
-                    (next, description) = AddOpponent(current, request);
+                    (next, description) = request.EnemySelection is null
+                        ? AddOpponent(current, request)
+                        : AddCatalogOpponent(current, request, enemyAdapter);
+                    break;
+                case CombatSessionMutationKind.RemoveOpponent:
+                    EnsureMaster(session, userId);
+                    (next, description) = RemoveOpponent(current, request);
                     break;
                 case CombatSessionMutationKind.NewRound:
                     EnsureMaster(session, userId);
@@ -1658,6 +1665,111 @@ public sealed class CombatSessionStateService(
         }, $"Gegner {name} hinzugefügt");
     }
 
+    private static (CombatSessionSnapshotDto Snapshot, string Description) AddCatalogOpponent(
+        CombatSessionSnapshotDto current,
+        CombatSessionMutationRequestDto request,
+        CombatEnemyProfileAdapter enemyAdapter)
+    {
+        var selection = request.EnemySelection
+                        ?? throw Validation("Für einen Kataloggegner muss ein Profil ausgewählt sein.");
+        var adapted = enemyAdapter.Resolve(selection);
+        if (!adapted.IsValid || adapted.Profile is null)
+        {
+            throw Validation(adapted.Message ?? "Das Gegnerprofil konnte nicht aufgelöst werden.");
+        }
+
+        var profile = adapted.Profile;
+        var name = string.IsNullOrWhiteSpace(request.Name) ? profile.Name : request.Name.Trim();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw Validation("Gegner brauchen mindestens einen Namen.");
+        }
+
+        var initiative = request.Initiative;
+        var opponentProfile = new CombatOpponentProfileDto(
+            profile.Attack,
+            profile.Parry,
+            profile.Dodge,
+            profile.Armor.TotalRs,
+            profile.LeP,
+            profile.WoundThreshold)
+        {
+            CatalogProfile = profile
+        };
+        var participant = new CombatSessionParticipantDto
+        {
+            Id = $"opponent:{Guid.NewGuid():N}",
+            Name = name,
+            Kind = CombatParticipantKind.Opponent,
+            Affiliation = string.IsNullOrWhiteSpace(request.Affiliation) ? "Gegner" : request.Affiliation.Trim(),
+            OpponentProfile = opponentProfile,
+            InitiativeBase = profile.InitiativeBase,
+            InitiativeDiceCount = Math.Clamp(profile.InitiativeDiceCount, 1, 2),
+            CurrentInitiative = initiative,
+            InitiativeCorrection = initiative.HasValue && profile.InitiativeBase.HasValue
+                ? initiative.Value - profile.InitiativeBase.Value
+                : request.InitiativeCorrection,
+            RuntimeState = new CombatRuntimeStateDto
+            {
+                IsStarted = true,
+                CurrentLeP = profile.LeP,
+                CurrentAuP = profile.AuP,
+                Wounds = CreateEmptyWounds()
+            },
+            ActionBudget = new CombatActionBudgetDto(),
+            ActionAvailable = initiative.HasValue,
+            ReactionAvailable = true
+        };
+        var actions = initiative.HasValue
+            ? current.Actions.Append(CreateNormalAction(participant, current.Round)).ToArray()
+            : current.Actions;
+        return (current with
+        {
+            IsStarted = current.IsStarted || initiative.HasValue,
+            Participants = current.Participants.Append(participant).ToArray(),
+            Actions = actions
+        }, $"Gegner {name} hinzugefügt");
+    }
+
+    private static (CombatSessionSnapshotDto Snapshot, string Description) RemoveOpponent(
+        CombatSessionSnapshotDto current,
+        CombatSessionMutationRequestDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.ParticipantId))
+        {
+            throw Validation("Zum Entfernen muss ein Gegner ausgewählt sein.");
+        }
+
+        var participant = current.Participants.FirstOrDefault(item =>
+            string.Equals(item.Id, request.ParticipantId.Trim(), StringComparison.Ordinal));
+        if (participant is null)
+        {
+            throw Validation("Der ausgewählte Gegner gehört nicht zu diesem Kampf.");
+        }
+
+        if (participant.Kind != CombatParticipantKind.Opponent)
+        {
+            throw Validation("Nur Gegner können aus der Gegnerverwaltung entfernt werden.");
+        }
+
+        if (current.ActiveExchange is not null &&
+            (string.Equals(current.ActiveExchange.AttackerParticipantId, participant.Id, StringComparison.Ordinal) ||
+             string.Equals(current.ActiveExchange.TargetParticipantId, participant.Id, StringComparison.Ordinal)))
+        {
+            throw Validation("Der Gegner kann während eines offenen Angriffsaustauschs nicht entfernt werden.");
+        }
+
+        return (current with
+        {
+            Participants = current.Participants
+                .Where(item => !string.Equals(item.Id, participant.Id, StringComparison.Ordinal))
+                .ToArray(),
+            Actions = current.Actions
+                .Where(action => !string.Equals(action.ParticipantId, participant.Id, StringComparison.Ordinal))
+                .ToArray()
+        }, $"Gegner {participant.Name} entfernt");
+    }
+
     private static (CombatSessionSnapshotDto Snapshot, string Description) NewRound(
         CombatSessionSnapshotDto current,
         CombatSessionMutationRequestDto _)
@@ -1924,7 +2036,9 @@ public sealed class CombatSessionStateService(
         CombatSessionMutationRequestDto request,
         string userId)
     {
-        if (request.Kind is CombatSessionMutationKind.NewRound or CombatSessionMutationKind.AddOpponent)
+        if (request.Kind is CombatSessionMutationKind.NewRound or
+            CombatSessionMutationKind.AddOpponent or
+            CombatSessionMutationKind.RemoveOpponent)
         {
             return new AuthorizationResult(string.Equals(session.MasterUserId, userId, StringComparison.Ordinal),
                 "Nur der Sitzungsleiter darf die Runde und Gegnerverwaltung ändern.");

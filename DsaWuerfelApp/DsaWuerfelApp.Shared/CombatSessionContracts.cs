@@ -14,6 +14,8 @@ public sealed record CombatOpponentProfileDto(
     int? LeP,
     int? WoundThreshold = null)
 {
+    public CombatEnemyResolvedProfileDto? CatalogProfile { get; init; }
+
     public bool HasBasicCombatValues =>
         Attack.HasValue &&
         (Parry.HasValue || Dodge.HasValue) &&
@@ -77,7 +79,8 @@ public enum CombatSessionMutationKind
     Undo,
     SetAnnouncement,
     Orient,
-    ResolveOrientation
+    ResolveOrientation,
+    RemoveOpponent
 }
 
 public sealed record CombatSessionParticipantDto
@@ -163,6 +166,7 @@ public sealed record CombatSessionMutationRequestDto
     public string? WeaponName { get; init; }
     public string? Affiliation { get; init; }
     public CombatOpponentProfileDto? OpponentProfile { get; init; }
+    public CombatEnemySelectionDto? EnemySelection { get; init; }
     public int? InitiativeBase { get; init; }
     public int? Initiative { get; init; }
     public int InitiativeCorrection { get; init; }
