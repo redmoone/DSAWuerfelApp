@@ -1,4 +1,8 @@
+using System.Net;
+using System.Net.Http.Json;
+
 using DsaWuerfelApp.Services;
+using DsaWuerfelApp.Shared;
 using DsaWuerfelApp.Tests.Infrastructure;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -7,6 +11,25 @@ namespace DsaWuerfelApp.Tests;
 
 public sealed class CombatEnemyCatalogBoundaryTests
 {
+    [Fact]
+    public async Task Authenticated_catalog_endpoint_returns_all_dsa41_profiles()
+    {
+        using var factory = new TestApplicationFactory();
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User-Id", "catalog-user");
+
+        using var response = await client.GetAsync("/api/dice/combat-enemies");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var enemies = await response.Content.ReadFromJsonAsync<CombatEnemyCatalogEntryDto[]>();
+        Assert.NotNull(enemies);
+        Assert.Equal(25, enemies!.Length);
+        Assert.All(
+            new[] { "goblin", "mittellaender", "ork", "zwerg" },
+            id => Assert.Contains(enemies, enemy => enemy.Id == id));
+        Assert.All(enemies, enemy => Assert.Contains(enemy.SourceRefs, source => !string.IsNullOrWhiteSpace(source.SourceId)));
+    }
+
     [Fact]
     public void Catalog_is_strict_dsa41_and_contains_all_expected_profiles()
     {
