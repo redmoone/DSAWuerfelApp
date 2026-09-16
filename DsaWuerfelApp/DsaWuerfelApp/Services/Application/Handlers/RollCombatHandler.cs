@@ -39,24 +39,61 @@ public sealed partial class RollCombatHandler(
         await combatSessionStateService.EnsureRollAvailabilityAsync(request, userId, cancellationToken);
 
         var resolvedPlayerName = string.IsNullOrWhiteSpace(playerName) ? "Unbekannt" : playerName.Trim();
-        if (!string.IsNullOrWhiteSpace(request.SessionId) &&
-            !string.IsNullOrWhiteSpace(request.ParticipantId))
+        CombatSessionSnapshotDto? sessionSnapshot = null;
+        CombatSessionParticipantDto? sessionParticipant = null;
+        if (!string.IsNullOrWhiteSpace(request.SessionId))
         {
-            var sessionSnapshot = await combatSessionStateService.GetAsync(
+            sessionSnapshot = await combatSessionStateService.GetAsync(
                 request.SessionId,
                 userId,
                 cancellationToken);
-            var opponent = sessionSnapshot.Participants.FirstOrDefault(participant =>
-                string.Equals(participant.Id, request.ParticipantId.Trim(), StringComparison.Ordinal));
-            if (opponent?.Kind == CombatParticipantKind.Opponent)
+
+            sessionParticipant = !string.IsNullOrWhiteSpace(request.ParticipantId)
+                ? sessionSnapshot.Participants.FirstOrDefault(participant =>
+                    string.Equals(participant.Id, request.ParticipantId.Trim(), StringComparison.Ordinal))
+                : request.HeroId.HasValue
+                    ? sessionSnapshot.Participants.FirstOrDefault(participant =>
+                        participant.Kind == CombatParticipantKind.Hero && participant.HeroId == request.HeroId)
+                    : null;
+
+            if (!string.IsNullOrWhiteSpace(request.ParticipantId) && sessionParticipant is null)
             {
+                throw Validation("Der Kampfwurf gehÃ¶rt nicht zu einem Teilnehmer dieser Session.");
+            }
+
+            if (sessionParticipant is not null)
+            {
+                if (sessionParticipant.Kind == CombatParticipantKind.Hero &&
+                    request.HeroId.HasValue && request.HeroId != sessionParticipant.HeroId)
+                {
+                    throw Validation("Der Kampfwurf gehÃ¶rt nicht zum ausgewÃ¤hlten Helden.");
+                }
+
+                if (sessionParticipant.Kind == CombatParticipantKind.Opponent && request.HeroId.HasValue)
+                {
+                    throw Validation("Ein Gegnerkampf verwendet keine Helden-ID.");
+                }
+
+                request = request with
+                {
+                    ParticipantId = sessionParticipant.Id,
+                    HeroId = sessionParticipant.Kind == CombatParticipantKind.Hero
+                        ? sessionParticipant.HeroId
+                        : null,
+                    // Session rolls always use the authoritative runtime snapshot.
+                    RuntimeState = sessionParticipant.RuntimeState
+                };
                 await combatSessionStateService.EnsureParticipantRollAccessAsync(
                     request,
                     userId,
                     cancellationToken);
+            }
+
+            if (sessionParticipant?.Kind == CombatParticipantKind.Opponent)
+            {
                 var opponentResult = RollOpponent(
                     request,
-                    opponent,
+                    sessionParticipant,
                     sessionSnapshot,
                     resolvedPlayerName,
                     userId);

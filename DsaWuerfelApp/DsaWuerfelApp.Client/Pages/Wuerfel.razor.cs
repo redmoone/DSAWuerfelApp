@@ -9,6 +9,9 @@ namespace DsaWuerfelApp.Client.Pages;
 
 public partial class Wuerfel : IDisposable
 {
+    private static readonly IReadOnlyDictionary<CombatWoundZone, int?> EmptySessionWounds =
+        new Dictionary<CombatWoundZone, int?>();
+
     private readonly int[] _availableSides = [4, 6, 8, 10, 12, 20];
     private readonly HashSet<string> _selectedMasterTargetUserIds = new(StringComparer.Ordinal);
 
@@ -39,17 +42,29 @@ public partial class Wuerfel : IDisposable
     private bool CombatProfileLoading => CombatState.IsProfileLoading;
     private string? CombatProfileError => CombatState.ProfileError;
     private CombatSetVariantDto? CombatSelectedSet => CombatState.SelectedSet;
-    private int? CombatCurrentLeP => CombatState.CurrentLeP;
-    private int? CombatCurrentAuP => CombatState.CurrentAuP;
+    private CombatRuntimeStateDto? CombatSessionRuntimeState =>
+        CombatIsSession ? OwnCombatParticipant?.RuntimeState : null;
+    private int? CombatCurrentLeP => CombatIsSession
+        ? CombatSessionRuntimeState?.CurrentLeP
+        : CombatState.CurrentLeP;
+    private int? CombatCurrentAuP => CombatIsSession
+        ? CombatSessionRuntimeState?.CurrentAuP
+        : CombatState.CurrentAuP;
     private int? CombatCurrentAeP => CombatState.CurrentAeP;
     private int? CombatCurrentKeP => CombatState.CurrentKeP;
-    private IReadOnlyDictionary<CombatWoundZone, int?> CombatWounds => CombatState.Wounds;
+    private IReadOnlyDictionary<CombatWoundZone, int?> CombatWounds => CombatIsSession
+        ? CombatSessionRuntimeState?.Wounds ?? EmptySessionWounds
+        : CombatState.Wounds;
     private IReadOnlyList<string> CombatEffects => CombatState.Effects;
     private CombatFacing CombatFacing => CombatState.Facing;
     private CombatWoundZone? CombatSelectedZone => CombatState.SelectedZone;
     private CombatSessionSnapshotDto? CombatSession => CombatSessionState.Current;
     private CombatSessionParticipantDto? OwnCombatParticipant => CombatSession?.Participants
-        .FirstOrDefault(participant => participant.HeroId == CombatHero?.Id);
+        .FirstOrDefault(participant => participant.Kind == CombatParticipantKind.Hero &&
+                                       participant.HeroId == CombatHero?.Id &&
+                                       string.Equals(participant.OwnerUserId,
+                                           AuthState.Current.User?.Id,
+                                           StringComparison.Ordinal));
     private bool CombatIsSession => !string.IsNullOrWhiteSpace(SessionState.ActiveSessionId);
     private int? CombatCurrentInitiative => CombatIsSession
         ? OwnCombatParticipant?.CurrentInitiative
@@ -321,7 +336,8 @@ public partial class Wuerfel : IDisposable
         try
         {
             await CombatState.SetResourceAsync(change.Resource, change.Value);
-            var sessionResult = await SyncCombatSessionRuntimeStateAsync();
+            var sessionResult = await SyncCombatSessionRuntimeStateAsync(
+                runtimeState: BuildLocalCombatRuntimeState());
             if (sessionResult?.Stale == true)
             {
                 _combatNotice = sessionResult.Message;
@@ -401,7 +417,8 @@ public partial class Wuerfel : IDisposable
             return;
         }
 
-        var sessionResult = await SyncCombatSessionRuntimeStateAsync();
+        var sessionResult = await SyncCombatSessionRuntimeStateAsync(
+            runtimeState: BuildLocalCombatRuntimeState());
         _combatNotice = sessionResult?.Stale == true
             ? sessionResult.Message
             : "Laufende Kampfwerte mit den importierten Maximalwerten initialisiert.";
@@ -415,7 +432,8 @@ public partial class Wuerfel : IDisposable
         }
 
         await CombatState.SetResourceAsync(resource, _combatResourceDraft);
-        var sessionResult = await SyncCombatSessionRuntimeStateAsync();
+        var sessionResult = await SyncCombatSessionRuntimeStateAsync(
+            runtimeState: BuildLocalCombatRuntimeState());
         _combatNotice = sessionResult?.Stale == true
             ? sessionResult.Message
             : $"{GetCombatResourceLabel(resource)} gespeichert.";
@@ -473,23 +491,34 @@ public partial class Wuerfel : IDisposable
             : "Keine Änderung zum Rückgängigmachen vorhanden.";
     }
 
-    private CombatRuntimeStateDto BuildCombatRuntimeState() => new()
+    private CombatRuntimeStateDto? BuildCombatRuntimeState() => CombatIsSession
+        ? CombatSessionRuntimeState
+        : BuildLocalCombatRuntimeState();
+
+    private CombatRuntimeStateDto BuildLocalCombatRuntimeState() => new()
     {
         IsStarted = CombatState.IsStarted,
-        CurrentLeP = CombatCurrentLeP,
-        CurrentAuP = CombatCurrentAuP,
-        Wounds = CombatWounds.ToDictionary(pair => pair.Key, pair => pair.Value)
+        CurrentLeP = CombatState.CurrentLeP,
+        CurrentAuP = CombatState.CurrentAuP,
+        Wounds = CombatState.Wounds.ToDictionary(pair => pair.Key, pair => pair.Value)
     };
 
-    private async Task<CombatSessionMutationResultDto?> SyncCombatSessionRuntimeStateAsync()
+    private async Task<CombatSessionMutationResultDto?> SyncCombatSessionRuntimeStateAsync(
+        CombatRuntimeStateDto? runtimeState = null)
     {
         if (!CombatIsSession || OwnCombatParticipant is not { } participant || CombatHero is null)
         {
             return null;
         }
 
+        var state = runtimeState ?? BuildCombatRuntimeState();
+        if (state is null)
+        {
+            return null;
+        }
+
         return await CombatSessionState.SyncRuntimeStateAsync(
-            BuildCombatRuntimeState(),
+            state,
             participant.Id,
             CombatHero.Id,
             CombatSelectedSet?.Id);

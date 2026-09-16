@@ -333,6 +333,98 @@ public sealed class CombatSessionStateTests
     }
 
     [Fact]
+    public async Task Session_roll_uses_authoritative_participant_runtime_instead_of_stale_request_state()
+    {
+        using var factory = new TestApplicationFactory();
+        var hero = await SeedHeroAsync(factory, "owner");
+        var session = CreateSession(factory, hero, "owner");
+        var state = factory.Services.GetRequiredService<CombatSessionStateService>();
+        var handler = factory.Services.GetRequiredService<RollCombatHandler>();
+        var profile = await factory.Services.GetRequiredService<HeroCombatProfileReader>().ReadAsync(hero.Id, "owner");
+        var set = Assert.Single(profile!.Sets, item => item.ArmorModel == CombatArmorModel.Zone);
+        var weapon = Assert.Single(set.Weapons, item => item.Name == "Schwert");
+        var wounds = Enum.GetValues<CombatWoundZone>()
+            .ToDictionary(zone => zone, _ => (int?)0);
+        var authoritativeRuntime = new CombatRuntimeStateDto
+        {
+            IsStarted = true,
+            CurrentLeP = 1,
+            CurrentAuP = 28,
+            Wounds = wounds
+        };
+
+        var initial = await state.GetAsync(session.SessionId, "owner");
+        var rolled = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = initial.Revision,
+            Kind = CombatSessionMutationKind.RollInitiative,
+            HeroId = hero.Id,
+            RuntimeState = authoritativeRuntime,
+            SetId = set.Id
+        }, "owner");
+        var attacker = Assert.Single(rolled.Snapshot.Participants, item => item.HeroId == hero.Id);
+        var action = Assert.Single(rolled.Snapshot.Actions, item => item.ParticipantId == attacker.Id);
+
+        var added = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = rolled.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.AddOpponent,
+            Name = "Testziel",
+            InitiativeBase = 1,
+            Initiative = 1,
+            OpponentProfile = new CombatOpponentProfileDto(10, 8, 7, 0, 20)
+        }, "owner");
+        var target = Assert.Single(added.Snapshot.Participants, item => item.Kind == CombatParticipantKind.Opponent);
+        var declaration = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = added.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.DeclareAttack,
+            ParticipantId = attacker.Id,
+            TargetParticipantId = target.Id,
+            ActionId = action.Id,
+            ExchangeId = "exchange-authoritative-runtime",
+            SetId = set.Id,
+            WeaponId = weapon.Id,
+            ActionKind = CombatActionKind.MeleeAttack
+        }, "owner");
+
+        var result = await handler.HandleAsync(new CombatRollRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ParticipantId = attacker.Id,
+            TargetParticipantId = target.Id,
+            ActionId = declaration.Snapshot.ActiveExchange!.ActionId,
+            ExpectedRevision = declaration.Snapshot.Revision,
+            HeroId = hero.Id,
+            ExchangeId = "exchange-authoritative-runtime",
+            SetId = set.Id,
+            WeaponId = weapon.Id,
+            RuntimeState = new CombatRuntimeStateDto
+            {
+                IsStarted = true,
+                CurrentLeP = 22,
+                CurrentAuP = 28,
+                Wounds = wounds
+            },
+            Options = new CombatRuleOptionsDto(SpecialResultsEnabled: false, LowLePEnabled: true),
+            Action = CombatActionKind.MeleeAttack
+        }, "owner", "Besitzer");
+
+        var lowLePModifier = Assert.Single(result.Snapshot.Modifiers,
+            modifier => modifier.Label == "Niedrige LeP");
+        Assert.Equal(-3, lowLePModifier.Value);
+        Assert.Equal(1, result.CombatSessionSnapshot!.Participants
+            .Single(item => item.Id == attacker.Id).RuntimeState!.CurrentLeP);
+    }
+
+    [Fact]
     public async Task Defense_reaction_resolves_the_open_exchange_and_consumes_only_one_reaction()
     {
         using var factory = new TestApplicationFactory();
