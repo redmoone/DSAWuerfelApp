@@ -671,11 +671,6 @@ public partial class Kampf : IDisposable
         _notice = null;
         try
         {
-            if (!await EnsureSessionAttackDeclaredAsync(action))
-            {
-                return;
-            }
-
             await CombatCoordinator.RollAsync(BuildRollRequest(action));
         }
         catch (Exception exception)
@@ -736,7 +731,11 @@ public partial class Kampf : IDisposable
                 : action is CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge
                     ? SessionCombat?.ActiveExchange?.AttackerParticipantId
                     : null,
-            ActionId = IsSessionCombat ? SessionCombat?.ActiveExchange?.ActionId : null,
+            ActionId = IsSessionCombat
+                ? IsAttackAction(action)
+                    ? GetSessionAttackAction(action)?.Id
+                    : SessionCombat?.ActiveExchange?.ActionId
+                : null,
             ExpectedRevision = IsSessionCombat ? SessionCombat?.Revision : null,
             HeroId = ActiveHero?.Id,
             SetId = SelectedSet?.Id,
@@ -812,66 +811,6 @@ public partial class Kampf : IDisposable
         };
     }
 
-    private async Task<bool> EnsureSessionAttackDeclaredAsync(CombatActionKind action)
-    {
-        if (!IsSessionCombat || action is not (CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack))
-        {
-            return true;
-        }
-
-        if (SessionCombat?.ActiveExchange is { } existing &&
-            existing.AttackerParticipantId == OwnSessionParticipant?.Id &&
-            existing.Status == CombatExchangeStatus.Declared &&
-            existing.AttackKind == action)
-        {
-            return true;
-        }
-
-        if (CombatAttackExchangeRules.IsOpen(SessionCombat?.ActiveExchange))
-        {
-            _notice = OpenExchangeNotice;
-            return false;
-        }
-
-        if (OwnSessionParticipant is not { } attacker ||
-            string.IsNullOrWhiteSpace(SelectedTargetParticipantId))
-        {
-            _notice = "Bitte zuerst ein gültiges Angriffsziel auswählen.";
-            return false;
-        }
-
-        var openAction = SessionCombat?.Actions.FirstOrDefault(current =>
-            current.ParticipantId == attacker.Id &&
-            current.Round == SessionCombat.Round &&
-            !current.IsReaction &&
-            current.State is CombatActionEntryState.Open or CombatActionEntryState.Held);
-        if (openAction is null)
-        {
-            _notice = "Für den eigenen Teilnehmer ist keine offene normale Handlung vorhanden.";
-            return false;
-        }
-
-        var result = await CombatSessionState.DeclareAttackAsync(
-            attacker.Id,
-            SelectedTargetParticipantId,
-            openAction.Id,
-            action,
-            Guid.NewGuid().ToString("N"),
-            SelectedSet?.Id,
-            SelectedWeapon?.Id,
-            SelectedWeapon?.Name,
-            openAction.PhaseInitiative,
-            ActiveHero?.Id,
-            Facing);
-        if (!result.Applied && !result.AlreadyApplied)
-        {
-            _notice = result.Message;
-            return false;
-        }
-
-        return true;
-    }
-
     private bool CanRollOpenSessionAttack(CombatActionKind action)
     {
         if (!IsSessionCombat || action is not (CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack))
@@ -882,6 +821,28 @@ public partial class Kampf : IDisposable
         return SessionCombat?.ActiveExchange is { Status: CombatExchangeStatus.Declared } exchange &&
                exchange.AttackerParticipantId == OwnSessionParticipant?.Id &&
                exchange.AttackKind == action;
+    }
+
+    private CombatSessionActionDto? GetSessionAttackAction(CombatActionKind action)
+    {
+        if (!IsSessionCombat || OwnSessionParticipant is not { } participant)
+        {
+            return null;
+        }
+
+        if (SessionCombat?.ActiveExchange is { Status: CombatExchangeStatus.Declared } exchange &&
+            exchange.AttackerParticipantId == participant.Id &&
+            exchange.AttackKind == action)
+        {
+            return GetParticipantActions(participant.Id)
+                .FirstOrDefault(current => current.Id == exchange.ActionId);
+        }
+
+        return GetParticipantActions(participant.Id).FirstOrDefault(current =>
+            !current.IsReaction &&
+            !IsOrientationAction(current) &&
+            current.State is (CombatActionEntryState.Open or CombatActionEntryState.Held) &&
+            (!current.IsAdditional || current.ActionKind is null || current.ActionKind == action));
     }
 
     private Task HandleTargetSelected(string participantId)
@@ -943,37 +904,18 @@ public partial class Kampf : IDisposable
         _notice = null;
         try
         {
-            var declaration = await CombatSessionState.DeclareAttackAsync(
-                attacker.Id,
-                targetId,
-                action.Id,
-                actionKind,
-                exchangeId: Guid.NewGuid().ToString("N"),
-                weaponId: attack.Id,
-                weaponName: attack.Name,
-                phaseInitiative: action.PhaseInitiative,
-                facing: Facing);
-            if (!declaration.Applied && !declaration.AlreadyApplied)
-            {
-                _notice = declaration.Message;
-                return;
-            }
-
-            var snapshot = declaration.Snapshot;
-            var currentAttacker = snapshot.Participants.First(participant => participant.Id == attacker.Id);
             var request = new CombatRollRequestDto
             {
                 RequestId = Guid.NewGuid(),
-                SessionId = snapshot.SessionId,
-                ParticipantId = currentAttacker.Id,
+                SessionId = SessionCombat?.SessionId,
+                ParticipantId = attacker.Id,
                 TargetParticipantId = targetId,
-                ActionId = snapshot.ActiveExchange?.ActionId ?? action.Id,
-                ExpectedRevision = snapshot.Revision,
-                ExchangeId = snapshot.ActiveExchange?.ExchangeId,
+                ActionId = action.Id,
+                ExpectedRevision = SessionCombat?.Revision,
                 Action = actionKind,
                 WeaponId = attack.Id,
                 WeaponName = attack.Name,
-                RuntimeState = currentAttacker.RuntimeState,
+                RuntimeState = attacker.RuntimeState,
                 Modifiers = Modifier == 0
                     ? []
                     : [new CombatModifierDto("Situativ", Modifier, "Kampfseite")],

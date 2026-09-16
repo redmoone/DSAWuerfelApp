@@ -36,6 +36,7 @@ public sealed partial class RollCombatHandler(
             }
         }
 
+        request = await PrepareSessionAttackAsync(request, userId, cancellationToken);
         await combatSessionStateService.EnsureRollAvailabilityAsync(request, userId, cancellationToken);
 
         var resolvedPlayerName = string.IsNullOrWhiteSpace(playerName) ? "Unbekannt" : playerName.Trim();
@@ -143,6 +144,163 @@ public sealed partial class RollCombatHandler(
 
         return await BindSessionResultAsync(request, result, userId, cancellationToken);
     }
+
+    private async Task<CombatRollRequestDto> PrepareSessionAttackAsync(
+        CombatRollRequestDto request,
+        string userId,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.SessionId) ||
+            request.Action is not (CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack) ||
+            !string.IsNullOrWhiteSpace(request.ExchangeId))
+        {
+            return request;
+        }
+
+        var snapshot = await combatSessionStateService.GetAsync(
+            request.SessionId,
+            userId,
+            cancellationToken);
+        if (snapshot.ActiveExchange is { } existingExchange)
+        {
+            if (!CombatAttackExchangeRules.IsOpen(existingExchange) ||
+                existingExchange.AttackResult is not null ||
+                existingExchange.RequestId != request.RequestId)
+            {
+                throw Validation("Der offene Angriffsaustausch muss zuerst abgeschlossen werden.");
+            }
+
+            EnsureSameAttackRequest(request, existingExchange);
+            return BindPreparedExchange(request, snapshot, existingExchange);
+        }
+
+        var attacker = ResolveRequestedParticipant(snapshot, request)
+                       ?? throw Validation("Der Angreifer wurde nicht gefunden.");
+        var action = ResolveAttackAction(snapshot, attacker.Id, request)
+                     ?? throw Validation("Für den Angreifer ist keine offene normale Handlung vorhanden.");
+        var expectedRevision = request.ExpectedRevision ?? snapshot.Revision;
+        var declaration = await combatSessionStateService.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = request.RequestId,
+            SessionId = snapshot.SessionId,
+            ExpectedRevision = expectedRevision,
+            Kind = CombatSessionMutationKind.DeclareAttack,
+            ParticipantId = attacker.Id,
+            TargetParticipantId = request.TargetParticipantId,
+            ActionId = action.Id,
+            ActionKind = request.Action,
+            ExchangeId = Guid.NewGuid().ToString("N"),
+            HeroId = attacker.HeroId,
+            SetId = request.SetId,
+            WeaponId = request.WeaponId,
+            WeaponName = request.WeaponName,
+            PhaseInitiative = action.PhaseInitiative,
+            Facing = request.Facing
+        }, userId, cancellationToken);
+
+        if (!declaration.Applied && !declaration.AlreadyApplied)
+        {
+            throw Validation(declaration.Message);
+        }
+
+        var exchange = declaration.Snapshot.ActiveExchange;
+        if (exchange is null || exchange.RequestId != request.RequestId ||
+            !CombatAttackExchangeRules.IsOpen(exchange))
+        {
+            throw Validation("Der Angriff konnte nicht für den Wurf vorbereitet werden.");
+        }
+
+        return BindPreparedExchange(request, declaration.Snapshot, exchange);
+    }
+
+    private static CombatRollRequestDto BindPreparedExchange(
+        CombatRollRequestDto request,
+        CombatSessionSnapshotDto snapshot,
+        CombatAttackExchangeDto exchange)
+    {
+        var attacker = snapshot.Participants.FirstOrDefault(participant =>
+            string.Equals(participant.Id, exchange.AttackerParticipantId, StringComparison.Ordinal));
+        return request with
+        {
+            ParticipantId = exchange.AttackerParticipantId,
+            TargetParticipantId = exchange.TargetParticipantId,
+            ActionId = exchange.ActionId,
+            ExpectedRevision = snapshot.Revision,
+            HeroId = attacker?.HeroId,
+            SetId = exchange.SetId,
+            ExchangeId = exchange.ExchangeId,
+            WeaponId = exchange.WeaponId,
+            WeaponName = exchange.WeaponName
+        };
+    }
+
+    private static void EnsureSameAttackRequest(
+        CombatRollRequestDto request,
+        CombatAttackExchangeDto exchange)
+    {
+        if (exchange.AttackKind != request.Action ||
+            !MatchesOptional(request.ParticipantId, exchange.AttackerParticipantId) ||
+            !MatchesOptional(request.TargetParticipantId, exchange.TargetParticipantId) ||
+            !MatchesOptional(request.ActionId, exchange.ActionId) ||
+            !MatchesOptional(request.SetId, exchange.SetId) ||
+            !MatchesOptional(request.WeaponId, exchange.WeaponId))
+        {
+            throw Validation("Der wiederholte AT-Wurf passt nicht zum bereits vorbereiteten Angriff.");
+        }
+    }
+
+    private static CombatSessionParticipantDto? ResolveRequestedParticipant(
+        CombatSessionSnapshotDto snapshot,
+        CombatRollRequestDto request)
+    {
+        if (!string.IsNullOrWhiteSpace(request.ParticipantId))
+        {
+            return snapshot.Participants.FirstOrDefault(participant =>
+                string.Equals(participant.Id, request.ParticipantId.Trim(), StringComparison.Ordinal));
+        }
+
+        if (request.HeroId.HasValue)
+        {
+            return snapshot.Participants.FirstOrDefault(participant =>
+                participant.Kind == CombatParticipantKind.Hero && participant.HeroId == request.HeroId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.ActionId))
+        {
+            var action = snapshot.Actions.FirstOrDefault(item => item.Id == request.ActionId);
+            return action is null
+                ? null
+                : snapshot.Participants.FirstOrDefault(participant => participant.Id == action.ParticipantId);
+        }
+
+        return snapshot.Participants.FirstOrDefault(participant => participant.Kind == CombatParticipantKind.Hero);
+    }
+
+    private static CombatSessionActionDto? ResolveAttackAction(
+        CombatSessionSnapshotDto snapshot,
+        string participantId,
+        CombatRollRequestDto request)
+    {
+        var actions = snapshot.Actions.Where(action =>
+                action.ParticipantId == participantId &&
+                action.Round == snapshot.Round &&
+                !action.IsReaction &&
+                action.State is CombatActionEntryState.Open or CombatActionEntryState.Held)
+            .ToArray();
+        if (!string.IsNullOrWhiteSpace(request.ActionId))
+        {
+            return actions.FirstOrDefault(action => action.Id == request.ActionId);
+        }
+
+        return actions.FirstOrDefault(action => !IsOrientationAction(action));
+    }
+
+    private static bool IsOrientationAction(CombatSessionActionDto action) =>
+        string.Equals(action.Label, "Orientieren", StringComparison.OrdinalIgnoreCase);
+
+    private static bool MatchesOptional(string? requested, string? expected) =>
+        string.IsNullOrWhiteSpace(requested) ||
+        string.Equals(requested.Trim(), expected, StringComparison.Ordinal);
 
     private async Task<CombatRollResultDto> BindSessionResultAsync(
         CombatRollRequestDto request,

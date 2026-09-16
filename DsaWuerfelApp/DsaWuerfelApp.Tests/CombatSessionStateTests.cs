@@ -333,6 +333,82 @@ public sealed class CombatSessionStateTests
     }
 
     [Fact]
+    public async Task Attack_roll_prepares_and_binds_the_exchange_without_a_client_declaration()
+    {
+        using var factory = new TestApplicationFactory();
+        var hero = await SeedHeroAsync(factory, "owner");
+        var session = CreateSession(factory, hero, "owner");
+        var state = factory.Services.GetRequiredService<CombatSessionStateService>();
+        var handler = factory.Services.GetRequiredService<RollCombatHandler>();
+        var profile = await factory.Services.GetRequiredService<HeroCombatProfileReader>().ReadAsync(hero.Id, "owner");
+        var set = Assert.Single(profile!.Sets, item => item.ArmorModel == CombatArmorModel.Zone);
+        var weapon = Assert.Single(set.Weapons, item => item.Name == "Schwert");
+
+        var initial = await state.GetAsync(session.SessionId, "owner");
+        var rolled = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = initial.Revision,
+            Kind = CombatSessionMutationKind.RollInitiative,
+            HeroId = hero.Id
+        }, "owner");
+        var attacker = Assert.Single(rolled.Snapshot.Participants, item => item.HeroId == hero.Id);
+        var action = Assert.Single(rolled.Snapshot.Actions, item => item.ParticipantId == attacker.Id);
+        var added = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = rolled.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.AddOpponent,
+            Name = "Übungsgegner",
+            InitiativeBase = 1,
+            Initiative = 1,
+            OpponentProfile = new CombatOpponentProfileDto(10, 8, 7, 2, 20)
+        }, "owner");
+        var target = Assert.Single(added.Snapshot.Participants, item => item.Kind == CombatParticipantKind.Opponent);
+
+        var invalidRequest = new CombatRollRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ParticipantId = attacker.Id,
+            TargetParticipantId = "opponent:not-in-session",
+            ActionId = action.Id,
+            ExpectedRevision = added.Snapshot.Revision,
+            HeroId = hero.Id,
+            SetId = set.Id,
+            WeaponId = weapon.Id,
+            Action = CombatActionKind.MeleeAttack
+        };
+        await Assert.ThrowsAsync<RequestRejectedException>(() => handler.HandleAsync(invalidRequest, "owner"));
+        var unchanged = await state.GetAsync(session.SessionId, "owner");
+        Assert.Null(unchanged.ActiveExchange);
+        Assert.Equal(1, Assert.Single(unchanged.Participants, item => item.Id == attacker.Id)
+            .ActionBudget?.NormalActionsRemaining);
+
+        var request = invalidRequest with
+        {
+            RequestId = Guid.NewGuid(),
+            TargetParticipantId = target.Id,
+            WeaponName = weapon.Name
+        };
+        var result = await handler.HandleAsync(request, "owner", "Besitzer");
+
+        var exchange = result.CombatSessionSnapshot?.ActiveExchange;
+        Assert.NotNull(exchange);
+        Assert.Equal(request.RequestId, exchange!.RequestId);
+        Assert.Equal(request.RequestId, exchange.AttackRollRequestId);
+        Assert.NotNull(exchange.AttackResult);
+        Assert.Equal(0, Assert.Single(result.CombatSessionSnapshot!.Participants,
+                item => item.Id == attacker.Id).ActionBudget?.NormalActionsRemaining);
+
+        var retry = await handler.HandleAsync(request, "owner", "Besitzer");
+        Assert.Equal(result.Snapshot.EntryId, retry.Snapshot.EntryId);
+        Assert.Equal(result.CombatSessionSnapshot.Revision, retry.CombatSessionSnapshot!.Revision);
+    }
+
+    [Fact]
     public async Task Session_roll_uses_authoritative_participant_runtime_instead_of_stale_request_state()
     {
         using var factory = new TestApplicationFactory();

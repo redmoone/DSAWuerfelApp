@@ -419,10 +419,7 @@ public sealed class CombatSessionStateService(
                 LastMutationDescription = $"{request.Action} für {exchange.ExchangeId} gespeichert",
                 LastMutationUserId = userId
             });
-            var appliedRequestIds = persisted.AppliedRequestIds
-                .Append(request.RequestId)
-                .TakeLast(MaxAppliedRequestIds)
-                .ToArray();
+            var appliedRequestIds = AppendAppliedRequestId(persisted.AppliedRequestIds, request.RequestId);
             next = next with { UndoAvailable = true };
             Save(session, CreateExchangePersistedState(
                 next,
@@ -650,10 +647,7 @@ public sealed class CombatSessionStateService(
                 LastMutationDescription = $"Schadensfolge für {exchange.ExchangeId} gespeichert",
                 LastMutationUserId = userId
             });
-            var appliedRequestIds = persisted.AppliedRequestIds
-                .Append(request.RequestId)
-                .TakeLast(MaxAppliedRequestIds)
-                .ToArray();
+            var appliedRequestIds = AppendAppliedRequestId(persisted.AppliedRequestIds, request.RequestId);
             next = next with { UndoAvailable = true };
             Save(session, CreateExchangePersistedState(
                 next,
@@ -1001,10 +995,7 @@ public sealed class CombatSessionStateService(
                 LastMutationDescription = $"Trefferzone für {exchange.ExchangeId} gespeichert",
                 LastMutationUserId = userId
             });
-            var appliedRequestIds = persisted.AppliedRequestIds
-                .Append(request.RequestId)
-                .TakeLast(MaxAppliedRequestIds)
-                .ToArray();
+            var appliedRequestIds = AppendAppliedRequestId(persisted.AppliedRequestIds, request.RequestId);
             next = next with { UndoAvailable = true };
             Save(session, CreateExchangePersistedState(
                 next,
@@ -1147,10 +1138,7 @@ public sealed class CombatSessionStateService(
                 LastMutationDescription = $"AT-Wurf für {exchange.ExchangeId} gespeichert",
                 LastMutationUserId = userId
             });
-            var appliedRequestIds = persisted.AppliedRequestIds
-                .Append(request.RequestId)
-                .TakeLast(MaxAppliedRequestIds)
-                .ToArray();
+            var appliedRequestIds = AppendAppliedRequestId(persisted.AppliedRequestIds, request.RequestId);
             next = next with { UndoAvailable = true };
             Save(session, CreateExchangePersistedState(
                 next,
@@ -1324,10 +1312,7 @@ public sealed class CombatSessionStateService(
                     userId);
             }
 
-            var appliedRequestIds = persisted.AppliedRequestIds
-                .Append(request.RequestId)
-                .TakeLast(MaxAppliedRequestIds)
-                .ToArray();
+            var appliedRequestIds = AppendAppliedRequestId(persisted.AppliedRequestIds, request.RequestId);
             var undoExchangeId = request.Kind == CombatSessionMutationKind.Undo
                 ? null
                 : ResolveUndoExchangeId(current, next, persisted);
@@ -3032,6 +3017,9 @@ public sealed class CombatSessionStateService(
     {
         Rolls = rolls?.ToArray() ?? []
     };
+
+    private static Guid[] AppendAppliedRequestId(IEnumerable<Guid> requestIds, Guid requestId) =>
+        requestIds.Append(requestId).Distinct().TakeLast(MaxAppliedRequestIds).ToArray();
 
     private static string HeroParticipantId(Guid heroId) => $"hero:{heroId:N}";
 

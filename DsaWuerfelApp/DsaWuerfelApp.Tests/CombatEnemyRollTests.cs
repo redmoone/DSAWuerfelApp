@@ -20,18 +20,22 @@ public sealed class CombatEnemyRollTests
         var attacker = await AddEnemyAsync(state, session.SessionId, "owner", "wolf-gemeine-werte", 20);
         var target = await AddEnemyAsync(state, session.SessionId, "owner", "ghul", 10,
             new CombatEnemySelectionDto { EnemyId = "ghul", AttackId = "gezielter-biss" });
-        var attack = await DeclareAttackAsync(state, session.SessionId, "owner", attacker, target, "biss");
+        var current = await state.GetAsync(session.SessionId, "owner");
+        var action = current.Actions.Single(item => item.ParticipantId == attacker.Id &&
+                                                    item.State == CombatActionEntryState.Open);
 
-        var result = await handler.HandleAsync(new CombatRollRequestDto
+        var request = new CombatRollRequestDto
         {
             RequestId = Guid.NewGuid(),
             SessionId = session.SessionId,
             ParticipantId = attacker.Id,
-            ExchangeId = attack.ExchangeId,
+            TargetParticipantId = target.Id,
+            ActionId = action.Id,
             Action = CombatActionKind.MeleeAttack,
             WeaponId = "biss",
             Options = new CombatRuleOptionsDto(SpecialResultsEnabled: false)
-        }, "owner", "Meister");
+        };
+        var result = await handler.HandleAsync(request, "owner", "Meister");
 
         Assert.Null(result.HeroName);
         Assert.Equal(attacker.Id, result.ParticipantId);
