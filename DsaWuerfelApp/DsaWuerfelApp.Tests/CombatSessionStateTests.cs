@@ -366,6 +366,7 @@ public sealed class CombatSessionStateTests
             OpponentProfile = new CombatOpponentProfileDto(10, 8, 7, 2, 20)
         }, "owner");
         var target = Assert.Single(added.Snapshot.Participants, item => item.Kind == CombatParticipantKind.Opponent);
+        var targetAction = Assert.Single(added.Snapshot.Actions, item => item.ParticipantId == target.Id);
         var declaration = await state.MutateAsync(new CombatSessionMutationRequestDto
         {
             RequestId = Guid.NewGuid(),
@@ -397,6 +398,8 @@ public sealed class CombatSessionStateTests
         var attackResult = CreateCombatResult(attackRequest, 8, 14, CombatOutcome.Success);
         var defenseOpen = await state.BindAttackRollAsync(attackRequest, attackResult, "owner");
         Assert.Equal(CombatExchangeStatus.DefenseOpen, defenseOpen.ActiveExchange!.Status);
+        Assert.Equal(targetAction.Id, defenseOpen.CurrentActionId);
+        Assert.Equal(targetAction.Id, Assert.Single(defenseOpen.CurrentActionIds));
 
         var defenseRequest = new CombatRollRequestDto
         {
@@ -854,6 +857,16 @@ public sealed class CombatSessionStateTests
             WeaponId = weapon.Id,
             ActionKind = CombatActionKind.MeleeAttack
         }, "owner");
+
+        await Assert.ThrowsAsync<RequestRejectedException>(() => state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = declared.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.CompleteAction,
+            ParticipantId = attacker.Id,
+            ActionId = action.Id
+        }, "owner"));
 
         await Assert.ThrowsAsync<RequestRejectedException>(() => state.MutateAsync(new CombatSessionMutationRequestDto
         {

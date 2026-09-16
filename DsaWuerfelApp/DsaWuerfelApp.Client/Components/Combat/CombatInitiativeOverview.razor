@@ -33,6 +33,41 @@
             <span>@(snapshot.IsStarted ? "Aktuelle Reihenfolge" : "Noch kein gemeinsamer Startwurf")</span>
         </div>
 
+        @if (snapshot.ActiveExchange is { } exchange && CombatAttackExchangeRules.IsOpen(exchange))
+        {
+            <section class="combat-initiative-overview-exchange"
+                     data-testid="combat-open-exchange"
+                     aria-live="polite"
+                     aria-label="Offener Angriffsaustausch">
+                <div class="combat-initiative-overview-exchange-heading">
+                    <div>
+                        <span class="combat-field-label">Offener Austausch</span>
+                        <strong>@GetExchangeStatusLabel(exchange.Status)</strong>
+                    </div>
+                    <span>Runde @exchange.Round</span>
+                </div>
+                <strong class="combat-initiative-overview-exchange-participants">
+                    @GetParticipantName(snapshot, exchange.AttackerParticipantId)
+                    <span aria-hidden="true">→</span>
+                    @GetParticipantName(snapshot, exchange.TargetParticipantId)
+                </strong>
+                <span class="combat-initiative-overview-exchange-prompt">@GetExchangePrompt(snapshot, exchange)</span>
+                @if (exchange.Status == CombatExchangeStatus.DefenseOpen && CanResolveActiveExchange)
+                {
+                    <div class="combat-initiative-overview-exchange-actions" data-testid="combat-exchange-defense">
+                        @foreach (var defenseAction in exchange.AllowedDefenseActions)
+                        {
+                            <UiButton Variant="primary"
+                                      Size="compact"
+                                      OnClick="() => ExchangeActionRequested.InvokeAsync(defenseAction)">
+                                @GetDefenseActionLabel(defenseAction)
+                            </UiButton>
+                        }
+                    </div>
+                }
+            </section>
+        }
+
         @if (Participants.Count == 0)
         {
             <p class="combat-initiative-overview-empty">Teilnehmer erscheinen nach ihrem ersten Initiativewurf.</p>

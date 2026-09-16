@@ -103,6 +103,9 @@ public partial class Kampf : IDisposable
     private bool CanSwitchCombatView => IsSessionCombat && IsSessionMaster && _combatViewInitialized;
     private bool IsMasterView => CanSwitchCombatView && _isMasterView;
     private bool NeedsOwnHeroPlaceholder => IsSessionCombat && !HasOwnSessionHero;
+    private bool HasOpenAttackExchange => IsSessionCombat &&
+                                          CombatAttackExchangeRules.IsOpen(SessionCombat?.ActiveExchange);
+    private const string OpenExchangeNotice = "Der offene Angriffsaustausch muss zuerst abgeschlossen werden.";
 
     private string? SelectedSetId => CombatState.SelectedSetId;
     private string? SelectedWeaponId => CombatState.SelectedWeaponId;
@@ -175,11 +178,11 @@ public partial class Kampf : IDisposable
 
     private IReadOnlyList<CombatActionPanel.ActionOption> Actions =>
     [
-        new("attack", "Attacke", FormatActionValue("AT", SelectedWeapon?.Attack), HasWeaponAttack && CanUseActionBudget(CombatActionKind.MeleeAttack)),
-        new("parry", "Waffenparade", FormatActionValue("PA", SelectedWeapon?.Parry), HasWeaponParry && CanUseActionBudget(CombatActionKind.WeaponParry)),
-        new("shield-parry", "Schildparade", FormatActionValue("PA", SelectedWeapon?.Parry), HasShieldParry && CanUseActionBudget(CombatActionKind.ShieldParry)),
-        new("dodge", "Ausweichen", FormatActionValue("AW", SelectedSet?.Dodge), SelectedSet?.Dodge.HasValue == true && CanUseActionBudget(CombatActionKind.Dodge)),
-        new("ranged", "Fernkampf", FormatActionValue("FK", SelectedWeapon?.RangedValue), HasRangedValue && CanUseActionBudget(CombatActionKind.RangedAttack)),
+        new("attack", "Attacke", FormatActionValue("AT", SelectedWeapon?.Attack), HasWeaponAttack && CanUseActionBudget(CombatActionKind.MeleeAttack) && CanUseActionDuringOpenExchange(CombatActionKind.MeleeAttack)),
+        new("parry", "Waffenparade", FormatActionValue("PA", SelectedWeapon?.Parry), HasWeaponParry && CanUseActionBudget(CombatActionKind.WeaponParry) && CanUseActionDuringOpenExchange(CombatActionKind.WeaponParry)),
+        new("shield-parry", "Schildparade", FormatActionValue("PA", SelectedWeapon?.Parry), HasShieldParry && CanUseActionBudget(CombatActionKind.ShieldParry) && CanUseActionDuringOpenExchange(CombatActionKind.ShieldParry)),
+        new("dodge", "Ausweichen", FormatActionValue("AW", SelectedSet?.Dodge), SelectedSet?.Dodge.HasValue == true && CanUseActionBudget(CombatActionKind.Dodge) && CanUseActionDuringOpenExchange(CombatActionKind.Dodge)),
+        new("ranged", "Fernkampf", FormatActionValue("FK", SelectedWeapon?.RangedValue), HasRangedValue && CanUseActionBudget(CombatActionKind.RangedAttack) && CanUseActionDuringOpenExchange(CombatActionKind.RangedAttack)),
         new("initiative", "Initiative", GetInitiativeDiceLabel(), CanRollInitiative)
     ];
 
@@ -198,15 +201,17 @@ public partial class Kampf : IDisposable
         : HasCombatContext && !_rollBusy && !_valueMutationBusy &&
           (!IsAttackAction(GetActionKind()) || SelectedTargetParticipantId is not null) &&
           (GetActionKind() is not { } selectedKind ||
-           CanUseActionBudget(selectedKind) ||
-           CanRollOpenSessionAttack(selectedKind)) &&
+           CanUseActionDuringOpenExchange(selectedKind) &&
+           (CanUseActionBudget(selectedKind) ||
+            CanRollOpenSessionAttack(selectedKind))) &&
           (GetActionKind() is { } activeKind && CanRollOpenSessionAttack(activeKind) ||
            Actions.FirstOrDefault(action => action.Key == SelectedAction)?.IsAvailable == true);
 
     private bool CanRollInitiative => HasCombatContext &&
                                       SelectedSet?.Initiative.HasValue == true &&
                                       !_rollBusy &&
-                                      !_valueMutationBusy;
+                                      !_valueMutationBusy &&
+                                      !HasOpenAttackExchange;
 
     private string? InitiativeDisabledReason
     {
@@ -220,6 +225,11 @@ public partial class Kampf : IDisposable
             if (!HasCombatContext)
             {
                 return "Zuerst einen aktiven Helden und ein Kampfset laden.";
+            }
+
+            if (HasOpenAttackExchange)
+            {
+                return OpenExchangeNotice;
             }
 
             if (SelectedSet?.Initiative.HasValue != true)
@@ -244,6 +254,39 @@ public partial class Kampf : IDisposable
             : CombatActionBudgetRules.RequiresReaction(action)
                 ? budget?.HasReaction == true
                 : true;
+    }
+
+    private bool CanUseActionDuringOpenExchange(CombatActionKind action)
+    {
+        if (!HasOpenAttackExchange || SessionCombat?.ActiveExchange is not { } exchange)
+        {
+            return true;
+        }
+
+        var ownParticipantId = OwnSessionParticipant?.Id;
+        if (string.IsNullOrWhiteSpace(ownParticipantId))
+        {
+            return false;
+        }
+
+        if (action is CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack)
+        {
+            return exchange.Status == CombatExchangeStatus.Declared &&
+                   exchange.AttackKind == action &&
+                   string.Equals(exchange.AttackerParticipantId, ownParticipantId, StringComparison.Ordinal);
+        }
+
+        if (action is CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge)
+        {
+            return exchange.Status == CombatExchangeStatus.DefenseOpen &&
+                   string.Equals(exchange.TargetParticipantId, ownParticipantId, StringComparison.Ordinal) &&
+                   (exchange.AllowedDefenseActions ?? []).Contains(action);
+        }
+
+        var isHitFollowUp = action is CombatActionKind.Damage or CombatActionKind.HitZone;
+        return isHitFollowUp &&
+               exchange.Status is (CombatExchangeStatus.Hit or CombatExchangeStatus.DamageOpen) &&
+               string.Equals(exchange.AttackerParticipantId, ownParticipantId, StringComparison.Ordinal);
     }
 
     private string DrawerTitle => _drawer switch
@@ -281,7 +324,8 @@ public partial class Kampf : IDisposable
     private bool CanSelectCombatTarget =>
         IsSessionCombat && HasOwnSessionHero &&
         (IsMasterView || CanManageOwnSessionParticipant) &&
-        IsAttackAction(GetActionKind());
+        IsAttackAction(GetActionKind()) &&
+        !HasOpenAttackExchange;
 
     private bool IsTargetSelectable(CombatSessionParticipantDto participant) =>
         CanSelectCombatTarget && TargetParticipants.Any(target => target.Id == participant.Id);
@@ -301,14 +345,22 @@ public partial class Kampf : IDisposable
         !_rollBusy &&
         !_valueMutationBusy;
 
+    private bool CanResolveActiveExchange =>
+        IsMasterView &&
+        SessionCombat?.ActiveExchange is { Status: CombatExchangeStatus.DefenseOpen } exchange &&
+        exchange.AllowedDefenseActions.Length > 0 &&
+        SessionCombat?.Participants.FirstOrDefault(participant =>
+            string.Equals(participant.Id, exchange.TargetParticipantId, StringComparison.Ordinal)) is
+        { Kind: CombatParticipantKind.Opponent } &&
+        !_rollBusy &&
+        !_valueMutationBusy;
+
     private bool CanHoldAction =>
         IsSessionCombat &&
         OwnSessionParticipant is { } participant &&
         !_rollBusy &&
         !_valueMutationBusy &&
-        (SessionCombat?.ActiveExchange is null ||
-         SessionCombat.ActiveExchange.Status is CombatExchangeStatus.Completed or
-             CombatExchangeStatus.Cancelled or CombatExchangeStatus.Avoided) &&
+        !HasOpenAttackExchange &&
         GetParticipantActions(participant.Id).Any(action =>
             action.Round == SessionCombat?.Round &&
             !action.IsReaction &&
@@ -325,7 +377,7 @@ public partial class Kampf : IDisposable
         get
         {
             var snapshot = SessionCombat;
-            if (snapshot is null || !snapshot.CurrentActionIds.Any())
+            if (snapshot is null || HasOpenAttackExchange || !snapshot.CurrentActionIds.Any())
             {
                 return new HashSet<string>(StringComparer.Ordinal);
             }
@@ -476,7 +528,18 @@ public partial class Kampf : IDisposable
         }
     }
 
-    private Task HandleActionSelected(string action) => CombatState.SetSelectedActionAsync(action);
+    private async Task HandleActionSelected(string action)
+    {
+        var actionKind = GetActionKind(action);
+        if (HasOpenAttackExchange &&
+            (action == "initiative" || actionKind is not { } kind || !CanUseActionDuringOpenExchange(kind)))
+        {
+            _notice = OpenExchangeNotice;
+            return;
+        }
+
+        await CombatState.SetSelectedActionAsync(action);
+    }
 
     private Task HandleAttributeModeChanged(bool attributeMode)
     {
@@ -623,15 +686,16 @@ public partial class Kampf : IDisposable
         }
 
         if (SessionCombat?.ActiveExchange is { } existing &&
+            existing.AttackerParticipantId == OwnSessionParticipant?.Id &&
             existing.Status == CombatExchangeStatus.Declared &&
             existing.AttackKind == action)
         {
             return true;
         }
 
-        if (SessionCombat?.ActiveExchange is { Status: not (CombatExchangeStatus.Completed or CombatExchangeStatus.Cancelled or CombatExchangeStatus.Avoided) })
+        if (CombatAttackExchangeRules.IsOpen(SessionCombat?.ActiveExchange))
         {
-            _notice = "Der offene Angriffsaustausch muss zuerst abgeschlossen werden.";
+            _notice = OpenExchangeNotice;
             return false;
         }
 
@@ -682,12 +746,13 @@ public partial class Kampf : IDisposable
         }
 
         return SessionCombat?.ActiveExchange is { Status: CombatExchangeStatus.Declared } exchange &&
+               exchange.AttackerParticipantId == OwnSessionParticipant?.Id &&
                exchange.AttackKind == action;
     }
 
     private Task HandleTargetSelected(string participantId)
     {
-        if (TargetParticipants.Any(participant => participant.Id == participantId))
+        if (!HasOpenAttackExchange && TargetParticipants.Any(participant => participant.Id == participantId))
         {
             _selectedTargetParticipantId = participantId;
         }
@@ -707,6 +772,23 @@ public partial class Kampf : IDisposable
             return;
         }
 
+        if (!(exchange.AllowedDefenseActions ?? []).Contains(action))
+        {
+            return;
+        }
+
+        var target = SessionCombat.Participants.FirstOrDefault(participant =>
+            string.Equals(participant.Id, exchange.TargetParticipantId, StringComparison.Ordinal));
+        if (target is null ||
+            (target.Kind == CombatParticipantKind.Opponent
+                ? !CanResolveActiveExchange
+                : !CanRespondToExchange))
+        {
+            return;
+        }
+
+        var targetIsOpponent = target.Kind == CombatParticipantKind.Opponent;
+
         var request = new CombatRollRequestDto
             {
                 RequestId = Guid.NewGuid(),
@@ -715,15 +797,15 @@ public partial class Kampf : IDisposable
                 TargetParticipantId = exchange.AttackerParticipantId,
                 ActionId = exchange.ActionId,
                 ExpectedRevision = SessionCombat?.Revision,
-                HeroId = ActiveHero?.Id,
-                SetId = SelectedSet?.Id,
+                HeroId = targetIsOpponent ? null : target.HeroId,
+                SetId = targetIsOpponent ? null : SelectedSet?.Id,
                 ExchangeId = exchange.ExchangeId,
                 Action = action,
-                WeaponId = action is CombatActionKind.WeaponParry or CombatActionKind.ShieldParry
+                WeaponId = !targetIsOpponent && action is (CombatActionKind.WeaponParry or CombatActionKind.ShieldParry)
                     ? SelectedWeapon?.Id
                     : null,
-                WeaponName = SelectedWeapon?.Name,
-                RuntimeState = BuildRuntimeState(),
+                WeaponName = targetIsOpponent ? null : SelectedWeapon?.Name,
+                RuntimeState = targetIsOpponent ? target.RuntimeState : BuildRuntimeState(),
                 Modifiers = Modifier == 0
                     ? []
                     : [new CombatModifierDto("Situativ", Modifier, "Kampfseite")],
@@ -826,6 +908,12 @@ public partial class Kampf : IDisposable
 
     private async Task HandleInitiativeChanged(int? initiative)
     {
+        if (HasOpenAttackExchange)
+        {
+            _notice = OpenExchangeNotice;
+            return;
+        }
+
         if (!initiative.HasValue)
         {
             _notice = IsSessionCombat
@@ -994,7 +1082,7 @@ public partial class Kampf : IDisposable
 
     private bool CanEditParticipantInitiative(CombatSessionParticipantDto participant)
     {
-        if (!IsSessionCombat || participant.HeroId == ActiveHero?.Id)
+        if (!IsSessionCombat || HasOpenAttackExchange || participant.HeroId == ActiveHero?.Id)
         {
             return false;
         }
@@ -1007,6 +1095,7 @@ public partial class Kampf : IDisposable
 
     private bool CanRollParticipantInitiative(CombatSessionParticipantDto participant) =>
         IsMasterView &&
+        !HasOpenAttackExchange &&
         participant.Kind == CombatParticipantKind.Opponent &&
         !participant.CurrentInitiative.HasValue &&
         participant.InitiativeBase.HasValue;
@@ -1042,7 +1131,7 @@ public partial class Kampf : IDisposable
     }
 
     private bool CanRemoveOpponent(CombatSessionParticipantDto participant) =>
-        IsMasterView && participant.Kind == CombatParticipantKind.Opponent;
+        IsMasterView && !HasOpenAttackExchange && participant.Kind == CombatParticipantKind.Opponent;
 
     private bool CanManageParticipantControls(CombatSessionParticipantDto participant)
     {
@@ -1169,7 +1258,7 @@ public partial class Kampf : IDisposable
 
     private void OpenOrientationDrawer()
     {
-        if (IsSessionCombat && !CanManageOwnSessionParticipant)
+        if (HasOpenAttackExchange || (IsSessionCombat && !CanManageOwnSessionParticipant))
         {
             return;
         }
@@ -1183,7 +1272,7 @@ public partial class Kampf : IDisposable
 
     private async Task OpenOpponentDrawer()
     {
-        if (!IsMasterView)
+        if (!IsMasterView || HasOpenAttackExchange)
         {
             return;
         }
@@ -1521,6 +1610,12 @@ public partial class Kampf : IDisposable
 
     private async Task CompleteActionAsync(CombatSessionActionDto action)
     {
+        if (HasOpenAttackExchange)
+        {
+            _notice = OpenExchangeNotice;
+            return;
+        }
+
         var participant = SessionCombat?.Participants.FirstOrDefault(item => item.Id == action.ParticipantId);
         if (participant is null || !CanManageParticipantControls(participant))
         {
@@ -1538,6 +1633,12 @@ public partial class Kampf : IDisposable
 
     private async Task ConsumeReactionAsync(CombatSessionParticipantDto participant)
     {
+        if (HasOpenAttackExchange)
+        {
+            _notice = OpenExchangeNotice;
+            return;
+        }
+
         if (!CanManageParticipantControls(participant))
         {
             return;
@@ -1570,6 +1671,12 @@ public partial class Kampf : IDisposable
 
     private async Task HoldActionAsync(CombatSessionActionDto action)
     {
+        if (HasOpenAttackExchange)
+        {
+            _notice = OpenExchangeNotice;
+            return;
+        }
+
         var participant = SessionCombat?.Participants.FirstOrDefault(item => item.Id == action.ParticipantId);
         if (participant is null || !CanManageParticipantControls(participant))
         {
@@ -1582,6 +1689,12 @@ public partial class Kampf : IDisposable
 
     private async Task ExecuteHeldActionAsync(CombatSessionActionDto action)
     {
+        if (HasOpenAttackExchange)
+        {
+            _notice = OpenExchangeNotice;
+            return;
+        }
+
         var participant = SessionCombat?.Participants.FirstOrDefault(item => item.Id == action.ParticipantId);
         if (participant is null || !CanManageParticipantControls(participant))
         {
@@ -1599,12 +1712,24 @@ public partial class Kampf : IDisposable
             return;
         }
 
+        if (HasOpenAttackExchange)
+        {
+            _notice = OpenExchangeNotice;
+            return;
+        }
+
         var result = await CombatSessionState.NewRoundAsync();
         _notice = result.Message;
     }
 
     private async Task OrientAsync(bool hasAttention)
     {
+        if (HasOpenAttackExchange)
+        {
+            _notice = OpenExchangeNotice;
+            return;
+        }
+
         var result = await CombatSessionState.OrientAsync(
             hasAttention,
             OwnSessionParticipant?.Id,
@@ -1638,6 +1763,12 @@ public partial class Kampf : IDisposable
     private async Task ResolveOrientationAsync(CombatSessionActionDto action)
     {
         var participant = SessionCombat?.Participants.FirstOrDefault(item => item.Id == action.ParticipantId);
+        if (HasOpenAttackExchange)
+        {
+            _notice = OpenExchangeNotice;
+            return;
+        }
+
         if (participant is null || !CanManageParticipantControls(participant))
         {
             return;
@@ -1671,6 +1802,12 @@ public partial class Kampf : IDisposable
 
     private bool IsCurrentParticipant(CombatSessionParticipantDto participant)
     {
+        if (HasOpenAttackExchange &&
+            string.Equals(GetPendingExchangeParticipantId(), participant.Id, StringComparison.Ordinal))
+        {
+            return true;
+        }
+
         return SessionCombat?.CurrentActionIds.Any(actionId =>
             SessionCombat.Actions.FirstOrDefault(action => action.Id == actionId)?.ParticipantId == participant.Id) == true;
     }
@@ -1687,6 +1824,11 @@ public partial class Kampf : IDisposable
             return "Als Nächstes";
         }
 
+        if (HasOpenAttackExchange)
+        {
+            return participant.CurrentInitiative.HasValue ? "Wartet" : "INI fehlt";
+        }
+
         var actions = GetParticipantActions(participant.Id);
         if (actions.Any(action => action.State == CombatActionEntryState.Held))
         {
@@ -1700,6 +1842,12 @@ public partial class Kampf : IDisposable
 
         return participant.CurrentInitiative.HasValue ? "Weitere offen" : "INI fehlt";
     }
+
+    private string? GetPendingExchangeParticipantId() => SessionCombat?.ActiveExchange is not { } exchange
+        ? null
+        : exchange.Status == CombatExchangeStatus.DefenseOpen
+            ? exchange.TargetParticipantId
+            : exchange.AttackerParticipantId;
 
     private string GetParticipantTurnClass(CombatSessionParticipantDto participant) => GetParticipantTurnLabel(participant) switch
     {
@@ -1732,7 +1880,7 @@ public partial class Kampf : IDisposable
             .ToArray() ?? Array.Empty<CombatSessionActionDto>();
     }
 
-    private CombatActionKind? GetActionKind() => SelectedAction switch
+    private static CombatActionKind? GetActionKind(string? action) => action switch
     {
         "attack" => CombatActionKind.MeleeAttack,
         "parry" => CombatActionKind.WeaponParry,
@@ -1745,6 +1893,8 @@ public partial class Kampf : IDisposable
         "fumble-helper" => CombatActionKind.FumbleHelper,
         _ => null
     };
+
+    private CombatActionKind? GetActionKind() => GetActionKind(SelectedAction);
 
     private int? GetActionBaseValue() => GetActionKind() switch
     {

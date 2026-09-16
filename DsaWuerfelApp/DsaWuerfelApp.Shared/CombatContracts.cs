@@ -163,6 +163,23 @@ public sealed record CombatAttackExchangeDto
 
 public static class CombatAttackExchangeRules
 {
+    public static bool IsOpen(CombatAttackExchangeDto? exchange) =>
+        exchange is { Status: not (CombatExchangeStatus.Avoided or CombatExchangeStatus.Completed or CombatExchangeStatus.Cancelled) };
+
+    public static bool BlocksTurnProgress(CombatSessionMutationKind mutationKind) => mutationKind is
+        CombatSessionMutationKind.RollInitiative or
+        CombatSessionMutationKind.SetInitiative or
+        CombatSessionMutationKind.CompleteAction or
+        CombatSessionMutationKind.ConsumeReaction or
+        CombatSessionMutationKind.HoldAction or
+        CombatSessionMutationKind.ExecuteHeldAction or
+        CombatSessionMutationKind.AddAction or
+        CombatSessionMutationKind.AddOpponent or
+        CombatSessionMutationKind.RemoveOpponent or
+        CombatSessionMutationKind.NewRound or
+        CombatSessionMutationKind.Orient or
+        CombatSessionMutationKind.ResolveOrientation;
+
     public static bool HasValidIdentity(CombatAttackExchangeDto exchange) =>
         !string.IsNullOrWhiteSpace(exchange.ExchangeId) &&
         !string.IsNullOrWhiteSpace(exchange.SessionId) &&

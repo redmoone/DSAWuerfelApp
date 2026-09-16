@@ -23,6 +23,8 @@ public partial class CombatInitiativeOverview
     [Parameter] public string? SelectedTargetParticipantId { get; set; }
     [Parameter] public Func<CombatSessionParticipantDto, bool>? CanSelectTarget { get; set; }
     [Parameter] public EventCallback<string> TargetSelected { get; set; }
+    [Parameter] public bool CanResolveActiveExchange { get; set; }
+    [Parameter] public EventCallback<CombatActionKind> ExchangeActionRequested { get; set; }
 
     private string GetTurnLabel(CombatSessionParticipantDto participant) =>
         TurnLabel?.Invoke(participant) ?? "Offen";
@@ -60,4 +62,40 @@ public partial class CombatInitiativeOverview
         string.IsNullOrWhiteSpace(participant.Affiliation)
             ? participant.Kind == CombatParticipantKind.Hero ? "Held" : "Gegner"
             : participant.Affiliation;
+
+    private static string GetParticipantName(
+        CombatSessionSnapshotDto snapshot,
+        string participantId) => snapshot.Participants.FirstOrDefault(participant =>
+            string.Equals(participant.Id, participantId, StringComparison.Ordinal))?.Name ?? "Unbekannt";
+
+    private static string GetExchangeStatusLabel(CombatExchangeStatus status) => status switch
+    {
+        CombatExchangeStatus.Declared => "AT-Wurf steht aus",
+        CombatExchangeStatus.AttackOpen => "AT-Wurf läuft",
+        CombatExchangeStatus.DefenseOpen => "Abwehr wählen",
+        CombatExchangeStatus.Hit => "Trefferfolge offen",
+        CombatExchangeStatus.DamageOpen => "TP-Wurf steht aus",
+        _ => status.ToString()
+    };
+
+    private static string GetExchangePrompt(
+        CombatSessionSnapshotDto snapshot,
+        CombatAttackExchangeDto exchange) => exchange.Status switch
+    {
+        CombatExchangeStatus.Declared or CombatExchangeStatus.AttackOpen =>
+            $"{GetParticipantName(snapshot, exchange.AttackerParticipantId)} würfelt die Attacke.",
+        CombatExchangeStatus.DefenseOpen =>
+            $"{GetParticipantName(snapshot, exchange.TargetParticipantId)} wählt die Abwehr.",
+        CombatExchangeStatus.Hit or CombatExchangeStatus.DamageOpen =>
+            $"Trefferfolge von {GetParticipantName(snapshot, exchange.AttackerParticipantId)} abschließen.",
+        _ => exchange.RuleNote ?? string.Empty
+    };
+
+    private static string GetDefenseActionLabel(CombatActionKind action) => action switch
+    {
+        CombatActionKind.WeaponParry => "Waffenparade",
+        CombatActionKind.ShieldParry => "Schildparade",
+        CombatActionKind.Dodge => "Ausweichen",
+        _ => action.ToString()
+    };
 }

@@ -122,6 +122,7 @@
                                            IsLoading="@ProfileLoading"
                                            SelectedSetId="@SelectedSetId"
                                            SetSelected="HandleSetSelected"
+                                           LoadoutLocked="@HasOpenAttackExchange"
                                            IsSessionCombat="@IsSessionCombat"
                                            AttributeMode="@IsAttributeMode"
                                            Weapons="@Weapons"
@@ -262,7 +263,7 @@
                                         @if (CanManageParticipantControls(participant))
                                         {
                                             <UiButton Size="compact"
-                                                      Disabled="@(!participant.ReactionAvailable)"
+                                                      Disabled="@(!participant.ReactionAvailable || HasOpenAttackExchange)"
                                                       OnClick="() => ConsumeReactionAsync(participant)">
                                                 @(participant.ReactionAvailable ? "Reaktion" : "PA verbraucht")
                                             </UiButton>
@@ -288,7 +289,7 @@
                                     {
                                         <div class="combat-action-entry @(action.State.ToString().ToLowerInvariant())">
                                             <span>@action.Label · @(action.ActionCost == 1 ? "1 Aktion" : $"{action.ActionCost} Aktionen")</span>
-                                            @if (action.State == CombatActionEntryState.Open && CanManageParticipantControls(participant))
+                                            @if (action.State == CombatActionEntryState.Open && CanManageParticipantControls(participant) && !HasOpenAttackExchange)
                                             {
                                                 <span class="combat-action-entry-buttons">
                                                     @if (IsOrientationAction(action) && action.RequiresCheck)
@@ -312,16 +313,16 @@
                     <div class="combat-initiative-actions">
                         @if (IsMasterView)
                         {
-                            <UiButton Disabled="@(!(SessionCombat?.IsStarted ?? false))" OnClick="NewRoundAsync">Neue Runde</UiButton>
+                            <UiButton Disabled="@(!(SessionCombat?.IsStarted ?? false) || HasOpenAttackExchange)" OnClick="NewRoundAsync">Neue Runde</UiButton>
                         }
                         @if (CanManageOwnSessionParticipant)
                         {
-                            <UiButton Disabled="@(OwnSessionParticipant?.CurrentInitiative is null)" OnClick="OpenOrientationDrawer">Orientieren</UiButton>
+                            <UiButton Disabled="@(OwnSessionParticipant?.CurrentInitiative is null || HasOpenAttackExchange)" OnClick="OpenOrientationDrawer">Orientieren</UiButton>
                         }
                         @if (IsSessionCombat && IsMasterView)
                         {
                             <UiButton OnClick="OpenAnnouncementDrawer">Rundenansage</UiButton>
-                            <UiButton OnClick="OpenOpponentDrawer">Gegner hinzufügen</UiButton>
+                            <UiButton Disabled="@HasOpenAttackExchange" OnClick="OpenOpponentDrawer">Gegner hinzufügen</UiButton>
                         }
                     </div>
                 </section>
@@ -343,6 +344,8 @@
                                           SelectedTargetParticipantId="@SelectedTargetParticipantId"
                                           CanSelectTarget="IsTargetSelectable"
                                           TargetSelected="HandleTargetSelected"
+                                          CanResolveActiveExchange="@CanResolveActiveExchange"
+                                          ExchangeActionRequested="HandleExchangeActionAsync"
                                           CanRollParticipantInitiative="CanRollParticipantInitiative"
                                           RollInitiativeRequested="RollParticipantInitiativeAsync"
                                           CanRemoveOpponent="CanRemoveOpponent"

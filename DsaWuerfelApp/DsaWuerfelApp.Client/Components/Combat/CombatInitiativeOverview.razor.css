@@ -63,6 +63,60 @@
     font-size: 0.78rem;
 }
 
+.combat-initiative-overview-exchange {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.65rem;
+    border: var(--ui-control-border-width) solid var(--dsa-gold);
+    border-radius: var(--dsa-panel-radius);
+    background: rgba(21, 48, 78, 0.62);
+}
+
+.combat-initiative-overview-exchange-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    color: var(--dsa-text-muted);
+    font-size: 0.68rem;
+}
+
+.combat-initiative-overview-exchange-heading > div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.12rem;
+}
+
+.combat-initiative-overview-exchange-heading strong,
+.combat-initiative-overview-exchange-participants {
+    color: var(--dsa-gold);
+    overflow-wrap: anywhere;
+}
+
+.combat-initiative-overview-exchange-participants {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.3rem;
+    font-size: 0.82rem;
+}
+
+.combat-initiative-overview-exchange-prompt {
+    color: var(--dsa-text-muted);
+    font-size: 0.7rem;
+    line-height: 1.35;
+}
+
+.combat-initiative-overview-exchange-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding-top: 0.2rem;
+}
+
 .combat-initiative-overview-list {
     display: flex;
     max-height: calc(100vh - 10rem);

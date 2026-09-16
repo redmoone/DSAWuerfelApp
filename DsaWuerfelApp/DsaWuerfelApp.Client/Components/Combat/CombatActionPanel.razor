@@ -129,7 +129,7 @@
                                     class="ui-select combat-set-select"
                                     aria-label="Kampfset auswählen"
                                     value="@SelectedSetId"
-                                    disabled="@IsBusy"
+                                    disabled="@(IsBusy || LoadoutLocked)"
                                     @onchange="HandleSetChanged">
                                 @foreach (var group in Sets.GroupBy(set => set.Number).OrderBy(group => group.Key))
                                 {
@@ -158,7 +158,7 @@
                                         class="ui-select combat-weapon-select"
                                         aria-label="Waffe oder Abwehr auswählen"
                                         value="@SelectedWeaponId"
-                                        disabled="@IsBusy"
+                                        disabled="@(IsBusy || LoadoutLocked)"
                                         @onchange="HandleWeaponChanged">
                                     @foreach (var weapon in Weapons)
                                     {
@@ -173,7 +173,7 @@
                                                       Active="@(weapon.Id == SelectedWeaponId)"
                                                       role="option"
                                                       aria-selected="@(weapon.Id == SelectedWeaponId)"
-                                              Disabled="@(IsBusy || weapon.IsAvailable == false)"
+                                              Disabled="@(IsBusy || LoadoutLocked || weapon.IsAvailable == false)"
                                               OnClick="() => WeaponSelected.InvokeAsync(weapon.Id)">
                                                 <span class="ui-button-label">@GetWeaponLabel(weapon)</span>
                                                 <span class="combat-option-value">@GetWeaponValue(weapon)</span>

@@ -1210,6 +1210,8 @@ public sealed class CombatSessionStateService(
                 throw new RequestRejectedException(RequestRejectionReason.Forbidden, authorization.Message);
             }
 
+            EnsureNoOpenAttackExchange(current, request.Kind);
+
             var previous = current;
             var rolls = Array.Empty<DiceRollDto>();
             RollHistoryEntryDto? historyEntry = null;
@@ -1592,8 +1594,7 @@ public sealed class CombatSessionStateService(
             throw Validation("Eine Attacke ist erst nach dem ersten Initiativewurf möglich.");
         }
 
-        if (current.ActiveExchange is
-            { Status: not (CombatExchangeStatus.Completed or CombatExchangeStatus.Cancelled or CombatExchangeStatus.Avoided) })
+        if (CombatAttackExchangeRules.IsOpen(current.ActiveExchange))
         {
             throw Validation("Es ist bereits ein offener Angriffsaustausch vorhanden.");
         }
@@ -2292,9 +2293,10 @@ public sealed class CombatSessionStateService(
             throw Validation("Nur Gegner können aus der Gegnerverwaltung entfernt werden.");
         }
 
-        if (current.ActiveExchange is not null &&
-            (string.Equals(current.ActiveExchange.AttackerParticipantId, participant.Id, StringComparison.Ordinal) ||
-             string.Equals(current.ActiveExchange.TargetParticipantId, participant.Id, StringComparison.Ordinal)))
+        if (current.ActiveExchange is { } exchange &&
+            CombatAttackExchangeRules.IsOpen(exchange) &&
+            (string.Equals(exchange.AttackerParticipantId, participant.Id, StringComparison.Ordinal) ||
+             string.Equals(exchange.TargetParticipantId, participant.Id, StringComparison.Ordinal)))
         {
             throw Validation("Der Gegner kann während eines offenen Angriffsaustauschs nicht entfernt werden.");
         }
@@ -2314,8 +2316,7 @@ public sealed class CombatSessionStateService(
         CombatSessionSnapshotDto current,
         CombatSessionMutationRequestDto _)
     {
-        if (current.ActiveExchange is { Status: not (CombatExchangeStatus.Completed or
-            CombatExchangeStatus.Cancelled or CombatExchangeStatus.Avoided) })
+        if (CombatAttackExchangeRules.IsOpen(current.ActiveExchange))
         {
             throw Validation("Der offene Angriffsaustausch muss zuerst abgeschlossen werden.");
         }
@@ -2730,12 +2731,17 @@ public sealed class CombatSessionStateService(
             .ThenByDescending(action => BaseInitiative(action, participantsById))
             .ThenBy(action => action.Id, StringComparer.Ordinal)
             .ToArray();
-        var current = openActions.FirstOrDefault();
+        var exchangeParticipantId = GetPendingExchangeParticipantId(snapshot.ActiveExchange);
+        var current = string.IsNullOrWhiteSpace(exchangeParticipantId)
+            ? openActions.FirstOrDefault()
+            : openActions.FirstOrDefault(action =>
+                string.Equals(action.ParticipantId, exchangeParticipantId, StringComparison.Ordinal));
         var currentValue = current is null ? (int?)null : EffectiveInitiative(current, participantsById);
         var currentBase = current is null ? (int?)null : BaseInitiative(current, participantsById);
         var currentIds = current is null
             ? []
-            : openActions
+            : (string.IsNullOrWhiteSpace(exchangeParticipantId) ? openActions : openActions
+                    .Where(action => string.Equals(action.ParticipantId, exchangeParticipantId, StringComparison.Ordinal)))
                 .Where(action => EffectiveInitiative(action, participantsById) == currentValue &&
                                  BaseInitiative(action, participantsById) == currentBase)
                 .Select(action => action.Id)
@@ -2767,6 +2773,13 @@ public sealed class CombatSessionStateService(
             SpecialResultsEnabled = snapshot.SpecialResultsEnabled
         };
     }
+
+    private static string? GetPendingExchangeParticipantId(CombatAttackExchangeDto? exchange) =>
+        !CombatAttackExchangeRules.IsOpen(exchange) || exchange is null
+            ? null
+            : exchange.Status == CombatExchangeStatus.DefenseOpen
+                ? exchange.TargetParticipantId
+                : exchange.AttackerParticipantId;
 
     private static int EffectiveInitiative(CombatSessionActionDto action,
         IReadOnlyDictionary<string, CombatSessionParticipantDto> participants)
@@ -2957,6 +2970,17 @@ public sealed class CombatSessionStateService(
     };
 
     private static string HeroParticipantId(Guid heroId) => $"hero:{heroId:N}";
+
+    private static void EnsureNoOpenAttackExchange(
+        CombatSessionSnapshotDto current,
+        CombatSessionMutationKind mutationKind)
+    {
+        if (CombatAttackExchangeRules.IsOpen(current.ActiveExchange) &&
+            CombatAttackExchangeRules.BlocksTurnProgress(mutationKind))
+        {
+            throw Validation("Der offene Angriffsaustausch muss zuerst abgeschlossen werden.");
+        }
+    }
 
     private static void EnsureMaster(GameSession session, string userId)
     {

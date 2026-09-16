@@ -14,6 +14,7 @@ public partial class CombatActionPanel
     [Parameter] public bool IsLoading { get; set; }
     [Parameter] public string? SelectedSetId { get; set; }
     [Parameter] public EventCallback<string> SetSelected { get; set; }
+    [Parameter] public bool LoadoutLocked { get; set; }
     [Parameter] public bool AttributeMode { get; set; }
     [Parameter] public EventCallback<bool> AttributeModeChanged { get; set; }
     [Parameter] public IReadOnlyList<CombatWeaponDto> Weapons { get; set; } = Array.Empty<CombatWeaponDto>();
