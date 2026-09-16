@@ -1540,6 +1540,29 @@ public partial class Kampf : IDisposable
 
     private async Task InitializeCombatStateAsync()
     {
+        if (IsSessionCombat)
+        {
+            if (Profile is null || SessionCombat is null || OwnSessionParticipant is null)
+            {
+                _notice = "Der aktuelle Session-Kampfstand ist noch nicht geladen.";
+                return;
+            }
+
+            var initializationResult = await SyncOwnSessionRuntimeEditAsync(runtime => runtime with
+            {
+                IsStarted = true,
+                CurrentLeP = runtime.CurrentLeP ?? Profile.Resources.LeP,
+                CurrentAuP = runtime.CurrentAuP ?? Profile.Resources.AuP,
+                Wounds = runtime.Wounds.Count == 0
+                    ? Enum.GetValues<CombatWoundZone>().ToDictionary(zone => zone, _ => (int?)0)
+                    : runtime.Wounds
+            });
+            _notice = initializationResult?.Stale == true
+                ? initializationResult.Message
+                : "Laufende Kampfwerte mit den Maximalwerten initialisiert.";
+            return;
+        }
+
         if (!await CombatState.StartCombatAsync())
         {
             _notice = "Für die Initialisierung fehlen die Kampfdaten.";

@@ -214,6 +214,59 @@ public class ClientStateTests
         }
     }
 
+    [Fact]
+    public void Session_storage_snapshot_keeps_ui_preferences_without_runtime_mirrors()
+    {
+        var source = new CombatRuntimeSnapshot(
+            1,
+            "user:hero:session-1",
+            3,
+            true,
+            8,
+            6,
+            17,
+            Enum.GetValues<CombatWoundZone>().ToDictionary(zone => zone, _ => (int?)2),
+            4,
+            ["alte Anzeige"],
+            "alter Zustand",
+            DateTimeOffset.UtcNow)
+        {
+            CurrentAeP = 4,
+            CurrentKeP = 2,
+            SelectedSetId = "set-1",
+            SelectedWeaponId = "weapon-1",
+            SelectedAction = "attack",
+            SelectedProbe = "Aufmerksamkeit",
+            SelectedAttribute = "MU",
+            SelectedAttributes = ["MU", "GE"],
+            SituationalModifier = 3,
+            InitiativeRuntimeModifier = -2,
+            RollText = "eigener Entwurf",
+            Facing = CombatFacing.Back,
+            SelectedZone = CombatWoundZone.Head
+        };
+
+        var create = typeof(CombatState).GetMethod(
+            "CreateSessionUiSnapshot", BindingFlags.Static | BindingFlags.NonPublic)!;
+        var snapshot = Assert.IsType<CombatRuntimeSnapshot>(create.Invoke(
+            null,
+            [source, "user:hero:session-1", 4]));
+
+        Assert.False(snapshot.IsStarted);
+        Assert.Null(snapshot.CurrentLeP);
+        Assert.Null(snapshot.CurrentAuP);
+        Assert.Null(snapshot.CurrentInitiative);
+        Assert.Empty(snapshot.Wounds);
+        Assert.Null(snapshot.CurrentAeP);
+        Assert.Null(snapshot.CurrentKeP);
+        Assert.Equal("set-1", snapshot.SelectedSetId);
+        Assert.Equal("weapon-1", snapshot.SelectedWeaponId);
+        Assert.Equal("eigener Entwurf", snapshot.RollText);
+        Assert.Equal(3, snapshot.SituationalModifier);
+        Assert.Equal(CombatFacing.Back, snapshot.Facing);
+        Assert.Equal(CombatWoundZone.Head, snapshot.SelectedZone);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

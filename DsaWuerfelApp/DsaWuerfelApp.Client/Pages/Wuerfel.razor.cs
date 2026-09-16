@@ -425,6 +425,29 @@ public partial class Wuerfel : IDisposable
 
     private async Task InitializeCombatStateAsync()
     {
+        if (CombatIsSession)
+        {
+            if (CombatProfile is null || CombatSession is null || OwnCombatParticipant is null)
+            {
+                _combatNotice = "Der aktuelle Session-Kampfstand ist noch nicht geladen.";
+                return;
+            }
+
+            var initializationResult = await SyncOwnCombatSessionRuntimeEditAsync(runtime => runtime with
+            {
+                IsStarted = true,
+                CurrentLeP = runtime.CurrentLeP ?? CombatProfile.Resources.LeP,
+                CurrentAuP = runtime.CurrentAuP ?? CombatProfile.Resources.AuP,
+                Wounds = runtime.Wounds.Count == 0
+                    ? Enum.GetValues<CombatWoundZone>().ToDictionary(zone => zone, _ => (int?)0)
+                    : runtime.Wounds
+            });
+            _combatNotice = initializationResult?.Stale == true
+                ? initializationResult.Message
+                : "Laufende Kampfwerte mit den importierten Maximalwerten initialisiert.";
+            return;
+        }
+
         if (!await CombatState.StartCombatAsync())
         {
             _combatNotice = "Für die Initialisierung fehlt ein importiertes Kampfprofil.";

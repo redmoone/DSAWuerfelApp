@@ -207,7 +207,7 @@ public sealed class CombatState : IDisposable
 
     public async Task SetResourceAsync(CombatResourceKind resource, int? value)
     {
-        if (Profile is null)
+        if (Profile is null || IsSessionContext)
         {
             return;
         }
@@ -234,7 +234,7 @@ public sealed class CombatState : IDisposable
 
     public async Task SetWoundAsync(CombatWoundZone zone, int value)
     {
-        if (Profile is null)
+        if (Profile is null || IsSessionContext)
         {
             return;
         }
@@ -280,7 +280,7 @@ public sealed class CombatState : IDisposable
 
     public async Task<bool> StartCombatAsync()
     {
-        if (Profile is null)
+        if (Profile is null || IsSessionContext)
         {
             return false;
         }
@@ -309,7 +309,7 @@ public sealed class CombatState : IDisposable
 
     public async Task<bool> SetInitiativeAsync(int? initiative)
     {
-        if (Profile is null)
+        if (Profile is null || IsSessionContext)
         {
             return false;
         }
@@ -331,7 +331,7 @@ public sealed class CombatState : IDisposable
         int newWounds,
         string? note)
     {
-        if (!_runtime.IsStarted || !_runtime.CurrentLeP.HasValue)
+        if (IsSessionContext || !_runtime.IsStarted || !_runtime.CurrentLeP.HasValue)
         {
             return false;
         }
@@ -354,7 +354,7 @@ public sealed class CombatState : IDisposable
 
     public async Task<bool> UndoLastChangeAsync()
     {
-        if (_undo is null)
+        if (IsSessionContext || _undo is null)
         {
             return false;
         }
@@ -431,11 +431,13 @@ public sealed class CombatState : IDisposable
                     return;
                 }
 
-                _runtime = NormalizeSnapshot(
-                    persisted?.Current ?? CreateInitialRuntime(contextKey, profile),
-                    contextKey,
-                    profile.SourceRevision);
-                _undo = persisted?.Undo is null
+                _runtime = IsSessionContext
+                    ? CreateSessionUiSnapshot(persisted?.Current, contextKey, profile.SourceRevision)
+                    : NormalizeSnapshot(
+                        persisted?.Current ?? CreateInitialRuntime(contextKey, profile),
+                        contextKey,
+                        profile.SourceRevision);
+                _undo = IsSessionContext || persisted?.Undo is null
                     ? null
                     : NormalizeSnapshot(persisted.Undo, contextKey, profile.SourceRevision);
                 RestoreSelection(profile);
@@ -521,7 +523,9 @@ public sealed class CombatState : IDisposable
             SelectedSetId = _runtime.SelectedSetId,
             SelectedWeaponId = _runtime.SelectedWeaponId
         };
-        var persisted = new CombatPersistedState(_runtime, _undo);
+        var persisted = IsSessionContext
+            ? new CombatPersistedState(CreateSessionUiSnapshot(_runtime, _contextKey, Profile.SourceRevision), null)
+            : new CombatPersistedState(_runtime, _undo);
         var saved = await _store.SaveAsync(_contextKey, persisted);
         _persistenceError = saved ? null : "Änderungen werden gerade nicht dauerhaft gespeichert.";
         Notify();
@@ -580,6 +584,8 @@ public sealed class CombatState : IDisposable
         return $"{userId}:{hero.Id:N}:{sessionId}";
     }
 
+    private bool IsSessionContext => !string.IsNullOrWhiteSpace(_sessionState.ActiveSessionId);
+
     private void ResetWithoutContext()
     {
         _contextLoaded = true;
@@ -624,6 +630,32 @@ public sealed class CombatState : IDisposable
             [],
             null,
             null);
+    }
+
+    private static CombatRuntimeSnapshot CreateSessionUiSnapshot(
+        CombatRuntimeSnapshot? source,
+        string contextKey,
+        int profileRevision)
+    {
+        var baseline = CreateEmptyRuntime(contextKey, profileRevision) with { Wounds = [] };
+        if (source is null)
+        {
+            return baseline;
+        }
+
+        return baseline with
+        {
+            SelectedSetId = source.SelectedSetId,
+            SelectedWeaponId = source.SelectedWeaponId,
+            SelectedAction = source.SelectedAction,
+            SelectedProbe = source.SelectedProbe,
+            SelectedAttribute = source.SelectedAttribute,
+            SelectedAttributes = source.SelectedAttributes ?? [],
+            SituationalModifier = source.SituationalModifier,
+            RollText = source.RollText,
+            Facing = source.Facing,
+            SelectedZone = source.SelectedZone
+        };
     }
 
     private static Dictionary<CombatWoundZone, int?> EmptyWounds() =>
