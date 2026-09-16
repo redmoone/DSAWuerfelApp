@@ -95,6 +95,17 @@ public sealed class CombatSessionStateService(
             return new CombatSessionRollProcessingResult(result, null, null);
         }
 
+        var cachedResult = await GetCachedRollAsync(
+            request.SessionId,
+            request.RequestId,
+            userId,
+            cancellationToken);
+        if (cachedResult is not null)
+        {
+            var cachedSnapshot = await GetAsync(request.SessionId, userId, cancellationToken);
+            return new CombatSessionRollProcessingResult(cachedResult, cachedSnapshot, null);
+        }
+
         var key = new SessionRollKey(request.SessionId.Trim(), request.RequestId, userId);
         var completion = new TaskCompletionSource<CombatSessionRollProcessingResult>(
             TaskCreationOptions.RunContinuationsAsynchronously);
