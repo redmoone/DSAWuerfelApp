@@ -632,6 +632,15 @@ public partial class Kampf : IDisposable
 
     private CombatRollRequestDto BuildRollRequest(CombatActionKind action)
     {
+        if (IsSessionCombat &&
+            CombatActionBudgetRules.RequiresReaction(action) &&
+            SessionCombat?.ActiveExchange is { } exchange &&
+            OwnSessionParticipant is { } ownTarget &&
+            string.Equals(exchange.TargetParticipantId, ownTarget.Id, StringComparison.Ordinal))
+        {
+            return BuildDefenseRollRequest(exchange, ownTarget, action);
+        }
+
         var modifiers = action == CombatActionKind.Damage || Modifier == 0
             ? Array.Empty<CombatModifierDto>()
             : [new CombatModifierDto("Situativ", Modifier, "Kampfseite")];
@@ -650,7 +659,9 @@ public partial class Kampf : IDisposable
             HeroId = ActiveHero?.Id,
             SetId = SelectedSet?.Id,
             ExchangeId = IsSessionCombat && action is
-                (CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack or CombatActionKind.HitZone or CombatActionKind.Damage)
+                (CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack or
+                 CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge or
+                 CombatActionKind.HitZone or CombatActionKind.Damage)
                 ? SessionCombat?.ActiveExchange?.ExchangeId
                 : null,
             Action = action,
@@ -680,6 +691,41 @@ public partial class Kampf : IDisposable
                 CombatActionKind.FumbleHelper => new CombatHelperRollRequestDto { DiceCount = 1, DiceSides = 20, Purpose = "Patzer-Hilfswurf" },
                 _ => null
             },
+            Note = string.IsNullOrWhiteSpace(RollText) ? null : RollText.Trim()
+        };
+    }
+
+    private CombatRollRequestDto BuildDefenseRollRequest(
+        CombatAttackExchangeDto exchange,
+        CombatSessionParticipantDto target,
+        CombatActionKind action)
+    {
+        var targetIsOpponent = target.Kind == CombatParticipantKind.Opponent;
+        var weapon = !targetIsOpponent && action is
+            (CombatActionKind.WeaponParry or CombatActionKind.ShieldParry)
+            ? SelectedWeapon
+            : null;
+
+        return new CombatRollRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = SessionState.ActiveSessionId,
+            ParticipantId = target.Id,
+            TargetParticipantId = exchange.AttackerParticipantId,
+            ActionId = exchange.ActionId,
+            ExpectedRevision = SessionCombat?.Revision,
+            HeroId = targetIsOpponent ? null : target.HeroId,
+            SetId = targetIsOpponent ? null : target.InitiativeSetId ?? SelectedSet?.Id,
+            ExchangeId = exchange.ExchangeId,
+            Action = action,
+            WeaponId = weapon?.Id,
+            WeaponName = weapon?.Name,
+            RuntimeState = target.RuntimeState,
+            Modifiers = Modifier == 0
+                ? []
+                : [new CombatModifierDto("Situativ", Modifier, "Kampfseite")],
+            Options = new CombatRuleOptionsDto(SpecialResultsEnabled: true, LowLePEnabled: true),
+            Facing = exchange.Facing,
             Note = string.IsNullOrWhiteSpace(RollText) ? null : RollText.Trim()
         };
     }
@@ -793,31 +839,7 @@ public partial class Kampf : IDisposable
             return;
         }
 
-        var targetIsOpponent = target.Kind == CombatParticipantKind.Opponent;
-
-        var request = new CombatRollRequestDto
-            {
-                RequestId = Guid.NewGuid(),
-                SessionId = SessionState.ActiveSessionId,
-                ParticipantId = exchange.TargetParticipantId,
-                TargetParticipantId = exchange.AttackerParticipantId,
-                ActionId = exchange.ActionId,
-                ExpectedRevision = SessionCombat?.Revision,
-                HeroId = targetIsOpponent ? null : target.HeroId,
-                SetId = targetIsOpponent ? null : SelectedSet?.Id,
-                ExchangeId = exchange.ExchangeId,
-                Action = action,
-                WeaponId = !targetIsOpponent && action is (CombatActionKind.WeaponParry or CombatActionKind.ShieldParry)
-                    ? SelectedWeapon?.Id
-                    : null,
-                WeaponName = targetIsOpponent ? null : SelectedWeapon?.Name,
-                RuntimeState = targetIsOpponent ? target.RuntimeState : BuildRuntimeState(),
-                Modifiers = Modifier == 0
-                    ? []
-                    : [new CombatModifierDto("Situativ", Modifier, "Kampfseite")],
-                Options = new CombatRuleOptionsDto(SpecialResultsEnabled: true, LowLePEnabled: true),
-                Facing = exchange.Facing
-            };
+        var request = BuildDefenseRollRequest(exchange, target, action);
 
         _rollBusy = true;
         _notice = null;
