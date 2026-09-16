@@ -1528,6 +1528,57 @@ public sealed class CombatSessionStateTests
     }
 
     [Fact]
+    public async Task Normal_action_cannot_be_completed_before_its_initiative_phase()
+    {
+        using var factory = new TestApplicationFactory();
+        var hero = await SeedHeroAsync(factory, "owner");
+        var session = CreateSession(factory, hero, "owner");
+        var state = factory.Services.GetRequiredService<CombatSessionStateService>();
+        var initial = await state.GetAsync(session.SessionId, "owner");
+
+        var rolled = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = initial.Revision,
+            Kind = CombatSessionMutationKind.RollInitiative,
+            HeroId = hero.Id
+        }, "owner");
+        var participant = Assert.Single(rolled.Snapshot.Participants, item => item.HeroId == hero.Id);
+        var action = Assert.Single(rolled.Snapshot.Actions, item => item.ParticipantId == participant.Id);
+
+        var withEarlierOpponent = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = rolled.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.AddOpponent,
+            Name = "Früher Gegner",
+            InitiativeBase = 100,
+            Initiative = 100,
+            OpponentProfile = new CombatOpponentProfileDto(10, 8, 7, 0, 20)
+        }, "owner");
+
+        Assert.DoesNotContain(action.Id, withEarlierOpponent.Snapshot.CurrentActionIds);
+        await Assert.ThrowsAsync<RequestRejectedException>(() => state.MutateAsync(
+            new CombatSessionMutationRequestDto
+            {
+                RequestId = Guid.NewGuid(),
+                SessionId = session.SessionId,
+                ExpectedRevision = withEarlierOpponent.Snapshot.Revision,
+                Kind = CombatSessionMutationKind.CompleteAction,
+                ParticipantId = participant.Id,
+                ActionId = action.Id
+            }, "owner"));
+
+        var unchanged = await state.GetAsync(session.SessionId, "owner");
+        Assert.Equal(CombatActionEntryState.Open,
+            unchanged.Actions.Single(item => item.Id == action.Id).State);
+        Assert.Equal(1, unchanged.Participants.Single(item => item.Id == participant.Id)
+            .ActionBudget?.NormalActionsRemaining);
+    }
+
+    [Fact]
     public async Task Normal_action_and_reaction_budgets_are_consumed_independently()
     {
         using var factory = new TestApplicationFactory();

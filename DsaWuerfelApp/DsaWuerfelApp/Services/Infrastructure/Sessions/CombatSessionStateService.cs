@@ -2099,6 +2099,13 @@ public sealed class CombatSessionStateService(
         {
             throw Validation("Dieser Teilnehmer ist nicht mehr kampffaehig.");
         }
+        if (!action.IsAdditional &&
+            current.CurrentActionIds.Length > 0 &&
+            !current.CurrentActionIds.Contains(action.Id, StringComparer.Ordinal))
+        {
+            throw Validation("Die Handlung kann erst abgeschlossen werden, wenn der Teilnehmer an der Reihe ist.");
+        }
+
         var budget = participant.ActionBudget ?? new CombatActionBudgetDto();
         if (!action.IsAdditional && !budget.HasNormalAction)
         {
