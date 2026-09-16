@@ -41,7 +41,7 @@ public static class CombatWoundRules
         if (currentWounds.HasValue && structurePoints.HasValue)
         {
             var thresholdWounds = ResolveThresholdWounds(structurePoints.Value, thresholds);
-            resultingWounds = Math.Max(currentWounds.Value, thresholdWounds);
+            resultingWounds = Math.Clamp(currentWounds.Value + thresholdWounds, 0, 3);
         }
 
         int? lepAfter = currentLeP;
@@ -68,17 +68,17 @@ public static class CombatWoundRules
         int structurePoints,
         CombatWoundThresholdsDto thresholds)
     {
-        if (thresholds.Third.HasValue && structurePoints >= thresholds.Third.Value)
+        if (thresholds.Third.HasValue && structurePoints > thresholds.Third.Value)
         {
             return 3;
         }
 
-        if (thresholds.Second.HasValue && structurePoints >= thresholds.Second.Value)
+        if (thresholds.Second.HasValue && structurePoints > thresholds.Second.Value)
         {
             return 2;
         }
 
-        return thresholds.First.HasValue && structurePoints >= thresholds.First.Value ? 1 : 0;
+        return thresholds.First.HasValue && structurePoints > thresholds.First.Value ? 1 : 0;
     }
 
     private static void ValidateThreshold(int? value, string parameterName)

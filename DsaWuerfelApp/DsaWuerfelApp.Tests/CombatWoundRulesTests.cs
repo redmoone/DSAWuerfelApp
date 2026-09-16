@@ -8,10 +8,13 @@ public sealed class CombatWoundRulesTests
 
     [Theory]
     [InlineData(3, 0)]
-    [InlineData(4, 1)]
-    [InlineData(8, 2)]
-    [InlineData(12, 3)]
-    public void Applies_zero_one_two_or_three_wounds_at_the_explicit_thresholds(
+    [InlineData(4, 0)]
+    [InlineData(5, 1)]
+    [InlineData(8, 1)]
+    [InlineData(9, 2)]
+    [InlineData(12, 2)]
+    [InlineData(13, 3)]
+    public void Applies_wounds_only_after_a_threshold_is_exceeded(
         int structurePoints,
         int expectedWounds)
     {
@@ -27,7 +30,7 @@ public sealed class CombatWoundRulesTests
     }
 
     [Fact]
-    public void Existing_wounds_are_not_removed_or_added_twice()
+    public void New_hit_wounds_are_added_to_existing_wounds()
     {
         var result = CombatWoundRules.Resolve(
             structurePoints: 8,
@@ -36,8 +39,8 @@ public sealed class CombatWoundRulesTests
             currentWounds: 2,
             Thresholds);
 
-        Assert.Equal(2, result.ResultingWounds);
-        Assert.Equal(0, result.AddedWounds);
+        Assert.Equal(3, result.ResultingWounds);
+        Assert.Equal(1, result.AddedWounds);
     }
 
     [Fact]
@@ -103,7 +106,7 @@ public sealed class CombatWoundRulesTests
     }
 
     [Fact]
-    public void Repeated_application_of_the_same_snapshot_is_idempotent()
+    public void Repeated_structure_points_represent_a_new_hit_and_are_not_silently_deduplicated()
     {
         var first = CombatWoundRules.Resolve(12, 20, CombatWoundZone.Torso, 0, Thresholds);
         var repeated = CombatWoundRules.Resolve(
@@ -113,8 +116,8 @@ public sealed class CombatWoundRulesTests
             first.ResultingWounds,
             Thresholds);
 
-        Assert.Equal(3, first.ResultingWounds);
+        Assert.Equal(2, first.ResultingWounds);
         Assert.Equal(3, repeated.ResultingWounds);
-        Assert.Equal(0, repeated.AddedWounds);
+        Assert.Equal(1, repeated.AddedWounds);
     }
 }
