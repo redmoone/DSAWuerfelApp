@@ -210,7 +210,7 @@ public partial class Kampf : IDisposable
         : SelectedAction == "initiative"
             ? CanRollInitiative
         : HasCombatContext && !_rollBusy && !_valueMutationBusy &&
-          (!IsAttackAction(GetActionKind()) || SelectedTargetParticipantId is not null) &&
+          (!IsSessionCombat || !IsAttackAction(GetActionKind()) || SelectedTargetParticipantId is not null) &&
           (GetActionKind() is not { } selectedKind ||
            CanUseActionDuringOpenExchange(selectedKind) &&
            (CanUseActionBudget(selectedKind) ||
