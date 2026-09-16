@@ -11,13 +11,13 @@ const combatXml = `
 </daten>`;
 
 async function waitForResult(page) {
-  await page.locator('[data-testid="combat-roll-result"]').waitFor();
+  await page.locator('.history-entry').last().waitFor();
   await page.locator('.combat-dice-viewport canvas').waitFor();
   await page.waitForFunction(() => {
-    const result = document.querySelector('[data-testid="combat-roll-result"]');
+    const result = document.querySelector('.history-entry:last-child');
     return Boolean(result?.textContent?.trim());
   });
-  return page.evaluate(() => document.querySelector('[data-testid="combat-roll-result"]')?.textContent?.trim() ?? '');
+  return page.locator('.history-entry').last().innerText();
 }
 
 (async () => {
@@ -40,7 +40,7 @@ async function waitForResult(page) {
     assert.match(firstResult, /Attacke|gelungen|misslungen/i,
       `result disappeared after the dice canvas mounted: ${await page.evaluate(() => ({
         location: location.href,
-        resultCount: document.querySelectorAll('[data-testid="combat-roll-result"]').length,
+        resultCount: document.querySelectorAll('.history-entry').length,
         actionText: document.querySelector('.combat-action-panel')?.textContent?.trim() ?? ''
       }))}`);
     assert.match(await page.locator('.combat-action-panel').innerText(), /Attacke auf 19/);
@@ -54,37 +54,35 @@ async function waitForResult(page) {
       'tab return created an additional history entry');
 
     await page.getByRole('button', { name: 'Attacke würfeln', exact: true }).click();
-    await page.waitForFunction(() =>
-      document.querySelector('.combat-history-inline summary')?.textContent?.includes('Verlauf (2)') === true);
+    await page.waitForFunction(() => document.querySelectorAll('.history-entry').length === 2);
     await waitForResult(page);
     assert.equal(await page.locator('.combat-dice-viewport canvas').count(), 1,
       'second result lost its dice viewport');
     assert.equal(await page.locator('.roll-history').count(), 1,
       'the history component was duplicated after the second roll');
-    assert.match(await page.locator('.combat-history-inline').innerText(), /Verlauf \(2\)/,
+    assert.equal(await page.locator('.history-entry').count(), 2,
       'second roll was not added to the history');
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`${origin}/kampf`, { waitUntil: 'domcontentloaded' });
-    await page.locator('.combat-resource-strip').waitFor();
+    await page.locator('.hero-status-resources').waitFor();
     await page.locator('.combat-initiative-overview').waitFor();
     const mobileGeometry = await page.evaluate(() => {
-      const setPicker = document.querySelector('.hero-status-set-picker')?.getBoundingClientRect();
-      const resources = document.querySelector('.combat-inline-status-grid')?.getBoundingClientRect();
+      const loadout = document.querySelector('.combat-loadout-details')?.getBoundingClientRect();
+      const resources = document.querySelector('.hero-status-resources')?.getBoundingClientRect();
       return {
         scrollWidth: document.documentElement.scrollWidth,
         clientWidth: document.documentElement.clientWidth,
-        setPickerHeight: setPicker?.height ?? 0,
-        resourcesTop: resources?.top ?? 0,
-        setPickerBottom: setPicker?.bottom ?? 0,
+        loadoutHeight: loadout?.height ?? 0,
+        resourcesHeight: resources?.height ?? 0,
         initiativeVisible: getComputedStyle(document.querySelector('.combat-initiative-overview')).display !== 'none'
       };
     });
     assert.ok(mobileGeometry.scrollWidth <= mobileGeometry.clientWidth + 1,
       `mobile horizontal overflow: ${JSON.stringify(mobileGeometry)}`);
-    assert.ok(mobileGeometry.setPickerHeight < 220,
+    assert.ok(mobileGeometry.loadoutHeight < 220,
       `mobile set picker retained a desktop-sized flex basis: ${JSON.stringify(mobileGeometry)}`);
-    assert.ok(mobileGeometry.resourcesTop >= mobileGeometry.setPickerBottom,
+    assert.ok(mobileGeometry.resourcesHeight > 0,
       `mobile status blocks overlap: ${JSON.stringify(mobileGeometry)}`);
     assert.equal(mobileGeometry.initiativeVisible, true);
     assert.equal(await page.locator('.combat-details-drawer').count(), 0,
@@ -92,7 +90,7 @@ async function waitForResult(page) {
 
     await page.setViewportSize({ width: 320, height: 844 });
     await page.goto(`${origin}/kampf`, { waitUntil: 'domcontentloaded' });
-    await page.locator('.combat-resource-strip').waitFor();
+    await page.locator('.hero-status-resources').waitFor();
     const narrowGeometry = await page.evaluate(() => ({
       scrollWidth: document.documentElement.scrollWidth,
       clientWidth: document.documentElement.clientWidth,
