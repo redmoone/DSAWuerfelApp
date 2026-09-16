@@ -1249,8 +1249,11 @@ public partial class Kampf : IDisposable
         }
     }
 
-    private async Task HandleParticipantInitiativeChanged(CombatSessionParticipantDto participant, int? initiative)
+    private async Task HandleParticipantInitiativeChanged(
+        CombatInitiativeOverview.ParticipantInitiativeChange change)
     {
+        var participant = change.Participant;
+        var initiative = change.Initiative;
         if (!initiative.HasValue)
         {
             _notice = "Bitte einen konkreten INI-Wert setzen.";
@@ -1266,12 +1269,22 @@ public partial class Kampf : IDisposable
         _notice = null;
         try
         {
+            var snapshot = SessionCombat;
+            var currentParticipant = snapshot?.Participants.FirstOrDefault(item =>
+                string.Equals(item.Id, participant.Id, StringComparison.Ordinal));
+            if (snapshot is null || currentParticipant is null || !CanEditParticipantInitiative(currentParticipant))
+            {
+                _notice = "Die Initiative dieses Teilnehmers kann nicht geändert werden.";
+                return;
+            }
+
             var result = await CombatSessionState.SetInitiativeAsync(
                 initiative.Value,
-                participant.Id,
-                participant.HeroId,
-                participant.RuntimeState,
-                participant.InitiativeSetId ?? SelectedSet?.Id);
+                currentParticipant.Id,
+                currentParticipant.HeroId,
+                currentParticipant.RuntimeState,
+                currentParticipant.InitiativeSetId,
+                expectedRevision: snapshot.Revision);
             if (result.Stale || !result.Applied)
             {
                 _notice = result.Message;

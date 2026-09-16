@@ -17,6 +17,8 @@ public partial class CombatInitiativeOverview
     [Parameter] public Func<CombatSessionParticipantDto, string?>? ParticipantStatus { get; set; }
     [Parameter] public Func<CombatSessionParticipantDto, bool>? CanRollParticipantInitiative { get; set; }
     [Parameter] public EventCallback<CombatSessionParticipantDto> RollInitiativeRequested { get; set; }
+    [Parameter] public Func<CombatSessionParticipantDto, bool>? CanEditParticipantInitiative { get; set; }
+    [Parameter] public EventCallback<ParticipantInitiativeChange> InitiativeChanged { get; set; }
     [Parameter] public Func<CombatSessionParticipantDto, bool>? CanRemoveOpponent { get; set; }
     [Parameter] public EventCallback<CombatSessionParticipantDto> RemoveOpponentRequested { get; set; }
     [Parameter] public bool ShowRoundControls { get; set; }
@@ -27,6 +29,8 @@ public partial class CombatInitiativeOverview
     [Parameter] public string? SelectedTargetParticipantId { get; set; }
     [Parameter] public Func<CombatSessionParticipantDto, bool>? CanSelectTarget { get; set; }
     [Parameter] public EventCallback<string> TargetSelected { get; set; }
+
+    private string? _initiativeEditingParticipantId;
 
     private string GetTurnLabel(CombatSessionParticipantDto participant) =>
         TurnLabel?.Invoke(participant) ?? "Offen";
@@ -40,6 +44,23 @@ public partial class CombatInitiativeOverview
     private bool IsSelectedTarget(CombatSessionParticipantDto participant) =>
         IsTargetSelectable(participant) &&
         string.Equals(SelectedTargetParticipantId, participant.Id, StringComparison.Ordinal);
+
+    private bool IsInitiativeEditable(CombatSessionParticipantDto participant) =>
+        CanEditParticipantInitiative?.Invoke(participant) == true;
+
+    private bool IsEditingInitiative(CombatSessionParticipantDto participant) =>
+        string.Equals(_initiativeEditingParticipantId, participant.Id, StringComparison.Ordinal);
+
+    private void ToggleInitiativeEditor(CombatSessionParticipantDto participant)
+    {
+        _initiativeEditingParticipantId = IsEditingInitiative(participant) ? null : participant.Id;
+    }
+
+    private async Task ChangeInitiativeAsync(CombatSessionParticipantDto participant, int? initiative)
+    {
+        await InitiativeChanged.InvokeAsync(new ParticipantInitiativeChange(participant, initiative));
+        _initiativeEditingParticipantId = null;
+    }
 
     private string GetTargetClass(CombatSessionParticipantDto participant) =>
         $"combat-initiative-overview-person combat-initiative-overview-target {(IsSelectedTarget(participant) ? "is-target" : string.Empty)}";
@@ -64,6 +85,10 @@ public partial class CombatInitiativeOverview
         string.IsNullOrWhiteSpace(participant.Affiliation)
             ? participant.Kind == CombatParticipantKind.Hero ? "Held" : "Gegner"
             : participant.Affiliation;
+
+    public sealed record ParticipantInitiativeChange(
+        CombatSessionParticipantDto Participant,
+        int? Initiative);
 
     private static string GetParticipantName(
         CombatSessionSnapshotDto snapshot,

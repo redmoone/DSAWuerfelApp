@@ -214,6 +214,8 @@
                                           TargetSelected="HandleTargetSelected"
                                           CanRollParticipantInitiative="CanRollParticipantInitiative"
                                           RollInitiativeRequested="RollParticipantInitiativeAsync"
+                                          CanEditParticipantInitiative="CanEditParticipantInitiative"
+                                          InitiativeChanged="HandleParticipantInitiativeChanged"
                                           CanRemoveOpponent="CanRemoveOpponent"
                                           RemoveOpponentRequested="RemoveOpponentAsync"
                                           ShowRoundControls="@(IsSessionCombat && IsMasterView)"

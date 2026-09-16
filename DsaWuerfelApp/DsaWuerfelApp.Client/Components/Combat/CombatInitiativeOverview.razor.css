@@ -263,6 +263,22 @@
     white-space: nowrap;
 }
 
+.combat-initiative-overview-initiative-editor {
+    max-width: 8.8rem;
+}
+
+.combat-initiative-overview-initiative-editor ::deep .number-control {
+    padding: 0.05rem;
+}
+
+.combat-initiative-overview-initiative-editor ::deep .number-control-field {
+    min-width: 2.7rem;
+}
+
+.combat-initiative-overview-initiative-editor ::deep .number-control-input {
+    width: 3rem;
+}
+
 .combat-initiative-overview-announcement,
 .combat-initiative-overview-action {
     grid-column: 1 / -1;

@@ -88,10 +88,37 @@ async function readRows(page) {
       await master.getByRole('button', { name: 'Held1 als Ziel auswählen', exact: true }).count() === 1,
     'the initiative roll did not return to attack target selection');
 
+    await master.getByRole('button', { name: 'Meisteransicht öffnen', exact: true }).click();
+    await master.getByRole('button', { name: 'Gegner hinzufügen', exact: true }).click();
+    const opponentDrawer = master.locator('.combat-details-drawer');
+    await opponentDrawer.locator('select.combat-enemy-select').selectOption('__manual__');
+    await opponentDrawer.locator('label.combat-drawer-field').filter({ hasText: 'Name' }).locator('input').fill('Goblin');
+    await opponentDrawer.locator('input[aria-label="INI-Basis"]').fill('10');
+    await opponentDrawer.locator('input[aria-label="Aktuelle INI"]').fill('9');
+    await opponentDrawer.getByRole('button', { name: 'Hinzufügen', exact: true }).click();
+    await waitFor(async () => await master.locator('.combat-initiative-overview-row').filter({ hasText: 'Goblin' }).count() === 1,
+      'manual opponent did not appear in the initiative overview');
+
+    const currentRowBeforeInitiativeEdit = await master.locator('.combat-initiative-overview-row.current strong').innerText();
+    await master.getByRole('button', { name: 'Held1 als Ziel auswählen', exact: true }).click();
+    const goblinRow = master.locator('.combat-initiative-overview-row').filter({ hasText: 'Goblin' });
+    await goblinRow.getByRole('button', { name: 'Goblin INI ändern', exact: true }).click();
+    const goblinInitiative = goblinRow.locator('input[aria-label="INI"]');
+    await goblinInitiative.fill('12');
+    await goblinInitiative.press('Enter');
+    await waitFor(async () => (await goblinRow.innerText()).includes('12'),
+      'master initiative edit did not update the Goblin row');
+    assert.equal(await master.getByRole('button', { name: 'Held1, ausgewähltes Ziel', exact: true }).count(), 1,
+      'initiative editing changed the selected target');
+    assert.equal(await master.locator('.combat-initiative-overview-row.current strong').innerText(), currentRowBeforeInitiativeEdit,
+      'initiative editing changed the acting participant');
+    assert.equal(await player.getByRole('button', { name: 'Goblin INI ändern', exact: true }).count(), 0,
+      'a player could edit an opponent initiative');
+
     for (const page of [master, player]) {
       await page.getByRole('tab', { name: 'Rüstung & Wunden', exact: true }).click();
       await page.locator('.combat-zone-row').first().waitFor();
-      assert.equal(await page.locator('.combat-initiative-overview-row').count(), 2);
+      assert.equal(await page.locator('.combat-initiative-overview-row').count(), 3);
       await page.getByRole('tab', { name: 'Kampf', exact: true }).click();
     }
 
@@ -111,7 +138,7 @@ async function readRows(page) {
       return { overflowX: style.overflowX, overflowY: style.overflowY, display: style.display };
     });
     assert.equal(mobileListStyle.overflowX, 'auto');
-    assert.equal(await player.locator('.combat-initiative-overview-row').count(), 2);
+    assert.equal(await player.locator('.combat-initiative-overview-row').count(), 3);
     assert.equal(errors.length, 0, `browser errors: ${errors.join(' | ')}`);
     console.log(JSON.stringify({ sessionOverview: true, rows: await readRows(master), mobileListStyle }));
   } finally {

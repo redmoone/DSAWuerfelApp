@@ -131,6 +131,26 @@
                                     INI würfeln
                                 </UiButton>
                             }
+                            @if (IsInitiativeEditable(participant))
+                            {
+                                @if (IsEditingInitiative(participant))
+                                {
+                                    <NumberControl Class="combat-initiative-overview-initiative-editor"
+                                                   Label="INI"
+                                                   Value="@participant.CurrentInitiative"
+                                                   ValueChanged="value => ChangeInitiativeAsync(participant, value)"
+                                                   AllowEmpty="false" />
+                                }
+                                else
+                                {
+                                    <UiButton Size="compact"
+                                              Class="combat-initiative-overview-button"
+                                              aria-label="@($"{participant.Name} INI ändern")"
+                                              OnClick="() => ToggleInitiativeEditor(participant)">
+                                        INI ändern
+                                    </UiButton>
+                                }
+                            }
                             @if (CanRemoveOpponent?.Invoke(participant) == true)
                             {
                                 <UiButton Size="compact"
