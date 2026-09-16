@@ -59,7 +59,7 @@ public class GameClient : IAsyncDisposable
     public event Action? SessionChanged;
     public event Action? SessionsChanged;
 
-    public async Task StartAsync()
+    public virtual async Task StartAsync()
     {
         await _connectionLock.WaitAsync();
         try
@@ -200,12 +200,12 @@ public class GameClient : IAsyncDisposable
         await _hub.InvokeAsync("RollCombat", request);
     }
 
-    public Task<CombatSessionSnapshotDto> GetCombatSessionState(string sessionId)
+    public virtual Task<CombatSessionSnapshotDto> GetCombatSessionState(string sessionId)
     {
         return _hub.InvokeAsync<CombatSessionSnapshotDto>("GetCombatSessionState", sessionId);
     }
 
-    public Task<CombatSessionMutationResultDto> MutateCombatSession(CombatSessionMutationRequestDto request)
+    public virtual Task<CombatSessionMutationResultDto> MutateCombatSession(CombatSessionMutationRequestDto request)
     {
         return _hub.InvokeAsync<CombatSessionMutationResultDto>("MutateCombatSession", request);
     }

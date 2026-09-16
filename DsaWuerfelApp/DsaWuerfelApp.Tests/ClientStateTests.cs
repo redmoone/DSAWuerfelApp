@@ -19,6 +19,27 @@ public class ClientStateTests
         }
     }
     private sealed class Navigation : NavigationManager { public Navigation() => Initialize("http://localhost/", "http://localhost/"); }
+
+    private sealed class FakeCombatGameClient(CombatSessionSnapshotDto initialSnapshot) : GameClient(new Navigation())
+    {
+        public CombatSessionSnapshotDto Snapshot { get; set; } = initialSnapshot;
+        public List<CombatSessionMutationRequestDto> Requests { get; } = [];
+        public Func<CombatSessionMutationRequestDto, CombatSessionMutationResultDto> Mutate { get; set; } = null!;
+
+        public override Task StartAsync() => Task.CompletedTask;
+
+        public override Task<CombatSessionSnapshotDto> GetCombatSessionState(string sessionId) =>
+            Task.FromResult(Snapshot);
+
+        public override Task<CombatSessionMutationResultDto> MutateCombatSession(
+            CombatSessionMutationRequestDto request)
+        {
+            Requests.Add(request);
+            var result = Mutate(request);
+            Snapshot = result.Snapshot;
+            return Task.FromResult(result);
+        }
+    }
     private sealed class Js : IJSRuntime
     {
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) => ValueTask.FromResult(default(TValue)!);
@@ -91,6 +112,107 @@ public class ClientStateTests
         .GetMethod("LoadActiveSessionAsync", BindingFlags.Instance | BindingFlags.NonPublic)!
         .Invoke(state, [id, CancellationToken.None])!;
     private static void Select(GameClient game, string id) => typeof(GameClient).GetProperty(nameof(GameClient.CurrentSessionId))!.SetValue(game, id);
+
+    [Fact]
+    public async Task Session_runtime_mutation_rebases_after_stale_revision_without_resending_old_values()
+    {
+        var heroId = Guid.NewGuid();
+        var participantId = "hero-1";
+        var initial = new CombatSessionSnapshotDto
+        {
+            SessionId = "session-1",
+            Revision = 1,
+            IsStarted = true,
+            Participants =
+            [
+                new CombatSessionParticipantDto
+                {
+                    Id = participantId,
+                    Kind = CombatParticipantKind.Hero,
+                    HeroId = heroId,
+                    OwnerUserId = "u",
+                    RuntimeState = new CombatRuntimeStateDto
+                    {
+                        IsStarted = true,
+                        CurrentLeP = 20,
+                        CurrentAuP = 10,
+                        Wounds = Enum.GetValues<CombatWoundZone>()
+                            .ToDictionary(zone => zone, _ => (int?)0)
+                    }
+                }
+            ]
+        };
+        var afterDamage = initial with
+        {
+            Revision = 2,
+            Participants =
+            [initial.Participants[0] with
+            {
+                RuntimeState = initial.Participants[0].RuntimeState! with { CurrentLeP = 8 }
+            }]
+        };
+        var game = new FakeCombatGameClient(initial);
+        game.Mutate = request => request.RequestId == Guid.Empty
+            ? throw new InvalidOperationException("request id missing")
+            : game.Requests.Count == 1
+                ? new CombatSessionMutationResultDto(
+                    request.RequestId,
+                    Applied: false,
+                    AlreadyApplied: false,
+                    Stale: true,
+                    "Der Kampfstand ist inzwischen bei Revision 2.",
+                    afterDamage)
+                : new CombatSessionMutationResultDto(
+                    request.RequestId,
+                    Applied: true,
+                    AlreadyApplied: false,
+                    Stale: false,
+                    "AuP gespeichert",
+                    afterDamage with
+                    {
+                        Revision = 3,
+                        Participants =
+                        [afterDamage.Participants[0] with
+                        {
+                            RuntimeState = request.RuntimeState
+                        }]
+                    });
+
+        var auth = new AuthState(Proxy.Make<IAuthApiClient>((_, _) =>
+            Task.FromResult(new AuthSessionDto(true, new("u", "u@example.test", "U")))));
+        await auth.RefreshAsync();
+        await using (game)
+        using (var session = new SessionState(null!, auth, game, new Js()))
+        using (var state = new CombatSessionState(auth, game, session))
+        {
+            Select(game, "session-1");
+
+            var stale = await state.SyncRuntimeStateAsync(
+                initial.Participants[0].RuntimeState! with { CurrentLeP = 15 },
+                participantId,
+                heroId,
+                expectedRevision: 1);
+
+            Assert.True(stale.Stale);
+            Assert.Equal(2, state.Current?.Revision);
+            Assert.Equal(8, state.Current?.Participants.Single().RuntimeState?.CurrentLeP);
+
+            var current = state.Current!;
+            var next = current.Participants.Single().RuntimeState! with { CurrentAuP = 9 };
+            var applied = await state.SyncRuntimeStateAsync(next, participantId, heroId);
+
+            Assert.True(applied.Applied);
+            Assert.Equal(2, game.Requests[1].ExpectedRevision);
+            Assert.Equal(8, game.Requests[1].RuntimeState?.CurrentLeP);
+            Assert.Equal(9, game.Requests[1].RuntimeState?.CurrentAuP);
+
+            var handle = typeof(CombatSessionState).GetMethod(
+                "HandleStateReceived", BindingFlags.Instance | BindingFlags.NonPublic)!;
+            handle.Invoke(state, [afterDamage]);
+            Assert.Equal(3, state.Current?.Revision);
+            Assert.Equal(8, state.Current?.Participants.Single().RuntimeState?.CurrentLeP);
+        }
+    }
 
     [Theory]
     [InlineData(false)]

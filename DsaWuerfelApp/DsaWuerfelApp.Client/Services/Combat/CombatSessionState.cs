@@ -65,8 +65,7 @@ public sealed class CombatSessionState : IDisposable
             var snapshot = await _gameClient.GetCombatSessionState(sessionId);
             if (string.Equals(_sessionState.ActiveSessionId, sessionId, StringComparison.Ordinal))
             {
-                Current = snapshot;
-                _loaded = true;
+                ApplySnapshot(snapshot);
             }
         }
         catch (Exception exception) when (!_disposed)
@@ -102,9 +101,8 @@ public sealed class CombatSessionState : IDisposable
         var result = await _gameClient.MutateCombatSession(prepared);
         if (string.Equals(result.Snapshot.SessionId, sessionId, StringComparison.Ordinal))
         {
-            Current = result.Snapshot;
+            ApplySnapshot(result.Snapshot);
             Error = result.Stale ? result.Message : null;
-            _loaded = true;
             Notify();
         }
 
@@ -117,14 +115,16 @@ public sealed class CombatSessionState : IDisposable
         CombatRuntimeStateDto? runtimeState = null,
         string? setId = null,
         int initiativeCorrection = 0,
-        CancellationToken cancellationToken = default) => MutateAsync(new CombatSessionMutationRequestDto
+        CancellationToken cancellationToken = default,
+        long? expectedRevision = null) => MutateAsync(new CombatSessionMutationRequestDto
         {
             Kind = CombatSessionMutationKind.RollInitiative,
             ParticipantId = participantId,
             HeroId = heroId,
             RuntimeState = runtimeState,
             SetId = setId,
-            InitiativeCorrection = initiativeCorrection
+            InitiativeCorrection = initiativeCorrection,
+            ExpectedRevision = expectedRevision
         }, cancellationToken);
 
     public Task<CombatSessionMutationResultDto> SetInitiativeAsync(
@@ -133,14 +133,16 @@ public sealed class CombatSessionState : IDisposable
         Guid? heroId = null,
         CombatRuntimeStateDto? runtimeState = null,
         string? setId = null,
-        CancellationToken cancellationToken = default) => MutateAsync(new CombatSessionMutationRequestDto
+        CancellationToken cancellationToken = default,
+        long? expectedRevision = null) => MutateAsync(new CombatSessionMutationRequestDto
         {
             Kind = CombatSessionMutationKind.SetInitiative,
             Initiative = initiative,
             ParticipantId = participantId,
             HeroId = heroId,
             RuntimeState = runtimeState,
-            SetId = setId
+            SetId = setId,
+            ExpectedRevision = expectedRevision
         }, cancellationToken);
 
     public Task<CombatSessionMutationResultDto> SyncRuntimeStateAsync(
@@ -148,13 +150,15 @@ public sealed class CombatSessionState : IDisposable
         string? participantId = null,
         Guid? heroId = null,
         string? setId = null,
-        CancellationToken cancellationToken = default) => MutateAsync(new CombatSessionMutationRequestDto
+        CancellationToken cancellationToken = default,
+        long? expectedRevision = null) => MutateAsync(new CombatSessionMutationRequestDto
         {
             Kind = CombatSessionMutationKind.SyncRuntimeState,
             RuntimeState = runtimeState,
             ParticipantId = participantId,
             HeroId = heroId,
-            SetId = setId
+            SetId = setId,
+            ExpectedRevision = expectedRevision
         }, cancellationToken);
 
     public Task<CombatSessionMutationResultDto> DeclareAttackAsync(
@@ -377,10 +381,25 @@ public sealed class CombatSessionState : IDisposable
             return;
         }
 
-        Current = snapshot;
-        _loaded = true;
+        if (!ApplySnapshot(snapshot))
+        {
+            return;
+        }
+
         Error = null;
         Notify();
+    }
+
+    private bool ApplySnapshot(CombatSessionSnapshotDto snapshot)
+    {
+        if (Current is not null && snapshot.Revision < Current.Revision)
+        {
+            return false;
+        }
+
+        Current = snapshot;
+        _loaded = true;
+        return true;
     }
 
     private void HandleContextChanged() => _ = EnsureLoadedAsync();

@@ -1028,8 +1028,19 @@ public partial class Kampf : IDisposable
         _notice = null;
         try
         {
-            await CombatState.SetResourceAsync(change.Resource, change.Value);
-            var result = await SyncSessionRuntimeStateAsync(runtimeState: BuildLocalRuntimeState());
+            var result = IsSessionCombat
+                ? await SyncOwnSessionRuntimeEditAsync(runtime => change.Resource switch
+                {
+                    CombatResourceKind.LeP => runtime with { CurrentLeP = change.Value },
+                    CombatResourceKind.AuP => runtime with { CurrentAuP = change.Value },
+                    _ => runtime
+                })
+                : null;
+            if (!IsSessionCombat)
+            {
+                await CombatState.SetResourceAsync(change.Resource, change.Value);
+            }
+
             if (result?.Stale == true)
             {
                 _notice = result.Message;
@@ -1061,8 +1072,18 @@ public partial class Kampf : IDisposable
         _notice = null;
         try
         {
-            await CombatState.SetWoundAsync(change.Zone, Math.Clamp(change.Value.Value, 0, 3));
-            var result = await SyncSessionRuntimeStateAsync(runtimeState: BuildLocalRuntimeState());
+            var value = Math.Clamp(change.Value.Value, 0, 3);
+            var result = IsSessionCombat
+                ? await SyncOwnSessionRuntimeEditAsync(runtime => runtime with
+                {
+                    Wounds = WithWound(runtime.Wounds, change.Zone, value)
+                })
+                : null;
+            if (!IsSessionCombat)
+            {
+                await CombatState.SetWoundAsync(change.Zone, value);
+            }
+
             if (result?.Stale == true)
             {
                 _notice = result.Message;
@@ -1105,19 +1126,24 @@ public partial class Kampf : IDisposable
         {
             if (IsSessionCombat)
             {
+                var snapshot = SessionCombat;
+                var participant = OwnSessionParticipant;
+                if (snapshot is null || participant is null)
+                {
+                    _notice = "Der aktuelle Session-Kampfstand ist noch nicht geladen.";
+                    return;
+                }
+
                 var result = await CombatSessionState.SetInitiativeAsync(
                     initiative.Value,
-                    OwnSessionParticipant?.Id,
-                    ActiveHero?.Id,
-                    BuildRuntimeState(),
-                    SelectedSet?.Id);
+                    participant.Id,
+                    participant.HeroId,
+                    participant.RuntimeState,
+                    participant.InitiativeSetId,
+                    expectedRevision: snapshot.Revision);
                 if (result.Stale || !result.Applied)
                 {
                     _notice = result.Message;
-                }
-                else
-                {
-                    await CombatState.SetInitiativeAsync(initiative);
                 }
             }
             else
@@ -1149,18 +1175,25 @@ public partial class Kampf : IDisposable
         {
             if (IsSessionCombat)
             {
-                var sessionResult = await CombatSessionState.RollInitiativeAsync(
-                    OwnSessionParticipant?.Id,
-                    ActiveHero?.Id,
-                    BuildRuntimeState(),
-                    SelectedSet?.Id,
-                    Modifier);
-                var participant = sessionResult.Snapshot.Participants
-                    .FirstOrDefault(current => current.HeroId == ActiveHero?.Id);
-                var initiative = participant?.CurrentInitiative;
-                if (initiative.HasValue)
+                var snapshot = SessionCombat;
+                var participant = OwnSessionParticipant;
+                if (snapshot is null || participant is null)
                 {
-                    await CombatState.SetInitiativeAsync(initiative);
+                    _notice = "Der aktuelle Session-Kampfstand ist noch nicht geladen.";
+                    return;
+                }
+
+                var sessionResult = await CombatSessionState.RollInitiativeAsync(
+                    participant.Id,
+                    participant.HeroId,
+                    participant.RuntimeState,
+                    participant.InitiativeSetId,
+                    Modifier,
+                    expectedRevision: snapshot.Revision);
+                var updatedParticipant = sessionResult.Snapshot.Participants
+                    .FirstOrDefault(current => current.HeroId == ActiveHero?.Id);
+                if (updatedParticipant?.CurrentInitiative.HasValue == true)
+                {
                     await CombatState.SetSelectedActionAsync(GetDefaultCombatAction());
                 }
 
@@ -2122,6 +2155,43 @@ public partial class Kampf : IDisposable
         CurrentAuP = CombatState.CurrentAuP,
         Wounds = CombatState.Wounds.ToDictionary(pair => pair.Key, pair => pair.Value)
     };
+
+    private async Task<CombatSessionMutationResultDto?> SyncOwnSessionRuntimeEditAsync(
+        Func<CombatRuntimeStateDto, CombatRuntimeStateDto> edit)
+    {
+        var snapshot = SessionCombat;
+        var participant = OwnSessionParticipant;
+        if (!IsSessionCombat || snapshot is null || participant is null || ActiveHero is null)
+        {
+            return null;
+        }
+
+        var current = participant.RuntimeState is { } runtime
+            ? runtime with
+            {
+                Wounds = (runtime.Wounds ?? new Dictionary<CombatWoundZone, int?>())
+                    .ToDictionary(pair => pair.Key, pair => pair.Value)
+            }
+            : new CombatRuntimeStateDto { IsStarted = snapshot.IsStarted };
+        var next = edit(current);
+        return await CombatSessionState.SyncRuntimeStateAsync(
+            next,
+            participant.Id,
+            participant.HeroId ?? ActiveHero.Id,
+            participant.InitiativeSetId,
+            expectedRevision: snapshot.Revision);
+    }
+
+    private static Dictionary<CombatWoundZone, int?> WithWound(
+        IReadOnlyDictionary<CombatWoundZone, int?>? wounds,
+        CombatWoundZone zone,
+        int value)
+    {
+        var next = wounds?.ToDictionary(pair => pair.Key, pair => pair.Value)
+                   ?? new Dictionary<CombatWoundZone, int?>();
+        next[zone] = value;
+        return next;
+    }
 
     private async Task<CombatSessionMutationResultDto?> SyncSessionRuntimeStateAsync(
         string? setId = null,

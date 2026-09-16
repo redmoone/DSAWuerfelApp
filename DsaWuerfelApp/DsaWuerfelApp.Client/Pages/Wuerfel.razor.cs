@@ -335,9 +335,19 @@ public partial class Wuerfel : IDisposable
         _combatNotice = null;
         try
         {
-            await CombatState.SetResourceAsync(change.Resource, change.Value);
-            var sessionResult = await SyncCombatSessionRuntimeStateAsync(
-                runtimeState: BuildLocalCombatRuntimeState());
+            var sessionResult = CombatIsSession
+                ? await SyncOwnCombatSessionRuntimeEditAsync(runtime => change.Resource switch
+                {
+                    CombatResourceKind.LeP => runtime with { CurrentLeP = change.Value },
+                    CombatResourceKind.AuP => runtime with { CurrentAuP = change.Value },
+                    _ => runtime
+                })
+                : null;
+            if (!CombatIsSession)
+            {
+                await CombatState.SetResourceAsync(change.Resource, change.Value);
+            }
+
             if (sessionResult?.Stale == true)
             {
                 _combatNotice = sessionResult.Message;
@@ -372,20 +382,24 @@ public partial class Wuerfel : IDisposable
         {
             if (CombatIsSession)
             {
+                var snapshot = CombatSession;
                 var participant = OwnCombatParticipant;
+                if (snapshot is null || participant is null)
+                {
+                    _combatNotice = "Der aktuelle Session-Kampfstand ist noch nicht geladen.";
+                    return;
+                }
+
                 var result = await CombatSessionState.SetInitiativeAsync(
                     initiative.Value,
-                    participant?.Id,
-                    CombatHero?.Id,
-                    BuildCombatRuntimeState(),
-                    CombatSelectedSet?.Id);
+                    participant.Id,
+                    participant.HeroId,
+                    participant.RuntimeState,
+                    participant.InitiativeSetId,
+                    expectedRevision: snapshot.Revision);
                 if (result.Stale || !result.Applied)
                 {
                     _combatNotice = result.Message;
-                }
-                else if (participant?.HeroId == CombatHero?.Id)
-                {
-                    await CombatState.SetInitiativeAsync(initiative);
                 }
 
                 return;
@@ -431,9 +445,19 @@ public partial class Wuerfel : IDisposable
             return;
         }
 
-        await CombatState.SetResourceAsync(resource, _combatResourceDraft);
-        var sessionResult = await SyncCombatSessionRuntimeStateAsync(
-            runtimeState: BuildLocalCombatRuntimeState());
+        var sessionResult = CombatIsSession
+            ? await SyncOwnCombatSessionRuntimeEditAsync(runtime => resource switch
+            {
+                CombatResourceKind.LeP => runtime with { CurrentLeP = _combatResourceDraft },
+                CombatResourceKind.AuP => runtime with { CurrentAuP = _combatResourceDraft },
+                _ => runtime
+            })
+            : null;
+        if (!CombatIsSession)
+        {
+            await CombatState.SetResourceAsync(resource, _combatResourceDraft);
+        }
+
         _combatNotice = sessionResult?.Stale == true
             ? sessionResult.Message
             : $"{GetCombatResourceLabel(resource)} gespeichert.";
@@ -448,8 +472,17 @@ public partial class Wuerfel : IDisposable
             return;
         }
 
-        await CombatState.SetWoundAsync(CombatWoundDrawerZone, _combatWoundDraft.Value);
-        var sessionResult = await SyncCombatSessionRuntimeStateAsync();
+        var sessionResult = CombatIsSession
+            ? await SyncOwnCombatSessionRuntimeEditAsync(runtime => runtime with
+            {
+                Wounds = WithCombatWound(runtime.Wounds, CombatWoundDrawerZone, _combatWoundDraft.Value)
+            })
+            : null;
+        if (!CombatIsSession)
+        {
+            await CombatState.SetWoundAsync(CombatWoundDrawerZone, _combatWoundDraft.Value);
+        }
+
         _combatNotice = sessionResult?.Stale == true
             ? sessionResult.Message
             : $"{GetCombatWoundLabel(CombatWoundDrawerZone)} gespeichert.";
@@ -502,6 +535,43 @@ public partial class Wuerfel : IDisposable
         CurrentAuP = CombatState.CurrentAuP,
         Wounds = CombatState.Wounds.ToDictionary(pair => pair.Key, pair => pair.Value)
     };
+
+    private async Task<CombatSessionMutationResultDto?> SyncOwnCombatSessionRuntimeEditAsync(
+        Func<CombatRuntimeStateDto, CombatRuntimeStateDto> edit)
+    {
+        var snapshot = CombatSession;
+        var participant = OwnCombatParticipant;
+        if (!CombatIsSession || snapshot is null || participant is null || CombatHero is null)
+        {
+            return null;
+        }
+
+        var current = participant.RuntimeState is { } runtime
+            ? runtime with
+            {
+                Wounds = (runtime.Wounds ?? new Dictionary<CombatWoundZone, int?>())
+                    .ToDictionary(pair => pair.Key, pair => pair.Value)
+            }
+            : new CombatRuntimeStateDto { IsStarted = snapshot.IsStarted };
+        var next = edit(current);
+        return await CombatSessionState.SyncRuntimeStateAsync(
+            next,
+            participant.Id,
+            participant.HeroId ?? CombatHero.Id,
+            participant.InitiativeSetId,
+            expectedRevision: snapshot.Revision);
+    }
+
+    private static Dictionary<CombatWoundZone, int?> WithCombatWound(
+        IReadOnlyDictionary<CombatWoundZone, int?>? wounds,
+        CombatWoundZone zone,
+        int value)
+    {
+        var next = wounds?.ToDictionary(pair => pair.Key, pair => pair.Value)
+                   ?? new Dictionary<CombatWoundZone, int?>();
+        next[zone] = value;
+        return next;
+    }
 
     private async Task<CombatSessionMutationResultDto?> SyncCombatSessionRuntimeStateAsync(
         CombatRuntimeStateDto? runtimeState = null)
