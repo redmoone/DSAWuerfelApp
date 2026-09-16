@@ -157,7 +157,9 @@ public sealed partial class RollCombatHandler(
             var sessionSnapshot = request.Action is CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack
                 ? await combatSessionStateService.BindAttackRollAsync(request, result, userId, cancellationToken)
                 : await combatSessionStateService.BindDefenseRollAsync(request, result, userId, cancellationToken);
-            var boundResult = result with { CombatSessionSnapshot = sessionSnapshot };
+            var boundResult = AttachExchangeContext(
+                result with { CombatSessionSnapshot = sessionSnapshot },
+                sessionSnapshot);
             var automaticHit = await combatSessionStateService.ResolveAutomaticHitAsync(
                 request,
                 boundResult,
@@ -183,7 +185,9 @@ public sealed partial class RollCombatHandler(
                 result,
                 userId,
                 cancellationToken);
-            var boundResult = result with { CombatSessionSnapshot = sessionSnapshot };
+            var boundResult = AttachExchangeContext(
+                result with { CombatSessionSnapshot = sessionSnapshot },
+                sessionSnapshot);
             await combatSessionStateService.CacheRollResultAsync(
                 request,
                 boundResult,
@@ -199,7 +203,9 @@ public sealed partial class RollCombatHandler(
                 result,
                 userId,
                 cancellationToken);
-            var boundResult = result with { CombatSessionSnapshot = sessionSnapshot };
+            var boundResult = AttachExchangeContext(
+                result with { CombatSessionSnapshot = sessionSnapshot },
+                sessionSnapshot);
             await combatSessionStateService.CacheRollResultAsync(
                 request,
                 boundResult,
@@ -246,12 +252,60 @@ public sealed partial class RollCombatHandler(
                     }
                 }
         };
-        return result with
+        return AttachExchangeContext(result with
         {
             Snapshot = snapshot,
             Rolls = result.Rolls.Concat(automaticHit.Rolls).ToArray(),
             HistoryEntry = historyEntry,
             CombatSessionSnapshot = automaticHit.Snapshot
+        }, automaticHit.Snapshot);
+    }
+
+    private static CombatRollResultDto AttachExchangeContext(
+        CombatRollResultDto result,
+        CombatSessionSnapshotDto sessionSnapshot)
+    {
+        var exchange = sessionSnapshot.ActiveExchange;
+        if (exchange is null || string.IsNullOrWhiteSpace(result.Snapshot.ExchangeId) ||
+            !string.Equals(exchange.ExchangeId, result.Snapshot.ExchangeId, StringComparison.Ordinal))
+        {
+            return result;
+        }
+
+        var attacker = sessionSnapshot.Participants.FirstOrDefault(participant =>
+            string.Equals(participant.Id, exchange.AttackerParticipantId, StringComparison.Ordinal));
+        var target = sessionSnapshot.Participants.FirstOrDefault(participant =>
+            string.Equals(participant.Id, exchange.TargetParticipantId, StringComparison.Ordinal));
+        var snapshot = result.Snapshot with
+        {
+            ExchangeAttackerName = attacker?.Name,
+            ExchangeTargetName = target?.Name,
+            ExchangeAttackResult = exchange.AttackResult,
+            ExchangeDefenseAction = exchange.SelectedDefenseAction,
+            ExchangeDefenseResult = exchange.DefenseResult
+        };
+
+        if (result.HistoryEntry.Context is not { } context)
+        {
+            return result with { Snapshot = snapshot };
+        }
+
+        var historySnapshot = (context.Snapshot ?? new RollHistorySnapshotDto()) with
+        {
+            Combat = snapshot
+        };
+        var historyEntry = result.HistoryEntry with
+        {
+            Context = context with
+            {
+                DisplayName = GetHistoryDisplayName(snapshot),
+                Snapshot = historySnapshot
+            }
+        };
+        return result with
+        {
+            Snapshot = snapshot,
+            HistoryEntry = historyEntry
         };
     }
 

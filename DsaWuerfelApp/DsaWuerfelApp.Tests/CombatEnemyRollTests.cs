@@ -39,7 +39,11 @@ public sealed class CombatEnemyRollTests
         Assert.Equal(attacker.Id, result.Snapshot.ParticipantId);
         Assert.Equal(10, result.Snapshot.BaseValue);
         Assert.Equal("DSA 4.1-Katalog", result.Snapshot.ValuesSource);
+        Assert.Equal(attacker.Name, result.Snapshot.ExchangeAttackerName);
+        Assert.Equal(target.Name, result.Snapshot.ExchangeTargetName);
+        Assert.NotNull(result.Snapshot.ExchangeAttackResult);
         Assert.Equal(attacker.Name, result.HistoryEntry.Context?.Snapshot?.ParticipantName);
+        Assert.Equal(target.Name, result.HistoryEntry.Context?.Snapshot?.Combat?.ExchangeTargetName);
         Assert.Null(result.HistoryEntry.Context?.Snapshot?.HeroName);
         Assert.NotNull(result.CombatSessionSnapshot?.ActiveExchange?.AttackResult);
     }
@@ -114,6 +118,12 @@ public sealed class CombatEnemyRollTests
             .RuntimeState!.CurrentLeP;
         var targetAfterDamage = defense.CombatSessionSnapshot.Participants.Single(participant => participant.Id == target.Id);
         Assert.Equal(target.Id, defense.ParticipantId);
+        Assert.Equal(attacker.Name, defense.Snapshot.ExchangeAttackerName);
+        Assert.Equal(target.Name, defense.Snapshot.ExchangeTargetName);
+        Assert.NotNull(defense.Snapshot.ExchangeAttackResult);
+        Assert.NotNull(defense.Snapshot.ExchangeDefenseResult);
+        Assert.Equal(target.Name, defense.HistoryEntry.Context?.Snapshot?.Combat?.ExchangeTargetName);
+        Assert.NotNull(defense.HistoryEntry.Context?.Snapshot?.Combat?.WoundApplication);
         Assert.True(defense.CombatSessionSnapshot.ActiveExchange.Damage!.Total >= 4);
         Assert.True(targetAfterDamage.RuntimeState!.CurrentLeP < beforeDamage);
 

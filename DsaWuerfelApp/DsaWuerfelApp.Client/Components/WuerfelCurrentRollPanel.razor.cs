@@ -325,14 +325,11 @@ public partial class WuerfelCurrentRollPanel
                 return details;
             }
 
+            AddExchangeDetails(details, combat);
             details.Add($"Kampf: {combat.StatusLabel}");
             AddText(details, "Aktion", combat.ActionLabel);
             AddText(details, "Waffe", combat.WeaponName);
-            AddValue(details, "Importierter Zielwert", combat.BaseValue);
-            if (combat.UnmodifiedBaseValue != combat.BaseValue)
-            {
-                AddValue(details, "Unveränderter Importwert", combat.UnmodifiedBaseValue);
-            }
+            AddValue(details, "Zielwert", combat.BaseValue);
             AddValue(details, "Effektives Ziel", combat.EffectiveTarget);
             AddValue(details, "Kontrollziel", combat.ControlTarget);
             if (combat.Modifiers.Length > 0)
@@ -488,15 +485,11 @@ public partial class WuerfelCurrentRollPanel
 
         var details = new List<string>
         {
-            $"Status: {snapshot.StatusLabel}",
-            $"Quelle: {snapshot.ValuesSource}"
+            $"Status: {snapshot.StatusLabel}"
         };
+        AddExchangeDetails(details, snapshot);
         AddText(details, "Waffe", snapshot.WeaponName);
-        AddValue(details, "Importierter Zielwert", snapshot.BaseValue);
-        if (snapshot.UnmodifiedBaseValue != snapshot.BaseValue)
-        {
-            AddValue(details, "Unveränderter Importwert", snapshot.UnmodifiedBaseValue);
-        }
+        AddValue(details, "Zielwert", snapshot.BaseValue);
         AddValue(details, "Effektives Ziel", snapshot.EffectiveTarget);
         AddValue(details, "Kontrollziel", snapshot.ControlTarget);
 
@@ -527,6 +520,110 @@ public partial class WuerfelCurrentRollPanel
 
         details.AddRange(snapshot.RuleNotes);
         return details;
+    }
+
+    private static void AddExchangeDetails(
+        ICollection<string> details,
+        CombatRollSnapshotDto combat)
+    {
+        if (!string.IsNullOrWhiteSpace(combat.ExchangeAttackerName) &&
+            !string.IsNullOrWhiteSpace(combat.ExchangeTargetName))
+        {
+            details.Add($"{combat.ExchangeAttackerName} → {combat.ExchangeTargetName}");
+        }
+        else if (!string.IsNullOrWhiteSpace(combat.ExchangeTargetName))
+        {
+            details.Add($"Ziel: {combat.ExchangeTargetName}");
+        }
+
+        if (combat.ExchangeAttackResult is { } attackResult)
+        {
+            details.Add($"AT: {FormatCombatEvaluation(attackResult)}");
+        }
+        else if (IsAttackAction(combat.Action))
+        {
+            details.Add($"{GetCombatCheckLabel(combat.Action)}: {FormatCombatSnapshot(combat)}");
+        }
+
+        if (combat.ExchangeDefenseResult is { } defenseResult)
+        {
+            details.Add($"{GetDefenseLabel(combat.ExchangeDefenseAction)}: {FormatCombatEvaluation(defenseResult)}");
+        }
+        else if (IsDefenseAction(combat.Action))
+        {
+            details.Add($"{GetDefenseLabel(combat.Action)}: {FormatCombatSnapshot(combat)}");
+        }
+
+        AddWoundDetails(details, combat.WoundApplication);
+    }
+
+    private static void AddWoundDetails(
+        ICollection<string> details,
+        CombatWoundApplicationDto? wounds)
+    {
+        if (wounds is null)
+        {
+            return;
+        }
+
+        AddValue(details, "LeP vorher", wounds.LePBefore);
+        AddValue(details, "LeP nachher", wounds.LePAfter);
+        if (wounds.ExistingWounds.HasValue || wounds.ResultingWounds.HasValue)
+        {
+            details.Add($"Wunden: {wounds.ExistingWounds?.ToString() ?? "—"} → " +
+                        $"{wounds.ResultingWounds?.ToString() ?? "—"}");
+        }
+        else if (wounds.AddedWounds > 0)
+        {
+            details.Add($"Wunden: +{wounds.AddedWounds}");
+        }
+
+        if (wounds.IsIncapacitated)
+        {
+            details.Add("handlungsunfähig");
+        }
+    }
+
+    private static bool IsAttackAction(CombatActionKind action) => action is
+        CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack;
+
+    private static bool IsDefenseAction(CombatActionKind action) => action is
+        CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge;
+
+    private static string GetCombatCheckLabel(CombatActionKind action) => action switch
+    {
+        CombatActionKind.MeleeAttack => "AT",
+        CombatActionKind.RangedAttack => "FK",
+        CombatActionKind.WeaponParry or CombatActionKind.ShieldParry => "PA",
+        CombatActionKind.Dodge => "AW",
+        _ => "Wurf"
+    };
+
+    private static string GetDefenseLabel(CombatActionKind? action) => action switch
+    {
+        CombatActionKind.WeaponParry => "PA",
+        CombatActionKind.ShieldParry => "Schild-PA",
+        CombatActionKind.Dodge => "AW",
+        _ => "Abwehr"
+    };
+
+    private static string FormatCombatEvaluation(CombatRollEvaluationDto evaluation)
+    {
+        var target = evaluation.EffectiveTarget is { } effectiveTarget
+            ? $"/{effectiveTarget}"
+            : string.Empty;
+        var status = string.IsNullOrWhiteSpace(evaluation.StatusLabel)
+            ? string.Empty
+            : $" · {evaluation.StatusLabel}";
+        return $"{evaluation.MainRoll}{target}{status}";
+    }
+
+    private static string FormatCombatSnapshot(CombatRollSnapshotDto combat)
+    {
+        var mainRoll = combat.LabeledRolls
+            .FirstOrDefault(roll => string.Equals(roll.Role, "Hauptwurf", StringComparison.Ordinal))?.Value;
+        var roll = mainRoll?.ToString() ?? "—";
+        return combat.EffectiveTarget is { } target ? $"{roll}/{target}" : roll;
     }
 
     private static string GetInitiativeEquation(

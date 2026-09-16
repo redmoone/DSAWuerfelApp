@@ -155,6 +155,9 @@ public partial class RollHistory
     private static bool IsInitiativeEntry(RollHistoryEntryDto entry) =>
         entry.Context?.Snapshot?.Combat?.Action == CombatActionKind.InitiativeHelper;
 
+    private static string? GetCombatExchangeId(RollHistoryEntryDto entry) =>
+        entry.Context?.Snapshot?.Combat?.ExchangeId;
+
     private static bool IsStateChange(RollHistoryEntryDto entry) =>
         entry.Context?.Snapshot?.CombatStateChange is not null;
 
@@ -169,6 +172,34 @@ public partial class RollHistory
         }
 
         var details = new List<string>();
+        if (!string.IsNullOrWhiteSpace(combat.ExchangeAttackerName) &&
+            !string.IsNullOrWhiteSpace(combat.ExchangeTargetName))
+        {
+            details.Add($"{combat.ExchangeAttackerName} → {combat.ExchangeTargetName}");
+        }
+        else if (!string.IsNullOrWhiteSpace(combat.ExchangeTargetName))
+        {
+            details.Add($"Ziel: {combat.ExchangeTargetName}");
+        }
+
+        if (combat.ExchangeAttackResult is { } attackResult)
+        {
+            details.Add($"AT {FormatCombatEvaluation(attackResult)}");
+        }
+        else if (IsAttackAction(combat.Action))
+        {
+            details.Add($"{GetCombatCheckLabel(combat.Action)} {FormatCombatSnapshot(combat)}");
+        }
+
+        if (combat.ExchangeDefenseResult is { } defenseResult)
+        {
+            details.Add($"{GetDefenseLabel(combat.ExchangeDefenseAction)} {FormatCombatEvaluation(defenseResult)}");
+        }
+        else if (IsDefenseAction(combat.Action))
+        {
+            details.Add($"{GetDefenseLabel(combat.Action)} {FormatCombatSnapshot(combat)}");
+        }
+
         if (!string.IsNullOrWhiteSpace(combat.StatusLabel))
         {
             details.Add(combat.StatusLabel);
@@ -200,7 +231,11 @@ public partial class RollHistory
                 details.Add($"LeP {wounds.LePBefore} → {wounds.LePAfter}");
             }
 
-            if (wounds.AddedWounds > 0)
+            if (wounds.ExistingWounds.HasValue || wounds.ResultingWounds.HasValue)
+            {
+                details.Add($"Wunden {wounds.ExistingWounds?.ToString() ?? "—"} → {wounds.ResultingWounds?.ToString() ?? "—"}");
+            }
+            else if (wounds.AddedWounds > 0)
             {
                 details.Add($"Wunden +{wounds.AddedWounds}");
             }
@@ -222,6 +257,48 @@ public partial class RollHistory
         }
 
         return details.ToArray();
+    }
+
+    private static bool IsAttackAction(CombatActionKind action) => action is
+        CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack;
+
+    private static bool IsDefenseAction(CombatActionKind action) => action is
+        CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge;
+
+    private static string GetCombatCheckLabel(CombatActionKind action) => action switch
+    {
+        CombatActionKind.MeleeAttack => "AT",
+        CombatActionKind.RangedAttack => "FK",
+        CombatActionKind.WeaponParry or CombatActionKind.ShieldParry => "PA",
+        CombatActionKind.Dodge => "AW",
+        _ => "Wurf"
+    };
+
+    private static string GetDefenseLabel(CombatActionKind? action) => action switch
+    {
+        CombatActionKind.WeaponParry => "PA",
+        CombatActionKind.ShieldParry => "Schild-PA",
+        CombatActionKind.Dodge => "AW",
+        _ => "Abwehr"
+    };
+
+    private static string FormatCombatEvaluation(CombatRollEvaluationDto evaluation)
+    {
+        var target = evaluation.EffectiveTarget is { } effectiveTarget
+            ? $"/{effectiveTarget}"
+            : string.Empty;
+        var status = string.IsNullOrWhiteSpace(evaluation.StatusLabel)
+            ? string.Empty
+            : $" · {evaluation.StatusLabel}";
+        return $"{evaluation.MainRoll}{target}{status}";
+    }
+
+    private static string FormatCombatSnapshot(CombatRollSnapshotDto combat)
+    {
+        var mainRoll = combat.LabeledRolls
+            .FirstOrDefault(roll => string.Equals(roll.Role, "Hauptwurf", StringComparison.Ordinal))?.Value;
+        var roll = mainRoll?.ToString() ?? "—";
+        return combat.EffectiveTarget is { } target ? $"{roll}/{target}" : roll;
     }
 
     private static string FormatModifier(CombatModifierDto modifier) =>

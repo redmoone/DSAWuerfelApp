@@ -242,6 +242,11 @@ public sealed record CombatRollSnapshotDto
     public string? SessionId { get; init; }
     public string? ParticipantId { get; init; }
     public string? ParticipantName { get; init; }
+    public string? ExchangeAttackerName { get; init; }
+    public string? ExchangeTargetName { get; init; }
+    public CombatRollEvaluationDto? ExchangeAttackResult { get; init; }
+    public CombatActionKind? ExchangeDefenseAction { get; init; }
+    public CombatRollEvaluationDto? ExchangeDefenseResult { get; init; }
     public string? ExchangeId { get; init; }
     public Guid? HeroId { get; init; }
     public CombatActionKind Action { get; init; }
