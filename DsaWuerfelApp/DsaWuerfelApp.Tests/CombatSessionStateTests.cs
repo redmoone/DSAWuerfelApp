@@ -301,9 +301,15 @@ public sealed class CombatSessionStateTests
             WeaponName = weapon.Name,
             Action = CombatActionKind.MeleeAttack
         };
-        var result = await handler.HandleAsync(rollRequest, "owner", "Besitzer");
+        var parallelResults = await Task.WhenAll(
+            handler.HandleAsync(rollRequest, "owner", "Besitzer"),
+            handler.HandleAsync(rollRequest, "owner", "Besitzer"));
+        var result = parallelResults[0];
+        var parallelRetry = parallelResults[1];
 
         Assert.NotNull(result.CombatSessionSnapshot);
+        Assert.Equal(result.Snapshot.EntryId, parallelRetry.Snapshot.EntryId);
+        Assert.Equal(result.CombatSessionSnapshot!.Revision, parallelRetry.CombatSessionSnapshot!.Revision);
         Assert.Equal(rollRequest.ExchangeId, result.Snapshot.ExchangeId);
         Assert.Equal(result.Snapshot.EntryId, result.CombatSessionSnapshot!.ActiveExchange!.HistoryEntryIds.Single());
         Assert.NotEqual(CombatExchangeStatus.Declared, result.CombatSessionSnapshot.ActiveExchange.Status);

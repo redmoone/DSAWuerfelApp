@@ -446,83 +446,34 @@ public sealed partial class RollCombatHandler(
         string userId,
         CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrWhiteSpace(request.SessionId) && request.Action is
-            CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack or
-            CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge)
+        var processing = await combatSessionStateService.ProcessSessionRollAsync(
+            request,
+            result,
+            userId,
+            cancellationToken);
+        if (processing.Snapshot is not { } sessionSnapshot)
         {
-            var sessionSnapshot = request.Action is CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack
-                ? await combatSessionStateService.BindAttackRollAsync(request, result, userId, cancellationToken)
-                : await combatSessionStateService.BindDefenseRollAsync(request, result, userId, cancellationToken);
-            var boundResult = AttachExchangeContext(
-                result with { CombatSessionSnapshot = sessionSnapshot },
-                sessionSnapshot);
-            var automaticHit = await combatSessionStateService.ResolveAutomaticHitAsync(
-                request,
-                boundResult,
-                userId,
-                cancellationToken);
-            if (automaticHit is not null)
-            {
-                boundResult = EnrichAutomaticHitResult(boundResult, automaticHit);
-            }
-            else if (boundResult.CombatSessionSnapshot?.ActiveExchange is
-                     { Status: CombatExchangeStatus.Hit })
-            {
-                var currentSnapshot = await combatSessionStateService.GetAsync(
-                    request.SessionId,
-                    userId,
-                    cancellationToken);
-                boundResult = AttachExchangeContext(
-                    boundResult with { CombatSessionSnapshot = currentSnapshot },
-                    currentSnapshot);
-            }
-
-            await combatSessionStateService.CacheRollResultAsync(
-                request,
-                boundResult,
-                userId,
-                cancellationToken);
-            return boundResult;
+            return result;
         }
 
-        if (!string.IsNullOrWhiteSpace(request.SessionId) && request.Action == CombatActionKind.HitZone)
+        var boundResult = AttachExchangeContext(
+            processing.Result with { CombatSessionSnapshot = sessionSnapshot },
+            sessionSnapshot);
+        if (processing.AutomaticHit is { } automaticHit)
         {
-            var sessionSnapshot = await combatSessionStateService.BindHitZoneAsync(
-                request,
-                result,
-                userId,
-                cancellationToken);
-            var boundResult = AttachExchangeContext(
-                result with { CombatSessionSnapshot = sessionSnapshot },
-                sessionSnapshot);
-            await combatSessionStateService.CacheRollResultAsync(
-                request,
-                boundResult,
-                userId,
-                cancellationToken);
-            return boundResult;
+            boundResult = EnrichAutomaticHitResult(boundResult, automaticHit);
         }
-
-        if (!string.IsNullOrWhiteSpace(request.SessionId) && request.Action == CombatActionKind.Damage)
+        else if (request.Action == CombatActionKind.Damage)
         {
-            var sessionSnapshot = await combatSessionStateService.ApplyDamageAsync(
-                request,
-                result,
-                userId,
-                cancellationToken);
-            var boundResult = AttachExchangeContext(
-                result with { CombatSessionSnapshot = sessionSnapshot },
-                sessionSnapshot);
             boundResult = EnrichWoundConsequenceResult(boundResult, sessionSnapshot);
-            await combatSessionStateService.CacheRollResultAsync(
-                request,
-                boundResult,
-                userId,
-                cancellationToken);
-            return boundResult;
         }
 
-        return result;
+        await combatSessionStateService.CacheRollResultAsync(
+            request,
+            boundResult,
+            userId,
+            cancellationToken);
+        return boundResult;
     }
 
     private static CombatRollResultDto EnrichAutomaticHitResult(

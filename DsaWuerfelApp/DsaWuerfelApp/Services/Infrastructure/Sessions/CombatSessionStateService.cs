@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
 
 using DsaWuerfelApp.Services.Application.Import;
@@ -20,6 +21,7 @@ public sealed class CombatSessionStateService(
     private const int MaxCachedRollResults = 128;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly SemaphoreSlim _stateLock = new(1, 1);
+    private readonly ConcurrentDictionary<SessionRollKey, TaskCompletionSource<CombatSessionRollProcessingResult>> _inFlightRolls = new();
 
     public async Task<CombatSessionSnapshotDto> GetAsync(
         string sessionId,
@@ -74,6 +76,115 @@ public sealed class CombatSessionStateService(
         }
     }
 
+    /// <summary>
+    /// Single session entry point for the stateful part of a combat roll.
+    /// Individual mutation methods remain available for existing callers and
+    /// tests, while the handler only needs this command boundary for a normal
+    /// session roll.
+    /// </summary>
+    public async Task<CombatSessionRollProcessingResult> ProcessSessionRollAsync(
+        CombatRollRequestDto request,
+        CombatRollResultDto result,
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(result);
+        if (string.IsNullOrWhiteSpace(request.SessionId))
+        {
+            return new CombatSessionRollProcessingResult(result, null, null);
+        }
+
+        var key = new SessionRollKey(request.SessionId.Trim(), request.RequestId, userId);
+        var completion = new TaskCompletionSource<CombatSessionRollProcessingResult>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        if (!_inFlightRolls.TryAdd(key, completion))
+        {
+            if (_inFlightRolls.TryGetValue(key, out var existing))
+            {
+                return await existing.Task.WaitAsync(cancellationToken);
+            }
+
+            // The first request completed between TryAdd and TryGetValue;
+            // retry against the persisted idempotence state.
+            var cached = await GetCachedRollAsync(
+                request.SessionId,
+                request.RequestId,
+                userId,
+                cancellationToken);
+            if (cached is null)
+            {
+                return new CombatSessionRollProcessingResult(result, null, null);
+            }
+
+            var cachedSnapshot = await GetAsync(request.SessionId, userId, cancellationToken);
+            return new CombatSessionRollProcessingResult(cached, cachedSnapshot, null);
+        }
+
+        var retainForResultCache = false;
+        try
+        {
+            CombatSessionSnapshotDto snapshot;
+            CombatAutomaticHitResolutionDto? automaticHit = null;
+            if (request.Action is CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack)
+            {
+                snapshot = await BindAttackRollAsync(request, result, userId, cancellationToken);
+                automaticHit = await ResolveAutomaticHitAsync(
+                    request,
+                    result with { CombatSessionSnapshot = snapshot },
+                    userId,
+                    cancellationToken);
+                snapshot = automaticHit?.Snapshot ?? snapshot;
+            }
+            else if (CombatActionBudgetRules.RequiresReaction(request.Action))
+            {
+                snapshot = await BindDefenseRollAsync(request, result, userId, cancellationToken);
+                automaticHit = await ResolveAutomaticHitAsync(
+                    request,
+                    result with { CombatSessionSnapshot = snapshot },
+                    userId,
+                    cancellationToken);
+                snapshot = automaticHit?.Snapshot ?? snapshot;
+            }
+            else if (request.Action == CombatActionKind.HitZone)
+            {
+                snapshot = await BindHitZoneAsync(request, result, userId, cancellationToken);
+            }
+            else if (request.Action == CombatActionKind.Damage)
+            {
+                snapshot = await ApplyDamageAsync(request, result, userId, cancellationToken);
+            }
+            else
+            {
+                var unsupported = new CombatSessionRollProcessingResult(result, null, null);
+                completion.TrySetResult(unsupported);
+                return unsupported;
+            }
+
+            if (automaticHit is null && snapshot.ActiveExchange is { Status: CombatExchangeStatus.Hit })
+            {
+                snapshot = await GetAsync(request.SessionId, userId, cancellationToken);
+            }
+
+            var processed = new CombatSessionRollProcessingResult(result, snapshot, automaticHit);
+            completion.TrySetResult(processed);
+            retainForResultCache = true;
+            return processed;
+        }
+        catch (Exception exception)
+        {
+            completion.TrySetException(exception);
+            throw;
+        }
+        finally
+        {
+            if (!retainForResultCache)
+            {
+                _inFlightRolls.TryRemove(key, out _);
+            }
+        }
+    }
+
     public async Task CacheRollResultAsync(
         CombatRollRequestDto request,
         CombatRollResultDto result,
@@ -104,6 +215,9 @@ public sealed class CombatSessionStateService(
         finally
         {
             _stateLock.Release();
+            _inFlightRolls.TryRemove(
+                new SessionRollKey(request.SessionId.Trim(), request.RequestId, userId),
+                out _);
         }
     }
 
@@ -3336,6 +3450,11 @@ public sealed class CombatSessionStateService(
     private sealed record HitStateApplication(
         CombatSessionSnapshotDto Snapshot);
 
+    private sealed record SessionRollKey(
+        string SessionId,
+        Guid RequestId,
+        string UserId);
+
     private sealed record AutomaticAttackInfo(string DamageNotation);
 
     private sealed record AuthorizationResult(bool Allowed, string Message);
@@ -3352,3 +3471,8 @@ public sealed class CombatSessionStateService(
         _ => zone.ToString()
     };
 }
+
+public sealed record CombatSessionRollProcessingResult(
+    CombatRollResultDto Result,
+    CombatSessionSnapshotDto? Snapshot,
+    CombatAutomaticHitResolutionDto? AutomaticHit);
