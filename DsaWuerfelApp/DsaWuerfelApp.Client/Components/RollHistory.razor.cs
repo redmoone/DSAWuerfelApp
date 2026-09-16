@@ -244,6 +244,20 @@ public partial class RollHistory
             {
                 details.Add("handlungsunfähig");
             }
+
+            if (wounds.InitiativeLoss is { } initiativeLoss)
+            {
+                details.Add($"INI-Verlust −{initiativeLoss}");
+            }
+
+            details.AddRange((wounds.FollowUps ?? []).Select(followUp =>
+                $"Offen: {followUp.Purpose}"));
+        }
+
+        if ((combat.FollowUps ?? []).Length > 0)
+        {
+            details.AddRange((combat.FollowUps ?? []).Select(followUp =>
+                $"Offen: {followUp.Purpose}"));
         }
 
         if (combat.EffectiveTarget is { } target && combat.LabeledRolls.Length == 0)

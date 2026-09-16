@@ -308,9 +308,34 @@ public static class CombatRollRules
         CombatRollEvaluationDto AttachDetails(CombatRollEvaluationDto evaluation) => evaluation with
         {
             Modifiers = evaluationModifiers,
+            FollowUps = ResolveFollowUps(evaluation),
             RuleNotes = evaluationRuleNotes,
             ValuesSource = valuesSource
         };
+    }
+
+    public static CombatFollowUpRequirementDto[] ResolveFollowUps(
+        CombatRollEvaluationDto evaluation)
+    {
+        ArgumentNullException.ThrowIfNull(evaluation);
+        if (evaluation.Outcome != CombatOutcome.Fumble)
+        {
+            return [];
+        }
+
+        var ranged = evaluation.Action == CombatActionKind.RangedAttack;
+        var purpose = ranged
+            ? "Bestätigter Fernkampfpatzer · passende Patzertabelle nach WdS S. 99 prüfen."
+            : "Bestätigter Kampfpatzer · passende Patzertabelle nach WdS S. 85 prüfen.";
+        return
+        [
+            new CombatFollowUpRequirementDto(
+                ranged ? "fumble-ranged-table" : "fumble-combat-table",
+                CombatFollowUpKind.FumbleTable,
+                0,
+                0,
+                purpose)
+        ];
     }
 
     public static CombatDamageCalculationDto CalculateDamage(

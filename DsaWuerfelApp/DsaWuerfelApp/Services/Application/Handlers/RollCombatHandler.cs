@@ -253,6 +253,7 @@ public sealed partial class RollCombatHandler(
             Outcome = evaluation.Outcome,
             StatusLabel = evaluation.StatusLabel,
             LabeledRolls = CreateStoredLabeledRolls(evaluation),
+            FollowUps = evaluation.FollowUps ?? [],
             RuleNotes = evaluation.RuleNotes ?? []
         };
         var result = CreateResult(
@@ -512,6 +513,7 @@ public sealed partial class RollCombatHandler(
             var boundResult = AttachExchangeContext(
                 result with { CombatSessionSnapshot = sessionSnapshot },
                 sessionSnapshot);
+            boundResult = EnrichWoundConsequenceResult(boundResult, sessionSnapshot);
             await combatSessionStateService.CacheRollResultAsync(
                 request,
                 boundResult,
@@ -527,9 +529,13 @@ public sealed partial class RollCombatHandler(
         CombatRollResultDto result,
         CombatAutomaticHitResolutionDto automaticHit)
     {
+        var initiativeLossRollCount = automaticHit.WoundApplication.InitiativeLossRolls.Length;
+        var initiativeLossStart = automaticHit.Rolls.Length - initiativeLossRollCount;
         var automaticLabels = automaticHit.Rolls
             .Select((roll, index) => new CombatLabeledRollDto(
-                automaticHit.ZoneWasRolled && index == 0 ? "Trefferzonenwurf" : "TP-Würfel",
+                automaticHit.ZoneWasRolled && index == 0
+                    ? "Trefferzonenwurf"
+                    : index >= initiativeLossStart ? "INI-Verlust-Würfel" : "TP-Würfel",
                 roll.Sides,
                 roll.Value));
         var snapshot = result.Snapshot with
@@ -567,6 +573,44 @@ public sealed partial class RollCombatHandler(
         }, automaticHit.Snapshot);
     }
 
+    private static CombatRollResultDto EnrichWoundConsequenceResult(
+        CombatRollResultDto result,
+        CombatSessionSnapshotDto sessionSnapshot)
+    {
+        var application = sessionSnapshot.ActiveExchange?.WoundApplication;
+        if (application is null || application.InitiativeLossRolls.Length == 0)
+        {
+            return result;
+        }
+
+        var labels = application.InitiativeLossRolls
+            .Select(roll => new CombatLabeledRollDto("INI-Verlust-Würfel", roll.Sides, roll.Value));
+        var snapshot = result.Snapshot with
+        {
+            LabeledRolls = result.Snapshot.LabeledRolls.Concat(labels).ToArray(),
+            WoundApplication = application
+        };
+        var historyEntry = result.HistoryEntry with
+        {
+            Rolls = result.HistoryEntry.Rolls.Concat(application.InitiativeLossRolls).ToArray(),
+            Context = result.HistoryEntry.Context is not { } context
+                ? null
+                : context with
+                {
+                    Snapshot = (context.Snapshot ?? new RollHistorySnapshotDto()) with
+                    {
+                        Combat = snapshot
+                    }
+                }
+        };
+        return result with
+        {
+            Snapshot = snapshot,
+            Rolls = result.Rolls.Concat(application.InitiativeLossRolls).ToArray(),
+            HistoryEntry = historyEntry
+        };
+    }
+
     private static CombatRollResultDto AttachExchangeContext(
         CombatRollResultDto result,
         CombatSessionSnapshotDto sessionSnapshot)
@@ -582,6 +626,8 @@ public sealed partial class RollCombatHandler(
             string.Equals(participant.Id, exchange.AttackerParticipantId, StringComparison.Ordinal));
         var target = sessionSnapshot.Participants.FirstOrDefault(participant =>
             string.Equals(participant.Id, exchange.TargetParticipantId, StringComparison.Ordinal));
+        var resultFollowUps = result.Snapshot.FollowUps ?? [];
+        var exchangeFollowUps = exchange.AttackResult?.FollowUps ?? [];
         var snapshot = result.Snapshot with
         {
             ExchangeAttackerName = attacker?.Name,
@@ -592,6 +638,7 @@ public sealed partial class RollCombatHandler(
             Zone = exchange.Zone ?? result.Snapshot.Zone,
             Damage = exchange.Damage ?? result.Snapshot.Damage,
             WoundApplication = exchange.WoundApplication ?? result.Snapshot.WoundApplication,
+            FollowUps = resultFollowUps.Length > 0 ? resultFollowUps : exchangeFollowUps,
             RuleNotes = exchange.Status is (CombatExchangeStatus.Hit or CombatExchangeStatus.DamageOpen) &&
                         !string.IsNullOrWhiteSpace(exchange.RuleNote)
                 ? result.Snapshot.RuleNotes
@@ -926,6 +973,7 @@ public sealed partial class RollCombatHandler(
                     new CombatLabeledRollDto("Kontrollwurf", 20, controlRoll.Value)
                 ]
                 : [new CombatLabeledRollDto("Hauptwurf", 20, mainRoll)],
+            FollowUps = evaluation.FollowUps ?? [],
             RuleNotes = BuildRuleNotes(request, evaluation, ruleNotes)
         };
 
@@ -1403,9 +1451,10 @@ public sealed partial class RollCombatHandler(
             notes.Add("Die AT ist gelungen und öffnet die Abwehrentscheidung; sie wendet keinen Treffer an.");
         }
 
-        if (evaluation?.Outcome == CombatOutcome.Fumble)
+        if (evaluation?.FollowUps is { Length: > 0 } followUps)
         {
-            notes.Add("Patzerfolgen benötigen die passende DSA-4.1-Tabelle und bleiben bis zur Meisterentscheidung offen.");
+            notes.AddRange(followUps.Select(followUp =>
+                $"Meisterentscheidung erforderlich: {followUp.Purpose}"));
         }
 
         if (request.Modifiers is { Length: > 0 })

@@ -180,6 +180,44 @@ public sealed class CombatRollRulesTests
         Assert.True(fumble.IsFumble);
     }
 
+    [Theory]
+    [InlineData(CombatActionKind.MeleeAttack, "fumble-combat-table", "WdS S. 85")]
+    [InlineData(CombatActionKind.RangedAttack, "fumble-ranged-table", "WdS S. 99")]
+    public void Confirmed_fumbles_keep_the_matching_dsa_four_point_one_table_as_a_follow_up(
+        CombatActionKind action,
+        string expectedId,
+        string expectedPage)
+    {
+        var evaluation = CombatRollRules.Evaluate(
+            action,
+            14,
+            [],
+            mainRoll: 20,
+            controlRoll: 20,
+            unmodifiedBaseValue: 14);
+
+        var followUp = Assert.Single(evaluation.FollowUps);
+        Assert.Equal(expectedId, followUp.Id);
+        Assert.Equal(CombatFollowUpKind.FumbleTable, followUp.Kind);
+        Assert.Contains(expectedPage, followUp.Purpose, StringComparison.Ordinal);
+        Assert.Equal(0, followUp.DiceCount);
+        Assert.Equal(0, followUp.DiceSides);
+    }
+
+    [Fact]
+    public void Avoided_fumbles_do_not_create_a_table_follow_up()
+    {
+        var evaluation = CombatRollRules.Evaluate(
+            CombatActionKind.MeleeAttack,
+            14,
+            [],
+            mainRoll: 20,
+            controlRoll: 1);
+
+        Assert.Equal(CombatOutcome.FumbleAvoided, evaluation.Outcome);
+        Assert.Empty(evaluation.FollowUps);
+    }
+
     [Fact]
     public void Ranged_lucky_one_requires_penalty_within_base_value()
     {

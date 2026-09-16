@@ -266,6 +266,7 @@ public sealed record CombatRollSnapshotDto
     public CombatDamageSnapshotDto? Damage { get; init; }
     public CombatZoneSnapshotDto? Zone { get; init; }
     public CombatWoundApplicationDto? WoundApplication { get; init; }
+    public CombatFollowUpRequirementDto[] FollowUps { get; init; } = [];
     public string[] RuleNotes { get; init; } = [];
 }
 
@@ -303,6 +304,7 @@ public sealed record CombatRollEvaluationDto(
     string StatusLabel)
 {
     public CombatModifierDto[] Modifiers { get; init; } = [];
+    public CombatFollowUpRequirementDto[] FollowUps { get; init; } = [];
     public string[] RuleNotes { get; init; } = [];
     public string ValuesSource { get; init; } = "Regelhilfe";
 }
@@ -345,7 +347,12 @@ public sealed record CombatWoundApplicationDto(
     int? ExistingWounds,
     int? ResultingWounds,
     int AddedWounds,
-    bool IsIncapacitated);
+    bool IsIncapacitated)
+{
+    public int? InitiativeLoss { get; init; }
+    public DiceRollDto[] InitiativeLossRolls { get; init; } = [];
+    public CombatFollowUpRequirementDto[] FollowUps { get; init; } = [];
+}
 
 public sealed record CombatFollowUpRequirementDto(
     string Id,

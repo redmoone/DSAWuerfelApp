@@ -123,7 +123,7 @@ public static class CombatRuntimeModifierRules
 
         if (GetKnownWoundCount(wounds, CombatWoundZone.Head) > 0)
         {
-            notes.Add($"{ZoneWoundSource}: Kopfwunden verursachen zusätzlich einen nicht gespeicherten 2W6-INI-Verlust; bitte am Tisch würfeln.");
+            notes.Add($"{ZoneWoundSource}: Kopfwunden verursachen zusätzlich einen 2W6-INI-Verlust; eine neue Trefferfolge speichert ihn automatisch.");
         }
 
         return modifier;

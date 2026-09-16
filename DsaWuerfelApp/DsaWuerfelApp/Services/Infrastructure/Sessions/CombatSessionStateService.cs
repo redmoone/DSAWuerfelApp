@@ -522,7 +522,10 @@ public sealed class CombatSessionStateService(
                 ? null
                 : ResolveParticipantSet(targetProfile, target, null);
             var armorRating = target.Kind == CombatParticipantKind.Opponent
-                ? target.OpponentProfile?.ArmorRating
+                ? zone.ArmorZone is { } enemyArmorZone
+                    ? CombatZoneRules.ResolveEnemyArmorRating(target.OpponentProfile?.Armor, enemyArmorZone) ??
+                      target.OpponentProfile?.ArmorRating
+                    : target.OpponentProfile?.ArmorRating
                 : zone.ArmorZone is { } armorZone
                     ? CombatZoneRules.ResolveArmorRating(targetSet, armorZone)
                     : null;
@@ -574,6 +577,13 @@ public sealed class CombatSessionStateService(
                 woundZone,
                 currentWounds,
                 woundThresholds);
+            var woundConsequences = ApplySupportedWoundConsequences(
+                target,
+                application,
+                targetSet?.UsesZonalArmor == true ||
+                target.OpponentProfile?.Armor?.UsesZonalArmor == true);
+            application = woundConsequences.Application;
+            target = woundConsequences.Participant;
 
             var nextWounds = wounds is null
                 ? null
@@ -602,6 +612,10 @@ public sealed class CombatSessionStateService(
                 };
             }
 
+            var nextActions = application.IsIncapacitated
+                ? ReleaseActionsForIncapacitated(current.Actions, target.Id)
+                : current.Actions;
+
             var nextRevision = current.Revision + 1;
             var storedDamage = rawDamage with
             {
@@ -609,6 +623,9 @@ public sealed class CombatSessionStateService(
                 StructurePoints = calculation.StructurePoints
             };
             var storedZone = zone with { ArmorRating = armorRating };
+            var consequenceNotes = woundConsequences.RuleNotes.Length == 0
+                ? string.Empty
+                : $" {string.Join("; ", woundConsequences.RuleNotes)}";
             var updatedExchange = exchange with
             {
                 Revision = nextRevision,
@@ -621,8 +638,8 @@ public sealed class CombatSessionStateService(
                     .Distinct()
                     .ToArray(),
                 RuleNote = application.IsIncapacitated
-                    ? $"{calculation.StructurePoints} SP; {target.Name} ist handlungsunfähig."
-                    : $"{calculation.StructurePoints} SP auf {target.Name}."
+                    ? $"{calculation.StructurePoints} SP; {target.Name} ist handlungsunfähig.{consequenceNotes}"
+                    : $"{calculation.StructurePoints} SP auf {target.Name}.{consequenceNotes}"
             };
             if (exchange.Status == CombatExchangeStatus.Hit &&
                 !CombatAttackExchangeRules.CanTransition(exchange.Status, CombatExchangeStatus.DamageOpen))
@@ -643,6 +660,7 @@ public sealed class CombatSessionStateService(
                     RuntimeState = nextRuntime,
                     ActionBudget = targetBudget
                 }),
+                Actions = nextActions,
                 ActiveExchange = updatedExchange,
                 LastMutationId = request.RequestId,
                 LastMutationDescription = $"Schadensfolge für {exchange.ExchangeId} gespeichert",
@@ -815,6 +833,13 @@ public sealed class CombatSessionStateService(
                 woundZone,
                 currentWounds,
                 thresholds);
+            var woundConsequences = ApplySupportedWoundConsequences(
+                target,
+                application,
+                targetSet?.UsesZonalArmor == true ||
+                target.OpponentProfile?.Armor?.UsesZonalArmor == true);
+            application = woundConsequences.Application;
+            target = woundConsequences.Participant;
 
             var nextWounds = new Dictionary<CombatWoundZone, int?>(wounds);
             if (application.ResultingWounds.HasValue)
@@ -841,6 +866,10 @@ public sealed class CombatSessionStateService(
                 };
             }
 
+            var nextActions = application.IsIncapacitated
+                ? ReleaseActionsForIncapacitated(current.Actions, target.Id)
+                : current.Actions;
+
             var damage = new CombatDamageSnapshotDto(
                 calculation.DiceTotal,
                 calculation.WeaponBonus,
@@ -860,6 +889,7 @@ public sealed class CombatSessionStateService(
                     ? $"LeP {currentLeP.Value} → {application.LePAfter.Value}"
                     : "LeP-Verlust gespeichert; ein Ausgangswert ist nicht bekannt."
             };
+            ruleNotes.AddRange(woundConsequences.RuleNotes);
             if (application.AddedWounds > 0)
             {
                 ruleNotes.Add($"Wunden +{application.AddedWounds} ({FormatWoundZone(woundZone)})");
@@ -883,6 +913,7 @@ public sealed class CombatSessionStateService(
                     RuntimeState = nextRuntime,
                     ActionBudget = targetBudget
                 }),
+                Actions = nextActions,
                 ActiveExchange = updatedExchange,
                 LastMutationId = request.RequestId,
                 LastMutationDescription = $"Trefferfolge für {exchange.ExchangeId} automatisch gespeichert",
@@ -903,6 +934,7 @@ public sealed class CombatSessionStateService(
             }
 
             automaticRolls.AddRange(damageRolls);
+            automaticRolls.AddRange(woundConsequences.InitiativeLossRolls);
             return new CombatAutomaticHitResolutionDto(
                 next,
                 automaticRolls.ToArray(),
@@ -917,6 +949,83 @@ public sealed class CombatSessionStateService(
             _stateLock.Release();
         }
     }
+
+    private SupportedWoundConsequences ApplySupportedWoundConsequences(
+        CombatSessionParticipantDto target,
+        CombatWoundApplicationDto application,
+        bool usesZonalArmor)
+    {
+        if (!usesZonalArmor || application.Zone != CombatWoundZone.Head || application.AddedWounds <= 0)
+        {
+            return new SupportedWoundConsequences(target, application, [], []);
+        }
+
+        if (!target.CurrentInitiative.HasValue)
+        {
+            var followUp = new CombatFollowUpRequirementDto(
+                "head-initiative-loss",
+                CombatFollowUpKind.InitiativeLoss,
+                2,
+                6,
+                "Kopfwunde: 2W6 INI-Verlust kann ohne laufenden INI-Wert noch nicht angewendet werden.");
+            var pending = application with { FollowUps = [followUp] };
+            return new SupportedWoundConsequences(
+                target,
+                pending,
+                [],
+                ["Kopfwunde: 2W6 INI-Verlust offen; für das Ziel ist noch kein laufender INI-Wert gespeichert."]);
+        }
+
+        var rolls = diceService.RollDice([new DiceRollGroupDto(6, 2)]);
+        var initiativeLoss = rolls.Sum(roll => roll.Value);
+        var updatedTarget = target with
+        {
+            CurrentInitiative = target.CurrentInitiative.Value - initiativeLoss,
+            RecoverableInitiativeLoss = target.RecoverableInitiativeLoss + initiativeLoss
+        };
+        var resolved = application with
+        {
+            InitiativeLoss = initiativeLoss,
+            InitiativeLossRolls = rolls
+        };
+        return new SupportedWoundConsequences(
+            updatedTarget,
+            resolved,
+            rolls,
+            [$"Kopfwunde: 2W6 INI-Verlust = {initiativeLoss}; laufende INI angepasst."]);
+    }
+
+    private static (CombatSessionParticipantDto Participant, CombatSessionActionDto[] Actions)
+        NormalizeIncapacitatedParticipant(
+            CombatSessionParticipantDto participant,
+            IEnumerable<CombatSessionActionDto> actions)
+    {
+        if (IsCombatEligible(participant))
+        {
+            return (participant, actions.ToArray());
+        }
+
+        return (
+            participant with
+            {
+                ActionBudget = CreateIncapacitatedBudget(),
+                ActionAvailable = false,
+                ReactionAvailable = false
+            },
+            ReleaseActionsForIncapacitated(actions, participant.Id));
+    }
+
+    private static CombatSessionActionDto[] ReleaseActionsForIncapacitated(
+        IEnumerable<CombatSessionActionDto> actions,
+        string participantId) => actions
+        .Select(action => action.ParticipantId == participantId && action.State != CombatActionEntryState.Completed
+            ? action with
+            {
+                State = CombatActionEntryState.Completed,
+                CompletedAt = DateTimeOffset.UtcNow
+            }
+            : action)
+        .ToArray();
 
     private CombatSessionSnapshotDto MarkAutomaticHitPending(
         GameSession session,
@@ -1525,10 +1634,12 @@ public sealed class CombatSessionStateService(
         };
         var participants = ReplaceParticipant(current.Participants, updatedParticipant);
         var actions = current.Actions;
-        if (actions.All(action => action.ParticipantId != participant.Id || action.Round != current.Round))
+        if (IsCombatEligible(updatedParticipant) &&
+            actions.All(action => action.ParticipantId != participant.Id || action.Round != current.Round))
         {
             actions = actions.Append(CreateNormalAction(updatedParticipant, current.Round)).ToArray();
         }
+        (updatedParticipant, actions) = NormalizeIncapacitatedParticipant(updatedParticipant, actions);
 
         var initiativeSnapshot = new CombatRollSnapshotDto
         {
@@ -1644,11 +1755,16 @@ public sealed class CombatSessionStateService(
                           ?? throw Validation("Der Teilnehmer für den laufenden Kampfzustand wurde nicht gefunden.");
         var initiativeInfo = await ResolveInitiativeInfoAsync(participant, request, userId, cancellationToken);
         var updatedParticipant = ApplyInitiativeInputs(participant, request, initiativeInfo, out var initiativeDelta);
+        (updatedParticipant, var actions) = NormalizeIncapacitatedParticipant(updatedParticipant, current.Actions);
 
         var description = initiativeDelta == 0
             ? $"Laufender Kampfzustand von {participant.Name} gespeichert"
             : $"Laufender Kampfzustand von {participant.Name} gespeichert; INI {FormatSigned(initiativeDelta)} angepasst";
-        return (current with { Participants = ReplaceParticipant(current.Participants, updatedParticipant) }, description);
+        return (current with
+        {
+            Participants = ReplaceParticipant(current.Participants, updatedParticipant),
+            Actions = actions
+        }, description);
     }
 
     private async Task<(CombatSessionSnapshotDto Snapshot, string Description)> DeclareAttackAsync(
@@ -2183,6 +2299,16 @@ public sealed class CombatSessionStateService(
     {
         var action = FindAction(current, request.ActionId, request.ParticipantId)
                      ?? throw Validation("Die Handlung wurde nicht gefunden.");
+        if (action.Round != current.Round)
+        {
+            throw Validation("Nur eine Handlung der aktuellen Runde kann gehalten oder ausgefÃ¼hrt werden.");
+        }
+
+        if (action.IsReaction)
+        {
+            throw Validation("Reaktionen kÃ¶nnen nicht gehalten werden.");
+        }
+
         if (state == CombatActionEntryState.Held && action.State != CombatActionEntryState.Open)
         {
             throw Validation("Nur eine offene Handlung kann gehalten werden.");
@@ -2198,6 +2324,14 @@ public sealed class CombatSessionStateService(
         {
             throw Validation("Dieser Teilnehmer ist nicht mehr kampffaehig.");
         }
+
+        if (state == CombatActionEntryState.Held &&
+            current.CurrentActionIds.Length > 0 &&
+            !current.CurrentActionIds.Contains(action.Id, StringComparer.Ordinal))
+        {
+            throw Validation("Die Handlung kann erst gehalten werden, wenn der Teilnehmer an der Reihe ist.");
+        }
+
         var budget = participant?.ActionBudget ?? new CombatActionBudgetDto();
         if (state == CombatActionEntryState.Held && budget.HeldActionId is not null &&
             !string.Equals(budget.HeldActionId, action.Id, StringComparison.Ordinal))
@@ -2443,7 +2577,15 @@ public sealed class CombatSessionStateService(
                     Round = round,
                     PhaseInitiative = participant.CurrentInitiative ?? action.PhaseInitiative
                 }
-                : action)
+                : currentParticipantsById.TryGetValue(action.ParticipantId, out var ineligibleParticipant) &&
+                  !IsCombatEligible(ineligibleParticipant) &&
+                  action.State != CombatActionEntryState.Completed
+                    ? action with
+                    {
+                        State = CombatActionEntryState.Completed,
+                        CompletedAt = DateTimeOffset.UtcNow
+                    }
+                    : action)
             .ToList();
         var heldActions = actions
             .Where(action => action.Round == round && action.State == CombatActionEntryState.Held)
@@ -2936,6 +3078,7 @@ public sealed class CombatSessionStateService(
             snapshot.StatusLabel)
         {
             Modifiers = snapshot.Modifiers ?? [],
+            FollowUps = snapshot.FollowUps ?? [],
             RuleNotes = snapshot.RuleNotes ?? [],
             ValuesSource = snapshot.ValuesSource ?? "Unbekannt"
         };
@@ -3183,6 +3326,12 @@ public sealed class CombatSessionStateService(
         string? SetId,
         string? WeaponId,
         string? WeaponName);
+
+    private sealed record SupportedWoundConsequences(
+        CombatSessionParticipantDto Participant,
+        CombatWoundApplicationDto Application,
+        DiceRollDto[] InitiativeLossRolls,
+        string[] RuleNotes);
 
     private sealed record AutomaticAttackInfo(string DamageNotation);
 

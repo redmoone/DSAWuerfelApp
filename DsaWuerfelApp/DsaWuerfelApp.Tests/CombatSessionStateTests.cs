@@ -922,7 +922,14 @@ public sealed class CombatSessionStateTests
             Name = "Übungsgegner",
             InitiativeBase = 1,
             Initiative = 1,
-            OpponentProfile = new CombatOpponentProfileDto(10, 8, 7, 2, 20, 5)
+            OpponentProfile = new CombatOpponentProfileDto(10, 8, 7, 2, 20, 1)
+            {
+                Armor = new CombatEnemyArmorDto
+                {
+                    UsesZonalArmor = true,
+                    Head = 2
+                }
+            }
         }, "owner");
         var target = Assert.Single(added.Snapshot.Participants, item => item.Kind == CombatParticipantKind.Opponent);
         var noReaction = await state.MutateAsync(new CombatSessionMutationRequestDto
@@ -960,6 +967,12 @@ public sealed class CombatSessionStateTests
             ExchangeId = "exchange-automatic-hit",
             SetId = set.Id,
             WeaponId = weapon.Id,
+            ResolvedZone = new CombatZoneSnapshotDto(
+                20,
+                CombatArmorZone.Head,
+                CombatWoundZone.Head,
+                CombatFacing.Front,
+                2),
             Action = CombatActionKind.MeleeAttack
         };
         var attackResult = CreateCombatResult(attackRequest, 8, 14, CombatOutcome.Success);
@@ -976,13 +989,106 @@ public sealed class CombatSessionStateTests
         Assert.NotNull(automatic.Snapshot.ActiveExchange.Zone);
         Assert.NotNull(automatic.Snapshot.ActiveExchange.Damage);
         Assert.NotNull(automatic.WoundApplication);
+        Assert.Equal(CombatWoundZone.Head, automatic.WoundApplication.Zone);
+        Assert.NotNull(automatic.WoundApplication.InitiativeLoss);
+        Assert.Equal(2, automatic.WoundApplication.InitiativeLossRolls.Length);
+        Assert.InRange(automatic.WoundApplication.InitiativeLoss!.Value, 2, 12);
+        Assert.Contains(automatic.RuleNotes, note => note.Contains("INI-Verlust", StringComparison.Ordinal));
+        var targetAfterDamage = Assert.Single(automatic.Snapshot.Participants, item => item.Id == target.Id);
+        Assert.Equal(target.CurrentInitiative - automatic.WoundApplication.InitiativeLoss,
+            targetAfterDamage.CurrentInitiative);
+        Assert.Equal(automatic.WoundApplication.InitiativeLoss,
+            targetAfterDamage.RecoverableInitiativeLoss);
         Assert.Equal(0, Assert.Single(automatic.Snapshot.Participants, item => item.Id == attacker.Id)
             .ActionBudget?.NormalActionsRemaining);
-        Assert.True(automatic.Rolls.Length >= 2);
+        Assert.Equal(3, automatic.Rolls.Length);
 
         var stored = await state.GetAsync(session.SessionId, "owner");
         Assert.Equal(automatic.Snapshot.Revision, stored.Revision);
         Assert.Equal(automatic.Snapshot.ActiveExchange.Status, stored.ActiveExchange!.Status);
+    }
+
+    [Fact]
+    public async Task Confirmed_fumble_is_completed_once_and_keeps_its_table_decision()
+    {
+        using var factory = new TestApplicationFactory();
+        var hero = await SeedHeroAsync(factory, "owner");
+        var session = CreateSession(factory, hero, "owner");
+        var state = factory.Services.GetRequiredService<CombatSessionStateService>();
+        var profile = await factory.Services.GetRequiredService<HeroCombatProfileReader>().ReadAsync(hero.Id, "owner");
+        var set = Assert.Single(profile!.Sets, item => item.ArmorModel == CombatArmorModel.Zone);
+        var weapon = Assert.Single(set.Weapons, item => item.Name == "Schwert");
+
+        var initial = await state.GetAsync(session.SessionId, "owner");
+        var rolled = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = initial.Revision,
+            Kind = CombatSessionMutationKind.RollInitiative,
+            HeroId = hero.Id
+        }, "owner");
+        var attacker = Assert.Single(rolled.Snapshot.Participants, item => item.HeroId == hero.Id);
+        var action = Assert.Single(rolled.Snapshot.Actions, item => item.ParticipantId == attacker.Id);
+        var added = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = rolled.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.AddOpponent,
+            Name = "Patzerziel",
+            InitiativeBase = 1,
+            Initiative = 1,
+            OpponentProfile = new CombatOpponentProfileDto(10, 8, 7, 0, 20)
+        }, "owner");
+        var target = Assert.Single(added.Snapshot.Participants, item => item.Kind == CombatParticipantKind.Opponent);
+        var declaration = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = added.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.DeclareAttack,
+            ParticipantId = attacker.Id,
+            TargetParticipantId = target.Id,
+            ActionId = action.Id,
+            ExchangeId = "exchange-fumble",
+            SetId = set.Id,
+            WeaponId = weapon.Id,
+            ActionKind = CombatActionKind.MeleeAttack
+        }, "owner");
+
+        var request = new CombatRollRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ParticipantId = attacker.Id,
+            TargetParticipantId = target.Id,
+            ActionId = action.Id,
+            ExchangeId = declaration.Snapshot.ActiveExchange!.ExchangeId,
+            HeroId = hero.Id,
+            SetId = set.Id,
+            WeaponId = weapon.Id,
+            Action = CombatActionKind.MeleeAttack
+        };
+        var followUps = CombatRollRules.Evaluate(
+            CombatActionKind.MeleeAttack,
+            14,
+            [],
+            20,
+            controlRoll: 20).FollowUps;
+        var fumble = CreateCombatResult(request, 20, 14, CombatOutcome.Fumble, followUps);
+
+        var completed = await state.BindAttackRollAsync(request, fumble, "owner");
+
+        Assert.Equal(CombatExchangeStatus.Completed, completed.ActiveExchange!.Status);
+        Assert.Equal(CombatOutcome.Fumble, completed.ActiveExchange.AttackResult!.Outcome);
+        Assert.Equal(followUps, completed.ActiveExchange.AttackResult.FollowUps);
+        Assert.Null(completed.ActiveExchange.Damage);
+        Assert.Null(completed.ActiveExchange.DefenseResult);
+        Assert.Equal(0, Assert.Single(completed.Participants, item => item.Id == attacker.Id)
+            .ActionBudget?.NormalActionsRemaining);
+        Assert.Equal(CombatActionEntryState.Completed,
+            completed.Actions.Single(item => item.Id == action.Id).State);
     }
 
     [Fact]
@@ -1160,12 +1266,23 @@ public sealed class CombatSessionStateTests
             HeroId = hero.Id
         }, "owner");
         var participant = Assert.Single(rolled.Snapshot.Participants, current => current.HeroId == hero.Id);
+        var action = Assert.Single(rolled.Snapshot.Actions, current => current.ParticipantId == participant.Id);
+
+        var held = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = rolled.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.HoldAction,
+            ActionId = action.Id,
+            ParticipantId = participant.Id
+        }, "owner");
 
         var synced = await state.MutateAsync(new CombatSessionMutationRequestDto
         {
             RequestId = Guid.NewGuid(),
             SessionId = session.SessionId,
-            ExpectedRevision = rolled.Snapshot.Revision,
+            ExpectedRevision = held.Snapshot.Revision,
             Kind = CombatSessionMutationKind.SyncRuntimeState,
             HeroId = hero.Id,
             RuntimeState = CreateRuntimeState(28) with { CurrentLeP = 0 }
@@ -1174,6 +1291,9 @@ public sealed class CombatSessionStateTests
         var afterSync = Assert.Single(synced.Snapshot.Participants, current => current.Id == participant.Id);
         Assert.False(afterSync.ActionAvailable);
         Assert.False(afterSync.ReactionAvailable);
+        Assert.Null(afterSync.ActionBudget?.HeldActionId);
+        Assert.Equal(CombatActionEntryState.Completed,
+            synced.Snapshot.Actions.Single(current => current.Id == action.Id).State);
 
         var nextRound = await state.MutateAsync(new CombatSessionMutationRequestDto
         {
@@ -1694,7 +1814,8 @@ public sealed class CombatSessionStateTests
         CombatRollRequestDto request,
         int mainRoll,
         int target,
-        CombatOutcome outcome)
+        CombatOutcome outcome,
+        CombatFollowUpRequirementDto[]? followUps = null)
     {
         var snapshot = new CombatRollSnapshotDto
         {
@@ -1708,7 +1829,8 @@ public sealed class CombatSessionStateTests
             EffectiveTarget = target,
             Outcome = outcome,
             StatusLabel = outcome == CombatOutcome.Success ? "Gelungen" : "Misslungen",
-            LabeledRolls = [new CombatLabeledRollDto("Hauptwurf", 20, mainRoll)]
+            LabeledRolls = [new CombatLabeledRollDto("Hauptwurf", 20, mainRoll)],
+            FollowUps = followUps ?? []
         };
         var roll = new DiceRollDto(20, mainRoll);
         var historyOutcome = outcome == CombatOutcome.Success
