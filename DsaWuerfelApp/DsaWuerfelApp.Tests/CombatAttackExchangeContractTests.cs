@@ -137,6 +137,34 @@ public sealed class CombatAttackExchangeContractTests
         Assert.False(CombatTargetRules.IsValidTarget(attacker, unknownArmorOpponent));
     }
 
+    [Fact]
+    public void Target_rules_allow_catalog_enemy_with_unresolved_equipment_values()
+    {
+        var attacker = new CombatSessionParticipantDto
+        {
+            Id = "hero:attacker",
+            Kind = CombatParticipantKind.Hero,
+            HeroId = Guid.NewGuid()
+        };
+        var goblin = new CombatSessionParticipantDto
+        {
+            Id = "opponent:goblin",
+            Kind = CombatParticipantKind.Opponent,
+            OpponentProfile = new CombatOpponentProfileDto(12, 10, null, null, 27)
+            {
+                CatalogProfile = new CombatEnemyResolvedProfileDto
+                {
+                    CatalogEnemyId = "goblin",
+                    CombatReady = false,
+                    Readiness = "requiresEquipmentValues",
+                    LeP = 27
+                }
+            }
+        };
+
+        Assert.True(CombatTargetRules.IsValidTarget(attacker, goblin));
+    }
+
     private static CombatAttackExchangeDto ValidExchange() => new()
     {
         ExchangeId = "exchange-1",

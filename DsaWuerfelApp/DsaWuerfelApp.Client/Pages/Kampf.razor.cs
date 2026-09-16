@@ -321,9 +321,7 @@ public partial class Kampf : IDisposable
     private IReadOnlyList<CombatSessionParticipantDto> TargetParticipants =>
         SessionCombat?.Participants
             .Where(participant => participant.Id != OwnSessionParticipant?.Id)
-            .Where(participant => participant.Kind == CombatParticipantKind.Hero
-                ? participant.HeroId.HasValue
-                : participant.OpponentProfile?.HasBasicCombatValues == true)
+            .Where(CombatTargetRules.HasTargetProfile)
             .OrderBy(participant => participant.Name, StringComparer.OrdinalIgnoreCase)
             .ToArray() ?? Array.Empty<CombatSessionParticipantDto>();
 
@@ -350,9 +348,7 @@ public partial class Kampf : IDisposable
     private IReadOnlyList<CombatSessionParticipantDto> OpponentTargetParticipants =>
         SessionCombat?.Participants
             .Where(participant => participant.Id != SelectedOpponentParticipant?.Id)
-            .Where(participant => participant.Kind == CombatParticipantKind.Hero
-                ? participant.HeroId.HasValue
-                : participant.OpponentProfile?.HasBasicCombatValues == true)
+            .Where(CombatTargetRules.HasTargetProfile)
             .OrderBy(participant => participant.Name, StringComparer.OrdinalIgnoreCase)
             .ToArray() ?? Array.Empty<CombatSessionParticipantDto>();
 
@@ -1140,6 +1136,7 @@ public partial class Kampf : IDisposable
                 if (initiative.HasValue)
                 {
                     await CombatState.SetInitiativeAsync(initiative);
+                    await CombatState.SetSelectedActionAsync(GetDefaultCombatAction());
                 }
 
                 if (sessionResult.Stale || !sessionResult.Applied)
@@ -1182,6 +1179,7 @@ public partial class Kampf : IDisposable
             });
             var total = baseInitiative + result.Rolls.Sum(roll => roll.Value) + runtime.Modifier + Modifier;
             await CombatState.SetInitiativeAsync(total);
+            await CombatState.SetSelectedActionAsync(GetDefaultCombatAction());
         }
         catch (Exception exception)
         {
@@ -2044,6 +2042,10 @@ public partial class Kampf : IDisposable
         "fumble-helper" => CombatActionKind.FumbleHelper,
         _ => null
     };
+
+    private string GetDefaultCombatAction() => SelectedWeapon?.Category == CombatWeaponCategory.Ranged
+        ? "ranged"
+        : "attack";
 
     private CombatActionKind? GetActionKind() => GetActionKind(SelectedAction);
 

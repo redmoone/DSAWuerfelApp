@@ -204,18 +204,24 @@ public static class CombatAttackExchangeRules
 
 public static class CombatTargetRules
 {
+    public static bool HasTargetProfile(CombatSessionParticipantDto target) =>
+        target.Kind switch
+        {
+            CombatParticipantKind.Hero => target.HeroId.HasValue,
+            CombatParticipantKind.Opponent => target.OpponentProfile is { } profile &&
+                (profile.CatalogProfile is not null
+                    ? profile.LeP.HasValue
+                    : profile.HasBasicCombatValues),
+            _ => false
+        };
+
     public static bool IsValidTarget(
         CombatSessionParticipantDto attacker,
         CombatSessionParticipantDto target) =>
         !string.IsNullOrWhiteSpace(attacker.Id) &&
         !string.IsNullOrWhiteSpace(target.Id) &&
         !string.Equals(attacker.Id, target.Id, StringComparison.Ordinal) &&
-        target.Kind switch
-        {
-            CombatParticipantKind.Hero => target.HeroId.HasValue,
-            CombatParticipantKind.Opponent => target.OpponentProfile?.HasBasicCombatValues == true,
-            _ => false
-        };
+        HasTargetProfile(target);
 }
 
 public sealed record CombatDamageSnapshotDto(
