@@ -585,38 +585,6 @@ public sealed class CombatSessionStateService(
             application = woundConsequences.Application;
             target = woundConsequences.Participant;
 
-            var nextWounds = wounds is null
-                ? null
-                : new Dictionary<CombatWoundZone, int?>(wounds);
-            if (nextWounds is not null && application.ResultingWounds.HasValue)
-            {
-                nextWounds[woundZone] = application.ResultingWounds;
-            }
-
-            var nextRuntime = (runtime ?? new CombatRuntimeStateDto()) with
-            {
-                IsStarted = true,
-                CurrentLeP = application.LePAfter,
-                Wounds = nextWounds ?? []
-            };
-            var targetBudget = target.ActionBudget ?? new CombatActionBudgetDto();
-            if (application.IsIncapacitated)
-            {
-                targetBudget = targetBudget with
-                {
-                    NormalActionsRemaining = 0,
-                    ReactionsRemaining = 0,
-                    FreeActionAvailable = false,
-                    HeldActionId = null,
-                    HeldActionRound = null
-                };
-            }
-
-            var nextActions = application.IsIncapacitated
-                ? ReleaseActionsForIncapacitated(current.Actions, target.Id)
-                : current.Actions;
-
-            var nextRevision = current.Revision + 1;
             var storedDamage = rawDamage with
             {
                 ArmorRating = armorRating,
@@ -626,21 +594,6 @@ public sealed class CombatSessionStateService(
             var consequenceNotes = woundConsequences.RuleNotes.Length == 0
                 ? string.Empty
                 : $" {string.Join("; ", woundConsequences.RuleNotes)}";
-            var updatedExchange = exchange with
-            {
-                Revision = nextRevision,
-                Status = CombatExchangeStatus.Completed,
-                Zone = storedZone,
-                Damage = storedDamage,
-                WoundApplication = application,
-                HistoryEntryIds = exchange.HistoryEntryIds
-                    .Append(result.Snapshot.EntryId)
-                    .Distinct()
-                    .ToArray(),
-                RuleNote = application.IsIncapacitated
-                    ? $"{calculation.StructurePoints} SP; {target.Name} ist handlungsunfähig.{consequenceNotes}"
-                    : $"{calculation.StructurePoints} SP auf {target.Name}.{consequenceNotes}"
-            };
             if (exchange.Status == CombatExchangeStatus.Hit &&
                 !CombatAttackExchangeRules.CanTransition(exchange.Status, CombatExchangeStatus.DamageOpen))
             {
@@ -652,30 +605,32 @@ public sealed class CombatSessionStateService(
                 throw Validation("Die Schadensfolge kann nicht abgeschlossen werden.");
             }
 
-            var next = FinalizeSnapshot(current with
-            {
-                Revision = nextRevision,
-                Participants = ReplaceParticipant(current.Participants, target with
-                {
-                    RuntimeState = nextRuntime,
-                    ActionBudget = targetBudget
-                }),
-                Actions = nextActions,
-                ActiveExchange = updatedExchange,
-                LastMutationId = request.RequestId,
-                LastMutationDescription = $"Schadensfolge für {exchange.ExchangeId} gespeichert",
-                LastMutationUserId = userId
-            });
+            var ruleNote = application.IsIncapacitated
+                ? $"{calculation.StructurePoints} SP; {target.Name} ist handlungsunfähig.{consequenceNotes}"
+                : $"{calculation.StructurePoints} SP auf {target.Name}.{consequenceNotes}";
+            var applied = ApplyHitState(
+                current,
+                exchange,
+                target,
+                wounds,
+                application,
+                woundZone,
+                storedZone,
+                storedDamage,
+                ruleNote,
+                result.Snapshot.EntryId,
+                request.RequestId,
+                $"Schadensfolge für {exchange.ExchangeId} gespeichert",
+                userId);
             var appliedRequestIds = AppendAppliedRequestId(persisted.AppliedRequestIds, request.RequestId);
-            next = next with { UndoAvailable = true };
             Save(session, CreateExchangePersistedState(
-                next,
+                applied.Snapshot,
                 current,
                 persisted,
                 exchange.ExchangeId,
                 userId,
                 appliedRequestIds));
-            return next;
+            return applied.Snapshot;
         }
         finally
         {
@@ -841,35 +796,6 @@ public sealed class CombatSessionStateService(
             application = woundConsequences.Application;
             target = woundConsequences.Participant;
 
-            var nextWounds = new Dictionary<CombatWoundZone, int?>(wounds);
-            if (application.ResultingWounds.HasValue)
-            {
-                nextWounds[woundZone] = application.ResultingWounds;
-            }
-
-            var nextRuntime = (runtime ?? new CombatRuntimeStateDto()) with
-            {
-                IsStarted = true,
-                CurrentLeP = application.LePAfter,
-                Wounds = nextWounds
-            };
-            var targetBudget = target.ActionBudget ?? new CombatActionBudgetDto();
-            if (application.IsIncapacitated)
-            {
-                targetBudget = targetBudget with
-                {
-                    NormalActionsRemaining = 0,
-                    ReactionsRemaining = 0,
-                    FreeActionAvailable = false,
-                    HeldActionId = null,
-                    HeldActionRound = null
-                };
-            }
-
-            var nextActions = application.IsIncapacitated
-                ? ReleaseActionsForIncapacitated(current.Actions, target.Id)
-                : current.Actions;
-
             var damage = new CombatDamageSnapshotDto(
                 calculation.DiceTotal,
                 calculation.WeaponBonus,
@@ -895,32 +821,22 @@ public sealed class CombatSessionStateService(
                 ruleNotes.Add($"Wunden +{application.AddedWounds} ({FormatWoundZone(woundZone)})");
             }
 
-            var nextRevision = current.Revision + 1;
-            var updatedExchange = exchange with
-            {
-                Revision = nextRevision,
-                Status = CombatExchangeStatus.Completed,
-                Zone = zone,
-                Damage = damage,
-                WoundApplication = application,
-                RuleNote = string.Join("; ", ruleNotes)
-            };
-            var next = FinalizeSnapshot(current with
-            {
-                Revision = nextRevision,
-                Participants = ReplaceParticipant(current.Participants, target with
-                {
-                    RuntimeState = nextRuntime,
-                    ActionBudget = targetBudget
-                }),
-                Actions = nextActions,
-                ActiveExchange = updatedExchange,
-                LastMutationId = request.RequestId,
-                LastMutationDescription = $"Trefferfolge für {exchange.ExchangeId} automatisch gespeichert",
-                LastMutationUserId = userId
-            }) with { UndoAvailable = true };
+            var applied = ApplyHitState(
+                current,
+                exchange,
+                target,
+                wounds,
+                application,
+                woundZone,
+                zone,
+                damage,
+                string.Join("; ", ruleNotes),
+                historyEntryId: null,
+                request.RequestId,
+                $"Trefferfolge für {exchange.ExchangeId} automatisch gespeichert",
+                userId);
             Save(session, CreateExchangePersistedState(
-                next,
+                applied.Snapshot,
                 current,
                 persisted,
                 exchange.ExchangeId,
@@ -936,7 +852,7 @@ public sealed class CombatSessionStateService(
             automaticRolls.AddRange(damageRolls);
             automaticRolls.AddRange(woundConsequences.InitiativeLossRolls);
             return new CombatAutomaticHitResolutionDto(
-                next,
+                applied.Snapshot,
                 automaticRolls.ToArray(),
                 zone,
                 damage,
@@ -993,6 +909,83 @@ public sealed class CombatSessionStateService(
             resolved,
             rolls,
             [$"Kopfwunde: 2W6 INI-Verlust = {initiativeLoss}; laufende INI angepasst."]);
+    }
+
+    private static HitStateApplication ApplyHitState(
+        CombatSessionSnapshotDto current,
+        CombatAttackExchangeDto exchange,
+        CombatSessionParticipantDto target,
+        IReadOnlyDictionary<CombatWoundZone, int?>? wounds,
+        CombatWoundApplicationDto application,
+        CombatWoundZone woundZone,
+        CombatZoneSnapshotDto zone,
+        CombatDamageSnapshotDto damage,
+        string ruleNote,
+        Guid? historyEntryId,
+        Guid requestId,
+        string mutationDescription,
+        string userId)
+    {
+        var nextWounds = wounds is null
+            ? null
+            : new Dictionary<CombatWoundZone, int?>(wounds);
+        if (nextWounds is not null && application.ResultingWounds.HasValue)
+        {
+            nextWounds[woundZone] = application.ResultingWounds;
+        }
+
+        var nextRuntime = (target.RuntimeState ?? new CombatRuntimeStateDto()) with
+        {
+            IsStarted = true,
+            CurrentLeP = application.LePAfter,
+            Wounds = nextWounds ?? []
+        };
+        var targetBudget = target.ActionBudget ?? new CombatActionBudgetDto();
+        if (application.IsIncapacitated)
+        {
+            targetBudget = targetBudget with
+            {
+                NormalActionsRemaining = 0,
+                ReactionsRemaining = 0,
+                FreeActionAvailable = false,
+                HeldActionId = null,
+                HeldActionRound = null
+            };
+        }
+
+        var nextActions = application.IsIncapacitated
+            ? ReleaseActionsForIncapacitated(current.Actions, target.Id)
+            : current.Actions;
+        var nextRevision = current.Revision + 1;
+        var historyEntryIds = historyEntryId is { } entryId
+            ? exchange.HistoryEntryIds.Append(entryId).Distinct().ToArray()
+            : exchange.HistoryEntryIds;
+        var updatedExchange = exchange with
+        {
+            Revision = nextRevision,
+            Status = CombatExchangeStatus.Completed,
+            Zone = zone,
+            Damage = damage,
+            WoundApplication = application,
+            HistoryEntryIds = historyEntryIds,
+            RuleNote = ruleNote
+        };
+        var next = FinalizeSnapshot(current with
+        {
+            Revision = nextRevision,
+            Participants = ReplaceParticipant(current.Participants, target with
+            {
+                RuntimeState = nextRuntime,
+                ActionBudget = targetBudget
+            }),
+            Actions = nextActions,
+            ActiveExchange = updatedExchange,
+            LastMutationId = requestId,
+            LastMutationDescription = mutationDescription,
+            LastMutationUserId = userId
+        }) with { UndoAvailable = true };
+
+        return new HitStateApplication(next);
     }
 
     private static (CombatSessionParticipantDto Participant, CombatSessionActionDto[] Actions)
@@ -3339,6 +3332,9 @@ public sealed class CombatSessionStateService(
         CombatWoundApplicationDto Application,
         DiceRollDto[] InitiativeLossRolls,
         string[] RuleNotes);
+
+    private sealed record HitStateApplication(
+        CombatSessionSnapshotDto Snapshot);
 
     private sealed record AutomaticAttackInfo(string DamageNotation);
 
