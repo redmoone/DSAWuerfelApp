@@ -401,7 +401,7 @@
                                   SelectedProbeChanged="ProbeSelected" />
                 </div>
 
-                @if (SelectedAction == "zone")
+                @if (SelectedAction == CombatActionIds.Zone)
                 {
                     <div class="combat-zone-choice" role="group" aria-label="Trefferzonenseite">
                         <span class="combat-field-label">Trefferzone</span>
@@ -430,7 +430,7 @@
                 </div>
             }
 
-            @if (!AttributeMode && SelectedAction != "initiative")
+            @if (!AttributeMode && SelectedAction != CombatActionIds.Initiative)
             {
                 <details class="combat-calculation-details">
                     <summary>Berechnung anzeigen</summary>
@@ -458,7 +458,7 @@
                                  ShowHiddenRollHint="false"
                                  ResetButtonText="Modifikator auf 0" />
 
-                @if (HasResultDice && SelectedAction != "initiative")
+                @if (HasResultDice && SelectedAction != CombatActionIds.Initiative)
                 {
                     <div class="combat-dice-viewport" data-testid="combat-dice-viewport" title="3D-Ansicht der Kampf-Würfel">
                         <DiceViewport SelectedDice="@EmptyDice"

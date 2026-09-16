@@ -21,7 +21,7 @@ public partial class CombatActionPanel
     [Parameter] public string? SelectedWeaponId { get; set; }
     [Parameter] public EventCallback<string> WeaponSelected { get; set; }
     [Parameter] public bool IsSessionCombat { get; set; }
-    [Parameter] public string SelectedAction { get; set; } = "attack";
+    [Parameter] public string SelectedAction { get; set; } = CombatActionIds.Attack;
     [Parameter] public EventCallback<string> ActionSelected { get; set; }
     [Parameter] public IReadOnlyList<ActionOption> Actions { get; set; } = Array.Empty<ActionOption>();
     [Parameter] public IReadOnlyList<ProbeSearchEntryDto> Maneuvers { get; set; } = Array.Empty<ProbeSearchEntryDto>();
@@ -71,8 +71,11 @@ public partial class CombatActionPanel
     [Parameter] public string? SelectedOpponentAttackId { get; set; }
     [Parameter] public EventCallback<string> OpponentAttackSelected { get; set; }
 
-    private IEnumerable<ActionOption> MainActions => Actions.Where(action => action.Key is "attack" or "parry" or "shield-parry" or "dodge" or "ranged");
-    private IEnumerable<ActionOption> AdditionalActions => Actions.Where(action => action.Key is "damage" or "zone" or "initiative");
+    private IEnumerable<ActionOption> MainActions => Actions.Where(action => action.Key is
+        CombatActionIds.Attack or CombatActionIds.Parry or CombatActionIds.ShieldParry or
+        CombatActionIds.Dodge or CombatActionIds.Ranged);
+    private IEnumerable<ActionOption> AdditionalActions => Actions.Where(action => action.Key is
+        CombatActionIds.Damage or CombatActionIds.Zone or CombatActionIds.Initiative);
     private ActionOption? SelectedActionOption => Actions.FirstOrDefault(action => action.Key == SelectedAction);
 
     private string EmptyStateTitle => IsLoading ? "Kampfprofil wird geladen." : "Noch kein Kampfprofil geladen.";
@@ -153,34 +156,22 @@ public partial class CombatActionPanel
         ? "Eigenschaften würfeln"
         : SelectedAction switch
         {
-            "attack" => "Attacke würfeln",
-            "parry" => "Waffenparade würfeln",
-            "shield-parry" => "Schildparade würfeln",
-            "dodge" => "Ausweichen würfeln",
-            "ranged" => "Fernkampf würfeln",
-            "damage" => "TP würfeln",
-            "zone" => "Trefferzone würfeln",
-            "wound-helper" => "Wund-Hilfswurf",
-            "fumble-helper" => "Patzer-Hilfswurf",
-            "initiative" => "Initiative würfeln",
+            CombatActionIds.Attack => "Attacke würfeln",
+            CombatActionIds.Parry => "Waffenparade würfeln",
+            CombatActionIds.ShieldParry => "Schildparade würfeln",
+            CombatActionIds.Dodge => "Ausweichen würfeln",
+            CombatActionIds.Ranged => "Fernkampf würfeln",
+            CombatActionIds.Damage => "TP würfeln",
+            CombatActionIds.Zone => "Trefferzone würfeln",
+            CombatActionIds.WoundHelper => "Wund-Hilfswurf",
+            CombatActionIds.FumbleHelper => "Patzer-Hilfswurf",
+            CombatActionIds.Initiative => "Initiative würfeln",
             _ => "Wurf ausführen"
         };
 
     private string RollButtonAriaLabel => AttributeMode ? "Eigenschaftsprobe ausführen" : RollButtonText;
 
-    private CombatActionKind? GetActionKind() => SelectedAction switch
-    {
-        "attack" => CombatActionKind.MeleeAttack,
-        "parry" => CombatActionKind.WeaponParry,
-        "shield-parry" => CombatActionKind.ShieldParry,
-        "dodge" => CombatActionKind.Dodge,
-        "ranged" => CombatActionKind.RangedAttack,
-        "damage" => CombatActionKind.Damage,
-        "zone" => CombatActionKind.HitZone,
-        "wound-helper" => CombatActionKind.WoundHelper,
-        "fumble-helper" => CombatActionKind.FumbleHelper,
-        _ => null
-    };
+    private CombatActionKind? GetActionKind() => CombatActionIds.ToKind(SelectedAction);
 
     private async Task HandleWeaponChanged(ChangeEventArgs args)
     {

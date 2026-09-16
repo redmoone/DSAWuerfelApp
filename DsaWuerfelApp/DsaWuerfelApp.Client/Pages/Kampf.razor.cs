@@ -187,12 +187,12 @@ public partial class Kampf : IDisposable
 
     private IReadOnlyList<CombatActionPanel.ActionOption> Actions =>
     [
-        new("attack", "Attacke", FormatActionValue("AT", SelectedWeapon?.Attack), HasWeaponAttack && CanUseActionBudget(CombatActionKind.MeleeAttack) && CanUseActionDuringOpenExchange(CombatActionKind.MeleeAttack)),
-        new("parry", "Waffenparade", FormatActionValue("PA", SelectedWeapon?.Parry), HasWeaponParry && CanUseActionBudget(CombatActionKind.WeaponParry) && CanUseActionDuringOpenExchange(CombatActionKind.WeaponParry)),
-        new("shield-parry", "Schildparade", FormatActionValue("PA", SelectedWeapon?.Parry), HasShieldParry && CanUseActionBudget(CombatActionKind.ShieldParry) && CanUseActionDuringOpenExchange(CombatActionKind.ShieldParry)),
-        new("dodge", "Ausweichen", FormatActionValue("AW", SelectedSet?.Dodge), SelectedSet?.Dodge.HasValue == true && CanUseActionBudget(CombatActionKind.Dodge) && CanUseActionDuringOpenExchange(CombatActionKind.Dodge)),
-        new("ranged", "Fernkampf", FormatActionValue("FK", SelectedWeapon?.RangedValue), HasRangedValue && CanUseActionBudget(CombatActionKind.RangedAttack) && CanUseActionDuringOpenExchange(CombatActionKind.RangedAttack)),
-        new("initiative", "Initiative", GetInitiativeDiceLabel(), CanRollInitiative)
+        new(CombatActionIds.Attack, "Attacke", FormatActionValue("AT", SelectedWeapon?.Attack), HasWeaponAttack && CanUseActionBudget(CombatActionKind.MeleeAttack) && CanUseActionDuringOpenExchange(CombatActionKind.MeleeAttack)),
+        new(CombatActionIds.Parry, "Waffenparade", FormatActionValue("PA", SelectedWeapon?.Parry), HasWeaponParry && CanUseActionBudget(CombatActionKind.WeaponParry) && CanUseActionDuringOpenExchange(CombatActionKind.WeaponParry)),
+        new(CombatActionIds.ShieldParry, "Schildparade", FormatActionValue("PA", SelectedWeapon?.Parry), HasShieldParry && CanUseActionBudget(CombatActionKind.ShieldParry) && CanUseActionDuringOpenExchange(CombatActionKind.ShieldParry)),
+        new(CombatActionIds.Dodge, "Ausweichen", FormatActionValue("AW", SelectedSet?.Dodge), SelectedSet?.Dodge.HasValue == true && CanUseActionBudget(CombatActionKind.Dodge) && CanUseActionDuringOpenExchange(CombatActionKind.Dodge)),
+        new(CombatActionIds.Ranged, "Fernkampf", FormatActionValue("FK", SelectedWeapon?.RangedValue), HasRangedValue && CanUseActionBudget(CombatActionKind.RangedAttack) && CanUseActionDuringOpenExchange(CombatActionKind.RangedAttack)),
+        new(CombatActionIds.Initiative, "Initiative", GetInitiativeDiceLabel(), CanRollInitiative)
     ];
 
     private bool HasWeaponAttack => SelectedWeapon is { Category: CombatWeaponCategory.Melee or CombatWeaponCategory.Unarmed } && SelectedWeapon.Attack.HasValue;
@@ -207,7 +207,7 @@ public partial class Kampf : IDisposable
         ? CanRollOpponentAttack
         : IsAttributeMode
         ? HasCombatContext && !_rollBusy && !_valueMutationBusy && SelectedAttributes.Count > 0
-        : SelectedAction == "initiative"
+        : SelectedAction == CombatActionIds.Initiative
             ? CanRollInitiative
         : HasCombatContext && !_rollBusy && !_valueMutationBusy &&
           (!IsSessionCombat || !IsAttackAction(GetActionKind()) || SelectedTargetParticipantId is not null) &&
@@ -600,15 +600,15 @@ public partial class Kampf : IDisposable
         await CombatState.SetSelectedSetAsync(setId);
         if (SelectedWeapon?.Category == CombatWeaponCategory.Ranged)
         {
-            await CombatState.SetSelectedActionAsync("ranged");
+            await CombatState.SetSelectedActionAsync(CombatActionIds.Ranged);
         }
         else if (SelectedWeapon?.Category == CombatWeaponCategory.Shield)
         {
-            await CombatState.SetSelectedActionAsync("shield-parry");
+            await CombatState.SetSelectedActionAsync(CombatActionIds.ShieldParry);
         }
-        else if (SelectedAction is "ranged" or "shield-parry")
+        else if (SelectedAction is CombatActionIds.Ranged or CombatActionIds.ShieldParry)
         {
-            await CombatState.SetSelectedActionAsync("attack");
+            await CombatState.SetSelectedActionAsync(CombatActionIds.Attack);
         }
 
         await SyncSessionRuntimeStateAsync(setId);
@@ -619,15 +619,15 @@ public partial class Kampf : IDisposable
         await CombatState.SetSelectedWeaponAsync(weaponId);
         if (SelectedWeapon?.Category == CombatWeaponCategory.Ranged)
         {
-            await CombatState.SetSelectedActionAsync("ranged");
+            await CombatState.SetSelectedActionAsync(CombatActionIds.Ranged);
         }
         else if (SelectedWeapon?.Category == CombatWeaponCategory.Shield)
         {
-            await CombatState.SetSelectedActionAsync("shield-parry");
+            await CombatState.SetSelectedActionAsync(CombatActionIds.ShieldParry);
         }
-        else if (SelectedAction is "ranged" or "shield-parry")
+        else if (SelectedAction is CombatActionIds.Ranged or CombatActionIds.ShieldParry)
         {
-            await CombatState.SetSelectedActionAsync("attack");
+            await CombatState.SetSelectedActionAsync(CombatActionIds.Attack);
         }
     }
 
@@ -635,7 +635,7 @@ public partial class Kampf : IDisposable
     {
         var actionKind = GetActionKind(action);
         if (HasOpenAttackExchange &&
-            (action == "initiative" || actionKind is not { } kind || !CanUseActionDuringOpenExchange(kind)))
+            (action == CombatActionIds.Initiative || actionKind is not { } kind || !CanUseActionDuringOpenExchange(kind)))
         {
             _notice = OpenExchangeNotice;
             return;
@@ -676,7 +676,7 @@ public partial class Kampf : IDisposable
             return;
         }
 
-        if (SelectedAction == "initiative")
+        if (SelectedAction == CombatActionIds.Initiative)
         {
             await RollInitiativeFromStatusAsync();
             return;
@@ -2123,23 +2123,11 @@ public partial class Kampf : IDisposable
             .ToArray() ?? Array.Empty<CombatSessionActionDto>();
     }
 
-    private static CombatActionKind? GetActionKind(string? action) => action switch
-    {
-        "attack" => CombatActionKind.MeleeAttack,
-        "parry" => CombatActionKind.WeaponParry,
-        "shield-parry" => CombatActionKind.ShieldParry,
-        "dodge" => CombatActionKind.Dodge,
-        "ranged" => CombatActionKind.RangedAttack,
-        "damage" => CombatActionKind.Damage,
-        "zone" => CombatActionKind.HitZone,
-        "wound-helper" => CombatActionKind.WoundHelper,
-        "fumble-helper" => CombatActionKind.FumbleHelper,
-        _ => null
-    };
+    private static CombatActionKind? GetActionKind(string? action) => CombatActionIds.ToKind(action);
 
     private string GetDefaultCombatAction() => SelectedWeapon?.Category == CombatWeaponCategory.Ranged
-        ? "ranged"
-        : "attack";
+        ? CombatActionIds.Ranged
+        : CombatActionIds.Attack;
 
     private CombatActionKind? GetActionKind() => GetActionKind(SelectedAction);
 

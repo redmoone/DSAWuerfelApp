@@ -14,6 +14,41 @@ public enum CombatActionKind
     FumbleHelper
 }
 
+/// <summary>
+/// Stable identifiers for combat actions persisted as UI preferences.
+/// Initiative is a UI action without a corresponding combat roll kind and
+/// therefore remains separate from <see cref="CombatActionKind"/>.
+/// </summary>
+public static class CombatActionIds
+{
+    public const string Attack = "attack";
+    public const string Parry = "parry";
+    public const string ShieldParry = "shield-parry";
+    public const string Dodge = "dodge";
+    public const string Ranged = "ranged";
+    public const string Damage = "damage";
+    public const string Zone = "zone";
+    public const string WoundHelper = "wound-helper";
+    public const string FumbleHelper = "fumble-helper";
+    public const string Initiative = "initiative";
+
+    public static CombatActionKind? ToKind(string? id) => id switch
+    {
+        Attack => CombatActionKind.MeleeAttack,
+        Parry => CombatActionKind.WeaponParry,
+        ShieldParry => CombatActionKind.ShieldParry,
+        Dodge => CombatActionKind.Dodge,
+        Ranged => CombatActionKind.RangedAttack,
+        Damage => CombatActionKind.Damage,
+        Zone => CombatActionKind.HitZone,
+        WoundHelper => CombatActionKind.WoundHelper,
+        FumbleHelper => CombatActionKind.FumbleHelper,
+        _ => null
+    };
+
+    public static bool IsAttack(string? id) => id is Attack or Ranged;
+}
+
 public enum CombatOutcome
 {
     Unknown,
