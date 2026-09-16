@@ -2,7 +2,7 @@
     display: flex;
     min-width: 0;
     flex-direction: column;
-    gap: 0.8rem;
+    gap: 0.55rem;
 }
 
 .combat-action-panel .combat-kicker,
@@ -26,7 +26,6 @@
 .combat-action-heading,
 .combat-roll-completion-heading,
 .combat-block-heading,
-.combat-secondary-actions,
 .combat-zone-choice {
     display: flex;
     align-items: flex-start;
@@ -40,7 +39,7 @@
     min-width: 0;
     flex-direction: column;
     gap: 0.45rem;
-    padding: 0.7rem;
+    padding: 0.55rem 0.65rem;
     border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.42);
     border-radius: 9px;
     background: rgba(21, 48, 78, 0.42);
@@ -143,7 +142,7 @@
     display: grid;
     min-width: 0;
     grid-template-columns: minmax(0, 1fr);
-    gap: 1rem;
+    gap: 0.65rem;
     align-items: start;
 }
 
@@ -152,19 +151,15 @@
     display: flex;
     min-width: 0;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.55rem;
 }
 
 .combat-roll-column {
-    padding: 0.8rem;
-    border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.48);
-    border-radius: var(--dsa-panel-radius);
-    background: rgba(7, 17, 29, 0.52);
+    padding: 0;
 }
 
 .combat-choice-block,
 .combat-action-choice-group,
-.combat-secondary-actions,
 .combat-helper-group,
 .combat-maneuver-block,
 .combat-attribute-block,
@@ -172,7 +167,7 @@
 .combat-target-preview,
 .combat-calculation-details {
     min-width: 0;
-    padding: 0.7rem;
+    padding: 0.55rem 0.65rem;
     border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.28);
     border-radius: 9px;
     background: rgba(7, 17, 29, 0.38);
@@ -180,7 +175,7 @@
 
 .combat-loadout-details {
     min-width: 0;
-    padding: 0.7rem;
+    padding: 0.55rem 0.65rem;
     border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.28);
     border-radius: 9px;
     background: rgba(7, 17, 29, 0.38);
@@ -235,7 +230,7 @@
 .combat-attribute-block {
     display: flex;
     flex-direction: column;
-    gap: 0.55rem;
+    gap: 0.4rem;
 }
 
 .combat-opponent-field {
@@ -290,11 +285,49 @@
     min-height: 2.3rem;
 }
 
-.combat-secondary-actions {
-    align-items: stretch;
-    flex-direction: column;
+.combat-action-utility {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.combat-action-utility .combat-action-options {
+    flex: 0 1 auto;
+}
+
+.combat-action-utility-note {
+    display: block;
+    margin-top: 0.15rem;
+    color: var(--dsa-text-muted);
+    font-size: 0.7rem;
+}
+
+.combat-action-entry {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
     gap: 0.45rem;
-    padding: 0.7rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid rgba(212, 175, 55, 0.18);
+    color: var(--dsa-text-muted);
+    font-size: 0.7rem;
+}
+
+.combat-action-entry-buttons {
+    display: inline-flex;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.25rem;
+}
+
+.combat-action-entry-state {
+    flex: 0 0 auto;
+    color: var(--dsa-text-muted);
+    font-size: 0.68rem;
 }
 
 .combat-helper-group {
@@ -416,13 +449,13 @@
     display: flex;
     min-width: 0;
     flex-direction: column;
-    gap: 0.65rem;
+    gap: 0.45rem;
 }
 
 .combat-dice-viewport {
     width: 100%;
-    height: clamp(6rem, 10vw, 7.5rem);
-    min-height: 6rem;
+    height: clamp(5rem, 9vw, 6.5rem);
+    min-height: 5rem;
     overflow: hidden;
     border: var(--ui-control-border-width) solid rgba(212, 175, 55, 0.26);
     border-radius: 0.9rem;
@@ -433,19 +466,6 @@
     display: block;
     width: 100%;
     height: 100%;
-}
-
-.combat-waiting-action {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.55rem;
-    padding-top: 0.1rem;
-}
-
-.combat-waiting-action span {
-    color: var(--dsa-text-muted);
-    font-size: 0.74rem;
 }
 
 .combat-result-actions {

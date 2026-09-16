@@ -19,6 +19,10 @@ public partial class CombatInitiativeOverview
     [Parameter] public EventCallback<CombatSessionParticipantDto> RollInitiativeRequested { get; set; }
     [Parameter] public Func<CombatSessionParticipantDto, bool>? CanRemoveOpponent { get; set; }
     [Parameter] public EventCallback<CombatSessionParticipantDto> RemoveOpponentRequested { get; set; }
+    [Parameter] public bool ShowRoundControls { get; set; }
+    [Parameter] public EventCallback NewRoundRequested { get; set; }
+    [Parameter] public EventCallback AnnouncementRequested { get; set; }
+    [Parameter] public EventCallback AddOpponentRequested { get; set; }
     [Parameter] public bool ShowTargetSelection { get; set; }
     [Parameter] public string? SelectedTargetParticipantId { get; set; }
     [Parameter] public Func<CombatSessionParticipantDto, bool>? CanSelectTarget { get; set; }

@@ -311,38 +311,73 @@
                     </div>
                 </div>
 
-                @if (CanHoldAction)
+                @if (CanHoldAction || CanOrient || AdditionalActions.Any())
                 {
-                    <div class="combat-waiting-action">
-                        <UiButton Variant="option"
-                                  Size="compact"
-                                  OnClick="HoldActionRequested">
-                            Abwarten
-                        </UiButton>
-                        <span>Die Handlung bleibt f&uuml;r sp&auml;ter in dieser Runde erhalten.</span>
-                    </div>
-                }
-
-                @if (AdditionalActions.Any())
-                {
-                    <div class="combat-secondary-actions">
-                    <span class="combat-field-label">Weitere Würfe</span>
-                    <div class="combat-action-options compact" role="listbox" aria-label="Weitere Würfe">
-                        @foreach (var action in AdditionalActions)
+                    <div class="combat-action-utility">
+                        @if (CanHoldAction)
                         {
-                            <div class="combat-option-entry">
-                                <UiButton Variant="option"
-                                          Active="@(action.Key == SelectedAction)"
-                                          role="option"
-                                          aria-selected="@(action.Key == SelectedAction)"
-                                          Disabled="@(IsBusy || !action.IsAvailable)"
-                                          OnClick="() => ActionSelected.InvokeAsync(action.Key)">
-                                    <span class="ui-button-label">@action.Label</span>
-                                    <span class="combat-option-value">@action.Detail</span>
-                                </UiButton>
+                            <UiButton Variant="option"
+                                      Size="compact"
+                                      OnClick="HoldActionRequested">
+                                Abwarten
+                            </UiButton>
+                        }
+                        @if (CanOrient)
+                        {
+                            <UiButton Variant="option"
+                                      Size="compact"
+                                      Disabled="@OrientationDisabled"
+                                      OnClick="OrientationRequested">
+                                Orientieren
+                            </UiButton>
+                        }
+                        @if (AdditionalActions.Any())
+                        {
+                            <div class="combat-action-options compact" role="listbox" aria-label="Weitere Würfe">
+                                @foreach (var action in AdditionalActions)
+                                {
+                                    <div class="combat-option-entry">
+                                        <UiButton Variant="option"
+                                                  Active="@(action.Key == SelectedAction)"
+                                                  role="option"
+                                                  aria-selected="@(action.Key == SelectedAction)"
+                                                  Disabled="@(IsBusy || !action.IsAvailable)"
+                                                  OnClick="() => ActionSelected.InvokeAsync(action.Key)">
+                                            <span class="ui-button-label">@action.Label</span>
+                                            <span class="combat-option-value">@action.Detail</span>
+                                        </UiButton>
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
+                    @if (CanHoldAction)
+                    {
+                        <span class="combat-action-utility-note">Die Handlung bleibt f&uuml;r sp&auml;ter in dieser Runde erhalten.</span>
+                    }
+                }
+
+                @if (OrientationAction is { } orientationAction)
+                {
+                    <div class="combat-action-entry @orientationAction.State.ToString().ToLowerInvariant()">
+                        <span>Orientieren · @(orientationAction.ActionCost == 1 ? "1 Aktion" : $"{orientationAction.ActionCost} Aktionen")</span>
+                        @if (orientationAction.State == CombatActionEntryState.Open)
+                        {
+                            <span class="combat-action-entry-buttons">
+                                @if (orientationAction.RequiresCheck)
+                                {
+                                    <UiButton Size="compact" OnClick="() => OrientationCheckRequested.InvokeAsync(orientationAction)">IN-Probe würfeln</UiButton>
+                                }
+                                else
+                                {
+                                    <UiButton Size="compact" OnClick="() => OrientationCompleteRequested.InvokeAsync(orientationAction)">Orientieren abschließen</UiButton>
+                                }
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="combat-action-entry-state">Abgeschlossen</span>
+                        }
                     </div>
                 }
 

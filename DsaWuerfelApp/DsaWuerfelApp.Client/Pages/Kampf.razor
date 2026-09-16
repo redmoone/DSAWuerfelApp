@@ -85,14 +85,6 @@
                 Rüstung &amp; Wunden
             </UiButton>
             <UiButton Variant="tab"
-                      Active="@(ActiveArea == CombatArea.Runde)"
-                      role="tab"
-                      aria-selected="@(ActiveArea == CombatArea.Runde)"
-                      aria-controls="combat-tab-runde"
-                      OnClick="() => SetArea(CombatArea.Runde)">
-                Rundenübersicht
-            </UiButton>
-            <UiButton Variant="tab"
                       Active="@(ActiveArea == CombatArea.Eigenschaften)"
                       role="tab"
                       aria-selected="@(ActiveArea == CombatArea.Eigenschaften)"
@@ -158,6 +150,12 @@
                                            ExchangeActionRequested="HandleExchangeActionAsync"
                                            CanHoldAction="@CanHoldAction"
                                            HoldActionRequested="HoldCurrentActionAsync"
+                                           CanOrient="@CanShowOrientation"
+                                           OrientationDisabled="@OrientationDisabled"
+                                           OrientationRequested="OpenOrientationDrawer"
+                                           OrientationAction="@CurrentOrientationAction"
+                                           OrientationCheckRequested="ResolveOrientationAsync"
+                                           OrientationCompleteRequested="CompleteActionAsync"
                                            OpponentMode="@IsMasterOpponentMode"
                                            OpponentParticipants="@OpponentParticipants"
                                            SelectedOpponentParticipantId="@SelectedOpponentParticipantId"
@@ -197,147 +195,6 @@
                     }
                 </section>
             }
-            else
-            {
-                <section id="combat-tab-runde" class="combat-tab-panel panel-surface" role="tabpanel" aria-labelledby="round-title">
-                    <div class="combat-section-heading">
-                        <div>
-                            <p class="combat-kicker">Initiative</p>
-                            <h2 id="round-title">Rundenübersicht</h2>
-                        </div>
-                        <span class="combat-round-state">@(IsSessionCombat ? "Gemeinsamer Sessionstand" : "Solo-Kampf")</span>
-                    </div>
-
-                    <div class="combat-initiative-summary">
-                        @if (IsSessionCombat && SessionCombat is { } sessionCombat)
-                        {
-                            <strong>Runde @sessionCombat.Round</strong>
-                            <span>@(sessionCombat.IsStarted ? "Gemeinsamer Sessionstand" : "Noch kein Startwurf") · Revision @sessionCombat.Revision</span>
-                        }
-                        else
-                        {
-                            <strong>@(CurrentInitiative.HasValue ? $"INI {CurrentInitiative}" : "Noch kein laufender INI-Wert")</strong>
-                            <span>Basis-INI: @(SelectedSet?.Initiative?.ToString() ?? "—") · Startwurf @GetInitiativeDiceLabel()</span>
-                        }
-                    </div>
-
-                    @if (!IsSessionCombat && HasRuntimeInitiativeNotes())
-                    {
-                        <p class="combat-initiative-runtime">@GetRuntimeInitiativeSummary()</p>
-                    }
-
-                    @if (!IsSessionCombat)
-                    {
-                        <div class="combat-solo-round-card">
-                            <div>
-                                <span class="combat-turn-label">Aktiver Held</span>
-                                <strong>@HeroDisplayName</strong>
-                            </div>
-                            <span class="combat-initiative-readonly">@(CurrentInitiative.HasValue ? $"INI {CurrentInitiative}" : "INI —")</span>
-                        </div>
-                    }
-                    else if (InitiativeParticipants.Count == 0)
-                    {
-                        <p class="combat-side-empty">Aktive Helden erscheinen nach ihrem ersten Initiativewurf.</p>
-                    }
-                    else
-                    {
-                        <div class="combat-initiative-list" aria-label="Gemeinsame Initiative">
-                            @foreach (var participant in InitiativeParticipants)
-                            {
-                                <div class="combat-initiative-row @(IsCurrentParticipant(participant) ? "current" : string.Empty) @(participant.CurrentInitiative.HasValue ? string.Empty : "unknown") @GetParticipantTurnClass(participant)">
-                                    <div class="combat-initiative-person">
-                                        <span class="combat-turn-label">@GetParticipantTurnLabel(participant)</span>
-                                        <strong>@participant.Name</strong>
-                                        <span>@(string.IsNullOrWhiteSpace(participant.Affiliation) ? participant.Kind == CombatParticipantKind.Hero ? "Held" : "Gegner" : participant.Affiliation)</span>
-                                    </div>
-                                    @if (OwnSessionParticipant?.Id == participant.Id)
-                                    {
-                                        <span class="combat-initiative-readonly">@(participant.CurrentInitiative.HasValue ? $"INI {participant.CurrentInitiative}" : "INI —")</span>
-                                    }
-                                    else if (CanEditParticipantInitiative(participant))
-                                    {
-                                        <NumberControl Label="INI"
-                                                       Value="@participant.CurrentInitiative"
-                                                       ValueChanged="value => HandleParticipantInitiativeChanged(participant, value)"
-                                                       AllowEmpty="true"
-                                                       DisableStepsWhenEmpty="true"
-                                                       ShowValidationMessage="true"
-                                                       Disabled="@_valueMutationBusy" />
-                                    }
-                                    else
-                                    {
-                                        <span class="combat-initiative-readonly">@(participant.CurrentInitiative.HasValue ? $"INI {participant.CurrentInitiative}" : "INI —")</span>
-                                    }
-                                    <div class="combat-initiative-flags">
-                                        <span class="combat-action-flag @(participant.ActionAvailable ? "available" : string.Empty)">@(participant.ActionAvailable ? "A" : "A✓")</span>
-                                        @if (CanManageParticipantControls(participant))
-                                        {
-                                            <UiButton Size="compact"
-                                                      Disabled="@(!participant.ReactionAvailable || HasOpenAttackExchange)"
-                                                      OnClick="() => ConsumeReactionAsync(participant)">
-                                                @(participant.ReactionAvailable ? "Reaktion" : "PA verbraucht")
-                                            </UiButton>
-                                        }
-                                        else
-                                        {
-                                            <span class="combat-action-flag @(participant.ReactionAvailable ? "available" : string.Empty)">
-                                                @(participant.ReactionAvailable ? "Reaktion frei" : "PA verbraucht")
-                                            </span>
-                                        }
-                                    </div>
-                                    @if (!string.IsNullOrWhiteSpace(participant.Announcement))
-                                    {
-                                        <span class="combat-initiative-announcement">Ansage: @participant.Announcement</span>
-                                    }
-                                    @if (HasRuntimeInitiativeState(participant))
-                                    {
-                                        <span class="combat-initiative-runtime" title="@FormatRuntimeNotes(participant.InitiativeRuntimeNotes)">
-                                            Laufend @FormatSigned(participant.InitiativeRuntimeModifier)
-                                        </span>
-                                    }
-                                    @foreach (var action in GetParticipantActions(participant.Id))
-                                    {
-                                        <div class="combat-action-entry @(action.State.ToString().ToLowerInvariant())">
-                                            <span>@action.Label · @(action.ActionCost == 1 ? "1 Aktion" : $"{action.ActionCost} Aktionen")</span>
-                                            @if (action.State == CombatActionEntryState.Open && CanManageParticipantControls(participant) && !HasOpenAttackExchange)
-                                            {
-                                                <span class="combat-action-entry-buttons">
-                                                    @if (IsOrientationAction(action) && action.RequiresCheck)
-                                                    {
-                                                        <UiButton Size="compact" OnClick="() => ResolveOrientationAsync(action)">IN-Probe würfeln</UiButton>
-                                                    }
-                                                    else
-                                                    {
-                                                        <UiButton Size="compact" OnClick="() => CompleteActionAsync(action)">@(IsOrientationAction(action) ? "Orientieren abschließen" : "Abschließen")</UiButton>
-                                                    }
-                                                <UiButton Size="compact" OnClick="() => HoldActionAsync(action)">Warten</UiButton>
-                                                </span>
-                                            }
-                                        </div>
-                                    }
-                                </div>
-                            }
-                        </div>
-                    }
-
-                    <div class="combat-initiative-actions">
-                        @if (IsMasterView)
-                        {
-                            <UiButton Disabled="@(!(SessionCombat?.IsStarted ?? false) || HasOpenAttackExchange)" OnClick="NewRoundAsync">Neue Runde</UiButton>
-                        }
-                        @if (CanManageOwnSessionParticipant)
-                        {
-                            <UiButton Disabled="@(OwnSessionParticipant?.CurrentInitiative is null || HasOpenAttackExchange)" OnClick="OpenOrientationDrawer">Orientieren</UiButton>
-                        }
-                        @if (IsSessionCombat && IsMasterView)
-                        {
-                            <UiButton OnClick="OpenAnnouncementDrawer">Rundenansage</UiButton>
-                            <UiButton Disabled="@HasOpenAttackExchange" OnClick="OpenOpponentDrawer">Gegner hinzufügen</UiButton>
-                        }
-                    </div>
-                </section>
-            }
         </main>
             </div>
 
@@ -358,7 +215,11 @@
                                           CanRollParticipantInitiative="CanRollParticipantInitiative"
                                           RollInitiativeRequested="RollParticipantInitiativeAsync"
                                           CanRemoveOpponent="CanRemoveOpponent"
-                                          RemoveOpponentRequested="RemoveOpponentAsync" />
+                                          RemoveOpponentRequested="RemoveOpponentAsync"
+                                          ShowRoundControls="@(IsSessionCombat && IsMasterView)"
+                                          NewRoundRequested="NewRoundAsync"
+                                          AnnouncementRequested="OpenAnnouncementDrawer"
+                                          AddOpponentRequested="OpenOpponentDrawer" />
 
                 <section class="combat-history-sidebar" aria-labelledby="combat-history-title">
                     <div class="combat-history-heading">

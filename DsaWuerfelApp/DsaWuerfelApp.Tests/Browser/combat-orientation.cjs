@@ -22,15 +22,13 @@ const combatXml = `
     await page.getByRole('button', { name: 'Session Erstellen', exact: true }).click();
     await page.locator('.wuerfel-page-container').waitFor();
     await page.goto(`${origin}/kampf`, { waitUntil: 'domcontentloaded' });
-    await page.locator('.combat-resource-strip').waitFor();
-    await page.getByRole('button', { name: 'Eigene INI', exact: true }).waitFor();
-
+    await page.locator('.hero-status-resources').waitFor();
     const orientationButton = page.getByRole('button', { name: 'Orientieren', exact: true });
     assert.equal(await orientationButton.isDisabled(), true);
 
-    await page.getByRole('button', { name: 'Eigene INI', exact: true }).click();
-    await page.getByRole('button', { name: '1W6 würfeln', exact: true }).click();
-    await page.locator('.combat-initiative-row.current .combat-initiative-value').filter({ hasText: /INI/ }).waitFor();
+    await page.getByRole('option', { name: /Initiative/ }).click();
+    await page.getByRole('button', { name: 'Initiative würfeln', exact: true }).click();
+    await page.locator('.combat-initiative-overview-row.current .combat-initiative-value').waitFor();
     assert.equal(await orientationButton.isDisabled(), false);
 
     await orientationButton.click();
@@ -42,7 +40,7 @@ const combatXml = `
     await orientationEntry.getByRole('button', { name: 'Orientieren abschließen', exact: true }).click();
     await page.locator('.combat-notice').filter({ hasText: 'Orientieren abgeschlossen' }).waitFor();
     assert.equal(await page.locator('.combat-action-entry.completed').filter({ hasText: 'Orientieren' }).count(), 1);
-    assert.match(await page.locator('.combat-initiative-row.current .combat-initiative-value').innerText(), /INI 17/);
+    assert.equal(await page.locator('.combat-initiative-overview-row.current .combat-initiative-value').innerText(), '17');
     assert.equal(errors.length, 0, `browser errors: ${errors.join(' | ')}`);
     console.log(JSON.stringify({ orientation: true, attention: true, initiativeAfterOrientation: 17 }));
   } finally {

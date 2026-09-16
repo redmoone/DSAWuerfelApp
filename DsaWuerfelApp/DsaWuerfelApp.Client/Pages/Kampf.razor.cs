@@ -445,6 +445,31 @@ public partial class Kampf : IDisposable
             !action.IsAdditional &&
             action.State == CombatActionEntryState.Open);
 
+    private bool CanShowOrientation =>
+        IsSessionCombat &&
+        CanManageOwnSessionParticipant;
+
+    private bool OrientationDisabled =>
+        !CanShowOrientation ||
+        OwnSessionParticipant?.CurrentInitiative is null ||
+        OpenOrientationAction is not null ||
+        _rollBusy ||
+        _valueMutationBusy ||
+        HasOpenAttackExchange;
+
+    private CombatSessionActionDto? OpenOrientationAction =>
+        IsSessionCombat && OwnSessionParticipant is { } participant
+            ? GetParticipantActions(participant.Id)
+                .FirstOrDefault(action => IsOrientationAction(action) &&
+                                          action.State == CombatActionEntryState.Open)
+            : null;
+
+    private CombatSessionActionDto? CurrentOrientationAction =>
+        IsSessionCombat && OwnSessionParticipant is { } participant
+            ? GetParticipantActions(participant.Id)
+                .FirstOrDefault(action => IsOrientationAction(action))
+            : null;
+
     private IReadOnlyList<CombatSessionActionDto> CurrentSessionActions =>
         SessionCombat?.Actions
             .Where(action => action.Round == (SessionCombat?.Round ?? 1) && action.State != CombatActionEntryState.Completed)
@@ -2196,7 +2221,6 @@ public partial class Kampf : IDisposable
     {
         Kampf,
         Zonen,
-        Runde,
         Eigenschaften
     }
 

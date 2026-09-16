@@ -49,7 +49,9 @@ async function waitForResult(page) {
     await page.getByRole('tab', { name: 'Rüstung & Wunden', exact: true }).click();
     await page.locator('.combat-zone-row').first().waitFor();
     await page.getByRole('tab', { name: 'Kampf', exact: true }).click();
-    await page.locator('.combat-dice-viewport canvas').waitFor();
+    await page.waitForTimeout(150);
+    await page.locator('.combat-action-panel').waitFor();
+    await page.waitForFunction(() => Boolean(document.querySelector('.combat-dice-viewport canvas')));
     assert.equal(await page.locator('.roll-history').count(), 1,
       'tab return created an additional history entry');
 

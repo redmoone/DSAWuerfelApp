@@ -54,6 +54,12 @@ public partial class CombatActionPanel
     [Parameter] public EventCallback<CombatActionKind> ExchangeActionRequested { get; set; }
     [Parameter] public bool CanHoldAction { get; set; }
     [Parameter] public EventCallback HoldActionRequested { get; set; }
+    [Parameter] public bool CanOrient { get; set; }
+    [Parameter] public bool OrientationDisabled { get; set; }
+    [Parameter] public EventCallback OrientationRequested { get; set; }
+    [Parameter] public CombatSessionActionDto? OrientationAction { get; set; }
+    [Parameter] public EventCallback<CombatSessionActionDto> OrientationCheckRequested { get; set; }
+    [Parameter] public EventCallback<CombatSessionActionDto> OrientationCompleteRequested { get; set; }
     [Parameter] public bool OpponentMode { get; set; }
     [Parameter] public IReadOnlyList<CombatSessionParticipantDto> OpponentParticipants { get; set; } = Array.Empty<CombatSessionParticipantDto>();
     [Parameter] public string? SelectedOpponentParticipantId { get; set; }

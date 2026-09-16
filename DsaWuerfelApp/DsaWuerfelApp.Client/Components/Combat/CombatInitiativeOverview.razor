@@ -150,5 +150,26 @@
                 }
             </div>
         }
+
+        @if (ShowRoundControls)
+        {
+            <div class="combat-initiative-overview-actions" aria-label="Kampfverwaltung">
+                <UiButton Size="compact"
+                          Disabled="@(!snapshot.IsStarted || CombatAttackExchangeRules.IsOpen(snapshot.ActiveExchange))"
+                          OnClick="NewRoundRequested">
+                    Neue Runde
+                </UiButton>
+                <UiButton Size="compact"
+                          Disabled="@(CombatAttackExchangeRules.IsOpen(snapshot.ActiveExchange))"
+                          OnClick="AnnouncementRequested">
+                    Rundenansage
+                </UiButton>
+                <UiButton Size="compact"
+                          Disabled="@(CombatAttackExchangeRules.IsOpen(snapshot.ActiveExchange))"
+                          OnClick="AddOpponentRequested">
+                    Gegner hinzuf&uuml;gen
+                </UiButton>
+            </div>
+        }
     }
 </aside>

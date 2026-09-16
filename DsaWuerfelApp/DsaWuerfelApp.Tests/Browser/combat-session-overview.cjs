@@ -84,6 +84,9 @@ async function readRows(page) {
       const playerRows = await readRows(player);
       return JSON.stringify(masterRows) === JSON.stringify(playerRows);
     }, 'initiative snapshots diverged between session clients');
+    await waitFor(async () =>
+      await master.getByRole('button', { name: 'Held1 als Ziel auswählen', exact: true }).count() === 1,
+    'the initiative roll did not return to attack target selection');
 
     for (const page of [master, player]) {
       await page.getByRole('tab', { name: 'Rüstung & Wunden', exact: true }).click();
@@ -92,8 +95,8 @@ async function readRows(page) {
       await page.getByRole('tab', { name: 'Kampf', exact: true }).click();
     }
 
-    await master.getByRole('tab', { name: 'Rundenübersicht', exact: true }).click();
-    await master.locator('.combat-initiative-list').waitFor();
+    assert.equal(await master.getByRole('tab', { name: 'Rundenübersicht', exact: true }).count(), 0,
+      'the removed duplicate round overview tab is still visible');
     await master.locator('.combat-work-area').evaluate(element => { element.style.minHeight = '1600px'; });
     await master.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     const stickyRect = await master.locator('.combat-initiative-overview').boundingBox();

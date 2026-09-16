@@ -105,6 +105,14 @@ public sealed class CombatEnemySessionTests
         Assert.Equal("requiresEquipmentValues", goblinParticipant.OpponentProfile!.CatalogProfile!.Readiness);
         Assert.Null(goblinParticipant.OpponentProfile.ArmorRating);
         Assert.False(goblinParticipant.OpponentProfile.HasBasicCombatValues);
+        Assert.True(CombatTargetRules.IsValidTarget(
+            new CombatSessionParticipantDto
+            {
+                Id = "hero:darian",
+                Kind = CombatParticipantKind.Hero,
+                HeroId = Guid.NewGuid()
+            },
+            goblinParticipant));
     }
 
     [Fact]

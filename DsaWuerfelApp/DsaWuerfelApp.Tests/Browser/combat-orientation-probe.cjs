@@ -21,14 +21,14 @@ const combatXml = `
     await page.getByRole('button', { name: 'Session Erstellen', exact: true }).click();
     await page.locator('.wuerfel-page-container').waitFor();
     await page.goto(`${origin}/kampf`, { waitUntil: 'domcontentloaded' });
-    await page.locator('.combat-resource-strip').waitFor();
+    await page.locator('.hero-status-resources').waitFor();
 
     const orientationButton = page.getByRole('button', { name: 'Orientieren', exact: true });
     assert.equal(await orientationButton.isDisabled(), true);
 
-    await page.getByRole('button', { name: 'Eigene INI', exact: true }).click();
-    await page.getByRole('button', { name: /1W6/ }).click();
-    const initiativeBefore = page.locator('.combat-initiative-row.current .combat-initiative-value');
+    await page.getByRole('option', { name: /Initiative/ }).click();
+    await page.getByRole('button', { name: 'Initiative würfeln', exact: true }).click();
+    const initiativeBefore = page.locator('.combat-initiative-overview-row.current .combat-initiative-value');
     await initiativeBefore.waitFor();
     const initiativeBeforeText = await initiativeBefore.innerText();
     assert.equal(await orientationButton.isDisabled(), false);
@@ -46,7 +46,7 @@ const combatXml = `
     await notice.waitFor();
     assert.match(await notice.innerText(), /misslungen/);
     assert.match(await notice.innerText(), /INI bleibt/);
-    assert.equal(await page.locator('.combat-initiative-row.current .combat-initiative-value').innerText(), initiativeBeforeText);
+    assert.equal(await page.locator('.combat-initiative-overview-row.current .combat-initiative-value').innerText(), initiativeBeforeText);
     assert.equal(await page.locator('.combat-action-entry.completed').filter({ hasText: 'Orientieren' }).count(), 1);
     assert.equal(errors.length, 0, `browser errors: ${errors.join(' | ')}`);
     console.log(JSON.stringify({ orientation: true, attention: false, probe: true }));
