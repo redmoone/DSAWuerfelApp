@@ -50,9 +50,20 @@ public partial class CombatActionPanel
     [Parameter] public string? ActiveExchangeAttackerName { get; set; }
     [Parameter] public string? ActiveExchangeTargetName { get; set; }
     [Parameter] public bool CanRespondToExchange { get; set; }
+    [Parameter] public bool CanResolveActiveExchange { get; set; }
     [Parameter] public EventCallback<CombatActionKind> ExchangeActionRequested { get; set; }
     [Parameter] public bool CanHoldAction { get; set; }
     [Parameter] public EventCallback HoldActionRequested { get; set; }
+    [Parameter] public bool OpponentMode { get; set; }
+    [Parameter] public IReadOnlyList<CombatSessionParticipantDto> OpponentParticipants { get; set; } = Array.Empty<CombatSessionParticipantDto>();
+    [Parameter] public string? SelectedOpponentParticipantId { get; set; }
+    [Parameter] public EventCallback<string> OpponentParticipantSelected { get; set; }
+    [Parameter] public IReadOnlyList<CombatSessionParticipantDto> OpponentTargets { get; set; } = Array.Empty<CombatSessionParticipantDto>();
+    [Parameter] public string? SelectedOpponentTargetId { get; set; }
+    [Parameter] public EventCallback<string> OpponentTargetSelected { get; set; }
+    [Parameter] public IReadOnlyList<CombatEnemyAttackDto> OpponentAttacks { get; set; } = Array.Empty<CombatEnemyAttackDto>();
+    [Parameter] public string? SelectedOpponentAttackId { get; set; }
+    [Parameter] public EventCallback<string> OpponentAttackSelected { get; set; }
 
     private IEnumerable<ActionOption> MainActions => Actions.Where(action => action.Key is "attack" or "parry" or "shield-parry" or "dodge" or "ranged");
     private IEnumerable<ActionOption> AdditionalActions => Actions.Where(action => action.Key is "damage" or "zone" or "initiative");
@@ -80,6 +91,20 @@ public partial class CombatActionPanel
 
     private bool HasResultDice => ResultDiceSides.Count > 0;
 
+    private CombatEnemyAttackDto? SelectedOpponentAttack =>
+        OpponentAttacks.FirstOrDefault(attack => attack.Id == SelectedOpponentAttackId);
+
+    private string OpponentRollButtonText => SelectedOpponentAttack?.Category.Contains("ranged", StringComparison.OrdinalIgnoreCase) == true
+        ? "Fernkampf würfeln"
+        : "Attacke würfeln";
+
+    private string OpponentRollTitle => SelectedOpponentAttack?.Name ?? "Gegnerangriff";
+
+    private static string GetOpponentAttackValue(CombatEnemyAttackDto attack) =>
+        attack.Category.Contains("ranged", StringComparison.OrdinalIgnoreCase)
+            ? $"FK {FormatNumber(attack.RangedValue)} · TP {attack.Damage?.Notation ?? "—"}"
+            : $"AT {FormatNumber(attack.Attack)} · TP {attack.Damage?.Notation ?? "—"}";
+
     private string ActiveRollTitle => AttributeMode
         ? "Eigenschaftsprobe"
         : SelectedActionOption?.Label ?? "Kampfwurf";
@@ -97,9 +122,16 @@ public partial class CombatActionPanel
         _ => ""
     };
 
-    private static string GetEvaluationText(CombatRollEvaluationDto evaluation) =>
-        $"{evaluation.StatusLabel} · {evaluation.MainRoll}" +
-        (evaluation.EffectiveTarget is { } target ? $" / {target}" : string.Empty);
+    private string ActiveExchangePrompt => ActiveExchange?.Status switch
+    {
+        CombatExchangeStatus.Declared or CombatExchangeStatus.AttackOpen =>
+            $"{ActiveExchangeAttackerName ?? "Angreifer"} würfelt die Attacke.",
+        CombatExchangeStatus.DefenseOpen =>
+            $"{ActiveExchangeTargetName ?? "Ziel"} wählt die Abwehr.",
+        CombatExchangeStatus.Hit or CombatExchangeStatus.DamageOpen =>
+            "Trefferfolge wird abgeschlossen.",
+        _ => string.Empty
+    };
 
     private static string GetExchangeActionLabel(CombatActionKind action) => action switch
     {

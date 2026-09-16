@@ -9,7 +9,7 @@
         </div>
     </div>
 
-    @if (IsSessionCombat && ActiveExchange is { } exchange)
+    @if (IsSessionCombat && ActiveExchange is { } exchange && CombatAttackExchangeRules.IsOpen(exchange))
     {
         <section class="combat-exchange-card" data-testid="combat-exchange" aria-label="Aktiver Angriffsaustausch">
             <div class="combat-exchange-heading">
@@ -27,25 +27,11 @@
                     <span>INI @phaseInitiative</span>
                 }
             </div>
-            @if (exchange.AttackResult is { } attackResult)
+            @if (!string.IsNullOrWhiteSpace(ActiveExchangePrompt))
             {
-                <div class="combat-exchange-result">
-                    <span>AT</span>
-                    <strong>@GetEvaluationText(attackResult)</strong>
-                </div>
+                <p class="combat-exchange-note">@ActiveExchangePrompt</p>
             }
-            @if (exchange.DefenseResult is { } defenseResult)
-            {
-                <div class="combat-exchange-result">
-                    <span>@(exchange.SelectedDefenseAction?.ToString() ?? "Abwehr")</span>
-                    <strong>@GetEvaluationText(defenseResult)</strong>
-                </div>
-            }
-            @if (!string.IsNullOrWhiteSpace(exchange.RuleNote))
-            {
-                <p class="combat-exchange-note">@exchange.RuleNote</p>
-            }
-            @if (exchange.Status == CombatExchangeStatus.DefenseOpen && CanRespondToExchange)
+            @if (exchange.Status == CombatExchangeStatus.DefenseOpen && (CanRespondToExchange || CanResolveActiveExchange))
             {
                 <div class="combat-exchange-actions" aria-label="Abwehraktionen">
                     @foreach (var defenseAction in exchange.AllowedDefenseActions)
@@ -61,6 +47,122 @@
         </section>
     }
 
+    @if (OpponentMode)
+    {
+        <div class="combat-action-workspace combat-opponent-workspace">
+            <div class="combat-setup-column">
+                <div class="combat-choice-block">
+                    <div class="combat-block-heading">
+                        <span class="combat-field-label">Gegneraktion</span>
+                        <span class="combat-muted">Meisteransicht</span>
+                    </div>
+
+                    @if (OpponentParticipants.Count == 0)
+                    {
+                        <div class="combat-empty-state">
+                            <strong>Kein kampfbereiter Gegner</strong>
+                            <span>Füge zuerst einen vollständigen DSA-4.1-Gegner hinzu.</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <label class="combat-opponent-field">
+                            <span class="combat-field-label">Handelnder Gegner</span>
+                            <select class="ui-select"
+                                    value="@SelectedOpponentParticipantId"
+                                    disabled="@IsBusy"
+                                    @onchange="eventArgs => OpponentParticipantSelected.InvokeAsync(eventArgs.Value?.ToString() ?? string.Empty)">
+                                @foreach (var participant in OpponentParticipants)
+                                {
+                                    <option value="@participant.Id">@participant.Name</option>
+                                }
+                            </select>
+                        </label>
+
+                        <label class="combat-opponent-field">
+                            <span class="combat-field-label">Ziel</span>
+                            <select class="ui-select"
+                                    value="@SelectedOpponentTargetId"
+                                    disabled="@(IsBusy || OpponentTargets.Count == 0)"
+                                    @onchange="eventArgs => OpponentTargetSelected.InvokeAsync(eventArgs.Value?.ToString() ?? string.Empty)">
+                                <option value="">Ziel auswählen …</option>
+                                @foreach (var target in OpponentTargets)
+                                {
+                                    <option value="@target.Id">@target.Name</option>
+                                }
+                            </select>
+                        </label>
+
+                        <div class="combat-action-options" role="listbox" aria-label="Gegnerangriffe">
+                            @foreach (var attack in OpponentAttacks)
+                            {
+                                <div class="combat-option-entry">
+                                    <UiButton Variant="option"
+                                              Active="@(attack.Id == SelectedOpponentAttackId)"
+                                              role="option"
+                                              aria-selected="@(attack.Id == SelectedOpponentAttackId)"
+                                              Disabled="@IsBusy"
+                                              OnClick="() => OpponentAttackSelected.InvokeAsync(attack.Id)">
+                                        <span class="ui-button-label">@attack.Name</span>
+                                        <span class="combat-option-value">@GetOpponentAttackValue(attack)</span>
+                                    </UiButton>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="combat-roll-column">
+                <div class="combat-roll-completion-heading">
+                    <div>
+                        <p class="combat-kicker">Würfeln</p>
+                        <h3>@OpponentRollTitle</h3>
+                    </div>
+                </div>
+
+                @if (SelectedOpponentAttack is { } selectedAttack)
+                {
+                    <div class="combat-target-preview">
+                        <div>
+                            <span class="combat-field-label">Angriff</span>
+                            <strong>@selectedAttack.Name</strong>
+                        </div>
+                    </div>
+                }
+
+                <div class="combat-dice-area">
+                    <WuerfelActionBar RollText="@RollText"
+                                     RollTextChanged="RollTextChanged"
+                                     Modifier="@Modifier"
+                                     ModifierChanged="ModifierChanged"
+                                     ResetRequested="ResetRequested"
+                                     RollRequested="RollRequested"
+                                     CanRoll="@CanRoll"
+                                     IsBusy="@IsBusy"
+                                     RollButtonText="@OpponentRollButtonText"
+                                     RollButtonAriaLabel="@OpponentRollButtonText"
+                                     AllowDirectModifierInput="true"
+                                     ShowRollText="false"
+                                     ShowTitle="false"
+                                     ShowHiddenRollHint="false"
+                                     ResetButtonText="Modifikator auf 0" />
+
+                    @if (HasResultDice)
+                    {
+                        <div class="combat-dice-viewport" data-testid="combat-dice-viewport" title="3D-Ansicht der Kampf-Würfel">
+                            <DiceViewport SelectedDice="@EmptyDice"
+                                          ResultDiceSides="@ResultDiceSides"
+                                          ResultDiceValues="@ResultDiceValues"
+                                          ResultVersion="@ResultVersion" />
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
     <div class="combat-action-workspace">
         <div class="combat-setup-column">
             @if (AttributeMode)
@@ -334,4 +436,5 @@
 
         </div>
     </div>
+    }
 </section>

@@ -23,8 +23,6 @@ public partial class CombatInitiativeOverview
     [Parameter] public string? SelectedTargetParticipantId { get; set; }
     [Parameter] public Func<CombatSessionParticipantDto, bool>? CanSelectTarget { get; set; }
     [Parameter] public EventCallback<string> TargetSelected { get; set; }
-    [Parameter] public bool CanResolveActiveExchange { get; set; }
-    [Parameter] public EventCallback<CombatActionKind> ExchangeActionRequested { get; set; }
 
     private string GetTurnLabel(CombatSessionParticipantDto participant) =>
         TurnLabel?.Invoke(participant) ?? "Offen";
@@ -91,11 +89,4 @@ public partial class CombatInitiativeOverview
         _ => exchange.RuleNote ?? string.Empty
     };
 
-    private static string GetDefenseActionLabel(CombatActionKind action) => action switch
-    {
-        CombatActionKind.WeaponParry => "Waffenparade",
-        CombatActionKind.ShieldParry => "Schildparade",
-        CombatActionKind.Dodge => "Ausweichen",
-        _ => action.ToString()
-    };
 }

@@ -109,7 +109,7 @@
                          class="combat-tab-panel panel-surface"
                          role="tabpanel"
                          aria-label="@(ActiveArea == CombatArea.Kampf ? "Kampf" : "Eigenschaften")">
-                    @if (NeedsOwnHeroPlaceholder)
+                    @if (NeedsOwnHeroPlaceholder && !IsMasterOpponentMode)
                     {
                         <div class="combat-hero-placeholder combat-hero-placeholder--workspace" role="status">
                             <strong>Keine eigenen Kampfaktionen verfügbar</strong>
@@ -154,9 +154,20 @@
                                            ActiveExchangeAttackerName="@ActiveExchangeAttackerName"
                                            ActiveExchangeTargetName="@ActiveExchangeTargetName"
                                            CanRespondToExchange="@CanRespondToExchange"
+                                           CanResolveActiveExchange="@CanResolveActiveExchange"
                                            ExchangeActionRequested="HandleExchangeActionAsync"
                                            CanHoldAction="@CanHoldAction"
                                            HoldActionRequested="HoldCurrentActionAsync"
+                                           OpponentMode="@IsMasterOpponentMode"
+                                           OpponentParticipants="@OpponentParticipants"
+                                           SelectedOpponentParticipantId="@SelectedOpponentParticipantId"
+                                           OpponentParticipantSelected="HandleOpponentParticipantSelected"
+                                           OpponentTargets="@OpponentTargetParticipants"
+                                           SelectedOpponentTargetId="@SelectedOpponentTargetId"
+                                           OpponentTargetSelected="HandleOpponentTargetSelected"
+                                           OpponentAttacks="@OpponentAttacks"
+                                           SelectedOpponentAttackId="@SelectedOpponentAttackId"
+                                           OpponentAttackSelected="HandleOpponentAttackSelected"
                                            ResultDiceSides="@ResultDiceSides"
                                            ResultDiceValues="@ResultDiceValues"
                                            ResultVersion="@ResultVersion" />
@@ -344,8 +355,6 @@
                                           SelectedTargetParticipantId="@SelectedTargetParticipantId"
                                           CanSelectTarget="IsTargetSelectable"
                                           TargetSelected="HandleTargetSelected"
-                                          CanResolveActiveExchange="@CanResolveActiveExchange"
-                                          ExchangeActionRequested="HandleExchangeActionAsync"
                                           CanRollParticipantInitiative="CanRollParticipantInitiative"
                                           RollInitiativeRequested="RollParticipantInitiativeAsync"
                                           CanRemoveOpponent="CanRemoveOpponent"

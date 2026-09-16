@@ -52,19 +52,6 @@
                     @GetParticipantName(snapshot, exchange.TargetParticipantId)
                 </strong>
                 <span class="combat-initiative-overview-exchange-prompt">@GetExchangePrompt(snapshot, exchange)</span>
-                @if (exchange.Status == CombatExchangeStatus.DefenseOpen && CanResolveActiveExchange)
-                {
-                    <div class="combat-initiative-overview-exchange-actions" data-testid="combat-exchange-defense">
-                        @foreach (var defenseAction in exchange.AllowedDefenseActions)
-                        {
-                            <UiButton Variant="primary"
-                                      Size="compact"
-                                      OnClick="() => ExchangeActionRequested.InvokeAsync(defenseAction)">
-                                @GetDefenseActionLabel(defenseAction)
-                            </UiButton>
-                        }
-                    </div>
-                }
             </section>
         }
 

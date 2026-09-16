@@ -142,7 +142,7 @@
 .combat-action-workspace {
     display: grid;
     min-width: 0;
-    grid-template-columns: minmax(0, 1.08fr) minmax(19rem, 0.92fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 1rem;
     align-items: start;
 }
@@ -236,6 +236,13 @@
     display: flex;
     flex-direction: column;
     gap: 0.55rem;
+}
+
+.combat-opponent-field {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.28rem;
 }
 
 .combat-block-heading {
@@ -492,13 +499,6 @@
 .combat-roll-column ::deep .right-actions .ui-button--dice {
     width: auto;
     min-width: 0;
-}
-
-@media (max-width: 1100px) {
-    .combat-action-workspace {
-        grid-template-columns: 1fr;
-    }
-
 }
 
 @media (max-width: 700px) {

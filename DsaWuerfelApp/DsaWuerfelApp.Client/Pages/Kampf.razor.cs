@@ -53,6 +53,9 @@ public partial class Kampf : IDisposable
     private CombatParticipantDrawerMode _participantDrawerMode;
     private RollHistoryEntryDto? _selectedHistoryEntry;
     private string? _selectedTargetParticipantId;
+    private string? _selectedActingOpponentId;
+    private string? _selectedOpponentTargetId;
+    private string? _selectedOpponentAttackId;
     private string? _viewSessionId;
     private bool _combatViewInitialized;
     private bool _isMasterView;
@@ -200,7 +203,9 @@ public partial class Kampf : IDisposable
 
     private int? EffectiveTarget => CombatRollRules.ResolveEffectiveTarget(GetActionBaseValue(), GetCurrentModifiers());
 
-    private bool CanRoll => IsAttributeMode
+    private bool CanRoll => IsMasterOpponentMode
+        ? CanRollOpponentAttack
+        : IsAttributeMode
         ? HasCombatContext && !_rollBusy && !_valueMutationBusy && SelectedAttributes.Count > 0
         : SelectedAction == "initiative"
             ? CanRollInitiative
@@ -321,6 +326,77 @@ public partial class Kampf : IDisposable
                 : participant.OpponentProfile?.HasBasicCombatValues == true)
             .OrderBy(participant => participant.Name, StringComparer.OrdinalIgnoreCase)
             .ToArray() ?? Array.Empty<CombatSessionParticipantDto>();
+
+    private bool IsMasterOpponentMode => IsMasterView && !HasOwnSessionHero;
+
+    private IReadOnlyList<CombatSessionParticipantDto> OpponentParticipants =>
+        SessionCombat?.Participants
+            .Where(participant => participant.Kind == CombatParticipantKind.Opponent)
+            .Where(participant => participant.OpponentProfile?.CatalogProfile?.CombatReady == true)
+            .Where(participant => participant.CurrentInitiative.HasValue)
+            .OrderByDescending(IsCurrentParticipant)
+            .ThenByDescending(participant => participant.CurrentInitiative ?? int.MinValue)
+            .ThenBy(participant => participant.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray() ?? Array.Empty<CombatSessionParticipantDto>();
+
+    private string? SelectedOpponentParticipantId =>
+        OpponentParticipants.Any(participant => participant.Id == _selectedActingOpponentId)
+            ? _selectedActingOpponentId
+            : OpponentParticipants.FirstOrDefault()?.Id;
+
+    private CombatSessionParticipantDto? SelectedOpponentParticipant =>
+        OpponentParticipants.FirstOrDefault(participant => participant.Id == SelectedOpponentParticipantId);
+
+    private IReadOnlyList<CombatSessionParticipantDto> OpponentTargetParticipants =>
+        SessionCombat?.Participants
+            .Where(participant => participant.Id != SelectedOpponentParticipant?.Id)
+            .Where(participant => participant.Kind == CombatParticipantKind.Hero
+                ? participant.HeroId.HasValue
+                : participant.OpponentProfile?.HasBasicCombatValues == true)
+            .OrderBy(participant => participant.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray() ?? Array.Empty<CombatSessionParticipantDto>();
+
+    private string? SelectedOpponentTargetId =>
+        OpponentTargetParticipants.Any(participant => participant.Id == _selectedOpponentTargetId)
+            ? _selectedOpponentTargetId
+            : OpponentTargetParticipants.FirstOrDefault()?.Id;
+
+    private IReadOnlyList<CombatEnemyAttackDto> OpponentAttacks =>
+        SelectedOpponentParticipant?.OpponentProfile?.CatalogProfile?.Attacks
+            ?? Array.Empty<CombatEnemyAttackDto>();
+
+    private string? SelectedOpponentAttackId =>
+        OpponentAttacks.Any(attack => attack.Id == _selectedOpponentAttackId)
+            ? _selectedOpponentAttackId
+            : SelectedOpponentParticipant?.OpponentProfile?.CatalogProfile?.AttackId
+              ?? OpponentAttacks.FirstOrDefault()?.Id;
+
+    private CombatEnemyAttackDto? SelectedOpponentAttack =>
+        OpponentAttacks.FirstOrDefault(attack => attack.Id == SelectedOpponentAttackId);
+
+    private CombatSessionActionDto? SelectedOpponentAction =>
+        SelectedOpponentParticipant is not { } participant
+            ? null
+            : GetParticipantActions(participant.Id)
+                .FirstOrDefault(action => !action.IsReaction &&
+                                          action.State is CombatActionEntryState.Open or CombatActionEntryState.Held);
+
+    private CombatActionKind? SelectedOpponentActionKind => SelectedOpponentAttack?.Category.Contains(
+        "ranged", StringComparison.OrdinalIgnoreCase) == true
+        ? CombatActionKind.RangedAttack
+        : SelectedOpponentAttack is null ? null : CombatActionKind.MeleeAttack;
+
+    private bool CanRollOpponentAttack =>
+        IsMasterOpponentMode &&
+        !_rollBusy &&
+        !_valueMutationBusy &&
+        !HasOpenAttackExchange &&
+        SelectedOpponentParticipant is not null &&
+        SelectedOpponentTargetId is not null &&
+        SelectedOpponentAttack is not null &&
+        SelectedOpponentAction is { } action &&
+        (action.State == CombatActionEntryState.Held ||
+         SessionCombat?.CurrentActionIds.Contains(action.Id, StringComparer.Ordinal) == true);
 
     private string? SelectedTargetParticipantId =>
         TargetParticipants.Any(participant => participant.Id == _selectedTargetParticipantId)
@@ -567,6 +643,12 @@ public partial class Kampf : IDisposable
 
     private async Task HandleRollRequested()
     {
+        if (IsMasterOpponentMode)
+        {
+            await HandleOpponentAttackRequested();
+            return;
+        }
+
         if (IsAttributeMode)
         {
             await HandleAttributeRollRequested();
@@ -810,6 +892,105 @@ public partial class Kampf : IDisposable
         }
 
         return Task.CompletedTask;
+    }
+
+    private Task HandleOpponentParticipantSelected(string participantId)
+    {
+        if (OpponentParticipants.Any(participant => participant.Id == participantId))
+        {
+            _selectedActingOpponentId = participantId;
+            _selectedOpponentAttackId = null;
+            _selectedOpponentTargetId = null;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task HandleOpponentTargetSelected(string participantId)
+    {
+        if (OpponentTargetParticipants.Any(participant => participant.Id == participantId))
+        {
+            _selectedOpponentTargetId = participantId;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task HandleOpponentAttackSelected(string attackId)
+    {
+        if (OpponentAttacks.Any(attack => attack.Id == attackId))
+        {
+            _selectedOpponentAttackId = attackId;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task HandleOpponentAttackRequested()
+    {
+        if (!CanRollOpponentAttack ||
+            SelectedOpponentParticipant is not { } attacker ||
+            SelectedOpponentTargetId is not { } targetId ||
+            SelectedOpponentAttack is not { } attack ||
+            SelectedOpponentAction is not { } action ||
+            SelectedOpponentActionKind is not { } actionKind)
+        {
+            _notice = "Bitte einen handlungsfähigen Gegner, ein Ziel und einen konkreten Angriff wählen.";
+            return;
+        }
+
+        _rollBusy = true;
+        _notice = null;
+        try
+        {
+            var declaration = await CombatSessionState.DeclareAttackAsync(
+                attacker.Id,
+                targetId,
+                action.Id,
+                actionKind,
+                exchangeId: Guid.NewGuid().ToString("N"),
+                weaponId: attack.Id,
+                weaponName: attack.Name,
+                phaseInitiative: action.PhaseInitiative,
+                facing: Facing);
+            if (!declaration.Applied && !declaration.AlreadyApplied)
+            {
+                _notice = declaration.Message;
+                return;
+            }
+
+            var snapshot = declaration.Snapshot;
+            var currentAttacker = snapshot.Participants.First(participant => participant.Id == attacker.Id);
+            var request = new CombatRollRequestDto
+            {
+                RequestId = Guid.NewGuid(),
+                SessionId = snapshot.SessionId,
+                ParticipantId = currentAttacker.Id,
+                TargetParticipantId = targetId,
+                ActionId = snapshot.ActiveExchange?.ActionId ?? action.Id,
+                ExpectedRevision = snapshot.Revision,
+                ExchangeId = snapshot.ActiveExchange?.ExchangeId,
+                Action = actionKind,
+                WeaponId = attack.Id,
+                WeaponName = attack.Name,
+                RuntimeState = currentAttacker.RuntimeState,
+                Modifiers = Modifier == 0
+                    ? []
+                    : [new CombatModifierDto("Situativ", Modifier, "Kampfseite")],
+                Options = new CombatRuleOptionsDto(SpecialResultsEnabled: true, LowLePEnabled: true),
+                Facing = Facing,
+                Note = string.IsNullOrWhiteSpace(RollText) ? null : RollText.Trim()
+            };
+            await CombatCoordinator.RollAsync(request);
+        }
+        catch (Exception exception)
+        {
+            _notice = exception.Message;
+        }
+        finally
+        {
+            _rollBusy = false;
+        }
     }
 
     private async Task HandleExchangeActionAsync(CombatActionKind action)
