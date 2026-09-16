@@ -135,6 +135,10 @@ public sealed class CombatSessionStateService(
         var snapshot = await GetAsync(request.SessionId, userId, cancellationToken);
         var participant = FindParticipant(snapshot, request.ParticipantId, request.HeroId)
                           ?? throw Validation("Der eigene Kampfteilnehmer wurde nicht gefunden.");
+        if (!IsCombatEligible(participant))
+        {
+            throw Validation("Dieser Teilnehmer ist nicht mehr kampffaehig.");
+        }
         var budget = participant.ActionBudget ?? new CombatActionBudgetDto();
         if (CombatActionBudgetRules.RequiresNormalAction(request.Action) && !budget.HasNormalAction)
         {
@@ -222,7 +226,7 @@ public sealed class CombatSessionStateService(
 
         var attacker = snapshot.Participants.FirstOrDefault(participant =>
             string.Equals(participant.Id, exchange.AttackerParticipantId, StringComparison.Ordinal));
-        if (attacker is null || !MatchesRequestedParticipant(attacker, request))
+        if (attacker is null || !IsCombatEligible(attacker) || !MatchesRequestedParticipant(attacker, request))
         {
             throw Validation("Der AT-Wurf gehört nicht zum deklarierten Angreifer.");
         }
@@ -285,7 +289,7 @@ public sealed class CombatSessionStateService(
 
         var target = snapshot.Participants.FirstOrDefault(participant =>
             string.Equals(participant.Id, exchange.TargetParticipantId, StringComparison.Ordinal));
-        if (target is null || !MatchesRequestedParticipant(target, request))
+        if (target is null || !IsCombatEligible(target) || !MatchesRequestedParticipant(target, request))
         {
             throw Validation("Die Abwehr gehört nicht zum Ziel des offenen Angriffs.");
         }
@@ -360,7 +364,7 @@ public sealed class CombatSessionStateService(
 
             var target = current.Participants.FirstOrDefault(participant =>
                 string.Equals(participant.Id, exchange.TargetParticipantId, StringComparison.Ordinal));
-            if (target is null || !MatchesRequestedParticipant(target, request) ||
+            if (target is null || !IsCombatEligible(target) || !MatchesRequestedParticipant(target, request) ||
                 (target.OwnerUserId != userId && !string.Equals(session.MasterUserId, userId, StringComparison.Ordinal)))
             {
                 throw new RequestRejectedException(RequestRejectionReason.Forbidden,
@@ -400,12 +404,15 @@ public sealed class CombatSessionStateService(
                     .ToArray(),
                 RuleNote = decision.StatusLabel
             };
+            var targetBudget = defenseEvaluation.Outcome == CombatOutcome.Lucky
+                ? budget
+                : budget.ConsumeReaction();
             var next = FinalizeSnapshot(current with
             {
                 Revision = nextRevision,
                 Participants = ReplaceParticipant(current.Participants, target with
                 {
-                    ActionBudget = budget.ConsumeReaction()
+                    ActionBudget = targetBudget
                 }),
                 ActiveExchange = updatedExchange,
                 LastMutationId = request.RequestId,
@@ -486,6 +493,7 @@ public sealed class CombatSessionStateService(
             var attacker = current.Participants.FirstOrDefault(participant =>
                 string.Equals(participant.Id, exchange.AttackerParticipantId, StringComparison.Ordinal));
             if (attacker is null ||
+                !IsCombatEligible(attacker) ||
                 !MatchesRequestedParticipant(attacker, request) ||
                 (attacker.OwnerUserId != userId && !string.Equals(session.MasterUserId, userId, StringComparison.Ordinal)))
             {
@@ -1424,6 +1432,10 @@ public sealed class CombatSessionStateService(
     {
         var participant = FindParticipant(current, request.ParticipantId, request.HeroId)
                           ?? throw Validation("Der Initiative-Teilnehmer wurde nicht gefunden.");
+        if (!IsCombatEligible(participant))
+        {
+            throw Validation("Dieser Teilnehmer ist nicht mehr kampffaehig.");
+        }
         if (participant.CurrentInitiative.HasValue || participant.ActionBudget?.HeldActionId is not null)
         {
             throw Validation($"Für {participant.Name} liegt bereits ein Initiativewert vor. Bitte den aktuellen Wert korrigieren.");
@@ -1616,6 +1628,10 @@ public sealed class CombatSessionStateService(
 
         var attacker = FindParticipant(current, request.ParticipantId, request.HeroId)
                         ?? throw Validation("Der Angreifer wurde nicht gefunden.");
+        if (!IsCombatEligible(attacker))
+        {
+            throw Validation("Dieser Teilnehmer ist nicht mehr kampffaehig.");
+        }
         var target = current.Participants.FirstOrDefault(participant =>
             string.Equals(participant.Id, request.TargetParticipantId, StringComparison.Ordinal))
                     ?? throw Validation("Das ausgewählte Ziel gehört nicht zu diesem Kampf.");
@@ -1821,6 +1837,11 @@ public sealed class CombatSessionStateService(
         CombatSessionParticipantDto target,
         CancellationToken cancellationToken)
     {
+        if (!IsCombatEligible(target))
+        {
+            return [];
+        }
+
         var targetBudget = target.ActionBudget ?? new CombatActionBudgetDto();
         if (!targetBudget.HasReaction)
         {
@@ -1902,6 +1923,10 @@ public sealed class CombatSessionStateService(
 
         var participant = current.Participants.FirstOrDefault(item => item.Id == action.ParticipantId)
                           ?? throw Validation("Der Teilnehmer für die Handlung wurde nicht gefunden.");
+        if (!IsCombatEligible(participant))
+        {
+            throw Validation("Dieser Teilnehmer ist nicht mehr kampffaehig.");
+        }
         var budget = participant.ActionBudget ?? new CombatActionBudgetDto();
         if (!action.IsAdditional && !budget.HasNormalAction)
         {
@@ -1990,6 +2015,10 @@ public sealed class CombatSessionStateService(
 
         var participant = FindParticipant(current, action.ParticipantId, null)
                           ?? throw Validation("Der Teilnehmer für Orientieren wurde nicht gefunden.");
+        if (!IsCombatEligible(participant))
+        {
+            throw Validation("Dieser Teilnehmer ist nicht mehr kampffaehig.");
+        }
         var completedAction = action with
         {
             State = CombatActionEntryState.Completed,
@@ -2065,6 +2094,10 @@ public sealed class CombatSessionStateService(
     {
         var participant = FindParticipant(current, request.ParticipantId, request.HeroId)
                           ?? throw Validation("Der Teilnehmer für die Reaktion wurde nicht gefunden.");
+        if (!IsCombatEligible(participant))
+        {
+            throw Validation("Dieser Teilnehmer ist nicht mehr kampffaehig.");
+        }
         if (!participant.ReactionAvailable)
         {
             throw Validation($"Für {participant.Name} ist keine Reaktion mehr verfügbar.");
@@ -2105,6 +2138,10 @@ public sealed class CombatSessionStateService(
         }
 
         var participant = current.Participants.FirstOrDefault(item => item.Id == action.ParticipantId);
+        if (participant is not null && !IsCombatEligible(participant))
+        {
+            throw Validation("Dieser Teilnehmer ist nicht mehr kampffaehig.");
+        }
         var budget = participant?.ActionBudget ?? new CombatActionBudgetDto();
         if (state == CombatActionEntryState.Held && budget.HeldActionId is not null &&
             !string.Equals(budget.HeldActionId, action.Id, StringComparison.Ordinal))
@@ -2138,6 +2175,10 @@ public sealed class CombatSessionStateService(
     {
         var participant = FindParticipant(current, request.ParticipantId, request.HeroId)
                           ?? throw Validation("Der Teilnehmer für die Handlung wurde nicht gefunden.");
+        if (!IsCombatEligible(participant))
+        {
+            throw Validation("Dieser Teilnehmer ist nicht mehr kampffaehig.");
+        }
         if (!participant.CurrentInitiative.HasValue)
         {
             throw Validation("Eine Handlung ist erst nach dem Initiativewurf verfügbar.");
@@ -2321,7 +2362,12 @@ public sealed class CombatSessionStateService(
             throw Validation("Der offene Angriffsaustausch muss zuerst abgeschlossen werden.");
         }
 
+        var eligibleParticipantIds = current.Participants
+            .Where(IsCombatEligible)
+            .Select(participant => participant.Id)
+            .ToHashSet(StringComparer.Ordinal);
         var openActions = current.Actions.Any(action => action.Round == current.Round &&
+                                                         eligibleParticipantIds.Contains(action.ParticipantId) &&
                                                          !action.IsReaction &&
                                                          action.State == CombatActionEntryState.Open);
         if (openActions)
@@ -2334,7 +2380,8 @@ public sealed class CombatSessionStateService(
             .ToDictionary(participant => participant.Id, StringComparer.Ordinal);
         var actions = current.Actions
             .Select(action => action.State == CombatActionEntryState.Held &&
-                              currentParticipantsById.TryGetValue(action.ParticipantId, out var participant)
+                              currentParticipantsById.TryGetValue(action.ParticipantId, out var participant) &&
+                              IsCombatEligible(participant)
                 ? action with
                 {
                     Round = round,
@@ -2349,7 +2396,10 @@ public sealed class CombatSessionStateService(
         var participants = current.Participants
             .Select(participant =>
             {
-                var budget = (participant.ActionBudget ?? new CombatActionBudgetDto()).ResetForRound();
+                var eligible = IsCombatEligible(participant);
+                var budget = eligible
+                    ? (participant.ActionBudget ?? new CombatActionBudgetDto()).ResetForRound()
+                    : CreateIncapacitatedBudget();
                 if (heldActions.TryGetValue(participant.Id, out var heldAction))
                 {
                     budget = budget with { HeldActionId = heldAction.Id, HeldActionRound = round };
@@ -2358,14 +2408,14 @@ public sealed class CombatSessionStateService(
                 return participant with
                 {
                     ActionBudget = budget,
-                    ActionAvailable = participant.CurrentInitiative.HasValue,
-                    ReactionAvailable = true,
+                    ActionAvailable = eligible && participant.CurrentInitiative.HasValue,
+                    ReactionAvailable = eligible,
                     IsOriented = false
                 };
             })
             .ToArray();
-        var participantsById = participants.ToDictionary(participant => participant.Id, StringComparer.Ordinal);
-        foreach (var participant in participants.Where(item => item.CurrentInitiative.HasValue &&
+        foreach (var participant in participants.Where(item => IsCombatEligible(item) &&
+                                                               item.CurrentInitiative.HasValue &&
                                                                !heldActions.ContainsKey(item.Id)))
         {
             actions.Add(CreateNormalAction(participant, round));
@@ -2726,7 +2776,9 @@ public sealed class CombatSessionStateService(
         var participantsById = snapshot.Participants.ToDictionary(item => item.Id, StringComparer.Ordinal);
         var openActions = snapshot.Actions
             .Where(action => action.Round == snapshot.Round && !action.IsReaction &&
-                             action.State == CombatActionEntryState.Open)
+                             action.State == CombatActionEntryState.Open &&
+                             participantsById.TryGetValue(action.ParticipantId, out var participant) &&
+                             IsCombatEligible(participant))
             .OrderByDescending(action => EffectiveInitiative(action, participantsById))
             .ThenByDescending(action => BaseInitiative(action, participantsById))
             .ThenBy(action => action.Id, StringComparer.Ordinal)
@@ -2750,9 +2802,11 @@ public sealed class CombatSessionStateService(
         var participants = snapshot.Participants
             .Select(participant => participant with
             {
-                ActionAvailable = (participant.ActionBudget ?? new CombatActionBudgetDto()).HasNormalAction &&
+                ActionAvailable = IsCombatEligible(participant) &&
+                                  (participant.ActionBudget ?? new CombatActionBudgetDto()).HasNormalAction &&
                                   openActions.Any(action => action.ParticipantId == participant.Id),
-                ReactionAvailable = (participant.ActionBudget ?? new CombatActionBudgetDto()).HasReaction
+                ReactionAvailable = IsCombatEligible(participant) &&
+                                    (participant.ActionBudget ?? new CombatActionBudgetDto()).HasReaction
             })
             .ToArray();
 
@@ -2920,6 +2974,16 @@ public sealed class CombatSessionStateService(
     private static Dictionary<CombatWoundZone, int?> CreateEmptyWounds() =>
         Enum.GetValues<CombatWoundZone>()
             .ToDictionary(zone => zone, _ => (int?)0);
+
+    private static CombatActionBudgetDto CreateIncapacitatedBudget() => new()
+    {
+        NormalActionsRemaining = 0,
+        ReactionsRemaining = 0,
+        FreeActionAvailable = false
+    };
+
+    private static bool IsCombatEligible(CombatSessionParticipantDto participant) =>
+        (participant.RuntimeState?.CurrentLeP ?? participant.OpponentProfile?.LeP) is not <= 0;
 
     private static CombatSessionActionDto[] ReplaceAction(
         IEnumerable<CombatSessionActionDto> actions,
