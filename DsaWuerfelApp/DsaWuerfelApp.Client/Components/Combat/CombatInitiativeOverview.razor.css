@@ -1,4 +1,5 @@
 .combat-initiative-overview {
+    grid-area: initiative;
     position: sticky;
     top: 1rem;
     display: flex;
