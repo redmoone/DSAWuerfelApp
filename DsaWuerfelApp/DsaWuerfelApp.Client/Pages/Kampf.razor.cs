@@ -739,6 +739,33 @@ public partial class Kampf : IDisposable
             return BuildDefenseRollRequest(exchange, ownTarget, action);
         }
 
+        if (IsSessionCombat && IsAttackAction(action))
+        {
+            if (SessionCombat is not { } snapshot ||
+                OwnSessionParticipant is not { } attacker ||
+                SelectedTargetParticipantId is not { } targetId ||
+                snapshot.Participants.FirstOrDefault(participant =>
+                    string.Equals(participant.Id, targetId, StringComparison.Ordinal)) is not { } target)
+            {
+                throw new InvalidOperationException("Für den Angriff muss ein aktuelles Ziel ausgewählt sein.");
+            }
+
+            return RequirePreparedRequest(CombatActionPreparation.PrepareAttack(
+                snapshot,
+                attacker,
+                target,
+                GetSessionAttackAction(action),
+                action,
+                attacker.InitiativeSetId ?? SelectedSet?.Id,
+                SelectedWeapon?.Id,
+                SelectedWeapon?.Name,
+                Modifier,
+                Facing,
+                attacker.RuntimeState,
+                snapshot.ActiveExchange?.ExchangeId,
+                RollText));
+        }
+
         var modifiers = action == CombatActionKind.Damage || Modifier == 0
             ? Array.Empty<CombatModifierDto>()
             : [new CombatModifierDto("Situativ", Modifier, "Kampfseite")];
@@ -808,29 +835,27 @@ public partial class Kampf : IDisposable
             ? SelectedWeapon
             : null;
 
-        return new CombatRollRequestDto
+        if (SessionCombat is not { } snapshot)
         {
-            RequestId = Guid.NewGuid(),
-            SessionId = SessionState.ActiveSessionId,
-            ParticipantId = target.Id,
-            TargetParticipantId = exchange.AttackerParticipantId,
-            ActionId = exchange.ActionId,
-            ExpectedRevision = SessionCombat?.Revision,
-            HeroId = targetIsOpponent ? null : target.HeroId,
-            SetId = targetIsOpponent ? null : target.InitiativeSetId ?? SelectedSet?.Id,
-            ExchangeId = exchange.ExchangeId,
-            Action = action,
-            WeaponId = weapon?.Id,
-            WeaponName = weapon?.Name,
-            RuntimeState = target.RuntimeState,
-            Modifiers = Modifier == 0
-                ? []
-                : [new CombatModifierDto("Situativ", Modifier, "Kampfseite")],
-            Options = new CombatRuleOptionsDto(SpecialResultsEnabled: true, LowLePEnabled: true),
-            Facing = exchange.Facing,
-            Note = string.IsNullOrWhiteSpace(RollText) ? null : RollText.Trim()
-        };
+            throw new InvalidOperationException("Für die Abwehr ist kein aktueller Sessionzustand verfügbar.");
+        }
+
+        return RequirePreparedRequest(CombatActionPreparation.PrepareDefense(
+            snapshot,
+            exchange,
+            target,
+            action,
+            targetIsOpponent ? null : target.InitiativeSetId ?? SelectedSet?.Id,
+            weapon?.Id,
+            weapon?.Name,
+            Modifier,
+            target.RuntimeState,
+            RollText));
     }
+
+    private static CombatRollRequestDto RequirePreparedRequest(CombatActionPreparationResult result) =>
+        result.Request ?? throw new InvalidOperationException(
+            result.Error ?? "Der Kampfvorgang konnte nicht vorbereitet werden.");
 
     private bool CanRollOpenSessionAttack(CombatActionKind action)
     {
@@ -925,25 +950,28 @@ public partial class Kampf : IDisposable
         _notice = null;
         try
         {
-            var request = new CombatRollRequestDto
+            if (SessionCombat is not { } snapshot ||
+                snapshot.Participants.FirstOrDefault(participant =>
+                    string.Equals(participant.Id, targetId, StringComparison.Ordinal)) is not { } target)
             {
-                RequestId = Guid.NewGuid(),
-                SessionId = SessionCombat?.SessionId,
-                ParticipantId = attacker.Id,
-                TargetParticipantId = targetId,
-                ActionId = action.Id,
-                ExpectedRevision = SessionCombat?.Revision,
-                Action = actionKind,
-                WeaponId = attack.Id,
-                WeaponName = attack.Name,
-                RuntimeState = attacker.RuntimeState,
-                Modifiers = Modifier == 0
-                    ? []
-                    : [new CombatModifierDto("Situativ", Modifier, "Kampfseite")],
-                Options = new CombatRuleOptionsDto(SpecialResultsEnabled: true, LowLePEnabled: true),
-                Facing = Facing,
-                Note = string.IsNullOrWhiteSpace(RollText) ? null : RollText.Trim()
-            };
+                _notice = "Das ausgewählte Ziel ist nicht mehr im aktuellen Sessionzustand enthalten.";
+                return;
+            }
+
+            var request = RequirePreparedRequest(CombatActionPreparation.PrepareAttack(
+                snapshot,
+                attacker,
+                target,
+                action,
+                actionKind,
+                setId: null,
+                weaponId: attack.Id,
+                weaponName: attack.Name,
+                modifier: Modifier,
+                facing: Facing,
+                runtimeState: attacker.RuntimeState,
+                exchangeId: snapshot.ActiveExchange?.ExchangeId,
+                note: RollText));
             await CombatCoordinator.RollAsync(request);
         }
         catch (Exception exception)
