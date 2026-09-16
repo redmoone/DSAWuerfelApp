@@ -157,6 +157,7 @@ public sealed record CombatAttackExchangeDto
     public CombatRollEvaluationDto? DefenseResult { get; init; }
     public CombatZoneSnapshotDto? Zone { get; init; }
     public CombatDamageSnapshotDto? Damage { get; init; }
+    public CombatWoundApplicationDto? WoundApplication { get; init; }
     public Guid[] HistoryEntryIds { get; init; } = [];
     public string? RuleNote { get; init; }
 }

@@ -409,6 +409,88 @@ public sealed class CombatSessionStateTests
     }
 
     [Fact]
+    public async Task Stored_attack_outcome_can_be_recovered_before_the_result_cache_is_written()
+    {
+        using var factory = new TestApplicationFactory();
+        var hero = await SeedHeroAsync(factory, "owner");
+        var session = CreateSession(factory, hero, "owner");
+        var state = factory.Services.GetRequiredService<CombatSessionStateService>();
+        var handler = factory.Services.GetRequiredService<RollCombatHandler>();
+        var profile = await factory.Services.GetRequiredService<HeroCombatProfileReader>().ReadAsync(hero.Id, "owner");
+        var set = Assert.Single(profile!.Sets, item => item.ArmorModel == CombatArmorModel.Zone);
+        var weapon = Assert.Single(set.Weapons, item => item.Name == "Schwert");
+
+        var initial = await state.GetAsync(session.SessionId, "owner");
+        var rolled = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = initial.Revision,
+            Kind = CombatSessionMutationKind.RollInitiative,
+            HeroId = hero.Id
+        }, "owner");
+        var attacker = Assert.Single(rolled.Snapshot.Participants, item => item.HeroId == hero.Id);
+        var action = Assert.Single(rolled.Snapshot.Actions, item => item.ParticipantId == attacker.Id);
+        var added = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = rolled.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.AddOpponent,
+            Name = "Wiederholungsziel",
+            InitiativeBase = 1,
+            Initiative = 1,
+            OpponentProfile = new CombatOpponentProfileDto(10, 8, 7, 2, 20)
+        }, "owner");
+        var target = Assert.Single(added.Snapshot.Participants, item => item.Kind == CombatParticipantKind.Opponent);
+        var declaration = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = added.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.DeclareAttack,
+            ParticipantId = attacker.Id,
+            TargetParticipantId = target.Id,
+            ActionId = action.Id,
+            ExchangeId = "exchange-recoverable",
+            SetId = set.Id,
+            WeaponId = weapon.Id,
+            ActionKind = CombatActionKind.MeleeAttack
+        }, "owner");
+
+        var request = new CombatRollRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ParticipantId = attacker.Id,
+            TargetParticipantId = target.Id,
+            ActionId = action.Id,
+            ExpectedRevision = declaration.Snapshot.Revision,
+            HeroId = hero.Id,
+            ExchangeId = "exchange-recoverable",
+            SetId = set.Id,
+            WeaponId = weapon.Id,
+            WeaponName = weapon.Name,
+            Action = CombatActionKind.MeleeAttack
+        };
+        var storedAttack = CreateCombatResult(request, 8, 14, CombatOutcome.Success);
+        var bound = await state.BindAttackRollAsync(request, storedAttack, "owner");
+
+        var recovered = await handler.HandleAsync(request, "owner", "Besitzer");
+
+        Assert.Equal(bound.Revision, recovered.CombatSessionSnapshot!.Revision);
+        Assert.Equal(storedAttack.Snapshot.EntryId, recovered.Snapshot.EntryId);
+        Assert.Equal(storedAttack.Snapshot.LabeledRolls.Select(roll => roll.Value),
+            recovered.Snapshot.LabeledRolls.Select(roll => roll.Value));
+        Assert.Equal(CombatExchangeStatus.DefenseOpen,
+            recovered.CombatSessionSnapshot.ActiveExchange!.Status);
+
+        var retry = await handler.HandleAsync(request, "owner", "Besitzer");
+        Assert.Equal(recovered.Snapshot.EntryId, retry.Snapshot.EntryId);
+        Assert.Equal(recovered.CombatSessionSnapshot.Revision, retry.CombatSessionSnapshot!.Revision);
+    }
+
+    [Fact]
     public async Task Session_roll_uses_authoritative_participant_runtime_instead_of_stale_request_state()
     {
         using var factory = new TestApplicationFactory();
@@ -901,6 +983,94 @@ public sealed class CombatSessionStateTests
         var stored = await state.GetAsync(session.SessionId, "owner");
         Assert.Equal(automatic.Snapshot.Revision, stored.Revision);
         Assert.Equal(automatic.Snapshot.ActiveExchange.Status, stored.ActiveExchange!.Status);
+    }
+
+    [Fact]
+    public async Task Missing_automatic_hit_data_is_visible_and_does_not_reroll_or_advance_repeatedly()
+    {
+        using var factory = new TestApplicationFactory();
+        var hero = await SeedHeroAsync(factory, "owner");
+        var session = CreateSession(factory, hero, "owner");
+        var state = factory.Services.GetRequiredService<CombatSessionStateService>();
+
+        var attackerResult = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = 0,
+            Kind = CombatSessionMutationKind.AddOpponent,
+            Name = "Angreifer ohne TP",
+            Initiative = 20,
+            OpponentProfile = new CombatOpponentProfileDto(10, 8, 7, 0, 20)
+        }, "owner");
+        var attacker = Assert.Single(attackerResult.Snapshot.Participants,
+            participant => participant.Kind == CombatParticipantKind.Opponent);
+        var targetResult = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = attackerResult.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.AddOpponent,
+            Name = "Ziel ohne Reaktion",
+            Initiative = 10,
+            OpponentProfile = new CombatOpponentProfileDto(10, 8, 7, 0, 20)
+        }, "owner");
+        var target = Assert.Single(targetResult.Snapshot.Participants,
+            participant => participant.Id != attacker.Id && participant.Kind == CombatParticipantKind.Opponent);
+        var targetWithoutReaction = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = targetResult.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.ConsumeReaction,
+            ParticipantId = target.Id
+        }, "owner");
+        var action = Assert.Single(targetWithoutReaction.Snapshot.Actions,
+            current => current.ParticipantId == attacker.Id && current.State == CombatActionEntryState.Open);
+        var declaration = await state.MutateAsync(new CombatSessionMutationRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ExpectedRevision = targetWithoutReaction.Snapshot.Revision,
+            Kind = CombatSessionMutationKind.DeclareAttack,
+            ParticipantId = attacker.Id,
+            TargetParticipantId = target.Id,
+            ActionId = action.Id,
+            ExchangeId = "exchange-missing-automatic-data",
+            ActionKind = CombatActionKind.MeleeAttack,
+            WeaponId = "unbekannte-waffe"
+        }, "owner");
+        var request = new CombatRollRequestDto
+        {
+            RequestId = Guid.NewGuid(),
+            SessionId = session.SessionId,
+            ParticipantId = attacker.Id,
+            TargetParticipantId = target.Id,
+            ActionId = action.Id,
+            ExchangeId = declaration.Snapshot.ActiveExchange!.ExchangeId,
+            Action = CombatActionKind.MeleeAttack,
+            WeaponId = "unbekannte-waffe"
+        };
+        var attackResult = CreateCombatResult(request, 8, 10, CombatOutcome.Success);
+        var hit = await state.BindAttackRollAsync(request, attackResult, "owner");
+        Assert.Equal(CombatExchangeStatus.Hit, hit.ActiveExchange!.Status);
+
+        Assert.Null(await state.ResolveAutomaticHitAsync(
+            request,
+            attackResult with { CombatSessionSnapshot = hit },
+            "owner"));
+        var pending = await state.GetAsync(session.SessionId, "owner");
+        Assert.Equal(CombatExchangeStatus.Hit, pending.ActiveExchange!.Status);
+        Assert.Contains("TP-Notation", pending.ActiveExchange.RuleNote, StringComparison.Ordinal);
+        var pendingRevision = pending.Revision;
+
+        Assert.Null(await state.ResolveAutomaticHitAsync(
+            request,
+            attackResult with { CombatSessionSnapshot = pending },
+            "owner"));
+        var repeated = await state.GetAsync(session.SessionId, "owner");
+        Assert.Equal(pendingRevision, repeated.Revision);
+        Assert.Equal(pending.ActiveExchange.RuleNote, repeated.ActiveExchange!.RuleNote);
     }
 
     [Fact]

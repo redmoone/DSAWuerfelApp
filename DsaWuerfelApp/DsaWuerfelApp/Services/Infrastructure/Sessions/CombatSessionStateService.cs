@@ -615,6 +615,7 @@ public sealed class CombatSessionStateService(
                 Status = CombatExchangeStatus.Completed,
                 Zone = storedZone,
                 Damage = storedDamage,
+                WoundApplication = application,
                 HistoryEntryIds = exchange.HistoryEntryIds
                     .Append(result.Snapshot.EntryId)
                     .Distinct()
@@ -707,6 +708,14 @@ public sealed class CombatSessionStateService(
             var attackInfo = await ResolveAutomaticAttackInfoAsync(attacker, exchange, cancellationToken);
             if (attackInfo is null)
             {
+                MarkAutomaticHitPending(
+                    session,
+                    current,
+                    persisted,
+                    exchange,
+                    null,
+                    "Trefferfolge offen: Eine auswertbare TP-Notation des Angriffs fehlt.",
+                    userId);
                 return null;
             }
 
@@ -720,19 +729,38 @@ public sealed class CombatSessionStateService(
                 exchange.Facing,
                 CombatArmorZone.LeftArm,
                 CombatArmorZone.RightArm);
-            var fixedW20 = request.ResolvedZone?.W20;
+            var fixedW20 = exchange.Zone?.W20 ?? request.ResolvedZone?.W20;
             var w20 = fixedW20 ?? diceService.RollDice([new DiceRollGroupDto(20, 1)])[0].Value;
-            var mappedZone = CombatZoneRules.ResolveHitZone(w20, zoneRequest);
+            var mappedZone = exchange.Zone?.ArmorZone is { } storedArmorZone &&
+                             exchange.Zone.WoundZone is { } storedWoundZone
+                ? (ArmorZone: storedArmorZone, WoundZone: storedWoundZone)
+                : CombatZoneRules.ResolveHitZone(w20, zoneRequest);
             var armorRating = target.Kind == CombatParticipantKind.Opponent
                 ? CombatZoneRules.ResolveEnemyArmorRating(target.OpponentProfile?.Armor, mappedZone.ArmorZone)
                   ?? target.OpponentProfile?.ArmorRating
                 : CombatZoneRules.ResolveArmorRating(targetSet, mappedZone.ArmorZone);
+            var zone = new CombatZoneSnapshotDto(
+                w20,
+                mappedZone.ArmorZone,
+                mappedZone.WoundZone,
+                exchange.Zone?.Facing ?? zoneRequest.Facing,
+                armorRating);
             if (!armorRating.HasValue || !CombatRollRules.TryParseDamageNotation(
                     attackInfo.DamageNotation,
                     out var diceCount,
                     out var diceSides,
                     out var weaponBonus))
             {
+                MarkAutomaticHitPending(
+                    session,
+                    current,
+                    persisted,
+                    exchange,
+                    zone,
+                    !armorRating.HasValue
+                        ? "Trefferfolge offen: Für die Trefferzone ist kein gültiger RS hinterlegt."
+                        : "Trefferfolge offen: Die TP-Notation des Angriffs kann nicht ausgewertet werden.",
+                    userId);
                 return null;
             }
 
@@ -753,6 +781,14 @@ public sealed class CombatSessionStateService(
                 armorRating);
             if (!calculation.StructurePoints.HasValue)
             {
+                MarkAutomaticHitPending(
+                    session,
+                    current,
+                    persisted,
+                    exchange,
+                    zone,
+                    "Trefferfolge offen: Für die Schadensberechnung konnten keine SP ermittelt werden.",
+                    userId);
                 return null;
             }
 
@@ -805,12 +841,6 @@ public sealed class CombatSessionStateService(
                 };
             }
 
-            var zone = new CombatZoneSnapshotDto(
-                w20,
-                mappedZone.ArmorZone,
-                mappedZone.WoundZone,
-                exchange.Facing,
-                armorRating);
             var damage = new CombatDamageSnapshotDto(
                 calculation.DiceTotal,
                 calculation.WeaponBonus,
@@ -842,6 +872,7 @@ public sealed class CombatSessionStateService(
                 Status = CombatExchangeStatus.Completed,
                 Zone = zone,
                 Damage = damage,
+                WoundApplication = application,
                 RuleNote = string.Join("; ", ruleNotes)
             };
             var next = FinalizeSnapshot(current with
@@ -885,6 +916,46 @@ public sealed class CombatSessionStateService(
         {
             _stateLock.Release();
         }
+    }
+
+    private CombatSessionSnapshotDto MarkAutomaticHitPending(
+        GameSession session,
+        CombatSessionSnapshotDto current,
+        PersistedState persisted,
+        CombatAttackExchangeDto exchange,
+        CombatZoneSnapshotDto? zone,
+        string note,
+        string userId)
+    {
+        if (string.Equals(exchange.RuleNote, note, StringComparison.Ordinal) &&
+            (zone is null || Equals(exchange.Zone, zone)))
+        {
+            return current;
+        }
+
+        var nextRevision = current.Revision + 1;
+        var updatedExchange = exchange with
+        {
+            Revision = nextRevision,
+            Zone = zone ?? exchange.Zone,
+            RuleNote = note
+        };
+        var next = FinalizeSnapshot(current with
+        {
+            Revision = nextRevision,
+            ActiveExchange = updatedExchange,
+            LastMutationId = current.LastMutationId,
+            LastMutationDescription = note,
+            LastMutationUserId = userId
+        }) with { UndoAvailable = true };
+        Save(session, CreateExchangePersistedState(
+            next,
+            current,
+            persisted,
+            exchange.ExchangeId,
+            userId,
+            persisted.AppliedRequestIds));
+        return next;
     }
 
     public async Task<CombatSessionSnapshotDto> BindHitZoneAsync(

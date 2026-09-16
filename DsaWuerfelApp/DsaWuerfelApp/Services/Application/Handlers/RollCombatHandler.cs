@@ -22,6 +22,7 @@ public sealed partial class RollCombatHandler(
     {
         ArgumentNullException.ThrowIfNull(request);
         ValidateRequest(request);
+        var resolvedPlayerName = string.IsNullOrWhiteSpace(playerName) ? "Unbekannt" : playerName.Trim();
 
         if (!string.IsNullOrWhiteSpace(request.SessionId))
         {
@@ -37,9 +38,22 @@ public sealed partial class RollCombatHandler(
         }
 
         request = await PrepareSessionAttackAsync(request, userId, cancellationToken);
+        var recovered = await TryRecoverStoredSessionRollAsync(
+            request,
+            userId,
+            resolvedPlayerName,
+            cancellationToken);
+        if (recovered is not null)
+        {
+            await combatSessionStateService.EnsureParticipantRollAccessAsync(
+                request,
+                userId,
+                cancellationToken);
+            return await BindSessionResultAsync(request, recovered, userId, cancellationToken);
+        }
+
         await combatSessionStateService.EnsureRollAvailabilityAsync(request, userId, cancellationToken);
 
-        var resolvedPlayerName = string.IsNullOrWhiteSpace(playerName) ? "Unbekannt" : playerName.Trim();
         CombatSessionSnapshotDto? sessionSnapshot = null;
         CombatSessionParticipantDto? sessionParticipant = null;
         if (!string.IsNullOrWhiteSpace(request.SessionId))
@@ -145,6 +159,130 @@ public sealed partial class RollCombatHandler(
         return await BindSessionResultAsync(request, result, userId, cancellationToken);
     }
 
+    private async Task<CombatRollResultDto?> TryRecoverStoredSessionRollAsync(
+        CombatRollRequestDto request,
+        string userId,
+        string playerName,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.SessionId) ||
+            request.Action is not (CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack or
+                CombatActionKind.WeaponParry or CombatActionKind.ShieldParry or CombatActionKind.Dodge) ||
+            string.IsNullOrWhiteSpace(request.ExchangeId))
+        {
+            return null;
+        }
+
+        var sessionSnapshot = await combatSessionStateService.GetAsync(
+            request.SessionId,
+            userId,
+            cancellationToken);
+        var exchange = sessionSnapshot.ActiveExchange;
+        if (exchange is null ||
+            !string.Equals(exchange.ExchangeId, request.ExchangeId, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var evaluation = request.Action is CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack
+            ? exchange.AttackRollRequestId == request.RequestId ? exchange.AttackResult : null
+            : exchange.DefenseRollRequestId == request.RequestId ? exchange.DefenseResult : null;
+        if (evaluation is null)
+        {
+            return null;
+        }
+
+        var participantId = request.Action is CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack
+            ? exchange.AttackerParticipantId
+            : exchange.TargetParticipantId;
+        var participant = sessionSnapshot.Participants.FirstOrDefault(current =>
+            string.Equals(current.Id, participantId, StringComparison.Ordinal));
+        if (participant is null)
+        {
+            return null;
+        }
+
+        var entryId = exchange.HistoryEntryIds.LastOrDefault();
+        if (entryId == Guid.Empty)
+        {
+            entryId = Guid.NewGuid();
+        }
+
+        var recoveredRequest = request with
+        {
+            SessionId = sessionSnapshot.SessionId,
+            ParticipantId = participant.Id,
+            TargetParticipantId = request.Action is CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack
+                ? exchange.TargetParticipantId
+                : exchange.AttackerParticipantId,
+            ActionId = exchange.ActionId,
+            ExchangeId = exchange.ExchangeId,
+            HeroId = participant.HeroId,
+            WeaponId = request.Action is CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack
+                ? exchange.WeaponId
+                : request.WeaponId,
+            WeaponName = request.Action is CombatActionKind.MeleeAttack or CombatActionKind.RangedAttack
+                ? exchange.WeaponName
+                : request.WeaponName
+        };
+        var rolls = new List<DiceRollDto> { new(20, evaluation.MainRoll) };
+        if (evaluation.ControlRoll is { } controlRoll)
+        {
+            rolls.Add(new DiceRollDto(20, controlRoll));
+        }
+
+        var snapshot = new CombatRollSnapshotDto
+        {
+            EntryId = entryId,
+            RequestId = recoveredRequest.RequestId,
+            SessionId = recoveredRequest.SessionId,
+            ParticipantId = participant.Id,
+            ParticipantName = participant.Name,
+            ExchangeId = exchange.ExchangeId,
+            HeroId = participant.HeroId,
+            Action = evaluation.Action,
+            ActionLabel = GetActionLabel(evaluation.Action),
+            WeaponName = recoveredRequest.WeaponName,
+            ValuesSource = evaluation.ValuesSource,
+            BaseValue = evaluation.BaseValue,
+            UnmodifiedBaseValue = evaluation.BaseValue,
+            EffectiveTarget = evaluation.EffectiveTarget,
+            ControlTarget = evaluation.ControlTarget,
+            Modifiers = evaluation.Modifiers ?? [],
+            RuleOptions = recoveredRequest.Options ?? new CombatRuleOptionsDto(),
+            Outcome = evaluation.Outcome,
+            StatusLabel = evaluation.StatusLabel,
+            LabeledRolls = CreateStoredLabeledRolls(evaluation),
+            RuleNotes = evaluation.RuleNotes ?? []
+        };
+        var result = CreateResult(
+            recoveredRequest,
+            participant.HeroId,
+            participant.Name,
+            participant.Id,
+            userId,
+            playerName,
+            snapshot,
+            rolls,
+            MapHistoryOutcome(evaluation.Outcome),
+            BuildChecks(evaluation));
+        return AttachExchangeContext(result, sessionSnapshot);
+    }
+
+    private static CombatLabeledRollDto[] CreateStoredLabeledRolls(CombatRollEvaluationDto evaluation)
+    {
+        var rolls = new List<CombatLabeledRollDto>
+        {
+            new("Hauptwurf", 20, evaluation.MainRoll)
+        };
+        if (evaluation.ControlRoll is { } controlRoll)
+        {
+            rolls.Add(new CombatLabeledRollDto("Kontrollwurf", 20, controlRoll));
+        }
+
+        return rolls.ToArray();
+    }
+
     private async Task<CombatRollRequestDto> PrepareSessionAttackAsync(
         CombatRollRequestDto request,
         string userId,
@@ -163,9 +301,8 @@ public sealed partial class RollCombatHandler(
             cancellationToken);
         if (snapshot.ActiveExchange is { } existingExchange)
         {
-            if (!CombatAttackExchangeRules.IsOpen(existingExchange) ||
-                existingExchange.AttackResult is not null ||
-                existingExchange.RequestId != request.RequestId)
+            if (existingExchange.RequestId != request.RequestId &&
+                existingExchange.AttackRollRequestId != request.RequestId)
             {
                 throw Validation("Der offene Angriffsaustausch muss zuerst abgeschlossen werden.");
             }
@@ -327,6 +464,17 @@ public sealed partial class RollCombatHandler(
             {
                 boundResult = EnrichAutomaticHitResult(boundResult, automaticHit);
             }
+            else if (boundResult.CombatSessionSnapshot?.ActiveExchange is
+                     { Status: CombatExchangeStatus.Hit })
+            {
+                var currentSnapshot = await combatSessionStateService.GetAsync(
+                    request.SessionId,
+                    userId,
+                    cancellationToken);
+                boundResult = AttachExchangeContext(
+                    boundResult with { CombatSessionSnapshot = currentSnapshot },
+                    currentSnapshot);
+            }
 
             await combatSessionStateService.CacheRollResultAsync(
                 request,
@@ -440,7 +588,17 @@ public sealed partial class RollCombatHandler(
             ExchangeTargetName = target?.Name,
             ExchangeAttackResult = exchange.AttackResult,
             ExchangeDefenseAction = exchange.SelectedDefenseAction,
-            ExchangeDefenseResult = exchange.DefenseResult
+            ExchangeDefenseResult = exchange.DefenseResult,
+            Zone = exchange.Zone ?? result.Snapshot.Zone,
+            Damage = exchange.Damage ?? result.Snapshot.Damage,
+            WoundApplication = exchange.WoundApplication ?? result.Snapshot.WoundApplication,
+            RuleNotes = exchange.Status is (CombatExchangeStatus.Hit or CombatExchangeStatus.DamageOpen) &&
+                        !string.IsNullOrWhiteSpace(exchange.RuleNote)
+                ? result.Snapshot.RuleNotes
+                    .Append(exchange.RuleNote!)
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray()
+                : result.Snapshot.RuleNotes
         };
 
         if (result.HistoryEntry.Context is not { } context)

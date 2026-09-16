@@ -129,7 +129,9 @@ public partial class CombatActionPanel
         CombatExchangeStatus.DefenseOpen =>
             $"{ActiveExchangeTargetName ?? "Ziel"} wählt die Abwehr.",
         CombatExchangeStatus.Hit or CombatExchangeStatus.DamageOpen =>
-            "Trefferfolge wird abgeschlossen.",
+            string.IsNullOrWhiteSpace(ActiveExchange?.RuleNote)
+                ? "Trefferfolge wird abgeschlossen."
+                : ActiveExchange.RuleNote,
         _ => string.Empty
     };
 

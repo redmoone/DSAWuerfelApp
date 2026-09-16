@@ -85,7 +85,9 @@ public partial class CombatInitiativeOverview
         CombatExchangeStatus.DefenseOpen =>
             $"{GetParticipantName(snapshot, exchange.TargetParticipantId)} wählt die Abwehr.",
         CombatExchangeStatus.Hit or CombatExchangeStatus.DamageOpen =>
-            $"Trefferfolge von {GetParticipantName(snapshot, exchange.AttackerParticipantId)} abschließen.",
+            string.IsNullOrWhiteSpace(exchange.RuleNote)
+                ? $"Trefferfolge von {GetParticipantName(snapshot, exchange.AttackerParticipantId)} abschließen."
+                : exchange.RuleNote,
         _ => exchange.RuleNote ?? string.Empty
     };
 
