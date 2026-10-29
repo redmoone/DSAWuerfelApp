@@ -19,6 +19,8 @@ jobs:
       - name: Check authentication and access control
         run: dotnet test DsaWuerfelApp/DsaWuerfelApp.Tests/DsaWuerfelApp.Tests.csproj -c Release --filter 'FullyQualifiedName~AuthRedirectTests|FullyQualifiedName~HeroAccessTests|FullyQualifiedName~SessionMembershipTests|FullyQualifiedName~MagicLinkConcurrencyTests|FullyQualifiedName~RequestRejectionTests|FullyQualifiedName~StartupOwnershipTests'
       - run: dotnet publish DsaWuerfelApp/DsaWuerfelApp/DsaWuerfelApp.csproj -c Release -o ./publish
+      - name: Version published stylesheets
+        run: node .github/scripts/version-styles.cjs ./publish
       - name: Check published browser configuration
         run: |
           test -s publish/wwwroot/appsettings.json
