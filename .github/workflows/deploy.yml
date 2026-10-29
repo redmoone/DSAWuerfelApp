@@ -51,5 +51,6 @@ jobs:
             sudo systemctl daemon-reload
             sudo systemctl restart dsawuerfelapp.service
             for config in appsettings.json appsettings.Development.json; do
-              curl --fail --silent --show-error --retry 10 --retry-delay 1 --retry-connrefused "http://127.0.0.1:5000/$config" | python3 -m json.tool > /dev/null
+              config_json="$(curl --fail --silent --show-error --retry 10 --retry-delay 1 --retry-connrefused "http://127.0.0.1:5000/$config")"
+              printf '%s' "$config_json" | python3 -m json.tool > /dev/null
             done
