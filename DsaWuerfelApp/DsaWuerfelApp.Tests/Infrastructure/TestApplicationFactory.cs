@@ -31,13 +31,14 @@ public sealed class TestApplicationFactory : WebApplicationFactory<Program>
     {
         builder.UseEnvironment("Testing");
         builder.UseSolutionRelativeContentRoot("DsaWuerfelApp/DsaWuerfelApp");
+        // Program reads these settings before the app-configuration callbacks run.
+        builder.UseSetting("DataProtection:KeysPath", _database.DataProtectionPath);
+        builder.UseSetting("DataProtection:ApplicationName", "DsaWuerfelApp.Tests");
         builder.ConfigureAppConfiguration((_, configuration) =>
         {
             configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ConnectionStrings:HeroesDb"] = _database.ConnectionString,
-                ["DataProtection:KeysPath"] = _database.DataProtectionPath,
-                ["DataProtection:ApplicationName"] = "DsaWuerfelApp.Tests",
                 ["MagicLinkAuth:ResendApiKey"] = "",
                 ["MagicLinkAuth:FromEmail"] = "",
                 ["MagicLinkAuth:PublicBaseUrl"] = "https://login.example/app"
