@@ -1,12 +1,36 @@
 using DsaWuerfelApp.Persistence;
 using DsaWuerfelApp.Shared.Models;
 using DsaWuerfelApp.Tests.Infrastructure;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using Microsoft.AspNetCore.DataProtection.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace DsaWuerfelApp.Tests;
 
 public class StartupOwnershipTests
 {
+    [Fact]
+    public void Test_host_persists_data_protection_keys_in_its_own_temporary_directory()
+    {
+        using var factory = new TestApplicationFactory();
+        var services = factory.Services;
+        var keyManagement = services.GetRequiredService<IOptions<KeyManagementOptions>>().Value;
+        var repository = Assert.IsType<FileSystemXmlRepository>(keyManagement.XmlRepository);
+
+        Assert.Equal(Path.GetFullPath(factory.Database.DataProtectionPath), repository.Directory.FullName);
+        Assert.Equal("DsaWuerfelApp.Tests",
+            services.GetRequiredService<IOptions<DataProtectionOptions>>().Value.ApplicationDiscriminator);
+
+        var protector = services.GetRequiredService<IDataProtectionProvider>().CreateProtector("startup-test");
+        var protectedValue = protector.Protect("test-value");
+
+        Assert.Equal("test-value", protector.Unprotect(protectedValue));
+        Assert.NotEmpty(Directory.GetFiles(factory.Database.DataProtectionPath, "key-*.xml"));
+    }
+
     [Fact]
     public async Task Repeated_startup_preserves_orphan_and_owned_heroes_and_adds_index()
     {

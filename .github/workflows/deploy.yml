@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - master
+  pull_request:
+    branches:
+      - master
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -16,7 +19,14 @@ jobs:
       - name: Check authentication and access control
         run: dotnet test DsaWuerfelApp/DsaWuerfelApp.Tests/DsaWuerfelApp.Tests.csproj -c Release --filter 'FullyQualifiedName~AuthRedirectTests|FullyQualifiedName~HeroAccessTests|FullyQualifiedName~SessionMembershipTests|FullyQualifiedName~MagicLinkConcurrencyTests|FullyQualifiedName~RequestRejectionTests|FullyQualifiedName~StartupOwnershipTests'
       - run: dotnet publish DsaWuerfelApp/DsaWuerfelApp/DsaWuerfelApp.csproj -c Release -o ./publish
+      - name: Check published browser configuration
+        run: |
+          test -s publish/wwwroot/appsettings.json
+          test -s publish/wwwroot/appsettings.Development.json
+          python3 -m json.tool publish/wwwroot/appsettings.json > /dev/null
+          python3 -m json.tool publish/wwwroot/appsettings.Development.json > /dev/null
       - uses: appleboy/scp-action@v0.1.7
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
@@ -25,14 +35,21 @@ jobs:
           target: "/var/www/dsawuerfelapp"
           strip_components: 1
       - uses: appleboy/ssh-action@v1.0.3
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
+            set -eu
+            test -s /var/www/dsawuerfelapp/wwwroot/appsettings.json
+            test -s /var/www/dsawuerfelapp/wwwroot/appsettings.Development.json
             sqlite_native="/var/www/dsawuerfelapp/runtimes/linux-x64/native/libe_sqlite3.so"
             sudo test -f /usr/lib/x86_64-linux-gnu/libsqlite3.so.0
             sudo rm -f "$sqlite_native"
             sudo ln -s /usr/lib/x86_64-linux-gnu/libsqlite3.so.0 "$sqlite_native"
             sudo systemctl daemon-reload
             sudo systemctl restart dsawuerfelapp.service
+            for config in appsettings.json appsettings.Development.json; do
+              curl --fail --silent --show-error --retry 10 --retry-delay 1 --retry-connrefused "http://127.0.0.1:5000/$config" | python3 -m json.tool > /dev/null
+            done
